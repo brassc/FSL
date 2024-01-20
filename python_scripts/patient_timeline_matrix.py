@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
 import seaborn as sns
+import matplotlib.gridspec as gridspec
 
 
 data=pd.read_csv('/Users/charlottebrass/repos/FSL/patient_timeline_map.csv')
@@ -30,6 +31,9 @@ cmap = mcolors.ListedColormap(['white', 'black', 'blue'])
 bounds = [0, 1, 2, 3]
 norm = mcolors.BoundaryNorm(bounds, cmap.N)
 
+column_sums = trimmed_data.sum()
+
+# MATRIX ONLY 
 
 # Create a figure and axis
 plt.figure(figsize=(trimmed_data.shape[1]*0.5, trimmed_data.shape[1]))
@@ -75,3 +79,83 @@ plt.savefig('python_scripts/patient_timeline_matrix.png')
 plt.show()
 
 
+# MATRIX AND BAR PLOT TOTALS
+
+# Create a figure with a grid layout for subplots
+fig = plt.figure(figsize=(4, 10))
+gs = gridspec.GridSpec(2, 1, height_ratios=[8, 1])  # 2 rows, 1 column, height ratios for subplots
+
+# Create the main axis for the matrix plot in the first row
+ax1 = plt.subplot(gs[0])
+
+# Use imshow to create the matrix plot
+ax1.imshow(modified_data, cmap=cmap, norm=norm, interpolation='none')
+
+# Customize the existing plot
+ax1.tick_params(
+    axis='both',
+    which='both',
+    bottom=False,
+    top=False,
+    left=False,
+    right=False,
+    labelbottom=True,
+    labelleft=True
+)
+
+y_labels = data.iloc[:, 0].astype(int).astype(str)
+y_labels = y_labels.replace('0', ' ')
+ax1.set_yticks(ticks=range(len(y_labels)))
+ax1.set_yticklabels(y_labels, fontsize=8)
+
+x_labels = data.columns[1:].drop(data.columns[-1])
+ax1.set_xticks(ticks=range(len(x_labels)))
+#ax1.set_xticklabels(x_labels, rotation=90)
+# Omit x-axis labels for the second bar chart
+ax1.set_xticklabels([])
+ax1.set_ylabel("Patient ID", labelpad=15)
+ax1.set_title("Patient ID Timescale Matrix", pad=20)
+
+blue_patch = mpatches.Patch(color='blue', label='bifrontal')
+black_patch = mpatches.Patch(color='black', label='hemi')
+ax1.legend(handles=[blue_patch, black_patch], loc='upper center', bbox_to_anchor=(0.5, -0.9), fancybox=False, shadow=False, ncol=2, fontsize=8)
+
+# Calculate the column sums of trimmed_data
+column_sums = trimmed_data.sum()
+
+# Create a new axis for the bar chart in the second row
+ax2 = plt.subplot(gs[1])
+
+# Create the bar chart with the same width as the matrix plot
+bar_width = 2/len(x_labels)  # Adjust the bar width as needed
+ax2.bar(x_labels, column_sums, color='gray', width=bar_width)
+ax2.set_ylabel('Sum')
+ax2.set_xticks(ticks=range(len(x_labels)))
+ax2.set_xticklabels(x_labels, rotation=90, fontsize=8)
+ax2.set_xlabel("Timescale", labelpad=15)
+
+# Omit x-axis labels for the second bar chart
+#ax2.set_xticklabels([])
+
+# Adjust subplot parameters for the main plot to add more white space at the bottom
+plt.subplots_adjust(hspace=0.5)
+plt.subplots_adjust(bottom=0.4)
+
+# Draw the figure to update the renderer and get the correct bounding boxes
+fig.canvas.draw()
+
+# Get the position of the first subplot after rendering the figure
+pos1 = ax1.get_position()
+
+# Set the position of the second subplot to match the width of the first subplot
+pos2 = [pos1.x0, 0.35, pos1.width, 0.15] # The y0 and height values here are placeholders and should be adjusted as needed
+ax2.set_position(pos2)
+
+# Redraw the figure to apply the new changes
+fig.canvas.draw()
+
+# Update save location as needed
+plt.savefig('python_scripts/patient_timeline_matrix_and_sums.png')
+
+# Show the combined figure
+plt.show()
