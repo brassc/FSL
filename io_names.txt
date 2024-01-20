@@ -1,0 +1,3 @@
+/home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi/12519/acute/Hour_01110.9833-Date_20070427/U-ID11556/T1w_space/T1w_trio_P00030_12519_acute_20070427_U-ID11556.nii.gz
+
+/home/cmb247/Desktop/Project_3/BET_Extractions/12519_acute_BET.nii.gz
