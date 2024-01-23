@@ -31,7 +31,8 @@ cmap = mcolors.ListedColormap(['white', 'black', 'blue'])
 bounds = [0, 1, 2, 3]
 norm = mcolors.BoundaryNorm(bounds, cmap.N)
 
-column_sums = trimmed_data.sum()
+
+
 
 # MATRIX ONLY 
 
@@ -122,20 +123,23 @@ ax1.legend(handles=[blue_patch, black_patch], loc='upper center', bbox_to_anchor
 
 # Calculate the column sums of trimmed_data
 column_sums = trimmed_data.sum()
+bifrontal_sums = trimmed_data.iloc[-7:, :].sum()
+hemi_sums = trimmed_data.iloc[:25, :].sum()
+barchart_df = pd.concat([bifrontal_sums, hemi_sums], axis=1, keys=['Bifrontal', 'Hemi'])
 
 # Create a new axis for the bar chart in the second row
 ax2 = plt.subplot(gs[1])
 
 # Create the bar chart with the same width as the matrix plot
-bar_width = 2/len(x_labels)  # Adjust the bar width as needed
-ax2.bar(x_labels, column_sums, color='gray', width=bar_width)
-ax2.set_ylabel('Sum')
+bar_width = 4/len(x_labels)  # Adjust the bar width as needed
+#ax2.bar(x_labels, column_sums, color='gray', width=bar_width)
+ax2.bar(x_labels, barchart_df['Bifrontal'], color='blue', width=bar_width, label='Bifrontal')
+ax2.bar(x_labels, barchart_df['Hemi'], color='black', width=bar_width, bottom=barchart_df['Bifrontal'], label='Hemi')
+ax2.set_ylabel('Total')
 ax2.set_xticks(ticks=range(len(x_labels)))
 ax2.set_xticklabels(x_labels, rotation=90, fontsize=8)
+ax2.tick_params(axis='x', length=0)
 ax2.set_xlabel("Timescale", labelpad=15)
-
-# Omit x-axis labels for the second bar chart
-#ax2.set_xticklabels([])
 
 # Adjust subplot parameters for the main plot to add more white space at the bottom
 plt.subplots_adjust(hspace=0.5)
@@ -159,3 +163,4 @@ plt.savefig('python_scripts/patient_timeline_matrix_and_sums.png')
 
 # Show the combined figure
 plt.show()
+
