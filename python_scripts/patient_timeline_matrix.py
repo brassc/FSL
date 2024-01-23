@@ -119,7 +119,7 @@ ax1.set_title("Patient ID Timescale Matrix", pad=20)
 
 blue_patch = mpatches.Patch(color='blue', label='bifrontal')
 black_patch = mpatches.Patch(color='black', label='hemi')
-ax1.legend(handles=[blue_patch, black_patch], loc='upper center', bbox_to_anchor=(0.5, -0.9), fancybox=False, shadow=False, ncol=2, fontsize=8)
+ax1.legend(handles=[blue_patch, black_patch], loc='upper center', bbox_to_anchor=(0.5, -0.65), fancybox=False, shadow=False, ncol=2, fontsize=8)
 
 # Calculate the column sums of trimmed_data
 column_sums = trimmed_data.sum()
@@ -139,11 +139,12 @@ ax2.set_ylabel('Total')
 ax2.set_xticks(ticks=range(len(x_labels)))
 ax2.set_xticklabels(x_labels, rotation=90, fontsize=8)
 ax2.tick_params(axis='x', length=0)
-ax2.set_xlabel("Timescale", labelpad=15)
+ax2.set_xlabel("Timescale", labelpad=20)
 
 # Adjust subplot parameters for the main plot to add more white space at the bottom
 plt.subplots_adjust(hspace=0.5)
-plt.subplots_adjust(bottom=0.4)
+plt.subplots_adjust(bottom=0.2)
+plt.subplots_adjust(top=0.9) 
 
 # Draw the figure to update the renderer and get the correct bounding boxes
 fig.canvas.draw()
@@ -152,8 +153,11 @@ fig.canvas.draw()
 pos1 = ax1.get_position()
 
 # Set the position of the second subplot to match the width of the first subplot
-pos2 = [pos1.x0, 0.35, pos1.width, 0.15] # The y0 and height values here are placeholders and should be adjusted as needed
+pos2 = [pos1.x0, 0.2, pos1.width, 0.15] # The y0 and height values here are placeholders and should be adjusted as needed
 ax2.set_position(pos2)
+
+
+
 
 # Redraw the figure to apply the new changes
 fig.canvas.draw()
