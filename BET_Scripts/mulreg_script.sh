@@ -4,7 +4,7 @@
 
 # Define the standard space template path (change this to your standard space template)
 standard_template="mni_icbm152_t1_tal_nlin_sym_55_ext.nii"
-registered_space_name="mni152"
+standard_space_name="mni152"
 
 
 # List of subdirectory names (e.g., 12519, 13990, 14324, 16577, 20942)
