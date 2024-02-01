@@ -75,12 +75,20 @@ plt.legend(handles=[blue_patch, black_patch], loc='upper center', bbox_to_anchor
 plt.subplots_adjust(bottom=0.25)  # Increase the bottom margin
 
 # Update save location as needed
-plt.savefig('python_scripts/patient_timeline_matrix.png')
+#plt.savefig('python_scripts/patient_timeline_matrix.png')
 
-plt.show()
+#plt.show()
 
 
 # MATRIX AND BAR PLOT TOTALS
+
+# Calculate the column sums of trimmed_data
+column_sums = trimmed_data.sum()
+bifrontal_sums = trimmed_data.iloc[-7:, :].sum()
+hemi_sums = trimmed_data.iloc[:25, :].sum()
+barchart_df = pd.concat([bifrontal_sums, hemi_sums], axis=1, keys=['Bifrontal', 'Hemi'])
+
+print(column_sums.sum())
 
 # Create a figure with a grid layout for subplots
 fig = plt.figure(figsize=(4, 10))
@@ -121,11 +129,6 @@ blue_patch = mpatches.Patch(color='blue', label='bifrontal')
 black_patch = mpatches.Patch(color='black', label='hemi')
 ax1.legend(handles=[blue_patch, black_patch], loc='upper center', bbox_to_anchor=(0.5, -0.65), fancybox=False, shadow=False, ncol=2, fontsize=8)
 
-# Calculate the column sums of trimmed_data
-column_sums = trimmed_data.sum()
-bifrontal_sums = trimmed_data.iloc[-7:, :].sum()
-hemi_sums = trimmed_data.iloc[:25, :].sum()
-barchart_df = pd.concat([bifrontal_sums, hemi_sums], axis=1, keys=['Bifrontal', 'Hemi'])
 
 # Create a new axis for the bar chart in the second row
 ax2 = plt.subplot(gs[1])
