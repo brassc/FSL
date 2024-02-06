@@ -7,6 +7,7 @@ module load fsl
 # Define the standard space template path (change this to your standard space template)
 standard_template="mni_icbm152_t1_tal_nlin_sym_55_ext.nii"
 standard_space_name="mni152_fnirt"
+log_file="mulfnirtreg_log.txt"
 
 
 # List of subdirectory names (e.g., 12519, 13990, 14324, 16577, 20942)
@@ -40,12 +41,12 @@ for subdirectory in "${subdirectories[@]}"; do
         done
 
         # Perform registration using flirt or fnirt (adjust parameters as needed)
-	echo "Completing linear registration for $patientID $extracted_keyword scan" >> mulfnirtreg_log.txt
-        flirt -in "$input_scan" -ref "$standard_template" -out "$output_scan" -omat "$output_directory/${scan_name}_registration.mat" >> mulfnirtreg_log.txt
-        echo "Linear registration for $patientID $extracted_keyword complete. Starting non-linear registration" >> mulfnirtreg_log.txt
+	echo "Completing linear registration for $patientID $extracted_keyword scan" >> $log_file
+        flirt -in "$input_scan" -ref "$standard_template" -out "$output_scan" -omat "$output_directory/${scan_name}_registration.mat" >> $log_file
+        echo "Linear registration for $patientID $extracted_keyword complete. Starting non-linear registration" >> $log_file
         # You can also use fnirt for non-linear registration if needed
-        fnirt --in="$input_scan" --ref="$standard_template" --iout="$output_scan" --aff="$output_directory/${scan_name}_registration.mat" --cout="$output_directory/${scan_name}_warp_coeff.nii.gz" >> mulfnirtreg_log.txt
-        echo "Non-linear registration for $patientID $extracted_keyword complete." >> mulfnirtreg_log.txt
+        fnirt --in="$input_scan" --ref="$standard_template" --iout="$output_scan" --aff="$output_directory/${scan_name}_registration.mat" --cout="$output_directory/${scan_name}_warp_coeff.nii.gz" >> $log_file
+        echo "Non-linear registration for $patientID $extracted_keyword complete." >> $log_file
     done
 
     echo "Registration complete for subdirectory $subdirectory."
