@@ -45,7 +45,7 @@ for subdirectory in "${subdirectories[@]}"; do
         echo "Linear registration for $patientID $extracted_keyword complete. Starting non-linear registration" >> mulfnirtreg_log.txt
         # You can also use fnirt for non-linear registration if needed
         fnirt --in="$input_scan" --ref="$standard_template" --iout="$output_scan" --aff="$output_directory/${scan_name}_registration.mat" --cout="$output_directory/${scan_name}_warp_coeff.nii.gz" >> mulfnirtreg_log.txt
-        echo "Non-linear registration for $patientID $extracted_keyword complete."
+        echo "Non-linear registration for $patientID $extracted_keyword complete." >> mulfnirtreg_log.txt
     done
 
     echo "Registration complete for subdirectory $subdirectory."
