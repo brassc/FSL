@@ -11,9 +11,10 @@ registration_space_name="T1w_time1_fnirt"
 keywords=("ultra-fast" "fast" "acute" "3mo" "6mo" "12mo" "24mo")
 
 # List of subdirectory names (e.g., 12519, 13990, 14324, 16577, 20942)
-subdirectories=("12519" "13198" "13782" "13990" "14324" "16754" "19344" "19575" "19978" "19981" "20174" "20651" "20942" "21221" "22725" "22785" "23348" ) #
+subdirectories=( "13198" "13782" "13990" "14324" "16754" "19344" "19575" "19978" "19981" "20174" "20651" "20942" "21221" "22725" "22785" "23348" ) # "12519"
 
 log_file="mult1fnirtreg_log.txt"
+echo "NEW RUN $(date +'%Y-%m-%d')" >> $log_file
 
 # Loop through each subdirectory
 for subdirectory in "${subdirectories[@]}"; do
