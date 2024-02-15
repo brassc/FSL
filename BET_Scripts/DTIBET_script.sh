@@ -15,7 +15,8 @@ fslroi $DTI_DATA $B0_IMAGE 0 1
 
 # Step 2: Run BET on the b0 image
 echo "Running BET on b0 image..."
-echo bet $B0_IMAGE $B0_BRAIN -f 0.3 -g 0.1 -m >> $LOG_FILE
+echo "bet $B0_IMAGE $B0_BRAIN -f 0.3 -g 0.1 -m" >> $LOG_FILE
+bet $B0_IMAGE $B0_BRAIN -f 0.3 -g 0.1 -m
 
 # The above command also generates a brain mask named automatically as "${B0_BRAIN}_mask.nii.gz" due to -m parameter
 # which is actually $B0_MASK as per our defined variable.
