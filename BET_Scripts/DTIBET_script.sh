@@ -5,8 +5,8 @@ DTI_DATA="data.nii.gz"
 
 # Define output names
 B0_IMAGE="b0_image.nii.gz"
-B0_BRAIN="b0_image_brain.nii.gz"
-B0_MASK="b0_image_brain_mask.nii.gz"
+B0_BRAIN="nodif_brain.nii.gz"
+B0_MASK="nodif_brain_mask.nii.gz"
 LOG_FILE="DTI_BET_log.txt"
 
 # Step 1: Extract the b0 image from the DTI dataset
