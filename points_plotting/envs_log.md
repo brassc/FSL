@@ -3,4 +3,5 @@ This file keeps track of library versions installed on cluster python environmen
 NumPy Version: 1.19.5
 Pandas Version: 1.1.5
 Nibabel Version: 3.2.2
-SciPy version: 1.5.4
+SciPy Version: 1.5.4
+Pillow Version: 10.2.0
