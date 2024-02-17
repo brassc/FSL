@@ -4,7 +4,6 @@ from PIL import Image
 import os 
 
 def extract_and_display_slice(nifti_file_path, scanner_coords):
-    log_file = "nifti_load_log.txt"
 
     # Extract the directory from nifti_file_path
     nifti_directory = os.path.dirname(nifti_file_path)
@@ -15,6 +14,9 @@ def extract_and_display_slice(nifti_file_path, scanner_coords):
     # Check if the save_directory exists, if not, create it
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
+
+    # Define the log file path inside the save_directory
+    log_file = os.path.join(save_directory, "nifti_load_log.txt")
     
     try:
         with open(log_file, "w") as f:
