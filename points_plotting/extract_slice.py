@@ -1,9 +1,21 @@
 import nibabel as nib
 import numpy as np
 from PIL import Image
+import os 
 
 def extract_and_display_slice(nifti_file_path, scanner_coords):
     log_file = "nifti_load_log.txt"
+
+    # Extract the directory from nifti_file_path
+    nifti_directory = os.path.dirname(nifti_file_path)
+
+    # Define the directory for saving the image
+    save_directory = os.path.join(nifti_directory, 'python_plots')
+    
+    # Check if the save_directory exists, if not, create it
+    if not os.path.exists(save_directory):
+        os.makedirs(save_directory)
+    
     try:
         with open(log_file, "w") as f:
             img = nib.load(nifti_file_path)
@@ -42,6 +54,7 @@ def extract_and_display_slice(nifti_file_path, scanner_coords):
     rotated_slice_image = slice_image.rotate(90, expand=True)
 
     # Save and display the image
-    rotated_slice_image.save('extracted_slice.png')  # Save the corrected slice image
+    save_path=os.path.join(save_directory, 'slice_extraction.png')
+    rotated_slice_image.save(save_path)  # Save the corrected slice image
     rotated_slice_image.show()
 
