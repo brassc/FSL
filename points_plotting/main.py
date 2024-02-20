@@ -19,7 +19,7 @@ poi_df=pd.read_csv(poi_log_file_path)
 
 nifti_file_path ='/home/cmb247/Desktop/Project_3/BET_Extractions/19978/T1w_time1_registered_scans/T1w_time1.T1w_verio_P00030_19978_acute_20111102_U-ID22791_registered.nii.gz'
  
-img = load_nifti(nifti_file_path)
+img, save_directory = load_nifti(nifti_file_path)
 
 
 # get the affine transformation matrix 
@@ -74,7 +74,13 @@ print(y_coords)
 # Mark the RAS/scanner points of interest on the slice
 plt.scatter(x_coords, y_coords, c='red', s=4)
 
+# Save plot
+save_path=os.path.join(save_directory, 'slice_plot.png')
+print('Plot saved to '+ save_path)
+
 plt.show()
+
+
 
 
 

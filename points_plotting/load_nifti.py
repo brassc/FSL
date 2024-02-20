@@ -35,4 +35,4 @@ def load_nifti(nifti_file_path):
         print(f"Error loading NIfTI file: {e}")
         return
     
-    return img
+    return img, save_directory
