@@ -7,6 +7,8 @@ import numpy as np
 
 def create_polynomial(poi_csv, affine):
     poi_df=pd.read_csv(poi_csv)
+    print(poi_df)
+    
     ## POINTS OF INTEREST
 
     transformed_points = []
@@ -38,5 +40,5 @@ def create_polynomial(poi_csv, affine):
     y_values = np.linspace(y_coords[0],y_coords[poi_df_max_index], 100)
     x_values = poly_func(y_values)
 
-    return poly_func, x_values, y_values
+    return poly_func, x_values, y_values, x_coords, y_coords
 
