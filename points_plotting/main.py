@@ -11,6 +11,7 @@ import os
 
 #user defined functions
 from load_nifti import load_nifti
+from polynomial_plot import create_polynomial
 #from extract_slice import extract_and_display_slice
 
 
@@ -57,28 +58,55 @@ for index, row in poi_df.iterrows():
     transformed_point = np.linalg.inv(affine).dot(point)
     transformed_points.append(transformed_point)
 
-# extract x and y coordinates
-print(transformed_points)
+# extract x and y coordinatess
 transformed_points=np.array(transformed_points)
-print(transformed_points)
 x_coords = transformed_points[:, 0]
 y_coords = transformed_points[:, 1]
+#z_coords = transformed_points[:, 2]
 
-print(x_coords)
-print(y_coords)
+#print(x_coords)
+#print(y_coords)
 
 
 
 
 
 # Mark the RAS/scanner points of interest on the slice
-plt.scatter(x_coords, y_coords, c='red', s=4)
+plt.scatter(x_coords, y_coords, c='red', s=2)
+
+## POLYNOMIAL FITTING
+"""
+# Fit a polynomial of degree 2 relating x to y
+coefficients = np.polyfit(y_coords, x_coords, 2)
+
+# Create a polynomial function using the coefficients
+poly_func = np.poly1d(coefficients)
+
+# Print the polynomial equation
+print("Polynomial Equation:")
+print(poly_func)
+
+# Generate points for the fitted polynomial curve
+poi_df_max_index=np.size(x_coords)-1
+y_values = np.linspace(y_coords[0],y_coords[poi_df_max_index], 100)
+x_values = poly_func(y_values)
+"""
+
+poly_func, x_values, y_values = create_polynomial(poi_log_file_path, affine)
+
+# Plot the fitted polynomial curve
+plt.plot(x_values, y_values, color='red', label='Fitted Polynomial')
+
 
 # Save plot
 save_path=os.path.join(save_directory, 'slice_plot.png')
 print('Plot saved to '+ save_path)
 
 plt.show()
+
+
+
+
 
 
 
