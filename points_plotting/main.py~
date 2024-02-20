@@ -71,7 +71,7 @@ print(y_coords)
 
 
 
-# Mark the RAS/scanner points of interest on the slice
+# Mark the RAS/scanner point on the slice
 plt.scatter(x_coords, y_coords, c='red', s=4)
 
 plt.show()

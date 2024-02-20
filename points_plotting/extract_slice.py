@@ -60,3 +60,5 @@ def extract_and_display_slice(nifti_file_path, scanner_coords):
     rotated_slice_image.save(save_path)  # Save the corrected slice image
     rotated_slice_image.show()
 
+    return normalized_slice
+
