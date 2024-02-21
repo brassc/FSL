@@ -14,6 +14,7 @@ from sklearn.linear_model import LinearRegression
 from load_nifti import load_nifti
 from polynomial_plot import create_polynomial
 from symmetry_line import get_mirror_line
+from symmetry_line import reflect_across_line
 #from extract_slice import extract_and_display_slice
 
 
@@ -94,30 +95,21 @@ plt.plot(xb_values, yb_values, color='red', label='Baseline Polynomial')
 
 
 # FINDING MIRRORLINE OF SELECTED POINTS xa and xb
-
-# Calculating the average x coordinate between the two dataframes
-
-poi_df=pd.read_csv(poi_log_file_path)
-poib_df=pd.read_csv(baseline_poi_log_file_path)
-"""
-poi_vox_df=pd.read_csv(poi_voxels_file_path)
-poib_vox_df=pd.read_csv(baseline_poi_voxels_file_path)
-
-avg_x_vox = ((poi_vox_df['x'] + poib_vox_df['x']) / 2).astype(int)
-print(avg_x_vox)
-#VOX ARE NOT TRANSFORMED
-"""
-
 m, c, Y = get_mirror_line(yb_coords, xa_coords, xb_coords)
 
 #extend Y fit line
 y_values = np.linspace(Y[0]+50, Y[-1]-50, 100)
 
-# Calculate the corresponding x values from the model
+# Calculate the corresponding x values from linear regression model, Y
 x_values = m * y_values + c
-#plot line
-plt.plot(x_values, y_values, color='blue', label='Fitted line')
 
+#REFLECT BASELINE POINTS
+xr = reflect_across_line(m, c, xb_coords, yb_coords)
+
+
+# plot points and lines
+plt.plot(x_values, y_values, color='blue', label='Mirror') # plot mirror line
+plt.scatter(xr, yb_coords, color='blue', s=2) # plot mirrored points
 
 # Save plot and show
 save_path=os.path.join(save_directory, 'slice_plot.png')

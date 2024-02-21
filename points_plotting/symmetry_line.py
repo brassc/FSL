@@ -40,4 +40,22 @@ def get_mirror_line(yb_coords, xa_coords, xb_coords):
 
     return m, c, Y
 
+
+
+
+def reflect_across_line(m, c, xb_coords, yb_coords):
+    
+    #points on line:
+    xl = m * yb_coords + c 
+    
+    #difference between baseline x and points on line
+    d = abs(xb_coords - xl)
+    #line coordinate + difference = reflection
+    xr = xl + d
+    
+    return xr
+
+
+
+
     
