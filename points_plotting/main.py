@@ -8,6 +8,7 @@ import pandas as pd
 #from PIL import Image
 import matplotlib.pyplot as plt
 import os
+from sklearn.linear_model import LinearRegression
 
 #user defined functions
 from load_nifti import load_nifti
@@ -17,7 +18,10 @@ from polynomial_plot import create_polynomial
 
 poi_log_file_path='/home/cmb247/repos/FSL/points_plotting/points.csv'
 baseline_poi_log_file_path='/home/cmb247/repos/FSL/points_plotting/baseline_points.csv'
-poi_df=pd.read_csv(poi_log_file_path)
+
+poi_voxels_file_path='/home/cmb247/repos/FSL/points_plotting/points_voxel_coords.csv'
+baseline_poi_voxels_file_path='/home/cmb247/repos/FSL/points_plotting/baseline_points_voxel_coords.csv'
+
 
 nifti_file_path ='/home/cmb247/Desktop/Project_3/BET_Extractions/19978/T1w_time1_registered_scans/T1w_time1.T1w_verio_P00030_19978_acute_20111102_U-ID22791_registered.nii.gz'
  
@@ -52,6 +56,8 @@ plt.imshow(slice_data.T, cmap='gray', origin='lower')
 
 
 ## POINTS OF INTEREST
+"""
+poi_df=pd.read_csv(poi_log_file_path)
 
 transformed_points = []
 for index, row in poi_df.iterrows():
@@ -66,7 +72,7 @@ y_coords = transformed_points[:, 1]
 
 # Mark the RAS/scanner points of interest on the slice
 plt.scatter(x_coords, y_coords, c='red', s=2)
-
+"""
 ## POLYNOMIAL FITTING
 
 # Deformed side
@@ -87,6 +93,67 @@ plt.plot(xb_values, yb_values, color='red', label='Baseline Polynomial')
 save_path=os.path.join(save_directory, 'slice_plot.png')
 print('Plot saved to '+ save_path)
 
+#plt.show()
+
+
+# FINDING CENTERLINE OF SELECTED POINTS 
+
+# Calculating the average x coordinate between the two dataframes
+
+poi_df=pd.read_csv(poi_log_file_path)
+poib_df=pd.read_csv(baseline_poi_log_file_path)
+"""
+poi_vox_df=pd.read_csv(poi_voxels_file_path)
+poib_vox_df=pd.read_csv(baseline_poi_voxels_file_path)
+
+avg_x_vox = ((poi_vox_df['x'] + poib_vox_df['x']) / 2).astype(int)
+print(avg_x_vox)
+#VOX ARE NOT TRANSFORMED
+"""
+
+y_coords_df = pd.DataFrame({'y': yb_coords})
+
+avg_x = ((xa_coords + xb_coords) / 2)
+print(avg_x)
+
+avg_x = pd.DataFrame({'avg_x': avg_x})
+print(avg_x)
+
+#TRIM TO ONLY INCLUDE FIRST AND LAST - LINE TO ONLY GO THROUGH FIRST AND LAST POINTS
+first_row = avg_x.iloc[[0]]
+last_row = avg_x.iloc[[-1]]
+tr_avg_x = pd.concat([first_row, last_row])
+
+firsty_row=y_coords_df.iloc[[0]]
+lasty_row=y_coords_df.iloc[[-1]]
+tr_y_coords_df=pd.concat([firsty_row, lasty_row])
+
+# Reshape your x and y data for sklearn
+x = tr_avg_x.values#.reshape(-1, 1)  # Reshaping is required for a single feature in sklearn
+Y = tr_y_coords_df['y'].values.reshape(-1,1)
+
+# Initialize the linear regression model
+model = LinearRegression()
+
+# Fit the model to your data
+model.fit(Y, x)
+
+# The slope (gradient m) and intercept (c) from the fitted model
+m = model.coef_[0]
+c = model.intercept_
+
+print('Gradient (m) is:', m)
+print('Intercept (c) is:', c)
+
+y_values = np.linspace(Y[0]+50, Y[-1]-50, 100)
+
+# Calculate the corresponding x values from the model
+x_values = m * y_values + c
+#plot line
+plt.plot(x_values, y_values, color='blue', label='Fitted line')
+
 plt.show()
+
+
 
 
