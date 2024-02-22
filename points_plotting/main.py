@@ -67,8 +67,8 @@ polyb_func, xb_values, yb_values, xb_coords, yb_coords = create_polynomial_from_
 
 #Find mirrorline (average of first and last points in xa and xb respertively)
 m, c, Y = get_mirror_line(yb_coords, xa_coords, xb_coords)
-y_values = np.linspace(Y[0]+50, Y[-1]-50, 100) #extend Y fit line
-x_values = m * y_values + c # x values and y values for mirrorline plot
+yl_values = np.linspace(Y[0]+50, Y[-1]-50, 100) #extend Y fit line
+xl_values = m * yl_values + c # x values and y values for mirrorline plot
 
 #Reflection of baseline side
 xr_coords = reflect_across_line(m, c, xb_coords, yb_coords)
@@ -80,7 +80,7 @@ plt.plot(x_values, y_values, color='red', label='Deformed Polynomial')
 plt.scatter(xa_coords, ya_coords, c='red', s=2) # plot expansion points
 plt.scatter(xb_coords, yb_coords, c='r', s=2) # plot baseline points
 plt.plot(xb_values, yb_values, color='red', label='Baseline Polynomial')
-plt.plot(x_values, y_values, color='blue', label='Mirror') # plot mirror line
+plt.plot(xl_values, yl_values, color='blue', label='Mirror') # plot mirror line
 plt.scatter(xr_coords, yb_coords, color='blue', s=2) # plot mirrored points
 plt.plot(xr_values, yr_values, color='blue', label='Mirrored fit polynomial')
 
