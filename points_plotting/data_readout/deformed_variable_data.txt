@@ -1,4 +1,5 @@
-Deformed Variable Data:
+Deformed Variable Data
+
 Polynomial Function:
            2
 -0.01025 x + 2.357 x + 26.41
