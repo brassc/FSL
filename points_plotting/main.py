@@ -16,6 +16,7 @@ from polynomial_plot import create_polynomial_from_csv
 from polynomial_plot import fit_poly
 from symmetry_line import get_mirror_line
 from symmetry_line import reflect_across_line
+from save_variables import save_variables
 #from extract_slice import extract_and_display_slice
 
 
@@ -72,7 +73,7 @@ xl_values = m * yl_values + c # x values and y values for mirrorline plot
 
 #Reflection of baseline side
 xr_coords = reflect_across_line(m, c, xb_coords, yb_coords)
-poly_func, xr_values, yr_values=fit_poly(yb_coords, xr_coords)
+polyr_func, xr_values, yr_values=fit_poly(yb_coords, xr_coords)
 
 
 # Plot the fitted polynomial curve
@@ -89,6 +90,20 @@ save_path=os.path.join(save_directory, 'slice_plot.png')
 print('Plot saved to '+ save_path)
 plt.savefig(save_path)
 plt.show()
+
+# Save data to files using user defined function
+
+save_variables(poly_func, x_values, y_values, xa_coords, ya_coords, data_type='deformed_variable_data')
+save_variables(polyb_func, xb_values, yb_values, xb_coords, yb_coords, data_type='baseline_variable_data')
+save_variables(polyr_func, xr_values, yr_values, xr_coords, yb_coords, data_type='reflected_baseline_variable_data')
+
+
+
+
+
+
+
+
 
 
 
