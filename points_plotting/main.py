@@ -1,14 +1,10 @@
-# main.py program from which functions are called
+# main.py program from which functions are called. References medical data and therefore must be run from where this data is stored/accessed. 
 
 # libraries
 import nibabel as nib
-import scipy as sp
 import numpy as np
-import pandas as pd
-#from PIL import Image
 import matplotlib.pyplot as plt
 import os
-from sklearn.linear_model import LinearRegression
 
 #user defined functions
 from load_nifti import load_nifti
@@ -66,7 +62,7 @@ poly_func, x_values, y_values, xa_coords, ya_coords = create_polynomial_from_csv
 #Baseline side
 polyb_func, xb_values, yb_values, xb_coords, yb_coords = create_polynomial_from_csv(baseline_poi_log_file_path, affine)
 
-#Find mirrorline (average of first and last points in xa and xb respertively)
+#Find mirrorline (average of first and last points in xa and xb respectively)
 m, c, Y = get_mirror_line(yb_coords, xa_coords, xb_coords)
 yl_values = np.linspace(Y[0]+50, Y[-1]-50, 100) #extend Y fit line
 xl_values = m * yl_values + c # x values and y values for mirrorline plot
@@ -93,6 +89,8 @@ plt.show()
 
 
 # Save np arrays to to file.npz in given directory 'data_readout' using np.savez
+print(poly_func)
+print(type(poly_func))
 
 save_arrays_to_directory('data_readout', 'deformed_arrays.npz',
                          poly_func=poly_func, x_values=x_values, y_values=y_values, xx_coords=xa_coords, yy_coords=ya_coords)
