@@ -99,9 +99,9 @@ save_variables(polyr_func, xr_values, yr_values, xr_coords, yb_coords, data_type
 
 # Save polynomial to separate files
 
-np.save('deformed_poly_coefficients.npy', poly_func)
-np.save('baseline_poly_coefficients.npy', polyb_func)
-np.save('reflected_baseline_poly_coefficients.npy', polyr_func)
+np.save('data_readout/deformed_poly_coefficients.npy', poly_func)
+np.save('data_readout/baseline_poly_coefficients.npy', polyb_func)
+np.save('data_readout/reflected_baseline_poly_coefficients.npy', polyr_func)
 
 
 
