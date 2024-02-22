@@ -91,11 +91,17 @@ print('Plot saved to '+ save_path)
 plt.savefig(save_path)
 plt.show()
 
-# Save data to files using user defined function
+# Save data to files as string using user defined function
 
 save_variables(poly_func, x_values, y_values, xa_coords, ya_coords, data_type='deformed_variable_data')
 save_variables(polyb_func, xb_values, yb_values, xb_coords, yb_coords, data_type='baseline_variable_data')
 save_variables(polyr_func, xr_values, yr_values, xr_coords, yb_coords, data_type='reflected_baseline_variable_data')
+
+# Save polynomial to separate files
+
+np.save('data_readout/deformed_poly_coefficients.npy', poly_func)
+np.save('data_readout/baseline_poly_coefficients.npy', polyb_func)
+np.save('data_readout/reflected_baseline_poly_coefficients.npy', polyr_func)
 
 
 
