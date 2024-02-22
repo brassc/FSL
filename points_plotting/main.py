@@ -16,7 +16,7 @@ from polynomial_plot import create_polynomial_from_csv
 from polynomial_plot import fit_poly
 from symmetry_line import get_mirror_line
 from symmetry_line import reflect_across_line
-from save_variables import save_variables
+from save_variables import save_arrays_to_directory
 #from extract_slice import extract_and_display_slice
 
 
@@ -91,17 +91,19 @@ print('Plot saved to '+ save_path)
 plt.savefig(save_path)
 plt.show()
 
-# Save data to files as string using user defined function
 
-save_variables(poly_func, x_values, y_values, xa_coords, ya_coords, data_type='deformed_variable_data')
-save_variables(polyb_func, xb_values, yb_values, xb_coords, yb_coords, data_type='baseline_variable_data')
-save_variables(polyr_func, xr_values, yr_values, xr_coords, yb_coords, data_type='reflected_baseline_variable_data')
+# Save np arrays to to file.npz in given directory 'data_readout' using np.savez
 
-# Save polynomial to separate files
+save_arrays_to_directory('data_readout', 'deformed_arrays.npz',
+                         poly_func=poly_func, x_values=x_values, y_values=y_values, xx_coords=xa_coords, yy_coords=ya_coords)
 
-np.save('data_readout/deformed_poly_coefficients.npy', poly_func)
-np.save('data_readout/baseline_poly_coefficients.npy', polyb_func)
-np.save('data_readout/reflected_baseline_poly_coefficients.npy', polyr_func)
+save_arrays_to_directory('data_readout', 'baseline_arrays.npz',
+                         poly_func=polyb_func, x_values=xb_values, y_values=yb_values, xx_coords=xb_coords, yy_coords=yb_coords)
+
+save_arrays_to_directory('data_readout', 'reflected_baseline_arrays.npz',
+                         poly_func=polyr_func, x_values=xr_values, y_values=yr_values, xx_coords=xr_coords, yy_coords=yb_coords)
+
+
 
 
 

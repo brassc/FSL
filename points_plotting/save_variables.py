@@ -1,30 +1,24 @@
+import numpy as np
 import os
 
-def save_variables(poly_func, x_values, y_values, xx_coords, yy_coords, data_type='baselineorreflectedordeformeddata'):
+def save_arrays_to_directory(directory, filename, **arrays):
     """
-    Save variables to a file within 'data_readout' directory.
+    Save multiple NumPy arrays to a specified directory.
 
     Parameters:
-    - poly_func: The polynomial function.
-    - x_values, y_values: Lists of x and y values.
-    - xx_coords, yy_coords: Lists of x and y coordinates.
-    - data_type: A string indicating the type of data (e.g., 'deformed_side', 'baseline_side', 'reflected_baseline').
+    - directory: The directory where the file will be saved.
+    - filename: The name of the file to save the arrays to.
+    - arrays: Keyword arguments where keys are the variable names to use when loading the arrays back,
+              and values are the NumPy arrays to be saved.
     """
-    # Check if the directory exists, create it if it doesn't
-    dir_path = 'data_readout'
-    if not os.path.exists(dir_path):
-        os.makedirs(dir_path)
+    # Check if the directory exists; create it if it doesn't
+    if not os.path.exists(directory):
+        os.makedirs(directory)
     
-    # Define the file path
-    file_path = os.path.join(dir_path, f'{data_type}.txt')
+    # Construct the full file path
+    filepath = os.path.join(directory, filename)
     
-    # Write data to the file
-    with open(file_path, 'w') as file:
-        file.write(f"{data_type.replace('_', ' ').title()}\n\n")
-        file.write(f"Polynomial Function:\n {poly_func}\n")
-        file.write(f"X Values:\n{x_values}\n")
-        file.write(f"Y Values:\n{y_values}\n")
-        file.write(f"X Coordinates:\n{xx_coords}\n")
-        file.write(f"Y Coordinates:\n{yy_coords}\n")
-
+    # Save the arrays to the specified file
+    np.savez(filepath, **arrays)
+    
     return 0
