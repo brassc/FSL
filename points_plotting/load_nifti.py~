@@ -33,4 +33,6 @@ def load_nifti(nifti_file_path):
     
     except Exception as e:
         print(f"Error loading NIfTI file: {e}")
-        return img
+        return
+    
+    return img
