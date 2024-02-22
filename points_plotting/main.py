@@ -89,9 +89,6 @@ plt.show()
 
 
 # Save np arrays to to file.npz in given directory 'data_readout' using np.savez
-print(poly_func)
-print(type(poly_func))
-
 save_arrays_to_directory('data_readout', 'deformed_arrays.npz',
                          poly_func=poly_func, x_values=x_values, y_values=y_values, xx_coords=xa_coords, yy_coords=ya_coords)
 
