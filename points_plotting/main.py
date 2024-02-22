@@ -72,7 +72,7 @@ xl_values = m * yl_values + c # x values and y values for mirrorline plot
 
 #Reflection of baseline side
 xr_coords = reflect_across_line(m, c, xb_coords, yb_coords)
-poly_func, xr_values, yr_values=fit_poly(yb_coords, xr_coords)
+polyr_func, xr_values, yr_values=fit_poly(yb_coords, xr_coords)
 
 
 # Plot the fitted polynomial curve
@@ -89,6 +89,47 @@ save_path=os.path.join(save_directory, 'slice_plot.png')
 print('Plot saved to '+ save_path)
 plt.savefig(save_path)
 plt.show()
+
+# Save data to files
+def save_variables(poly_func, x_values, y_values, xx_coords, yy_coords, data_type='baselineorreflectedordeformeddata'):
+    """
+    Save variables to a file within 'data_readout' directory.
+
+    Parameters:
+    - poly_func: The polynomial function.
+    - x_values, y_values: Lists of x and y values.
+    - xx_coords, yy_coords: Lists of x and y coordinates.
+    - data_type: A string indicating the type of data (e.g., 'deformed_side', 'baseline_side', 'reflected_baseline').
+    """
+    # Check if the directory exists, create it if it doesn't
+    dir_path = 'data_readout'
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+    
+    # Define the file path
+    file_path = os.path.join(dir_path, f'{data_type}.txt')
+    
+    # Write data to the file
+    with open(file_path, 'w') as file:
+        file.write(f"{data_type.replace('_', ' ').title()}\n\n")
+        file.write(f"Polynomial Function:\n {poly_func}\n")
+        file.write(f"X Values:\n{x_values}\n")
+        file.write(f"Y Values:\n{y_values}\n")
+        file.write(f"X Coordinates:\n{xx_coords}\n")
+        file.write(f"Y Coordinates:\n{yy_coords}\n")
+
+
+save_variables(poly_func, x_values, y_values, xa_coords, ya_coords, data_type='deformed_variable_data')
+save_variables(polyb_func, xb_values, yb_values, xb_coords, yb_coords, data_type='baseline_variable_data')
+save_variables(polyr_func, xr_values, yr_values, xr_coords, yb_coords, data_type='reflected_baseline_variable_data')
+
+
+
+
+
+
+
+
 
 
 
