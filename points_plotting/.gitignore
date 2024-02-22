@@ -1,5 +1,6 @@
-# .gitignore entry to ignore backup files
+# .gitignore entry to ignore backup files and cache
 *~
+*__pycache__
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
