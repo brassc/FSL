@@ -16,6 +16,7 @@ from polynomial_plot import create_polynomial_from_csv
 from polynomial_plot import fit_poly
 from symmetry_line import get_mirror_line
 from symmetry_line import reflect_across_line
+from save_variables import save_variables
 #from extract_slice import extract_and_display_slice
 
 
@@ -90,34 +91,7 @@ print('Plot saved to '+ save_path)
 plt.savefig(save_path)
 plt.show()
 
-# Save data to files
-def save_variables(poly_func, x_values, y_values, xx_coords, yy_coords, data_type='baselineorreflectedordeformeddata'):
-    """
-    Save variables to a file within 'data_readout' directory.
-
-    Parameters:
-    - poly_func: The polynomial function.
-    - x_values, y_values: Lists of x and y values.
-    - xx_coords, yy_coords: Lists of x and y coordinates.
-    - data_type: A string indicating the type of data (e.g., 'deformed_side', 'baseline_side', 'reflected_baseline').
-    """
-    # Check if the directory exists, create it if it doesn't
-    dir_path = 'data_readout'
-    if not os.path.exists(dir_path):
-        os.makedirs(dir_path)
-    
-    # Define the file path
-    file_path = os.path.join(dir_path, f'{data_type}.txt')
-    
-    # Write data to the file
-    with open(file_path, 'w') as file:
-        file.write(f"{data_type.replace('_', ' ').title()}\n\n")
-        file.write(f"Polynomial Function:\n {poly_func}\n")
-        file.write(f"X Values:\n{x_values}\n")
-        file.write(f"Y Values:\n{y_values}\n")
-        file.write(f"X Coordinates:\n{xx_coords}\n")
-        file.write(f"Y Coordinates:\n{yy_coords}\n")
-
+# Save data to files using user defined function
 
 save_variables(poly_func, x_values, y_values, xa_coords, ya_coords, data_type='deformed_variable_data')
 save_variables(polyb_func, xb_values, yb_values, xb_coords, yb_coords, data_type='baseline_variable_data')
