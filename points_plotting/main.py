@@ -12,7 +12,8 @@ from sklearn.linear_model import LinearRegression
 
 #user defined functions
 from load_nifti import load_nifti
-from polynomial_plot import create_polynomial
+from polynomial_plot import create_polynomial_from_csv
+from polynomial_plot import fit_poly
 from symmetry_line import get_mirror_line
 from symmetry_line import reflect_across_line
 #from extract_slice import extract_and_display_slice
@@ -56,60 +57,32 @@ slice_data=data[:,:, z_index]
 plt.imshow(slice_data.T, cmap='gray', origin='lower')
 
 
-
-## POINTS OF INTEREST
-"""
-poi_df=pd.read_csv(poi_log_file_path)
-
-transformed_points = []
-for index, row in poi_df.iterrows():
-    point = np.array([row[0], row[1], row[2], 1])
-    transformed_point = np.linalg.inv(affine).dot(point)
-    transformed_points.append(transformed_point)
-
-# extract x and y coordinatess
-transformed_points=np.array(transformed_points)
-x_coords = transformed_points[:, 0]
-y_coords = transformed_points[:, 1]
-
-# Mark the RAS/scanner points of interest on the slice
-plt.scatter(x_coords, y_coords, c='red', s=2)
-"""
-## POLYNOMIAL FITTING
+## POLYNOMIAL AND MIRROR LINE FITTING FROM POI
 
 # Deformed side
-poly_func, x_values, y_values, xa_coords, ya_coords = create_polynomial(poi_log_file_path, affine)
+poly_func, x_values, y_values, xa_coords, ya_coords = create_polynomial_from_csv(poi_log_file_path, affine)
 
 #Baseline side
-polyb_func, xb_values, yb_values, xb_coords, yb_coords = create_polynomial(baseline_poi_log_file_path, affine)
+polyb_func, xb_values, yb_values, xb_coords, yb_coords = create_polynomial_from_csv(baseline_poi_log_file_path, affine)
+
+#Find mirrorline (average of first and last points in xa and xb respertively)
+m, c, Y = get_mirror_line(yb_coords, xa_coords, xb_coords)
+y_values = np.linspace(Y[0]+50, Y[-1]-50, 100) #extend Y fit line
+x_values = m * y_values + c # x values and y values for mirrorline plot
+
+#Reflection of baseline side
+xr_coords = reflect_across_line(m, c, xb_coords, yb_coords)
+poly_func, xr_values, yr_values=fit_poly(yb_coords, xr_coords)
 
 
 # Plot the fitted polynomial curve
-plt.plot(x_values, y_values, color='red', label='Fitted Polynomial')
-plt.scatter(xa_coords, ya_coords, c='red', s=2)
-plt.scatter(xb_coords, yb_coords, c='r', s=2)
+plt.plot(x_values, y_values, color='red', label='Deformed Polynomial')
+plt.scatter(xa_coords, ya_coords, c='red', s=2) # plot expansion points
+plt.scatter(xb_coords, yb_coords, c='r', s=2) # plot baseline points
 plt.plot(xb_values, yb_values, color='red', label='Baseline Polynomial')
-
-
-
-
-
-# FINDING MIRRORLINE OF SELECTED POINTS xa and xb
-m, c, Y = get_mirror_line(yb_coords, xa_coords, xb_coords)
-
-#extend Y fit line
-y_values = np.linspace(Y[0]+50, Y[-1]-50, 100)
-
-# Calculate the corresponding x values from linear regression model, Y
-x_values = m * y_values + c
-
-#REFLECT BASELINE POINTS
-xr = reflect_across_line(m, c, xb_coords, yb_coords)
-
-
-# plot points and lines
 plt.plot(x_values, y_values, color='blue', label='Mirror') # plot mirror line
-plt.scatter(xr, yb_coords, color='blue', s=2) # plot mirrored points
+plt.scatter(xr_coords, yb_coords, color='blue', s=2) # plot mirrored points
+plt.plot(xr_values, yr_values, color='blue', label='Mirrored fit polynomial')
 
 # Save plot and show
 save_path=os.path.join(save_directory, 'slice_plot.png')
