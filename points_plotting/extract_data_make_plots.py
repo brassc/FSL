@@ -70,14 +70,15 @@ def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slic
     xr_coords = reflect_across_line(m, c, xb_coords, yb_coords)
     polyr_func, xr_values, yr_values=fit_poly(yb_coords, xr_coords)
 
-    # Save np arrays to to file.npz in given directory 'data_readout' using np.savez
-    save_arrays_to_directory('data_readout', 'deformed_arrays.npz',
+    # Save np arrays to to file.npz in given directory data_readout_dir using np.savez
+    data_readout_dir=f"data_readout/{patient_id}_{patient_timepoint}"
+    save_arrays_to_directory(data_readout_dir, 'deformed_arrays.npz',
                             poly_func=poly_func, x_values=x_values, y_values=y_values, xx_coords=xa_coords, yy_coords=ya_coords)
 
-    save_arrays_to_directory('data_readout', 'baseline_arrays.npz',
+    save_arrays_to_directory(data_readout_dir, 'baseline_arrays.npz',
                             poly_func=polyb_func, x_values=xb_values, y_values=yb_values, xx_coords=xb_coords, yy_coords=yb_coords)
 
-    save_arrays_to_directory('data_readout', 'reflected_baseline_arrays.npz',
+    save_arrays_to_directory(data_readout_dir, 'reflected_baseline_arrays.npz',
                             poly_func=polyr_func, x_values=xr_values, y_values=yr_values, xx_coords=xr_coords, yy_coords=yb_coords)
 
 
