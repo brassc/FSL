@@ -73,13 +73,13 @@ polyr_func, xr_values, yr_values=fit_poly(yb_coords, xr_coords)
 
 
 # Plot the fitted polynomial curve
-plt.plot(x_values, y_values, color='red', label='Deformed Polynomial')
-plt.scatter(xa_coords, ya_coords, c='red', s=2) # plot expansion points
+#plt.plot(x_values, y_values, color='red', label='Deformed Polynomial')
+plt.scatter(xa_coords, ya_coords, c='red', s=4) # plot expansion points
 plt.scatter(xb_coords, yb_coords, c='r', s=2) # plot baseline points
-plt.plot(xb_values, yb_values, color='red', label='Baseline Polynomial')
+#plt.plot(xb_values, yb_values, color='red', label='Baseline Polynomial')
 plt.plot(xl_values, yl_values, color='blue', label='Mirror') # plot mirror line
-plt.scatter(xr_coords, yb_coords, color='blue', s=2) # plot mirrored points
-plt.plot(xr_values, yr_values, color='blue', label='Mirrored fit polynomial')
+plt.scatter(xr_coords, yb_coords, color='blue', s=1) # plot mirrored points
+#plt.plot(xr_values, yr_values, color='blue', label='Mirrored fit polynomial')
 
 # Save plot and show
 save_path=os.path.join(save_directory, 'slice_plot.png')
