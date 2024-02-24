@@ -8,7 +8,7 @@ import os
 #import nibabel as nib
 
 #user defined functions
-from make_patient_dir import ensure_directory_exists
+from extract_data_make_plots import extract_data_make_plots
 
 # Patient info
 patient_id='19978'
