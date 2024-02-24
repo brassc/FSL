@@ -14,17 +14,25 @@ from symmetry_line import get_mirror_line
 from symmetry_line import reflect_across_line
 from save_variables import save_arrays_to_directory
 #from extract_slice import extract_and_display_slice
+from make_patient_dir import ensure_directory_exists
 
-
-poi_log_file_path='/home/cmb247/repos/FSL/points_plotting/points.csv'
-baseline_poi_log_file_path='/home/cmb247/repos/FSL/points_plotting/baseline_points.csv'
-
-poi_voxels_file_path='/home/cmb247/repos/FSL/points_plotting/points_voxel_coords.csv'
-baseline_poi_voxels_file_path='/home/cmb247/repos/FSL/points_plotting/baseline_points_voxel_coords.csv'
-
-
+# Patient info
+patient_id='19978'
+patient_timepoint='acute'
 nifti_file_path ='/home/cmb247/Desktop/Project_3/BET_Extractions/19978/T1w_time1_registered_scans/T1w_time1.T1w_verio_P00030_19978_acute_20111102_U-ID22791_registered.nii.gz'
- 
+slice_selected=np.array([2.641497, -2.877373, -12.73399,1]) # Scanner coordinates
+#voxel loc: 91 119 145
+# points directory path and associated points files based on patient ID and timepoint
+directory_path = ensure_directory_exists(patient_id, patient_timepoint)
+
+
+poi_log_file_path=f"{directory_path}/points.csv"#'/home/cmb247/repos/FSL/points_plotting/points.csv'
+baseline_poi_log_file_path=f"{directory_path}/baseline_points.csv"#'/home/cmb247/repos/FSL/points_plotting/baseline_points.csv'
+
+poi_voxels_file_path=f"{directory_path}/points_voxel_coords.csv"#'/home/cmb247/repos/FSL/points_plotting/points_voxel_coords.csv'
+baseline_poi_voxels_file_path=f"{directory_path}/baseline_points_voxel_coords.csv"#'/home/cmb247/repos/FSL/points_plotting/baseline_points_voxel_coords.csv'
+
+
 img, save_directory = load_nifti(nifti_file_path)
 
 
@@ -37,7 +45,7 @@ data = img.get_fdata()
 ## SELECT AND PLOT BASE SLICE
 
 # Define the scanner (RAS, anatomical, imaging space) coordinates or voxel location
-scanner_coords = np.array([2.641497, -2.877373, -12.73399,1])  
+scanner_coords = slice_selected 
 #voxel loc: 91 119 145
 
 # Inverse affine to convert RAS/anatomical coords to voxel coords
