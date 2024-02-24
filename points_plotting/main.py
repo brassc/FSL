@@ -88,6 +88,16 @@ plt.savefig(save_path)
 plt.show()
 
 
+# Plot polynomial area between on scan
+# plot the axial slice
+plt.imshow(slice_data.T, cmap='gray', origin='lower')
+plt.fill_betweenx(yb_values, x_values, xr_values, color='orange', alpha=0.5)
+save_path2=os.path.join(save_directory, 'slice_plot.png')
+print('Plot saved to '+ save_path2)
+plt.savefig(save_path2)
+plt.show()
+
+
 # Save np arrays to to file.npz in given directory 'data_readout' using np.savez
 save_arrays_to_directory('data_readout', 'deformed_arrays.npz',
                          poly_func=poly_func, x_values=x_values, y_values=y_values, xx_coords=xa_coords, yy_coords=ya_coords)
