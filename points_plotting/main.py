@@ -1,21 +1,14 @@
 # main.py program from which functions are called. References medical data and therefore must be run from where this data is stored/accessed. 
 
 # libraries
-import nibabel as nib
+
 import numpy as np
-import matplotlib.pyplot as plt
 import os
+#import matplotlib.pyplot as plt
+#import nibabel as nib
 
 #user defined functions
-from load_nifti import load_nifti
-from polynomial_plot import create_polynomial_from_csv
-from polynomial_plot import fit_poly
-from symmetry_line import get_mirror_line
-from symmetry_line import reflect_across_line
-from save_variables import save_arrays_to_directory
-#from extract_slice import extract_and_display_slice
 from make_patient_dir import ensure_directory_exists
-from extract_data_make_plots import extract_data_make_plots
 
 # Patient info
 patient_id='19978'
