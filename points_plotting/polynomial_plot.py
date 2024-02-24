@@ -8,8 +8,13 @@ def fit_poly(y_coords, x_coords):
 
     ## POLYNOMIAL FITTING
 
+    # include weights 
+    # Assign weights, with higher values for the first and last points
+    weights = np.ones(len(y_coords))
+    weights[0] = weights[-1] = 10  # Adjust this value to emphasize the first and last points more
+
     # Fit a polynomial of degree 2 relating x to y
-    coefficients = np.polyfit(y_coords, x_coords, 2)
+    coefficients = np.polyfit(y_coords, x_coords, 2, w=weights)
 
     # Create a polynomial function using the coefficients
     poly_func = np.poly1d(coefficients)
