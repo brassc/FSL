@@ -3,6 +3,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import nibabel as nib
 
+# User defined functions
+from make_patient_dir import ensure_directory_exists
+from load_nifti import load_nifti
+from polynomial_plot import create_polynomial_from_csv
+from polynomial_plot import fit_poly
+from symmetry_line import get_mirror_line
+from symmetry_line import reflect_across_line
+from save_variables import save_arrays_to_directory
+
 
 
 def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected):

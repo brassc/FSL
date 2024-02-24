@@ -15,6 +15,7 @@ from symmetry_line import reflect_across_line
 from save_variables import save_arrays_to_directory
 #from extract_slice import extract_and_display_slice
 from make_patient_dir import ensure_directory_exists
+from extract_data_make_plots import extract_data_make_plots
 
 # Patient info
 patient_id='19978'
