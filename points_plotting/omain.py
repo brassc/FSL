@@ -8,9 +8,13 @@ from reorient import switch_orientation # there is also a reverse_switch_orienta
 
 
 #load data
-poly_func, x_values, y_values, xa_coords, ya_coords = load_data_readout('data_readout/deformed_arrays.npz')
-polyb_func, xb_values, yb_values, xb_coords, yb_coords = load_data_readout('data_readout/baseline_arrays.npz')
-polyr_func, xr_values, yr_values, xr_coords, yb_coords = load_data_readout('data_readout/reflected_baseline_arrays.npz')
+patient_id = '19978'
+patient_timepoint="acute"
+
+data_readout_loc = f"data_readout/{patient_id}_{patient_timepoint}"
+poly_func, x_values, y_values, xa_coords, ya_coords = load_data_readout(data_readout_loc, 'deformed_arrays.npz')
+polyb_func, xb_values, yb_values, xb_coords, yb_coords = load_data_readout(data_readout_loc, 'baseline_arrays.npz')
+polyr_func, xr_values, yr_values, xr_coords, yb_coords = load_data_readout(data_readout_loc, 'reflected_baseline_arrays.npz')
 
 #change orientation 
 # new x coord is vertical, v new y coord is horizontal, h
@@ -23,7 +27,7 @@ vr_values, hr_values, vr_coords, hr_coords = switch_orientation(xr_values, yr_va
 
 
 # MAKE NICE PLOT - WIP
-plt.plot(hr_values, vr_values, c='blue')
+plt.plot(hr_values, vr_values, c='cyan')
 plt.plot(hd_values, vd_values, c='red')
 plt.show()
  
