@@ -14,7 +14,7 @@ from save_variables import save_arrays_to_directory
 
 
 
-def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected):
+def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=False):
     # loads or creates points directory path and associated points files based on patient ID and timepoint
     directory_path = ensure_directory_exists(patient_id, patient_timepoint)
 
@@ -90,6 +90,16 @@ def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slic
     plt.plot(xl_values, yl_values, color='w', linestyle='--', linewidth=0.5, dashes =[10,5], label='Mirror') # plot mirror line
     #plt.scatter(xr_coords, yb_coords, color='blue', s=1) # plot mirrored points
     plt.plot(xr_values, yr_values, color='cyan',linewidth=0.75, label='Mirrored fit polynomial')
+
+    if scatter:
+        # plot scatter points
+        print('plotting scatter points')
+        plt.scatter(xa_coords, ya_coords, c='red', s=4) # plot expansion points
+        plt.scatter(xb_coords, yb_coords, c='r', s=2) # plot baseline points
+        plt.scatter(xr_coords, yb_coords, color='blue', s=1) # plot mirrored points
+    else: 
+        print('plot without scatter points')
+        
 
     # Save plot and show
     save_path=os.path.join(save_directory, 'slice_plot.png')
