@@ -4,7 +4,7 @@ import numpy as np
 
 
 ## THIS FUNCTION RETURNS A POLYNOMIAL AND VALUES TO PLOT FROM GIVEN Y AND X COORDS
-def fit_poly(y_coords, x_coords):
+def fit_poly(y_coords, x_coords, order=2):
 
     ## POLYNOMIAL FITTING
 
@@ -12,9 +12,12 @@ def fit_poly(y_coords, x_coords):
     # Assign weights, with higher values for the first and last points
     weights = np.ones(len(y_coords))
     weights[0] = weights[-1] = 10  # Adjust this value to emphasize the first and last points more
+    #weights[3] = weights[4] = 5
+    #weights[1] = weights[-2] = 9  
 
-    # Fit a polynomial of degree 2 relating x to y
-    coefficients = np.polyfit(y_coords, x_coords, 2, w=weights)
+    # Fit a polynomial of order specified (default 2) relating x to y
+   
+    coefficients = np.polyfit(y_coords, x_coords, order, w=weights)
 
     # Create a polynomial function using the coefficients
     poly_func = np.poly1d(coefficients)
@@ -34,9 +37,9 @@ def fit_poly(y_coords, x_coords):
 # THIS FUNCTION TAKES A .CSV FILE AND RETURNS POLYNOMIAL FUNCTION, X AND Y VALUES TO PLOT. 
 # NOTE Y AND X AXES ARE REVERSED FROM WHAT IT TYPICAL DUE TO THE ORIENTATION OF THE POLYNOMIAL. LINE 23 coefficients = np.polyfit(y_coords, x_coords, 2)
 
-def create_polynomial_from_csv(poi_csv, affine):
+def create_polynomial_from_csv(poi_csv, affine, order):
     poi_df=pd.read_csv(poi_csv)
-    print(poi_df)
+    #print(poi_df)
     
     ## POINTS OF INTEREST
 
@@ -54,7 +57,7 @@ def create_polynomial_from_csv(poi_csv, affine):
 
     ## POLYNOMIAL FITTING
 
-    poly_func, x_values, y_values=fit_poly(y_coords, x_coords)
+    poly_func, x_values, y_values=fit_poly(y_coords, x_coords, order)
     """
     # Fit a polynomial of degree 2 relating x to y
     coefficients = np.polyfit(y_coords, x_coords, 2)

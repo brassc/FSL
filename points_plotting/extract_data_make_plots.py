@@ -14,7 +14,7 @@ from save_variables import save_arrays_to_directory
 
 
 
-def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=False):
+def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=False, deformed_order=2):
     # loads or creates points directory path and associated points files based on patient ID and timepoint
     directory_path = ensure_directory_exists(patient_id, patient_timepoint)
 
@@ -56,10 +56,12 @@ def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slic
     ## POLYNOMIAL AND MIRROR LINE FITTING FROM POI
 
     # Deformed side
-    poly_func, x_values, y_values, xa_coords, ya_coords = create_polynomial_from_csv(poi_log_file_path, affine)
+    print('deformed side equation:')
+    poly_func, x_values, y_values, xa_coords, ya_coords = create_polynomial_from_csv(poi_log_file_path, affine, order=deformed_order)
 
     #Baseline side
-    polyb_func, xb_values, yb_values, xb_coords, yb_coords = create_polynomial_from_csv(baseline_poi_log_file_path, affine)
+    print('baseline side equation:')
+    polyb_func, xb_values, yb_values, xb_coords, yb_coords = create_polynomial_from_csv(baseline_poi_log_file_path, affine, order=2)
 
     #Find mirrorline (average of first and last points in xa and xb respectively)
     m, c, Y = get_mirror_line(yb_coords, xa_coords, xb_coords)
@@ -68,7 +70,8 @@ def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slic
 
     #Reflection of baseline side
     xr_coords = reflect_across_line(m, c, xb_coords, yb_coords)
-    polyr_func, xr_values, yr_values=fit_poly(yb_coords, xr_coords)
+    print('reflected baseline equation:')
+    polyr_func, xr_values, yr_values=fit_poly(yb_coords, xr_coords, order=2)
 
     # Save np arrays to to file.npz in given directory data_readout_dir using np.savez
     data_readout_dir=f"data_readout/{patient_id}_{patient_timepoint}"
