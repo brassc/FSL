@@ -105,7 +105,7 @@ def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slic
         
 
     # Save plot and show
-    save_path=os.path.join(save_directory, 'slice_plot.png')
+    save_path=os.path.join(save_directory, f"{patient_id}_{patient_timepoint}_polynomial_slice_plot.png")
     print('Plot saved to '+ save_path)
     plt.savefig(save_path)
     plt.show()
@@ -115,7 +115,7 @@ def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slic
     # plot the axial slice
     plt.imshow(slice_data.T, cmap='gray', origin='lower')
     plt.fill_betweenx(yb_values, x_values, xr_values, color='orange', alpha=0.5)
-    save_path2=os.path.join(save_directory, 'slice_plot.png')
+    save_path2=os.path.join(save_directory, f"{patient_id}_{patient_timepoint}_area_slice_plot.png")
     print('Plot saved to '+ save_path2)
     plt.savefig(save_path2)
     plt.show()
