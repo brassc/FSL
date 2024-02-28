@@ -13,6 +13,8 @@ from symmetry_line import get_mirror_line
 from symmetry_line import reflect_across_line
 from save_variables import save_arrays_to_directory
 from reorient import switch_orientation # there is also a reverse_switch_orientation function
+from load_np_data import load_data_readout
+from translate_rotate import move
 
 
 
@@ -151,3 +153,87 @@ def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slic
 
 
     return 0
+
+
+def rt_data_make_plots(patient_id, patient_timepoint):
+    data_readout_loc = f"points_plotting/data_readout/{patient_id}_{patient_timepoint}"
+    
+    polyd_func, x_values, y_values, xa_coords, ya_coords = load_data_readout(data_readout_loc, 'deformed_arrays.npz')
+    polyb_func, xb_values, yb_values, xb_coords, yb_coords = load_data_readout(data_readout_loc, 'baseline_arrays.npz')
+    polyr_func, xr_values, yr_values, xr_coords, yb_coords = load_data_readout(data_readout_loc, 'reflected_baseline_arrays.npz')
+
+    #change orientation 
+    # new x coord is vertical, v new y coord is horizontal, h
+    # DEFORMED VALUES
+    vd_values, hd_values, vd_coords, hd_coords = switch_orientation(x_values, y_values, xa_coords, ya_coords)
+    # BASELINE VALUES
+    vb_values, hb_values, vb_coords, hb_coords = switch_orientation(xb_values, yb_values, xb_coords, yb_coords)
+    # REFLECTED VALUES
+    vr_values, hr_values, vr_coords, hr_coords = switch_orientation(xr_values, yr_values, xr_coords, yb_coords)
+
+
+    # CALCULATE AREA
+    aread, _ = quad(polyd_func, hb_values[0], hb_values[-1])
+    arear, _ = quad(polyr_func, hb_values[0], hb_values[-1])
+    area_betw = np.abs(aread-arear)
+    area_betw=round(area_betw, 2)
+    print(area_betw)
+
+
+    # MAKE NICE PLOT
+
+    plt.plot(hr_values, vr_values, c='cyan')
+    plt.plot(hd_values, vd_values, c='red')
+    plt.fill_between(hd_values, vd_values, vr_values, color='orange', alpha=0.5 )
+    plt.text(70, 165, f'Area = {area_betw} mm^2', fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
+    plt.scatter(hr_coords[0], vr_coords[0])
+    plt.text(hr_coords[0], vr_coords[0], 'hr_coords[0], vr_coords[0]')
+    plt.scatter(hr_coords[-1], vr_coords[-1])
+    plt.text(hr_coords[-1], vr_coords[-1], 'hr_coords[-1], vr_coords[-1]')
+    plt.show()
+
+
+    # TRANSLATE and ROTATE SO THAT POINTS LIE ON HORIZONTAL AXIS
+    tr_hr_coords, tr_vr_coords, _ = move(hr_coords, vr_coords)
+    tr_hd_coords, tr_vd_coords, _ = move(hd_coords, vd_coords)
+    tr_hr_values, tr_vr_values, polyr_func = move(hr_values, vr_values)
+    tr_hd_values, tr_vd_values, polyd_func = move(hd_values, vd_values)
+
+    # SAVE ARRAYS TO DIRECTORY
+    # Save np arrays to to file.npz in given directory data_readout_dir using np.savez
+    data_readout_dir=f"points_plotting/data_readout/{patient_id}_{patient_timepoint}"
+    save_arrays_to_directory(data_readout_dir, 'deformed_rt_array.npz',
+                                poly_func=polyd_func, x_values=tr_hd_values, 
+                                    y_values=tr_vd_values, xx_coords=tr_hd_coords, yy_coords=tr_vd_coords)
+
+        #save_arrays_to_directory(data_readout_dir, 'baseline__rt_arrays.npz', poly_func=polyb_func, x_values=xb_values, y_values=yb_values, xx_coords=xb_coords, yy_coords=yb_coords)
+
+    save_arrays_to_directory(data_readout_dir, 'reflected_baseline_rt_array.npz',
+                                poly_func=polyr_func, x_values=tr_hr_values, 
+                                    y_values=tr_vr_values, xx_coords=tr_hr_coords, yy_coords=tr_vr_coords)
+
+
+    # PLOT TRANSLATED AND ROTATED FUNCTION
+    plt.scatter(tr_hr_coords, tr_vr_coords, c='cyan', s=2)
+    plt.scatter(tr_hd_coords, tr_vd_coords, c='red', s=2)
+    plt.plot(tr_hd_values, tr_vd_values, c='red')
+    plt.plot(tr_hr_values, tr_vr_values, c='cyan')
+    plt.xlim(0)
+    plt.ylim(0)
+
+    # Calculate the range of values along each axis
+    x_range = np.max(hd_values) - np.min(hd_values)
+    y_range = np.max(vd_values)+100 - np.min(vd_values)-100
+
+    # Calculate the aspect ratio
+    aspect_ratio = 20/9
+    # Set aspect ratio
+    plt.gca().set_aspect(0.5)
+
+    plt.savefig(f"points_plotting/plots_no_patient_data/{patient_id}_{patient_timepoint}_rt_plot.png")
+    plt.show()
+        
+    
+    
+    return 0
+
