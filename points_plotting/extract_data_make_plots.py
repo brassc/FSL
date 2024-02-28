@@ -89,15 +89,15 @@ def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slic
 
     result, _ = quad(poly_func, hd_values[0], hd_values[-1])
     result_r, _ = quad(polyr_func, hd_values[0], hd_values[-1])
-    area_between = result - result_r
-    print('deformed area = ', result)
-    print('baseline reflection area = ', result_r)
+    area_between = np.abs(result - result_r)
+    area_between=round(area_between, 2) 
+    result_rounded=round(result,2) 
+    result_rounded_r=round(result_r, 2)  
+    print('deformed area = ', result_rounded)
+    print('baseline reflection area = ', result_rounded_r)
     print('**** total deformed AREA IS ****')    
     print(area_between)
     
-
-
-
 
 
     # Save np arrays to to file.npz in given directory data_readout_dir using np.savez
@@ -142,6 +142,8 @@ def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slic
     # plot the axial slice
     plt.imshow(slice_data.T, cmap='gray', origin='lower')
     plt.fill_betweenx(yb_values, x_values, xr_values, color='orange', alpha=0.5)
+    plt.text(3, 250, f'Area = {area_between} mm^2', fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
+
     save_path2=os.path.join(save_directory, f"{patient_id}_{patient_timepoint}_area_slice_plot.png")
     print('Plot saved to '+ save_path2)
     plt.savefig(save_path2)
