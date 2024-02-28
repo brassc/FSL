@@ -32,11 +32,13 @@ vr_values, hr_values, vr_coords, hr_coords = switch_orientation(xr_values, yr_va
 aread, _ = quad(poly_func, hb_values[0], hb_values[-1])
 arear, _ = quad(polyr_func, hb_values[0], hb_values[-1])
 area_betw = np.abs(aread-arear)
+area_betw=round(area_betw, 2)
 print(area_betw)
 # MAKE NICE PLOT - WIP
 plt.plot(hr_values, vr_values, c='cyan')
 plt.plot(hd_values, vd_values, c='red')
 plt.fill_between(hd_values, vd_values, vr_values, color='orange', alpha=0.5 )
+plt.text(70, 165, f'Area = {area_betw} mm^2', fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
 plt.show()
 
 
