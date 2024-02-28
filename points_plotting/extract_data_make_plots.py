@@ -2,6 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import nibabel as nib
+from scipy.integrate import quad
 
 # User defined functions
 from make_patient_dir import ensure_directory_exists
@@ -11,6 +12,7 @@ from polynomial_plot import fit_poly
 from symmetry_line import get_mirror_line
 from symmetry_line import reflect_across_line
 from save_variables import save_arrays_to_directory
+from reorient import switch_orientation # there is also a reverse_switch_orientation function
 
 
 
@@ -72,6 +74,31 @@ def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slic
     xr_coords = reflect_across_line(m, c, xb_coords, yb_coords)
     print('reflected baseline equation:')
     polyr_func, xr_values, yr_values=fit_poly(yb_coords, xr_coords, order=2)
+
+
+
+    # AREA CALC
+    #change orientation 
+    # new x coord is vertical, v new y coord is horizontal, h
+    # DEFORMED VALUES
+    vd_values, hd_values, vd_coords, hd_coords = switch_orientation(x_values, y_values, xa_coords, ya_coords)
+    # BASELINE VALUES
+    vb_values, hb_values, vb_coords, hb_coords = switch_orientation(xb_values, yb_values, xb_coords, yb_coords)
+    # REFLECTED VALUES
+    vr_values, hr_values, vr_coords, hr_coords = switch_orientation(xr_values, yr_values, xr_coords, yb_coords)
+
+    result, _ = quad(poly_func, hd_values[0], hd_values[-1])
+    result_r, _ = quad(polyr_func, hd_values[0], hd_values[-1])
+    area_between = result - result_r
+    print('deformed area = ', result)
+    print('baseline reflection area = ', result_r)
+    print('**** total deformed AREA IS ****')    
+    print(area_between)
+    
+
+
+
+
 
     # Save np arrays to to file.npz in given directory data_readout_dir using np.savez
     data_readout_dir=f"data_readout/{patient_id}_{patient_timepoint}"

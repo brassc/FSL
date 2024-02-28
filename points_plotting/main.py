@@ -24,7 +24,7 @@ nifti_file_path ='/home/cmb247/Desktop/Project_3/BET_Extractions/19978/T1w_time1
 slice_selected=np.array([2.641497, -2.877373, -12.73399,1]) # Scanner coordinates
 #voxel loc: 91 119 145
 
-extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=True, deformed_order=7)
+extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=True, deformed_order=4)
 
 
 
