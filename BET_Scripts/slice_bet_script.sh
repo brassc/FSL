@@ -1,6 +1,9 @@
 #!/bin/bash
 module load fsl
 
+# THIS SCRIPT PERFORMS BET EXTRACTION SUCH THAT SLICE Z 145 LOOKS GOOD FOR PATIENT 19978 TIME ACUTE
+# 1) NECK CROPPING 2) BET EXTRACTION 3) RESTORE ORIGINAL DIMENSIONS 4) EXTRACT BINARY MASK. 
+
 # Set paths
 input_image="/home/cmb247/Desktop/Project_3/BET_Extractions/19978/T1w_time1_registered_scans/T1w_time1.T1w_verio_P00030_19978_acute_20111102_U-ID22791_registered.nii.gz"
 #input_image="/home/cmb247/Desktop/Project_3/BET_Extractions/19978/T1w_time1_registered_scans/T1w_time1.T1w_verio_P00030_19978_fast_20111027_U-ID22723_registered.nii.gz"
@@ -42,21 +45,14 @@ fslcreatehd $x_dim $y_dim $removed_slices 1 $x_pixdim $y_pixdim $z_pixdim 1 0 0 
 fslmerge -z ${directory}restored_bet${bet_p} ${directory}empty ${directory}bet${bet_p}
 
 
+# Create binary mask
+fslmaths ${directory}restored_bet${bet_p} -bin ${directory}restored_bet_mask${bet_p}
+
 
 # Extract one slice
 #slice_to_extract='89' #'145-$cut_above
 #fslroi ${directory}bet$bet_p ${directory}slice${bet_p}.nii.gz 0 -1 0 -1 $slice_to_extract 1
 
-
-# Run BET on the slice
-#bet ${directory}slice.nii.gz ${directory}slice_brain.nii.gz -f 0.4 -B #-c 50 50 50 
-
-# Replace the slice in the original image with the brain-extracted slice
-#fslroi "$input_image" ${directory}temp.nii.gz 0 -1 0 -1 145 1
-#fslmaths ${directory}temp.nii.gz -mas ${directory}slice_brain.nii.gz "${output_image}"
-
-# Clean up temporary files
-#rm ${directory}slice.nii.gz ${directory}slice_brain.nii.gz ${directory}temp.nii.gz
 
 chmod +x slice_bet_script.sh
 
