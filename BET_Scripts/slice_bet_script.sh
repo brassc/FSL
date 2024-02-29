@@ -35,7 +35,7 @@ z_pixdim=$(fslval ${directory}${patient_timepoint}_bet${bet_p} pixdim3)
 
 
 # Calculate the number of slices removed during the cut
-removed_slices=$((original_dim_z - bet_dim_z))
+removed_slices=$((original_dim_z - bet_dim_z + 1)) #add 1, was one too few before
 echo $removed_slices
 
 # Create an empty image with the same dimensions as the cut-off part
