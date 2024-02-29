@@ -7,3 +7,4 @@ SciPy Version: 1.5.4
 Pillow Version: 10.2.0
 Matplotlib version: 3.3.4
 Scikit-learn version: 0.24.2
+OpenCV version: 4.9.0
