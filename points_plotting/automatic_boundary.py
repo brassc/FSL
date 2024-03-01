@@ -21,7 +21,7 @@ slice_selected=np.array([2.641497, -2.877373, -12.73399,1]) # Scanner coordinate
 bet_mask_file_path="/home/cmb247/Desktop/Project_3/BET_Extractions/19978/T1w_time1_registered_scans/acute_restored_bet_mask-f0.5-R.nii.gz"
 
 
-def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path):
+def load_boundary_detection_features(patient_id, patient_timepoint, bet_mask_file_path):
     directory_path = ensure_directory_exists(patient_id, patient_timepoint)
 
     data_readout_loc = f"data_readout/{patient_id}_{patient_timepoint}"
@@ -63,6 +63,59 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path):
     # Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
     plt.show()
+
+    return corrected_slice, xa_coords, ya_coords, xa_coords, yb_coords, xr_coords
+
+
+
+
+def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path):
+    """
+    directory_path = ensure_directory_exists(patient_id, patient_timepoint)
+
+    data_readout_loc = f"data_readout/{patient_id}_{patient_timepoint}"
+    polyd_func, x_values, y_values, xa_coords, ya_coords = load_data_readout(data_readout_loc, 'deformed_arrays.npz')
+    polyb_func, xb_values, yb_values, xb_coords, yb_coords = load_data_readout(data_readout_loc, 'baseline_arrays.npz')
+    polyr_func, xr_values, yr_values, xr_coords, yb_coords = load_data_readout(data_readout_loc, 'reflected_baseline_arrays.npz')
+
+        
+    mask_nifti = nib.load(bet_mask_file_path)
+
+    # Step 2: Access the image data
+    mask_data = mask_nifti.get_fdata()
+
+    # Step 3: Check for binary values
+    unique_values = np.unique(mask_data)
+    print("Unique values in the mask:", unique_values)
+
+    # Verify it's binary
+    if np.array_equal(unique_values, [0, 1]) or np.array_equal(unique_values, [0]) or np.array_equal(unique_values, [1]):
+        print("The mask is binary.")
+        mask_data = mask_data  # No change needed; just assign it directly
+    else:
+        print("The mask is not strictly binary. Binarizing now...")
+        # Correct binarization: Apply the condition to the entire mask_data array
+        mask_data = (mask_data > 0).astype(np.uint8)
+    
+    # Step 4: Visual inspection - plot at chosen slice index
+    file_loc = f"points_dir/{patient_id}_{patient_timepoint}/points_voxel_coords.csv"
+    # Load the CSV file using pandas
+    df = pd.read_csv(file_loc)
+    # Retrieve the slice index value assuming it's stored in the second row and fourth column (1,3 in 0-indexed)
+    slice_index = int(df.iloc[1, 3])
+
+    corrected_slice=np.transpose(mask_data[:,:,slice_index])
+
+    # Plot the entire slice
+    plt.imshow(corrected_slice, cmap='gray')
+    plt.title(f'Slice at index {slice_index}')
+    # Adjust the y-axis to display in the original image's orientation
+    plt.gca().invert_yaxis()
+    plt.show()
+    """
+    corrected_slice, xa_coords, ya_coords, xa_coords, yb_coords, xr_coords = load_boundary_detection_features(patient_id, patient_timepoint, bet_mask_file_path)
+
+    # PLOT REGION ONLY BASED ON x_offset VALUE 
 
     # Ensure the starting index is smaller than the ending index
     start_y = int(min(yb_coords[-1], yb_coords[0]))
