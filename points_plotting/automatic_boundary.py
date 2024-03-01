@@ -79,7 +79,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_of
     # Ensure the starting index is smaller than the ending index
     start_y = int(min(yb_coords[-1], yb_coords[0]))
     end_y = int(max(yb_coords[-1], yb_coords[0]))
-    #x_offset = 120  # Adjust based on your earlier trimming
+    
 
     if x_offset > 0.5 * corrected_slice.shape[1]:
         trimmed_slice_data = corrected_slice[start_y:end_y, x_offset:]
@@ -107,7 +107,10 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_of
 
     # Display the restored slice such that trimmed area fills the plot
     # You can plot this data so it fills the plot but maintains its reference to the original coordinate system
-    plt.imshow(trimmed_slice_data, cmap='gray', extent=[x_offset, x_offset + trimmed_slice_data.shape[1], end_y, start_y])
+    if x_offset > 0.5 * corrected_slice.shape[1]:
+        plt.imshow(trimmed_slice_data, cmap='gray', extent=[x_offset, x_offset + trimmed_slice_data.shape[1], end_y, start_y])
+    else:
+        plt.imshow(trimmed_slice_data, cmap='gray', extent=[x_offset - trimmed_slice_data.shape[1], x_offset, end_y, start_y])
 
     # Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
@@ -158,7 +161,10 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_of
 
     contour_img_original_ref[start_y:end_y, x_offset:end_x] = contour_img
 
-    plt.imshow(contour_img, cmap='gray', extent=[x_offset, x_offset + contour_img.shape[1], end_y, start_y])
+    if x_offset > 0.5 * corrected_slice.shape[1]:
+        plt.imshow(contour_img, cmap='gray', extent=[x_offset, x_offset + contour_img.shape[1], end_y, start_y])
+    else:
+        plt.imshow(contour_img, cmap='gray', extent=[x_offset - contour_img.shape[1], x_offset, end_y, start_y])
 
     # Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
@@ -203,8 +209,10 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_of
     save_arrays_to_directory(data_readout_dir, array_save_name,
                                 xx_coords=contour_x_coords, yy_coords=contour_y_coords)
 
-
-    plt.imshow(contour_img, cmap='gray', extent=[x_offset, x_offset + contour_img.shape[1], end_y, start_y])
+    if x_offset > 0.5 * corrected_slice.shape[1]:
+        plt.imshow(contour_img, cmap='gray', extent=[x_offset, x_offset + contour_img.shape[1], end_y, start_y])
+    else:
+        plt.imshow(contour_img, cmap='gray', extent=[x_offset - contour_img.shape[1], x_offset, end_y, start_y])
 
     # Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
