@@ -14,8 +14,8 @@ from save_variables import save_arrays_to_directory
 # loads or creates points directory path and associated points files based on patient ID and timepoint
 patient_id='19978'
 patient_timepoint='acute'
-directory_path = ensure_directory_exists(patient_id, patient_timepoint)
-nifti_file_path ='/home/cmb247/Desktop/Project_3/BET_Extractions/19978/T1w_time1_registered_scans/T1w_time1.T1w_verio_P00030_19978_acute_20111102_U-ID22791_registered.nii.gz'
+#directory_path = ensure_directory_exists(patient_id, patient_timepoint)
+#nifti_file_path ='/home/cmb247/Desktop/Project_3/BET_Extractions/19978/T1w_time1_registered_scans/T1w_time1.T1w_verio_P00030_19978_acute_20111102_U-ID22791_registered.nii.gz'
 slice_selected=np.array([2.641497, -2.877373, -12.73399,1]) # Scanner coordinates
 #load mask created from slice_bet_script.sh
 bet_mask_file_path="/home/cmb247/Desktop/Project_3/BET_Extractions/19978/T1w_time1_registered_scans/acute_restored_bet_mask-f0.5-R.nii.gz"
@@ -67,9 +67,6 @@ def load_boundary_detection_features(patient_id, patient_timepoint, bet_mask_fil
 
     return corrected_slice, xa_coords, ya_coords, xb_coords, yb_coords, xr_coords
 
-
-
-
 def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset, array_save_name):
     
     corrected_slice, xa_coords, ya_coords, xb_coords, yb_coords, xr_coords = load_boundary_detection_features(patient_id, patient_timepoint, bet_mask_file_path)
@@ -80,7 +77,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_of
     start_y = int(min(yb_coords[-1], yb_coords[0]))
     end_y = int(max(yb_coords[-1], yb_coords[0]))
     
-
+    """
     if x_offset > 0.5 * corrected_slice.shape[1]:
         trimmed_slice_data = corrected_slice[start_y:end_y, x_offset:]
     else:
@@ -91,6 +88,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_of
     # Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
     plt.show()
+    """
 
     # Assume corrected_slice has the original dimensions, e.g., from a 256x256 slice
     original_shape = corrected_slice.shape
@@ -105,6 +103,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_of
 
     restored_slice[start_y:end_y, x_offset:end_x] = trimmed_slice_data
 
+    """
     # Display the restored slice such that trimmed area fills the plot
     # You can plot this data so it fills the plot but maintains its reference to the original coordinate system
     if x_offset > 0.5 * corrected_slice.shape[1]:
@@ -120,14 +119,15 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_of
     plt.ylabel('Y coordinate in original image')
     plt.title('Trimmed Slice Displayed in Original Coordinates')
     if x_offset > 0.5 * corrected_slice.shape[1]:
-        plt.scatter(xa_coords, ya_coords)
-        plt.scatter(xr_coords, yb_coords, s=2)
+        plt.scatter(xa_coords, ya_coords, s=2, color='red')
+        plt.scatter(xr_coords, yb_coords, s=2, color='cyan')
     else:   
-        plt.scatter(xb_coords, yb_coords, s=2)
+        plt.scatter(xb_coords, yb_coords, s=2, color='cyan')
         
     plt.show()
+    """
 
-        #normalise trimmed data 
+    #normalise trimmed data 
     norm_tr_slice = 255 * (trimmed_slice_data - np.min(trimmed_slice_data)) / (np.max(trimmed_slice_data) - np.min(trimmed_slice_data))
     norm_tr_slice = norm_tr_slice.astype(np.uint8)
 
@@ -143,8 +143,8 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_of
     # Draw contours on the image
     cv2.drawContours(contour_img, contours, -1, (255, 0, 0), 1)
 
+    """
     # Display the image
-
     plt.figure(figsize=(10, 10))
     plt.imshow(contour_img, cmap='gray')
     # Adjust the y-axis to display in the original image's orientation
@@ -152,6 +152,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_of
     plt.title('Brain Boundary')
 
     plt.show()
+    """
 
     # Create an image based on the original image dimensions to position the contours correctly
     contour_img_original_ref = np.zeros(original_shape)
@@ -174,10 +175,10 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_of
     plt.ylabel('Y coordinate in original image')
     plt.title('Trimmed Slice Boundary Displayed in Original Coordinates')
     if x_offset > 0.5 * corrected_slice.shape[1]:
-        plt.scatter(xa_coords, ya_coords)
-        plt.scatter(xr_coords, yb_coords, s=2)
+        plt.scatter(xa_coords, ya_coords, s=2, color='red')
+        plt.scatter(xr_coords, yb_coords, s=2, color ='cyan')
     else:   
-        plt.scatter(xb_coords, yb_coords, s=2)
+        plt.scatter(xb_coords, yb_coords, s=2, color='cyan')
 
     plt.show()
 
@@ -213,14 +214,16 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_of
     plt.imshow(contour_img, cmap='gray', extent=[x_offset, x_offset + contour_img.shape[1], end_y, start_y])
     # Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
-    plt.scatter(contour_x_coords, contour_y_coords)
+    if x_offset > 0.5 * corrected_slice.shape[1]:
+        plt.scatter(contour_x_coords, contour_y_coords, s=2, color'red')
+    else:
+        plt.scatter(contour_x_coords, contour_y_coords, s=2, color'cyan')
     plt.show()
-
 
     return contour_x_coords, contour_y_coords
 
 
 #auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset=120, array_save_name='deformed_boundary.npz')
-auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset=50, array_save_name='baseline_boundary.npz')
+#auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset=50, array_save_name='baseline_boundary.npz')
 
 
