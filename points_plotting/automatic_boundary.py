@@ -70,50 +70,8 @@ def load_boundary_detection_features(patient_id, patient_timepoint, bet_mask_fil
 
 
 
-def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path):
-    """
-    directory_path = ensure_directory_exists(patient_id, patient_timepoint)
-
-    data_readout_loc = f"data_readout/{patient_id}_{patient_timepoint}"
-    polyd_func, x_values, y_values, xa_coords, ya_coords = load_data_readout(data_readout_loc, 'deformed_arrays.npz')
-    polyb_func, xb_values, yb_values, xb_coords, yb_coords = load_data_readout(data_readout_loc, 'baseline_arrays.npz')
-    polyr_func, xr_values, yr_values, xr_coords, yb_coords = load_data_readout(data_readout_loc, 'reflected_baseline_arrays.npz')
-
-        
-    mask_nifti = nib.load(bet_mask_file_path)
-
-    # Step 2: Access the image data
-    mask_data = mask_nifti.get_fdata()
-
-    # Step 3: Check for binary values
-    unique_values = np.unique(mask_data)
-    print("Unique values in the mask:", unique_values)
-
-    # Verify it's binary
-    if np.array_equal(unique_values, [0, 1]) or np.array_equal(unique_values, [0]) or np.array_equal(unique_values, [1]):
-        print("The mask is binary.")
-        mask_data = mask_data  # No change needed; just assign it directly
-    else:
-        print("The mask is not strictly binary. Binarizing now...")
-        # Correct binarization: Apply the condition to the entire mask_data array
-        mask_data = (mask_data > 0).astype(np.uint8)
+def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset, array_save_name):
     
-    # Step 4: Visual inspection - plot at chosen slice index
-    file_loc = f"points_dir/{patient_id}_{patient_timepoint}/points_voxel_coords.csv"
-    # Load the CSV file using pandas
-    df = pd.read_csv(file_loc)
-    # Retrieve the slice index value assuming it's stored in the second row and fourth column (1,3 in 0-indexed)
-    slice_index = int(df.iloc[1, 3])
-
-    corrected_slice=np.transpose(mask_data[:,:,slice_index])
-
-    # Plot the entire slice
-    plt.imshow(corrected_slice, cmap='gray')
-    plt.title(f'Slice at index {slice_index}')
-    # Adjust the y-axis to display in the original image's orientation
-    plt.gca().invert_yaxis()
-    plt.show()
-    """
     corrected_slice, xa_coords, ya_coords, xa_coords, yb_coords, xr_coords = load_boundary_detection_features(patient_id, patient_timepoint, bet_mask_file_path)
 
     # PLOT REGION ONLY BASED ON x_offset VALUE 
@@ -121,10 +79,14 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path):
     # Ensure the starting index is smaller than the ending index
     start_y = int(min(yb_coords[-1], yb_coords[0]))
     end_y = int(max(yb_coords[-1], yb_coords[0]))
-    x_offset = 120  # Adjust based on your earlier trimming
+    #x_offset = 120  # Adjust based on your earlier trimming
 
+    if x_offset > 0.5 * corrected_slice.shape[1]:
+        trimmed_slice_data = corrected_slice[start_y:end_y, x_offset:]
+    else:
+        trimmed_slice_data = corrected_slice[start_y:end_y, :x_offset]
     # Slice 'corrected_slice' between these y-coordinates and plot
-    trimmed_slice_data = corrected_slice[start_y:end_y, x_offset:]
+    #trimmed_slice_data = corrected_slice[start_y:end_y, x_offset:]
     plt.imshow(trimmed_slice_data, cmap='gray')
     # Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
@@ -145,7 +107,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path):
 
     # Display the restored slice such that trimmed area fills the plot
     # You can plot this data so it fills the plot but maintains its reference to the original coordinate system
-    plt.imshow(trimmed_slice_data, cmap='gray', extent=[120, 120 + trimmed_slice_data.shape[1], end_y, start_y])
+    plt.imshow(trimmed_slice_data, cmap='gray', extent=[x_offset, x_offset + trimmed_slice_data.shape[1], end_y, start_y])
 
     # Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
@@ -232,7 +194,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path):
 
     # Save np arrays to to file.npz in given directory data_readout_dir using np.savez
     data_readout_dir=f"data_readout/{patient_id}_{patient_timepoint}"
-    save_arrays_to_directory(data_readout_dir, 'deformed_boundary.npz',
+    save_arrays_to_directory(data_readout_dir, array_save_name,
                                 xx_coords=contour_x_coords, yy_coords=contour_y_coords)
 
 
@@ -247,5 +209,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path):
     return contour_x_coords, contour_y_coords
 
 
-auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path)
+auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset=120, array_save_name='deformed_boundary.npz')
+auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset=50, array_save_name='baseline_boundary.npz')
+
 
