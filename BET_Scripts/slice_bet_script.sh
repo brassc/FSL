@@ -50,6 +50,8 @@ fslmerge -z ${directory}${patient_timepoint}_restored_bet${bet_p} ${directory}em
 # Create binary mask
 fslmaths ${directory}${patient_timepoint}_restored_bet${bet_p} -bin ${directory}${patient_timepoint}_restored_bet_mask${bet_p}
 
+echo "${directory}${patient_timepoint}_restored_bet_mask${bet_p}"
+
 
 # Extract one slice
 #slice_to_extract='89' #'145-$cut_above
