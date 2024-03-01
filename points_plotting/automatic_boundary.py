@@ -65,7 +65,7 @@ def load_boundary_detection_features(patient_id, patient_timepoint, bet_mask_fil
     plt.gca().invert_yaxis()
     plt.show()
 
-    return corrected_slice, xa_coords, ya_coords, xa_coords, yb_coords, xr_coords
+    return corrected_slice, xa_coords, ya_coords, xb_coords, yb_coords, xr_coords
 
 
 
