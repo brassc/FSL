@@ -72,7 +72,7 @@ def load_boundary_detection_features(patient_id, patient_timepoint, bet_mask_fil
 
 def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset, array_save_name):
     
-    corrected_slice, xa_coords, ya_coords, xa_coords, yb_coords, xr_coords = load_boundary_detection_features(patient_id, patient_timepoint, bet_mask_file_path)
+    corrected_slice, xa_coords, ya_coords, xb_coords, yb_coords, xr_coords = load_boundary_detection_features(patient_id, patient_timepoint, bet_mask_file_path)
 
     # PLOT REGION ONLY BASED ON x_offset VALUE 
 
@@ -116,9 +116,12 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_of
     plt.xlabel('X coordinate in original image')
     plt.ylabel('Y coordinate in original image')
     plt.title('Trimmed Slice Displayed in Original Coordinates')
-    plt.scatter(xa_coords, ya_coords)
-    plt.scatter(xr_coords, yb_coords, s=2)
-
+    if x_offset > 0.5 * corrected_slice.shape[1]:
+        plt.scatter(xa_coords, ya_coords)
+        plt.scatter(xr_coords, yb_coords, s=2)
+    else:   
+        plt.scatter(xb_coords, yb_coords, s=2)
+        
     plt.show()
 
         #normalise trimmed data 
@@ -164,8 +167,11 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_of
     plt.xlabel('X coordinate in original image')
     plt.ylabel('Y coordinate in original image')
     plt.title('Trimmed Slice Boundary Displayed in Original Coordinates')
-    plt.scatter(xa_coords, ya_coords)
-    plt.scatter(xr_coords, yb_coords, s=2)
+    if x_offset > 0.5 * corrected_slice.shape[1]:
+        plt.scatter(xa_coords, ya_coords)
+        plt.scatter(xr_coords, yb_coords, s=2)
+    else:   
+        plt.scatter(xb_coords, yb_coords, s=2)
 
     plt.show()
 
