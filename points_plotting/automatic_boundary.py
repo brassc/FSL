@@ -51,9 +51,9 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path):
     # Step 4: Visual inspection
     # Choose a slice index
     slice_index = 145  # Middle slice, adjust as needed
-    file_loc=f"points_dir/{patient_id}_{patient_timepoint}/points_voxel_coords.csv"
-    file=np.load(file_loc)
-    slice_index=int(file[1,3])
+    #file_loc=f"points_dir/{patient_idau}_{patient_timepoint}/points_voxel_coords.csv"
+    #file=np.load(file_loc)
+    #slice_index=int(file[1,3])
 
     corrected_slice=np.transpose(mask_data[:,:,slice_index])
 
