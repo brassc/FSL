@@ -53,7 +53,8 @@ def load_boundary_detection_features(patient_id, patient_timepoint, bet_mask_fil
     # Load the CSV file using pandas
     df = pd.read_csv(file_loc)
     # Retrieve the slice index value assuming it's stored in the second row and fourth column (1,3 in 0-indexed)
-    slice_index = int(df.iloc[1, 3])
+    print(df.head(2))
+    slice_index=int(df.iloc[0, 2])
 
     corrected_slice=np.transpose(mask_data[:,:,slice_index])
 
