@@ -209,11 +209,8 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_of
     save_arrays_to_directory(data_readout_dir, array_save_name,
                                 xx_coords=contour_x_coords, yy_coords=contour_y_coords)
 
-    if x_offset > 0.5 * corrected_slice.shape[1]:
-        plt.imshow(contour_img, cmap='gray', extent=[x_offset, x_offset + contour_img.shape[1], end_y, start_y])
-    else:
-        plt.imshow(contour_img, cmap='gray', extent=[x_offset - contour_img.shape[1], x_offset, end_y, start_y])
-
+    #no if statement necessary here because points are already adjustd
+    plt.imshow(contour_img, cmap='gray', extent=[x_offset, x_offset + contour_img.shape[1], end_y, start_y])
     # Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
     plt.scatter(contour_x_coords, contour_y_coords)
@@ -223,7 +220,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_of
     return contour_x_coords, contour_y_coords
 
 
-auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset=120, array_save_name='deformed_boundary.npz')
+#auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset=120, array_save_name='deformed_boundary.npz')
 auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset=50, array_save_name='baseline_boundary.npz')
 
 
