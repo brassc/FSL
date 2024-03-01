@@ -3,6 +3,7 @@ import numpy as np
 import nibabel as nib
 from PIL import Image
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from make_patient_dir import ensure_directory_exists
 from load_nifti import load_nifti
@@ -47,12 +48,12 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path):
         # Correct binarization: Apply the condition to the entire mask_data array
         mask_data = (mask_data > 0).astype(np.uint8)
     
-    # Step 4: Visual inspection
-    # Choose a slice index
-    slice_index = 145  # Middle slice, adjust as needed
-    #file_loc=f"points_dir/{patient_idau}_{patient_timepoint}/points_voxel_coords.csv"
-    #file=np.load(file_loc)
-    #slice_index=int(file[1,3])
+    # Step 4: Visual inspection - plot at chosen slice index
+    file_loc = f"points_dir/{patient_id}_{patient_timepoint}/points_voxel_coords.csv"
+    # Load the CSV file using pandas
+    df = pd.read_csv(file_loc)
+    # Retrieve the slice index value assuming it's stored in the second row and fourth column (1,3 in 0-indexed)
+    slice_index = int(df.iloc[1, 3])
 
     corrected_slice=np.transpose(mask_data[:,:,slice_index])
 
