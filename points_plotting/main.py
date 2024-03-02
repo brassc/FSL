@@ -38,7 +38,7 @@ patient_timepoint='acute'
 nifti_file_path = '/home/cmb247/Desktop/Project_3/BET_Extractions/19344/T1w_time1_registered_scans/T1w_time1.T1w_verio_P00244_19344_acute_20110323_U-ID21262_registered.nii.gz'
 slice_selected=np.array([29.85494, -76.71205, 22.77727, 1]) # Scanner coordinates
 
-extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=False, deformed_order=2)
+extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=True, deformed_order=3)
 
 patient_timepoint='fast'
 nifti_file_path='/home/cmb247/Desktop/Project_3/BET_Extractions/19344/T1w_time1_registered_scans/T1w_time1.T1w_verio_P00244_19344_fast_20110308_U-ID21134_registered.nii.gz'
