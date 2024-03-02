@@ -77,13 +77,14 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_of
     start_y = int(min(yb_coords[-1], yb_coords[0]))
     end_y = int(max(yb_coords[-1], yb_coords[0]))
     
-    """
+    
     if x_offset > 0.5 * corrected_slice.shape[1]:
         trimmed_slice_data = corrected_slice[start_y:end_y, x_offset:]
     else:
         trimmed_slice_data = corrected_slice[start_y:end_y, :x_offset]
     # Slice 'corrected_slice' between these y-coordinates and plot
     #trimmed_slice_data = corrected_slice[start_y:end_y, x_offset:]
+    """
     plt.imshow(trimmed_slice_data, cmap='gray')
     # Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
@@ -215,9 +216,9 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_of
     # Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
     if x_offset > 0.5 * corrected_slice.shape[1]:
-        plt.scatter(contour_x_coords, contour_y_coords, s=2, color'red')
+        plt.scatter(contour_x_coords, contour_y_coords, s=2, color='red')
     else:
-        plt.scatter(contour_x_coords, contour_y_coords, s=2, color'cyan')
+        plt.scatter(contour_x_coords, contour_y_coords, s=2, color='cyan')
     plt.show()
 
     return contour_x_coords, contour_y_coords

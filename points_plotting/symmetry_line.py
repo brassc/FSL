@@ -47,17 +47,16 @@ def reflect_across_line(m, c, xb_coords, yb_coords):
     
     #points on line:
     xl = m * yb_coords + c 
-    
-    #difference between baseline x and points on line
-    d = xb_coords - xl
-    #line coordinate + difference = reflection
-    #xr = xl + d
 
-    if xb_coords >= 0:
-        xr = xl + abs(d)
+
+    # Difference between baseline x and points on line
+    if xb_coords[0] <= 0:
+        d = np.abs(xl - xb_coords)
+        xr = xl + d
     else:
-        xr = xl - abs(d)
-    
+        d = np.abs(xb_coords - xl)
+        xr = xl - d
+        
     return xr
 
 
