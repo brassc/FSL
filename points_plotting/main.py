@@ -28,7 +28,7 @@ nifti_file_path ='/home/cmb247/Desktop/Project_3/BET_Extractions/19978/T1w_time1
 slice_selected=np.array([2.641497, -2.877373, -12.73399,1]) # Scanner coordinates
 #voxel loc: 91 119 145
 
-#extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=True, deformed_order=4)
+extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=True, deformed_order=4)
 #auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset=120, array_save_name='deformed_boundary.npz')
 #auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset=50, array_save_name='baseline_boundary.npz')
 

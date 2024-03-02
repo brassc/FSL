@@ -48,10 +48,10 @@ def reflect_across_line(m, c, xb_coords, yb_coords):
     #points on line:
     xl = m * yb_coords + c 
 
-
+    print('***********xb_coords[0] is:',xb_coords[0])
     # Difference between baseline x and points on line
-    if xb_coords[0] <= 0:
-        d = np.abs(xl - xb_coords)
+    if xb_coords[0] <= xl[0]:
+        d = np.abs(xl-xb_coords)
         xr = xl + d
     else:
         d = np.abs(xb_coords - xl)
