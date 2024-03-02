@@ -49,9 +49,14 @@ def reflect_across_line(m, c, xb_coords, yb_coords):
     xl = m * yb_coords + c 
     
     #difference between baseline x and points on line
-    d = abs(xb_coords - xl)
+    d = xb_coords - xl
     #line coordinate + difference = reflection
-    xr = xl + d
+    #xr = xl + d
+
+    if xb_coords >= 0:
+        xr = xl + abs(d)
+    else:
+        xr = xl - abs(d)
     
     return xr
 

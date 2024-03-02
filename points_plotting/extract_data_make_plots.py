@@ -15,6 +15,7 @@ from save_variables import save_arrays_to_directory
 from reorient import switch_orientation # there is also a reverse_switch_orientation function
 from load_np_data import load_data_readout
 from translate_rotate import move
+from automatic_boundary import auto_boundary_detect
 
 
 
@@ -132,7 +133,8 @@ def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slic
     else: 
         print('plot without scatter points')
         
-
+    plt.xlim(0)
+    plt.ylim(0)
     # Save plot and show
     save_path=os.path.join(save_directory, f"{patient_id}_{patient_timepoint}_polynomial_slice_plot.png")
     print('Plot saved to '+ save_path)
@@ -145,7 +147,8 @@ def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slic
     plt.imshow(slice_data.T, cmap='gray', origin='lower')
     plt.fill_betweenx(yb_values, x_values, xr_values, color='orange', alpha=0.5)
     plt.text(3, 250, f'Area = {area_between} mm^2', fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
-
+    plt.xlim(0)
+    plt.ylim(0)
     save_path2=os.path.join(save_directory, f"{patient_id}_{patient_timepoint}_area_slice_plot.png")
     print('Plot saved to '+ save_path2)
     plt.savefig(save_path2)
