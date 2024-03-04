@@ -40,18 +40,27 @@ def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slic
 
     ## SELECT AND PLOT BASE SLICE
 
-    # Define the scanner (RAS, anatomical, imaging space) coordinates or voxel location
-    scanner_coords = slice_selected 
-    #voxel loc: 91 119 145
+    if isinstance(slice_selected, np.ndarray):
+        # Do something if slice_selected is an array
+        print("slice_selected is a numpy array:", slice_selected)
+        # Define the scanner (RAS, anatomical, imaging space) coordinates or voxel location
+        scanner_coords = slice_selected 
+        #voxel loc: 91 119 145
 
-    # Inverse affine to convert RAS/anatomical coords to voxel coords
-    inv_affine=np.linalg.inv(img.affine)
+        # Inverse affine to convert RAS/anatomical coords to voxel coords
+        inv_affine=np.linalg.inv(img.affine)
 
-    # convert RAS/anatomical coords to voxel coords
-    voxel_coords=inv_affine.dot(scanner_coords)[:3]
+        # convert RAS/anatomical coords to voxel coords
+        voxel_coords=inv_affine.dot(scanner_coords)[:3]
 
-    # Extract the axial slice at the z voxel index determined from the scanner coordinates
-    z_index=int(voxel_coords[2])
+        # Extract the axial slice at the z voxel index determined from the scanner coordinates
+        z_index=int(voxel_coords[2])
+    else:
+        # Do something else if slice_selected is not an array
+        print("slice_selected is an integer:", slice_selected)
+        z_index=int(slice_selected)
+
+    
     print(z_index)
     slice_data=data[:,:, z_index]
 
