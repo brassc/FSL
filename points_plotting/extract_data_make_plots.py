@@ -19,7 +19,7 @@ from automatic_boundary import auto_boundary_detect
 
 
 
-def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=False, deformed_order=2):
+def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected=0, scatter=False, deformed_order=2):
     # loads or creates points directory path and associated points files based on patient ID and timepoint
     directory_path = ensure_directory_exists(patient_id, patient_timepoint)
 
@@ -52,6 +52,7 @@ def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slic
 
     # Extract the axial slice at the z voxel index determined from the scanner coordinates
     z_index=int(voxel_coords[2])
+    print(z_index)
     slice_data=data[:,:, z_index]
 
     # plot the axial slice
