@@ -55,6 +55,15 @@ slice_selected=int(169)
 extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=False, deformed_order=2)
 
 
+patient_id='13990'
+patient_timepoint='acute'
+nifti_file_path='/home/cmb247/Desktop/Project_3/BET_Extractions/13990/T1w_time1_registered_scans/T1w_time1.T1w_trio_P00030_13990_acute_20080226_U-ID14047_registered.nii.gz'
+slice_selected=int(170)
+
+extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=False, deformed_order=2)
+
+
+
 
 
 
