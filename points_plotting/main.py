@@ -27,7 +27,7 @@ patient_timepoint='fast'
 nifti_file_path ='/home/cmb247/Desktop/Project_3/BET_Extractions/19978/T1w_time1_registered_scans/T1w_time1.T1w_verio_P00030_19978_fast_20111027_U-ID22723_registered.nii.gz'
 #slice_selected=np.array([2.641497, -2.877373, -12.73399,1]) # Scanner coordinates
 #voxel loc: 91 119 145
-slice_selected=int([145])
+slice_selected=int(145)
 
 #extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=True, deformed_order=4)
 #auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset=120, array_save_name='deformed_boundary.npz')
@@ -43,14 +43,16 @@ slice_selected=np.array([29.85494, -76.71205, 22.77727, 1]) # Scanner coordinate
 
 patient_timepoint='fast'
 nifti_file_path='/home/cmb247/Desktop/Project_3/BET_Extractions/19344/T1w_time1_registered_scans/T1w_time1.T1w_verio_P00244_19344_fast_20110308_U-ID21134_registered.nii.gz'
-slice_selected=int([155])
+slice_selected=int(155)
 
 extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=False, deformed_order=2)
 
 patient_id='22725'
 patient_timepoint='acute'
-nifti_file_path=f"/home/cmb247/Desktop/Project_3/BET_Extractions/{patient_id}/T1w_time1_registered_scans/"
-slice_selected=int([169])
+nifti_file_path=f"/home/cmb247/Desktop/Project_3/BET_Extractions/{patient_id}/T1w_time1_registered_scans/T1w_time1.T1w_verio_P00370_22725_acute_20131118_U-ID29681_registered.nii.gz"
+slice_selected=int(169)
+
+extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=False, deformed_order=2)
 
 
 
