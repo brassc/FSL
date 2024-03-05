@@ -114,8 +114,8 @@ def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slic
 
     # SAVE AREA TO FILE
     # Flag to check if patient_id and patient_timepoint have been found in the file
-    current_directory = os.getcwd():
-    if current_directory == 'points_plotting'
+    current_directory = os.getcwd()
+    if os.path.basename(current_directory) == 'points_plotting':
         csv_file_path = 'area_data.csv'
     else:
         print('please run from points_plotting directory in FSL repo.')
