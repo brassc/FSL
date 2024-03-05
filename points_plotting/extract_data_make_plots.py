@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import nibabel as nib
 from scipy.integrate import quad
+import csv
 
 # User defined functions
 from make_patient_dir import ensure_directory_exists
@@ -110,7 +111,33 @@ def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slic
     print('baseline reflection area = ', result_rounded_r)
     print('**** total deformed AREA IS ****')    
     print(area_between)
-    
+
+    # SAVE AREA TO FILE
+    # Flag to check if patient_id and patient_timepoint have been found in the file
+    csv_file_path = '~repos/FSL/points_plotting/area_data.csv'
+    found = False
+
+    # Read existing contents of the CSV file
+    with open(csv_file_path, mode='r', newline='') as file:
+        reader = csv.reader(file)
+        rows = list(reader)
+        for row in rows:
+            # Check if the row contains the same patient_id and patient_timepoint
+            if row[0] == patient_id and row[1] == patient_timepoint:
+                # Replace this row with the new data
+                row[:] = [patient_id, patient_timepoint, area_between]
+                found = True
+                break
+
+    # If patient_id and patient_timepoint were not found, append a new row
+    if not found:
+        rows.append([patient_id, patient_timepoint, area_between])
+
+    # Write the updated contents back to the CSV file
+    with open(csv_file_path, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerows(rows)
+        
 
 
     # Save np arrays to to file.npz in given directory data_readout_dir using np.savez
