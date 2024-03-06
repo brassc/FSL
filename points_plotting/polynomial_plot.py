@@ -1,6 +1,7 @@
 import pandas as pd
 import nibabel as nib
 import numpy as np
+from scipy.optimize import curve_fit
 
 
 ## THIS FUNCTION RETURNS A POLYNOMIAL AND VALUES TO PLOT FROM GIVEN Y AND X COORDS
@@ -32,6 +33,44 @@ def fit_poly(y_coords, x_coords, order=2):
     x_values = poly_func(y_values)
 
     return poly_func, x_values, y_values
+
+
+def func(x, a, b, c, d):
+    return (np.sqrt(1-(a*x-d)*np.sqrt(1+(b*x-d)+c)))
+
+def func2(x, a, c, d):
+    return (np.sqrt(1-(a*x**2-d))+c)
+
+    
+
+## THIS FUNCTION RETURNS A POLYNOMIAL APPROXIMATION OF A y=sqrt(1-x^2) FUNCTION GIVEN H_COORDS AND V_COORDS ALREADY TRANSLATED AND ROTATED. 
+def approx_poly(h_coords, v_coords):
+    print(h_coords)
+    print(v_coords)
+    
+    try:
+        # Perform curve fitting
+        popt, _ = curve_fit(func, h_coords, v_coords, p0=(0.005, 10, 135, 80))
+        #popt2, _ = curve_fit(func2, h_coords, v_coords, p0=(0.005, 135, 80))
+
+        
+        # Extract the optimal parameter
+        a_optimal, b_optimal, c_optimal, d_optimal= popt
+        print(a_optimal)
+        print(b_optimal)
+        print(c_optimal)
+        print(d_optimal)
+
+        # Generate x values using the fitted function
+        h_values = np.linspace(min(h_coords), max(h_coords), 100)
+        v_fitted = func(h_values, a_optimal, b_optimal, c_optimal, d_optimal)
+        #v_fitted = func2(h_values, a_optimal, c_optimal, d_optimal)
+
+        return a_optimal, h_values, v_fitted
+    except RuntimeError:
+        print("Curve fitting failed. Try adjusting parameters or check your data.")
+
+
 
 
 # THIS FUNCTION TAKES A .CSV FILE AND RETURNS POLYNOMIAL FUNCTION, X AND Y VALUES TO PLOT. 

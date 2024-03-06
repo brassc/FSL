@@ -11,6 +11,7 @@ from make_patient_dir import ensure_directory_exists
 from load_nifti import load_nifti
 from polynomial_plot import create_polynomial_from_csv
 from polynomial_plot import fit_poly
+from polynomial_plot import approx_poly
 from symmetry_line import get_mirror_line
 from symmetry_line import reflect_across_line
 from save_variables import save_arrays_to_directory
@@ -202,8 +203,7 @@ def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slic
 
     return 0
 
-
-def rt_data_make_plots(patient_id, patient_timepoint):
+def rt_data(patient_id, patient_timepoint):
     data_readout_loc = f"points_plotting/data_readout/{patient_id}_{patient_timepoint}"
     
     polyd_func, x_values, y_values, xa_coords, ya_coords = load_data_readout(data_readout_loc, 'deformed_arrays.npz')
@@ -229,6 +229,13 @@ def rt_data_make_plots(patient_id, patient_timepoint):
         vr_values, hr_values, vr_coords, hr_coords = switch_sign(vr_values, hr_values, vr_coords, hr_coords)
     else:
         print('no sign change required')
+
+    return vd_values, hd_values, vd_coords, hd_coords, vr_values, hr_values, vr_coords, hr_coords, hb_values, polyd_func, polyr_func
+
+
+def rt_data_make_plots(patient_id, patient_timepoint):
+
+    vd_values, hd_values, vd_coords, hd_coords, vr_values, hr_values, vr_coords, hr_coords, hb_values, polyd_func, polyr_func = rt_data(patient_id, patient_timepoint)
 
 
     # CALCULATE AREA
@@ -258,6 +265,9 @@ def rt_data_make_plots(patient_id, patient_timepoint):
     tr_hd_coords, tr_vd_coords, _ = move(hd_coords, vd_coords)
     tr_hr_values, tr_vr_values, polyr_func = move(hr_values, vr_values)
     tr_hd_values, tr_vd_values, polyd_func = move(hd_values, vd_values)
+    # compare translating points like this with fitting a new polynomial:
+    polyd2_func, tr2_vd_values, tr2_hd_values = fit_poly(tr_hd_coords, tr_vd_coords, order=2)
+
 
     # SAVE ARRAYS TO DIRECTORY
     # Save np arrays to to file.npz in given directory data_readout_dir using np.savez
@@ -278,6 +288,7 @@ def rt_data_make_plots(patient_id, patient_timepoint):
     plt.scatter(tr_hd_coords, tr_vd_coords, c='red', s=2)
     plt.plot(tr_hd_values, tr_vd_values, c='red')
     plt.plot(tr_hr_values, tr_vr_values, c='cyan')
+    #plt.plot(tr2_hd_values, tr2_vd_values, c='blue')
     plt.xlim(0)
     plt.ylim(0)
 
@@ -297,3 +308,35 @@ def rt_data_make_plots(patient_id, patient_timepoint):
     
     return 0
 
+def rt_data_poly_plot(patient_id, patient_timepoint):
+
+    _,_, vd_coords, hd_coords, _, _, vr_coords, hr_coords, hb_values, _, _ = rt_data(patient_id, patient_timepoint)
+
+    poly_func, vd_values, hd_values = fit_poly(hd_coords, vd_coords, order=2)
+
+    plt.plot(hd_values, vd_values, color='red')
+    plt.show()
+
+    return hd_values, vd_values
+
+
+def test_fun(patient_id, patient_timepoint):
+    data_readout_loc = f"points_plotting/data_readout/{patient_id}_{patient_timepoint}"
+    
+    _, _, _, xa_coords, ya_coords = load_data_readout(data_readout_loc, 'deformed_arrays.npz')
+    _, _, _, xb_coords, yb_coords = load_data_readout(data_readout_loc, 'baseline_arrays.npz')
+    _, _, _, xr_coords, yb_coords = load_data_readout(data_readout_loc, 'reflected_baseline_arrays.npz')
+
+    a_optimal, h_values, v_fitted = approx_poly(ya_coords, xa_coords)
+
+    # Plot the original data points and the fitted curve
+    plt.scatter(ya_coords, xa_coords, label='Original data points', color='r', s=2)
+    plt.plot(h_values, v_fitted, label='Fitted curve', color='red')
+    plt.xlabel('y')
+    plt.ylabel('x')
+    plt.title('Fitting sqrt(1 - x^2)')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    return 0
