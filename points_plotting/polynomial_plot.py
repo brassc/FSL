@@ -2,6 +2,7 @@ import pandas as pd
 import nibabel as nib
 import numpy as np
 from scipy.optimize import curve_fit
+from scipy.optimize import least_squares
 
 
 ## THIS FUNCTION RETURNS A POLYNOMIAL AND VALUES TO PLOT FROM GIVEN Y AND X COORDS
@@ -35,35 +36,66 @@ def fit_poly(y_coords, x_coords, order=2):
     return poly_func, x_values, y_values
 
 
-def func(x, a, b, c, d):
-    return (np.sqrt(1-(a*x-d)*np.sqrt(1+(b*x-d)+c)))
+def func(x, a, b, c, d, e):
+    return (np.sqrt(1-(a*x-d)*np.sqrt(1+(b*x-e)+c)))
+
+"""
+def func3(x, a, b, c, d, e):
+    return (np.sqrt(a*(1-(x-d)))*np.sqrt(b*(1+(x-e)))+c)
 
 def func2(x, a, c, d):
     return (np.sqrt(1-(a*x**2-d))+c)
 
-    
+
+def constraint_func(params, x_endpoints, y_endpoints):
+    a, b, c, d, e = params
+    return [func(params, x_endpoints[0]) - y_endpoints[0], func(params, x_endpoints[-1]) - y_endpoints[-1]]
+
+def residual(params, x, y):
+    return func(params[:5], x) - y
+"""
 
 ## THIS FUNCTION RETURNS A POLYNOMIAL APPROXIMATION OF A y=sqrt(1-x^2) FUNCTION GIVEN H_COORDS AND V_COORDS ALREADY TRANSLATED AND ROTATED. 
 def approx_poly(h_coords, v_coords):
     print(h_coords)
     print(v_coords)
-    
+
+    # Define the weights
+    weights = np.zeros_like(h_coords)
+    weights = weights+0.05
+    weights[0] = 10 # Increase weight for the first point
+    weights[-1] = 10  # Increase weight for the last point
+    print(h_coords[0])
+
+    # Decrease weights gradually towards the middle
+    """middle_idx = int(len(weights) // 2)
+    for n in range(middle_idx):
+        weights[n+1]=weights[0]**(1/(n+1))
+        weights[-1-n-1]=weights[-1]**(1/(n+1))
+    #weights[:middle_idx] *= np.linspace(1000, 1, middle_idx)
+    """ 
     try:
         # Perform curve fitting
-        popt, _ = curve_fit(func, h_coords, v_coords, p0=(0.005, 10, 135, 80))
-        #popt2, _ = curve_fit(func2, h_coords, v_coords, p0=(0.005, 135, 80))
-
+        initial_guess = (10, 80, -180, 2500, 2500)
+        ##popt, _ = curve_fit(func, h_coords, v_coords, p0=(10, 80, -180, 2500, 2500), sigma=weights)
+        popt, _ = curve_fit(func, h_coords, v_coords, p0=initial_guess, sigma=weights)
         
+        ##popt2, _ = curve_fit(func2, h_coords, v_coords, p0=(0.005, 135, 80))
+
+    
         # Extract the optimal parameter
-        a_optimal, b_optimal, c_optimal, d_optimal= popt
+        a_optimal, b_optimal, c_optimal, d_optimal, e_optimal= popt
         print(a_optimal)
         print(b_optimal)
         print(c_optimal)
         print(d_optimal)
+        print(e_optimal)
+    
 
         # Generate x values using the fitted function
         h_values = np.linspace(min(h_coords), max(h_coords), 100)
-        v_fitted = func(h_values, a_optimal, b_optimal, c_optimal, d_optimal)
+        #v_fitted = func(h_values, a_optimal, b_optimal, c_optimal, d_optimal, e_optimal)
+        v_fitted = func(h_values, a_optimal, b_optimal, c_optimal, d_optimal, e_optimal)
         #v_fitted = func2(h_values, a_optimal, c_optimal, d_optimal)
 
         return a_optimal, h_values, v_fitted
