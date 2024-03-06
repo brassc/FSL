@@ -20,15 +20,15 @@ patient_timepoint='acute'
 rt_data_make_plots(patient_id, patient_timepoint)
 
 patient_timepoint='fast'
-rt_data_make_plots(patient_id, patient_timepoint)
+#rt_data_make_plots(patient_id, patient_timepoint)
 
 patient_id='22725'
 patient_timepoint='acute'
-rt_data_make_plots(patient_id, patient_timepoint)
+#rt_data_make_plots(patient_id, patient_timepoint)
 
 patient_id='13990'
 patient_timepoint='acute'
-rt_data_make_plots(patient_id, patient_timepoint)
+#rt_data_make_plots(patient_id, patient_timepoint)
 
 
 

@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import nibabel as nib
 from scipy.integrate import quad
 import csv
+import pandas as pd
 
 # User defined functions
 from make_patient_dir import ensure_directory_exists
@@ -14,6 +15,7 @@ from symmetry_line import get_mirror_line
 from symmetry_line import reflect_across_line
 from save_variables import save_arrays_to_directory
 from reorient import switch_orientation # there is also a reverse_switch_orientation function
+from reorient import switch_sign
 from load_np_data import load_data_readout
 from translate_rotate import move
 from automatic_boundary import auto_boundary_detect
@@ -217,6 +219,17 @@ def rt_data_make_plots(patient_id, patient_timepoint):
     # REFLECTED VALUES
     vr_values, hr_values, vr_coords, hr_coords = switch_orientation(xr_values, yr_values, xr_coords, yb_coords)
 
+    
+    # find average (centerline), find if vd_coord < or > centerline
+    avg_x = ((xa_coords + xb_coords) / 2)
+   #avg_x = pd.DataFrame({'avg_x': avg_x})
+    print(avg_x)
+    if (xa_coords[0] <= avg_x[0]):
+        vd_values, hd_values, vd_coords, hd_coords = switch_sign(vd_values, hd_values, vd_coords, hd_coords)
+        vr_values, hr_values, vr_coords, hr_coords = switch_sign(vr_values, hr_values, vr_coords, hr_coords)
+    else:
+        print('no sign change required')
+
 
     # CALCULATE AREA
     aread, _ = quad(polyd_func, hb_values[0], hb_values[-1])
@@ -229,12 +242,13 @@ def rt_data_make_plots(patient_id, patient_timepoint):
     # MAKE NICE PLOT
 
     plt.plot(hr_values, vr_values, c='cyan')
+    plt.scatter(hr_coords, vr_coords, s=2, color='cyan')
     plt.plot(hd_values, vd_values, c='red')
+    plt.scatter(hd_coords, vd_coords, s=2, color='red')
     plt.fill_between(hd_values, vd_values, vr_values, color='orange', alpha=0.5 )
     plt.text(70, 165, f'Area = {area_betw} mm^2', fontsize=10, bbox=dict(facecolor='white', alpha=0.5))
-    plt.scatter(hr_coords[0], vr_coords[0])
     plt.text(hr_coords[0], vr_coords[0], 'hr_coords[0], vr_coords[0]')
-    plt.scatter(hr_coords[-1], vr_coords[-1])
+    #plt.scatter(hr_coords[-1], vr_coords[-1])
     plt.text(hr_coords[-1], vr_coords[-1], 'hr_coords[-1], vr_coords[-1]')
     plt.show()
 
