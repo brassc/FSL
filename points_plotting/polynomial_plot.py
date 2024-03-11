@@ -4,6 +4,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 from scipy.optimize import least_squares
 from scipy.optimize import minimize
+import matplotlib.pyplot as plt
 
 from translate_rotate import move
 
@@ -50,7 +51,7 @@ def func(x, h, a, c, d):
     with np.errstate(invalid='ignore'):
         y = h * np.sqrt(np.maximum(0, a**2 - (x - c)**2)) + d
     return y
-
+"""
 # Define a cost function that calculates the total squared error
 def cost_function(params, h_coords, v_coords):
     h, a, c, d = params
@@ -65,7 +66,7 @@ def constraint1(params, h_coords, v_coords, tol):
 def constraint2(params, h_coords, v_coords, tol):
     h, a, c, d = params
     return func(h_coords[-1], h, a, c, d) - v_coords[-1] - tol # should be 0
-
+"""
 
 
 """
@@ -83,6 +84,43 @@ def constraint_func(params, x_endpoints, y_endpoints):
 def residual(params, x, y):
     return func(params[:5], x) - y
 """
+
+def update_c(initial_guess, h_coords, v_coords, weights):
+    # Extract initial guess parameters
+    h0, a, c, d = initial_guess
+    
+    # Specify target point
+    target_point = (h_coords[0], v_coords[0])
+    
+    # Define a tolerance for convergence
+    tolerance = 50
+    
+    # Maximum number of iterations
+    max_iterations = 100
+    
+    # Initialize iteration counter
+    iteration = 0
+    
+    # Loop until convergence or maximum iterations reached
+    while True:
+        # Perform curve fitting with updated parameters
+        params, covariance = curve_fit(func, h_coords, v_coords, p0=(h0, a, c, d))#, sigma=weights)
+        
+        # Update parameter c
+        c = c - (func(target_point[0], *params) - target_point[1]) / func(target_point[0], *params)
+        
+        # Check convergence
+        if abs(func(target_point[0], *params) - target_point[1]) < tolerance or iteration >= max_iterations:
+            break
+        
+        # Increment iteration counter
+        iteration += 1
+    
+    # Update initial guess tuple with the new value of c
+    updated_initial_guess = (h0, a, c, d)
+    
+    # Return updated initial guess tuple
+    return updated_initial_guess
 
 ## THIS FUNCTION RETURNS A POLYNOMIAL APPROXIMATION OF A y=sqrt(1-x^2) FUNCTION GIVEN H_COORDS AND V_COORDS ALREADY TRANSLATED AND ROTATED. 
 def approx_poly(h_coords, v_coords):
@@ -115,11 +153,13 @@ def approx_poly(h_coords, v_coords):
         # initial_guess = (10, 80, -180, 2500, 2500)
         h = v_coords.max()
         a = h_coords.max() - h_coords.min()
-        c = a / 2 # middle value
+        c = 0# middle value
         d = v_coords.min()
         initial_guess=(h, a, c, d) 
-        ##popt, _ = curve_fit(func, h_coords, v_coords, p0=(10, 80, -180, 2500, 2500), sigma=weights)
+        #updated_initial_guess = update_c(initial_guess, h_coords, v_coords, weights)
         params, covariance = curve_fit(func, h_coords, v_coords, p0=initial_guess, sigma=weights)
+        ##popt, _ = curve_fit(func, h_coords, v_coords, p0=(10, 80, -180, 2500, 2500), sigma=weights)
+        #params, covariance = curve_fit(func, h_coords, v_coords, p0=initial_guess, sigma=weights)
         
         ##popt2, _ = curve_fit(func2, h_coords, v_coords, p0=(0.005, 135, 80))
         """
@@ -155,7 +195,12 @@ def approx_poly(h_coords, v_coords):
         print(c_optimal_init)
         print(d_optimal_init)
         #print(e_optimal)
+        h_optimal, a_optimal, c_optimal, d_optimal = params
 
+
+    
+        
+        """
         # Set constraints
         # Modifying optimization constraints to use local scope variables
         tol = 1E-2
@@ -170,20 +215,58 @@ def approx_poly(h_coords, v_coords):
 
         # Extract the optimal parameters
         h_optimal, a_optimal, c_optimal, d_optimal = result.x
-
+        """
         print(h_optimal)
         print(a_optimal)
         #print(b_optimal)
+        print('c is')
         print(c_optimal)
         print(d_optimal)
-            
 
+        new_c = h_coords[0] - (v_coords[0]-d_optimal)/(h_optimal*a_optimal)
+        print('new c is')
+        print(new_c)
+
+        
+
+
+            
+        
         # Generate x values using the fitted function
         h_values = np.linspace(min(h_coords), max(h_coords), 100)
         #v_fitted = func(h_values, a_optimal, b_optimal, c_optimal, d_optimal, e_optimal)
-        v_fitted = func(h_values, h_optimal, a_optimal, c_optimal, d_optimal)
+        v_fitted = func(h_values, h_optimal, a_optimal, new_c, d_optimal)
         #v_fitted = func2(h_values, a_optimal, c_optimal, d_optimal)
+        """
+        X=h_coords.reshape(-1, 1)  # Ensuring X is a column vector
+        Y=v_coords.reshape(-1, 1)  # Ensuring X is a column vector
 
+        # Formulate and solve the least squares problem ||Ax - b ||^2
+        A = np.hstack([X**2, X * Y, Y**2, X, Y])
+        b = np.ones((len(X), 1))  # Explicitly defining b as a 2D column vector
+        x, residuals, rank, s = np.linalg.lstsq(A, b, rcond=None)
+        x = x.squeeze()
+
+        # Print the equation of the ellipse in standard form
+        print('The ellipse is given by {0:.3}x^2 + {1:.3}xy+{2:.3}y^2+{3:.3}x+{4:.3}y = 1'.format(x[0], x[1],x[2],x[3],x[4]))
+
+        # Plot the noisy data
+        plt.scatter(X, Y, label='Data Points')
+
+        # Plot the least squares ellipse
+        x_coord = np.linspace(-5,5,300)
+        y_coord = np.linspace(-5,5,300)
+        X_coord, Y_coord = np.meshgrid(x_coord, y_coord)
+        Z_coord = x[0] * X_coord ** 2 + x[1] * X_coord * Y_coord + x[2] * Y_coord**2 + x[3] * X_coord + x[4] * Y_coord
+        plt.contour(X_coord, Y_coord, Z_coord, levels=[1], colors=('r'), linewidths=2)
+
+        plt.legend()
+        plt.xlabel('X')
+        plt.ylabel('Y')
+        plt.xlim(0)
+        plt.ylim(0)
+        plt.show()
+        """
 
         return a_optimal, h_values, v_fitted
     except RuntimeError:
