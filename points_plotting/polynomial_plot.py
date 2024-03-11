@@ -153,7 +153,7 @@ def approx_poly(h_coords, v_coords):
         # initial_guess = (10, 80, -180, 2500, 2500)
         h = v_coords.max()
         a = h_coords.max() - h_coords.min()
-        c = 0# middle value
+        c = a / 2 # middle value
         d = v_coords.min()
         initial_guess=(h, a, c, d) 
         #updated_initial_guess = update_c(initial_guess, h_coords, v_coords, weights)

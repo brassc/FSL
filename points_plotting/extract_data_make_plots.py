@@ -19,6 +19,7 @@ from reorient import switch_orientation # there is also a reverse_switch_orienta
 from reorient import switch_sign
 from load_np_data import load_data_readout
 from translate_rotate import move
+from translate_rotate import center
 from automatic_boundary import auto_boundary_detect
 
 
@@ -329,17 +330,19 @@ def test_fun(patient_id, patient_timepoint):
 
     tr_h_coords, tr_v_coords, _ = move(ya_coords, xa_coords, poly=0)
     print(tr_h_coords, tr_v_coords)
-    a_optimal, h_values, v_fitted = approx_poly(tr_h_coords, tr_v_coords)
+    #Centered coords:
+    ctr_h_coords, c_val = center(tr_h_coords)
+    a_optimal, h_values, v_fitted = approx_poly(ctr_h_coords, tr_v_coords)
 
     # Plot the original data points and the fitted curve
     #plt.scatter(ya_coords, xa_coords, label='Original data points', color='r', s=2)
-    plt.scatter(tr_h_coords, tr_v_coords, label='translated and rotated data points', color='r', s=2)
+    plt.scatter(ctr_h_coords, tr_v_coords, label='translated and rotated data points', color='r', s=2)
     plt.plot(h_values, v_fitted, label='Fitted curve', color='red')
-    plt.scatter(tr_h_coords[0], tr_v_coords[0], c='black')
-    plt.scatter(tr_h_coords[-1], tr_v_coords[-1], c='orange', label='h[-1], v[-1]')
+    plt.scatter(ctr_h_coords[0], tr_v_coords[0], c='black')
+    plt.scatter(ctr_h_coords[-1], tr_v_coords[-1], c='orange', label='h[-1], v[-1]')
     plt.xlabel('y')
     plt.ylabel('x')
-    plt.xlim(0)
+    #plt.xlim(0)
     plt.ylim(0)
     plt.title('Fitting function of form y=h sqrt[a^2-x^2]')
     plt.legend()

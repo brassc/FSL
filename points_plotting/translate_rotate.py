@@ -31,4 +31,9 @@ def move(h, v, poly=0):
         return tr_h_coords, tr_v_coords, None
 
 
-    
+def center(h):
+    # find centre value of horizontal points
+    c_val = h[-1] + h[0] / 2
+    h_centered = h - c_val
+
+    return h_centered, c_val
