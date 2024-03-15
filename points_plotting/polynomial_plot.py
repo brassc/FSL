@@ -52,10 +52,10 @@ def func(x, h, a, c, d):
         y = h * np.sqrt(np.maximum(0, a**2 - (x - c)**2)) + d
     return y
 
-def func1(x, h, a):
+def func1(x, h, a, b, c=0, d=0):
     # To ensure we only deal with the upper portion, we return NaN if the inside of the sqrt becomes negative
     with np.errstate(invalid='ignore'):
-        y = h * np.sqrt(np.maximum(0, a**2 - (x)**2))
+        y = h * np.sqrt(np.maximum(0, a**2 - (x-c)**2))*(1+(b/a)*x)+d
     return y
 """
 # Define a cost function that calculates the total squared error
@@ -93,7 +93,7 @@ def residual(params, x, y):
 
 def update_c(initial_guess, h_coords, v_coords, weights):
     # Extract initial guess parameters
-    h0, a, c, d = initial_guess
+    h0, a, b, c, d = initial_guess
     
     # Specify target point
     target_point = (h_coords[0], v_coords[0])
@@ -110,7 +110,7 @@ def update_c(initial_guess, h_coords, v_coords, weights):
     # Loop until convergence or maximum iterations reached
     while True:
         # Perform curve fitting with updated parameters
-        params, covariance = curve_fit(func, h_coords, v_coords, p0=(h0, a, c, d))#, sigma=weights)
+        params, covariance = curve_fit(func, h_coords, v_coords, p0=(h0, a, b, c, d))#, sigma=weights)
         
         # Update parameter c
         c = c - (func(target_point[0], *params) - target_point[1]) / func(target_point[0], *params)
@@ -123,7 +123,7 @@ def update_c(initial_guess, h_coords, v_coords, weights):
         iteration += 1
     
     # Update initial guess tuple with the new value of c
-    updated_initial_guess = (h0, a, c, d)
+    updated_initial_guess = (h0, a, b, c, d)
     
     # Return updated initial guess tuple
     return updated_initial_guess
@@ -139,9 +139,6 @@ def approx_poly(h_coords, v_coords):
     weights[-1] = 5  # Increase weight for the last point
     print(h_coords[0])
 
-    
-    
-
     ## Calculate the mean of the first and last entries
     #mean_first_last = np.mean([h_coords[0], h_coords[-1]])
     #h_coords_centered=h_coords - mean_first_last
@@ -155,16 +152,36 @@ def approx_poly(h_coords, v_coords):
     #weights[:middle_idx] *= np.linspace(1000, 1, middle_idx)
     """ 
     try:
+
+        # Bounds for parameters
+        # Setting bounds for each parameter separately
+        #lower_bounds = [lower_bound_h, lower_bound_a, lower_bound_b, lower_bound_c, lower_bound_d]
+        lower_bound_a = np.abs(h_coords[-1])
+        upper_bound_a = np.abs(h_coords[0]*2 + 20)
+        lower_bounds = [-np.inf, lower_bound_a, -np.inf]#, -np.inf, -np.inf]
+        upper_bounds = [np.inf, upper_bound_a, np.inf]#, np.inf, np.inf]  
+        #upper_bounds = [upper_bound_h, upper_bound_a, upper_bound_b, upper_bound_c, upper_bound_d]
+        bounds = (lower_bounds, upper_bounds)
+        desired_width = np.abs(h_coords[-1] - h_coords[0])  # Desired width for the function
+        print(f"Desired width: {desired_width}")
+        # If width is specified, use a constraint for parameter 'a'
+        
+        print(f"Bounds: {lower_bound_a}")
         # Perform curve fitting
         # initial_guess = (10, 80, -180, 2500, 2500)
         h = v_coords.max()
         #a = h_coords.max() - h_coords.min()
         a = h_coords[0] - h_coords[-1]
         c = a / 2 # middle value
+        b = 0
+        c=0
         d = v_coords.min()
-        initial_guess=(h, a) 
+        d=0
+        initial_guess=(h, a, b) 
         #updated_initial_guess = update_c(initial_guess, h_coords, v_coords, weights)
-        params, covariance = curve_fit(func1, h_coords, v_coords, p0=initial_guess, sigma=weights)
+        params, covariance = curve_fit(func1, h_coords, v_coords, p0=initial_guess, sigma=weights, bounds=bounds)
+        print('***COVARIANCE: ***')
+        np.linalg.cond(covariance)
         ##popt, _ = curve_fit(func, h_coords, v_coords, p0=(10, 80, -180, 2500, 2500), sigma=weights)
         #params, covariance = curve_fit(func, h_coords, v_coords, p0=initial_guess, sigma=weights)
         
@@ -196,14 +213,22 @@ def approx_poly(h_coords, v_coords):
         """ 
         # Extract the optimal parameter
         if len(params) == 4:
-            h_optimal_init, a_optimal_init, c_optimal_init, d_optimal_init = params
+            print('***4PARAMETERS***')
+            h_optimal_init, a_optimal_init, b_optimal_init, d_optimal_init = params #, c_optimal_init, d_optimal_init = params
             print(h_optimal_init)
             print(a_optimal_init)
-            #print(b_optimal)
-            print(c_optimal_init)
+            print(b_optimal_init)
+            #print(c_optimal_init)
             print(d_optimal_init)
             #print(e_optimal)
-            h_optimal, a_optimal, c_optimal, d_optimal = params
+            h_optimal, a_optimal, b_optimal, d_optimal = params
+        elif len(params) == 5:
+            print('***5PARAMETERS***')
+            h_optimal, a_optimal, b_optimal, c_optimal, d_optimal = params
+        elif len(params) == 3:
+            print('****3PARAMETERS****')
+            h_optimal, a_optimal, b_optimal = params
+            print(f"a_optimal: {a_optimal}")
         elif len(params) == 2:
             h_optimal, a_optimal = params
             print(h_optimal)
@@ -251,15 +276,19 @@ def approx_poly(h_coords, v_coords):
             
         
         # Generate x values using the fitted function
-        h_values = np.linspace(min(h_coords), max(h_coords), 100)
+        h_values = np.linspace(min(h_coords)-10, max(h_coords), 100)
         #v_fitted = func(h_values, a_optimal, b_optimal, c_optimal, d_optimal, e_optimal)
         #v_fitted = func(h_values, h_optimal, a_optimal, c_optimal, d_optimal)
         if len(params) == 2:
             v_fitted = func1(h_values, h_optimal, a_optimal)
+        elif len(params) == 3:
+            v_fitted = func1(h_values, h_optimal, a_optimal, b_optimal)
         elif len(params) == 4:
-            v_fitted = func(h_values, h_optimal, a_optimal, c_optimal, d_optimal)
+            v_fitted = func(h_values, h_optimal, a_optimal, b_optimal, d_optimal)
+        elif len(params) == 5:
+            v_fitted = func(h_values, h_optimal, a_optimal, b_optimal, c_optimal, d_optimal)
         else:
-            print('userdeferror: v_fitted not calculated, number of parameters != number of function variables')
+            print(f"userdeferror: v_fitted not calculated, number of parameters, {len(params)}!= number of function variables")
 
         #v_fitted = func2(h_values, a_optimal, c_optimal, d_optimal)
         """
