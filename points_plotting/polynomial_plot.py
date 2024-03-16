@@ -113,6 +113,24 @@ def constraint_func(params, x_endpoints, y_endpoints):
 def residual(params, x, y):
     return func(params[:5], x) - y
 """
+def determine_max_side(v_coords):
+    """
+    Determine which side of the center axis a given index is on.
+
+    Parameters:
+        v_coords (array-like): Vertical coordinates.
+
+    Returns:
+        side (str): Side of the y-axis ('left' or 'right').
+    """
+    max_index = np.argmax(v_coords)
+
+    if max_index < len(v_coords) / 2:
+        side = 'left'
+    else:
+        side = 'right'
+    return side
+
 
 def update_c(initial_guess, h_coords, v_coords, weights):
     # Extract initial guess parameters
@@ -189,9 +207,20 @@ def approx_poly(h_coords, v_coords):
         lower_bound_h = intersection_height / lower_bound_a
         print(f"Intersection height: {lower_bound_h}")
 
+        # BOUNDS FOR B
+        side = determine_max_side(v_coords)
+        if side == 'left':
+            lower_bound_b = -np.inf
+            upper_bound_b = 0
+        else:
+            lower_bound_b = 0
+            upper_bound_b = np.inf
+        
+        print(f"Side: {side}\nLower bound b: {lower_bound_b}\nUpper bound b: {upper_bound_b}")
+        
 
-        lower_bounds = [lower_bound_h, lower_bound_a, -np.inf]#, -np.inf, -np.inf]
-        upper_bounds = [np.inf, upper_bound_a, np.inf]#, np.inf, np.inf]  
+        lower_bounds = [lower_bound_h, lower_bound_a, lower_bound_b]#, -np.inf, -np.inf]
+        upper_bounds = [np.inf, upper_bound_a, upper_bound_b]#, np.inf, np.inf]  
         #upper_bounds = [upper_bound_h, upper_bound_a, upper_bound_b, upper_bound_c, upper_bound_d]
         bounds = (lower_bounds, upper_bounds)
         desired_width = np.abs(h_coords[-1] - h_coords[0])  # Desired width for the function
