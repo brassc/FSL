@@ -57,6 +57,29 @@ def func1(x, h, a, b, c=0, d=0):
     with np.errstate(invalid='ignore'):
         y = h * np.sqrt(np.maximum(0, a**2 - (x-c)**2))*(1+(b/a)*x)+d
     return y
+
+
+def find_intersection_height(h_coords, v_coords):
+    """
+    Find the height at which a linear interpolation between two h_coords either side of the y axis cuts the y axis.
+
+    Parameters:
+        h_coords (array-like): Horizontal coordinates.
+        v_coords (array-like): Vertical coordinates.
+
+    Returns:
+        intersection_height (float): Height at which the linear interpolation intersects the y-axis.
+    """
+    # Find indices of the points closest to the y-axis
+    left_index = np.abs(h_coords).argmin()
+    right_index = len(h_coords) - np.abs(h_coords[::-1]).argmin() - 2
+    print(f"Left index: {left_index}\nRight index: {right_index}")
+
+    # Perform linear interpolation between the points
+    slope = (v_coords[right_index] - v_coords[left_index]) / (h_coords[right_index] - h_coords[left_index])
+    intersection_height = v_coords[left_index] - slope * h_coords[left_index]
+
+    return intersection_height
 """
 # Define a cost function that calculates the total squared error
 def cost_function(params, h_coords, v_coords):
@@ -135,8 +158,8 @@ def approx_poly(h_coords, v_coords):
 
     # Define the weights
     weights = np.ones_like(h_coords)
-    weights[0] = 5 # Increase weight for the first point
-    weights[-1] = 5  # Increase weight for the last point
+    weights[0] = 1 # Increase weight for the first point
+    weights[-1] = 1  # Increase weight for the last point
     print(h_coords[0])
 
     ## Calculate the mean of the first and last entries
@@ -156,9 +179,18 @@ def approx_poly(h_coords, v_coords):
         # Bounds for parameters
         # Setting bounds for each parameter separately
         #lower_bounds = [lower_bound_h, lower_bound_a, lower_bound_b, lower_bound_c, lower_bound_d]
+        # BOUNDS FOR A
         lower_bound_a = np.abs(h_coords[-1])
         upper_bound_a = np.abs(h_coords[0]*2 + 20)
-        lower_bounds = [-np.inf, lower_bound_a, -np.inf]#, -np.inf, -np.inf]
+        print(f"Lower bound a: {lower_bound_a} \nUpper bound a: {upper_bound_a}")
+
+        # BOUNDS FOR H
+        intersection_height = find_intersection_height(h_coords, v_coords)
+        lower_bound_h = intersection_height / lower_bound_a
+        print(f"Intersection height: {lower_bound_h}")
+
+
+        lower_bounds = [lower_bound_h, lower_bound_a, -np.inf]#, -np.inf, -np.inf]
         upper_bounds = [np.inf, upper_bound_a, np.inf]#, np.inf, np.inf]  
         #upper_bounds = [upper_bound_h, upper_bound_a, upper_bound_b, upper_bound_c, upper_bound_d]
         bounds = (lower_bounds, upper_bounds)
@@ -166,7 +198,7 @@ def approx_poly(h_coords, v_coords):
         print(f"Desired width: {desired_width}")
         # If width is specified, use a constraint for parameter 'a'
         
-        print(f"Bounds: {lower_bound_a}")
+
         # Perform curve fitting
         # initial_guess = (10, 80, -180, 2500, 2500)
         h = v_coords.max()
@@ -228,7 +260,10 @@ def approx_poly(h_coords, v_coords):
         elif len(params) == 3:
             print('****3PARAMETERS****')
             h_optimal, a_optimal, b_optimal = params
-            print(f"a_optimal: {a_optimal}")
+            print(f"h_optimal (height at x=0): {h_optimal}")
+            print(f"a_optimal (width): {a_optimal}")
+            print(f"b_optimal (skew): {b_optimal}")
+            
         elif len(params) == 2:
             h_optimal, a_optimal = params
             print(h_optimal)
