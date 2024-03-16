@@ -340,8 +340,8 @@ def test_fun(patient_id, patient_timepoint):
     plt.plot(h_values, v_fitted, label='Fitted curve', color='red')
     plt.scatter(ctr_h_coords[0], tr_v_coords[0], c='black')
     plt.scatter(ctr_h_coords[-1], tr_v_coords[-1], c='orange', label='h[-1], v[-1]')
-    plt.xlabel('y')
-    plt.ylabel('x')
+    plt.xlabel('y anatomical')
+    plt.ylabel('x anatomical')
 
     
     #plt.xlim(0)
