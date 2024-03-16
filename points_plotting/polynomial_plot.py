@@ -311,7 +311,7 @@ def approx_poly(h_coords, v_coords):
             
         
         # Generate x values using the fitted function
-        h_values = np.linspace(min(h_coords)-10, max(h_coords), 100)
+        h_values = np.linspace(min(h_coords), max(h_coords), 200)
         #v_fitted = func(h_values, a_optimal, b_optimal, c_optimal, d_optimal, e_optimal)
         #v_fitted = func(h_values, h_optimal, a_optimal, c_optimal, d_optimal)
         if len(params) == 2:
@@ -357,7 +357,7 @@ def approx_poly(h_coords, v_coords):
         plt.show()
         """
 
-        return a_optimal, h_values, v_fitted
+        return h_values, v_fitted, h_optimal, a_optimal, b_optimal
     except RuntimeError:
         print("Curve fitting failed. Try adjusting parameters or check your data.")
 
