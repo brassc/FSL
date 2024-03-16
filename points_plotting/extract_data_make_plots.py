@@ -332,7 +332,7 @@ def test_fun(patient_id, patient_timepoint):
     print(tr_h_coords, tr_v_coords)
     #Centered coords:
     ctr_h_coords, c_val = center(tr_h_coords)
-    a_optimal, h_values, v_fitted = approx_poly(ctr_h_coords, tr_v_coords)
+    h_values, v_fitted, h_optimal, a_optimal, b_optimal = approx_poly(ctr_h_coords, tr_v_coords)
 
     # Plot the original data points and the fitted curve
     #plt.scatter(ya_coords, xa_coords, label='Original data points', color='r', s=2)
@@ -342,7 +342,11 @@ def test_fun(patient_id, patient_timepoint):
     plt.scatter(ctr_h_coords[-1], tr_v_coords[-1], c='orange', label='h[-1], v[-1]')
     plt.xlabel('y')
     plt.ylabel('x')
+
+    
     #plt.xlim(0)
+    legend_text = f'h_optimal: {h_optimal:.2f}\na_optimal: {a_optimal:.2f}\nb_optimal: {b_optimal:.2f}'
+    plt.text(0.95, 1.02, legend_text, transform=plt.gca().transAxes)
     plt.ylim(0)
     plt.title('Fitting function of form y=h sqrt[a^2-x^2]')
     plt.legend()
