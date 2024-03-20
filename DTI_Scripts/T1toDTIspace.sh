@@ -137,19 +137,19 @@ fi
 #B0_MASK="${working_directory}/${patient_id}_${patient_timepoint}_nodif_brain_mask.nii.gz"
 LOG_FILE="${working_directory}/${patient_id}_${patient_timepoint}_T1toDTI_reg_log.txt"
 DTIFIT_LOG="${working_directory}/${patient_id}_${patient_timepoint}_dtifit.log"
-OUTPUT_IMAGE="$working_directory/registered_${patient_timepoint}_T1_BET_to_DWI.nii.gz"
-OUTPUT_MATRIX="$working_directory/registered_${patient_timepoint}_T1_BET_to_DWI_mat.mat"
-T1XFM_BET_MASK="$working_directory/registered_${patient_timepoint}_T1_BET_to_DWI_mask.nii.gz"
+OUTPUT_IMAGE="$working_directory/${patient_id}_${patient_timepoint}_T1_BET_DWIspace.nii.gz"
+OUTPUT_MATRIX="$working_directory/${patient_id}_${patient_timepoint}_T1_BET_DWIspace_mat.mat"
+T1XFM_BET_MASK="$working_directory/${patient_id}_${patient_timepoint}_T1_BET_DWIspace_mask.nii.gz"
 echo "T1XFM_BET_MASK: $T1XFM_BET_MASK"
-DTI_BET_IMAGE="$working_directory/registered_${patient_timepoint}_DWI_BET_image.nii.gz"
-DTIFIT_OUTPUT="$working_directory/registered_${patient_timepoint}_DTIFIT_output.nii.gz"
+DTI_BET_IMAGE="$working_directory/${patient_id}_${patient_timepoint}_DWI_BET_image.nii.gz"
+DTIFIT_OUTPUT="$working_directory/${patient_id}_${patient_timepoint}_DTIFIT_output"
 
 # Register T1_BET to DTI_data
 echo -e "\nRegistering T1_BET to DTI_DATA to create T1XFM_BET\n"
 flirt -in $T1_BET -ref $DTI_DATA -out $OUTPUT_IMAGE -omat $OUTPUT_MATRIX -dof 6
 
 # Create binary mask from T1XFM_BET
-echo -e "Creating binary mask from output image T1XFM_BET\n"
+echo -e "\nCreating binary mask from output image T1XFM_BET\n"
 fslmaths $OUTPUT_IMAGE -bin $T1XFM_BET_MASK
 
 # multiply T1 BET xfm by DTI_DATA to get DTI_BET image
@@ -161,6 +161,9 @@ echo "Performing dtifit using DTI_BET..."
 dtifit -k $DTI_BET_IMAGE -o $DTIFIT_OUTPUT -m $T1XFM_BET_MASK -r $BVECS -b $BVALS > "$DTIFIT_LOG" 2>&1
 echo -e "dtifit output written to log file $DTIFIT_LOG\n"
 echo "***SCRIPT COMPLETE***"
+
+fsleyes "$OUTPUT_IMAGE" "${DTIFIT_OUTPUT}_FA.nii.gz" "${DTIFIT_OUTPUT}_V1.nii.gz"
+
 
 
 
