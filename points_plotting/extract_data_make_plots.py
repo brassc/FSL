@@ -204,6 +204,79 @@ def extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slic
 
     return 0
 
+
+#def autoextract currently broken
+def autoextract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected=0, scatter=False, deformed_order=2):
+    # loads or creates points directory path and associated points files based on patient ID and timepoint
+    directory_path = ensure_directory_exists(patient_id, patient_timepoint)
+
+    poi_log_file_path=f"{directory_path}/points.csv"#'/home/cmb247/repos/FSL/points_plotting/points.csv'
+    baseline_poi_log_file_path=f"{directory_path}/baseline_points.csv"#'/home/cmb247/repos/FSL/points_plotting/baseline_points.csv'
+
+    poi_voxels_file_path=f"{directory_path}/points_voxel_coords.csv"#'/home/cmb247/repos/FSL/points_plotting/points_voxel_coords.csv'
+    baseline_poi_voxels_file_path=f"{directory_path}/baseline_points_voxel_coords.csv"#'/home/cmb247/repos/FSL/points_plotting/baseline_points_voxel_coords.csv'
+
+    img, save_directory = load_nifti(nifti_file_path)
+
+
+    # get the affine transformation matrix 
+    affine=img.affine
+
+    # Get image data
+    data = img.get_fdata()
+
+    ## SELECT AND PLOT BASE SLICE
+
+    if isinstance(slice_selected, np.ndarray):
+        # Do something if slice_selected is an array
+        print("slice_selected is a numpy array:", slice_selected)
+        # Define the scanner (RAS, anatomical, imaging space) coordinates or voxel location
+        scanner_coords = slice_selected 
+        #voxel loc: 91 119 145
+
+        # Inverse affine to convert RAS/anatomical coords to voxel coords
+        inv_affine=np.linalg.inv(img.affine)
+
+        # convert RAS/anatomical coords to voxel coords
+        voxel_coords=inv_affine.dot(scanner_coords)[:3]
+
+        # Extract the axial slice at the z voxel index determined from the scanner coordinates
+        z_index=int(voxel_coords[2])
+    else:
+        # Do something else if slice_selected is not an array
+        print("slice_selected is an integer:", slice_selected)
+        z_index=int(slice_selected)
+
+    
+    print(z_index)
+    slice_data=data[:,:, z_index]
+
+    # plot the axial slice
+    plt.imshow(slice_data.T, cmap='gray', origin='lower')
+
+    ## POLYNOMIAL AND MIRROR LINE FITTING FROM POI
+
+    # Deformed side
+    print('deformed side fit:')
+    poly_func, x_values, y_values, xa_coords, ya_coords = create_polynomial_from_csv(poi_log_file_path, affine, order=deformed_order)
+
+    #Baseline side
+    print('baseline side fit:')
+    __, xb_values, yb_values, xb_coords, yb_coords = create_polynomial_from_csv(baseline_poi_log_file_path, affine, order=2)
+
+    #Find mirrorline (average of first and last points in xa and xb respectively)
+    m, c, Y = get_mirror_line(yb_coords, xa_coords, xb_coords)
+    yl_values = np.linspace(Y[0]+50, Y[-1]-65, 100) #extend Y fit line
+    xl_values = m * yl_values + c # x values and y values for mirrorline plot
+
+    # Reflection of baseline side
+    xr_coords = reflect_across_line(m, c, xb_coords, yb_coords)
+    print('reflected baseline fit:')
+    __, xr_values, yr_values=fit_poly(yb_coords, xr_coords, order=2)
+
+    
+
+
 def rt_data(patient_id, patient_timepoint):
     data_readout_loc = f"points_plotting/data_readout/{patient_id}_{patient_timepoint}"
     
