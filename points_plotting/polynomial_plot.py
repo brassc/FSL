@@ -211,10 +211,12 @@ def approx_poly(h_coords, v_coords):
         side = determine_max_side(v_coords)
         if side == 'left':
             lower_bound_b = -np.inf
-            upper_bound_b = 0
+            upper_bound_b = -0.2
+            b=upper_bound_b
         else:
             lower_bound_b = 0
             upper_bound_b = np.inf
+            b=lower_bound_b
         
         print(f"Side: {side}\nLower bound b: {lower_bound_b}\nUpper bound b: {upper_bound_b}")
         
@@ -234,7 +236,7 @@ def approx_poly(h_coords, v_coords):
         #a = h_coords.max() - h_coords.min()
         a = h_coords[0] - h_coords[-1]
         c = a / 2 # middle value
-        b = 0
+        b = b #as above in if statement 
         c=0
         d = v_coords.min()
         d=0
