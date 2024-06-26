@@ -107,9 +107,16 @@ def auto_npz_from_points(patient_id, patient_timepoint, nifti_file_path, slice_s
 
     ## SAVE ARRAYS TO .npz FILES
     #save_auto_arrays_to_directory(patient_id, patient_timepoint, xa_coords, ya_coords, xb_coords, yb_coords, xr_coords)
+
+
+    print(f"xa_coords:{xa_coords}")
+    print(f"ya_coords:{ya_coords}")
     
-    data_readout_dir = ensure_directory_exists(patient_id, patient_timepoint)
+    data_readout_dir = f"/home/cmb247/repos/FSL/points_plotting/data_readout/{patient_id}_{patient_timepoint}"
     print(f"saving arrays to directory {data_readout_dir}")
+
+
+    
     save_arrays_to_directory(data_readout_dir, 'auto_deformed_array.npz',
                                 xx_coords=xa_coords, yy_coords=ya_coords)
     save_arrays_to_directory(data_readout_dir, 'auto_baseline_array.npz', 
