@@ -21,16 +21,4 @@ def save_arrays_to_directory(directory, filename, **arrays):
     # Save the arrays to the specified file
     np.savez(filepath, **arrays)
     
-     
-    # Print the contents of each array
-    print(f"Saved arrays to {filepath}:")
-    for array_name, array_data in arrays.items():
-        print(f"{array_name}:")
-        if isinstance(array_data, np.lib.polynomial.poly1d):
-            # Print polynomial coefficients
-            print("Coefficients:", array_data.coefficients)
-        else:
-            # Print array data
-            print(array_data)
-    
     return 0
