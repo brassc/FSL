@@ -12,6 +12,7 @@ print(sys.path)
 from extract_data_make_plots import extract_data_make_plots
 from automatic_boundary import auto_boundary_detect
 from auto_npz_from_points import auto_npz_from_points
+from load_np_data import load_auto_data_readout
 
 # Patient info
 patient_id='19978'
@@ -25,6 +26,11 @@ slice_selected=np.array([2.641497, -2.877373, -12.73399,1]) # Scanner coordinate
 auto_npz_from_points(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=False)
 auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset=120, array_save_name='auto_boundary_deformed_array.npz') #overwrite manual .npz deformed array
 auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset=50, array_save_name='auto_boundary_baseline_array.npz')
+
+## CREATE SPLINES FOR BOTH DATA? FIT ELLIPSE NOW? s
+
+
+
 #extract data again using auto extracted points
 #extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=False, deformed_order=2)
 
