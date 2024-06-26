@@ -20,7 +20,7 @@ from reorient import switch_sign
 from load_np_data import load_data_readout
 from translate_rotate import move
 from translate_rotate import center
-from automatic_boundary import auto_boundary_detect
+#from automatic_boundary import auto_boundary_detect
 
 
 

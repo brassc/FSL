@@ -4,9 +4,10 @@
 
 import numpy as np
 import os
+import sys
 #import matplotlib.pyplot as plt
 #import nibabel as nib
-
+print(sys.path)
 #user defined functions
 from extract_data_make_plots import extract_data_make_plots
 from automatic_boundary import auto_boundary_detect
@@ -20,12 +21,12 @@ nifti_file_path ='/home/cmb247/Desktop/Project_3/BET_Extractions/19978/T1w_time1
 bet_mask_file_path="/home/cmb247/Desktop/Project_3/BET_Extractions/19978/T1w_time1_registered_scans/acute_restored_bet_mask-f0.5-R.nii.gz"
 slice_selected=np.array([2.641497, -2.877373, -12.73399,1]) # Scanner coordinates
 #voxel loc: 91 119 145
-extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=False, deformed_order=2)
+#extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=False, deformed_order=2)
 auto_npz_from_points(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=False)
-auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset=120, array_save_name='deformed_arrays.npz') #overwrite manual .npz deformed array
-#auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset=50, array_save_name='baseline_arrays.npz')
+auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset=120, array_save_name='auto_boundary_deformed_array.npz') #overwrite manual .npz deformed array
+auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset=50, array_save_name='auto_boundary_baseline_array.npz')
 #extract data again using auto extracted points
-extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=False, deformed_order=2)
+#extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=False, deformed_order=2)
 
 ## x_offset VARIABLE SETS X DIMENSION FOR ZOOMED IN PLOT WINDOW
 """

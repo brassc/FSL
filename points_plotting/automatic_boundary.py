@@ -7,7 +7,7 @@ import pandas as pd
 
 from make_patient_dir import ensure_directory_exists
 from load_nifti import load_nifti
-from load_np_data import load_data_readout
+from load_np_data import load_auto_data_readout
 from save_variables import save_arrays_to_directory
 
 
@@ -24,9 +24,9 @@ bet_mask_file_path="/home/cmb247/Desktop/Project_3/BET_Extractions/19978/T1w_tim
 def load_boundary_detection_features(patient_id, patient_timepoint, bet_mask_file_path):
     directory_path = ensure_directory_exists(patient_id, patient_timepoint)
     data_readout_loc = f"data_readout/{patient_id}_{patient_timepoint}"
-    xa_coords, ya_coords, _, _, _ = load_data_readout(data_readout_loc, 'auto_deformed_array.npz')
-    xb_coords, yb_coords, _, _, _ = (data_readout_loc, 'auto_baseline_array.npz')
-    xr_coords, yb_coords, _, _, _ = load_data_readout(data_readout_loc, 'auto_reflected_arrays.npz')
+    xa_coords, ya_coords = load_auto_data_readout(data_readout_loc, 'auto_deformed_array.npz')
+    xb_coords, yb_coords = load_auto_data_readout(data_readout_loc, 'auto_baseline_array.npz')
+    xr_coords, yb_coords = load_auto_data_readout(data_readout_loc, 'auto_reflected_array.npz')
 
         
     mask_nifti = nib.load(bet_mask_file_path)
