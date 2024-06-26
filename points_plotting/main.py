@@ -10,6 +10,7 @@ import os
 #user defined functions
 from extract_data_make_plots import extract_data_make_plots
 from automatic_boundary import auto_boundary_detect
+from auto_npz_from_points import auto_npz_from_points
 
 # Patient info
 patient_id='19978'
@@ -20,6 +21,7 @@ bet_mask_file_path="/home/cmb247/Desktop/Project_3/BET_Extractions/19978/T1w_tim
 slice_selected=np.array([2.641497, -2.877373, -12.73399,1]) # Scanner coordinates
 #voxel loc: 91 119 145
 extract_data_make_plots(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=False, deformed_order=2)
+auto_npz_from_points(patient_id, patient_timepoint, nifti_file_path, slice_selected, scatter=False)
 auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset=120, array_save_name='deformed_arrays.npz') #overwrite manual .npz deformed array
 #auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset=50, array_save_name='baseline_arrays.npz')
 #extract data again using auto extracted points
