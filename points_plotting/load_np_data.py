@@ -14,3 +14,14 @@ def load_data_readout(data_readout_loc, filename):
 
     # return them
     return poly_func, x_values, y_values, xx_coords, yy_coords
+
+def load_auto_data_readout(data_readout_loc, filename):
+    # load data
+    file = f"{data_readout_loc}/{filename}"
+    data = np.load(file)
+    # access arrays
+    xx_coords = data['xx_coords']
+    yy_coords = data['yy_coords']
+
+    # return them
+    return xx_coords, yy_coords
