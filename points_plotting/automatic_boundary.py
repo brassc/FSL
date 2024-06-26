@@ -9,7 +9,6 @@ from make_patient_dir import ensure_directory_exists
 from load_nifti import load_nifti
 from load_np_data import load_data_readout
 from save_variables import save_arrays_to_directory
-from auto_npz_from_points import auto_npz_from_points
 
 
 # loads or creates points directory path and associated points files based on patient ID and timepoint
