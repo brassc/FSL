@@ -57,6 +57,8 @@ echo "${directory}${patient_timepoint}_restored_bet_mask${bet_p}"
 #slice_to_extract='89' #'145-$cut_above
 #fslroi ${directory}bet$bet_p ${directory}slice${bet_p}.nii.gz 0 -1 0 -1 $slice_to_extract 1
 
+fsleyes "${directory}${patient_timepoint}_restored_bet_mask${bet_p}" "${directory}${patient_timepoint}_bet${bet_p}" "${input_image}"
+
 
 chmod +x slice_bet_script.sh
 
