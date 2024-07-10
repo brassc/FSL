@@ -8,5 +8,8 @@ Pipeline:
 - bash script: functrial1.sh
 
 2. FSL flirt to register bias corrected images to first time point available for each patient
+- output registered images to `T1_time1_bias_corr_registered_scans` directory.
+- log file (`bias_reg_log.txt`) located at `BET_Extractions` directory level
+- bash script: t1mulregbiascorr.sh
 
-
+Note: absolute paths specified so runs from repo location
