@@ -17,7 +17,16 @@ log_file="${directory}bias_reg_log.txt"
 # Loop through each subdirectory
 for subdirectory in "${subdirectories[@]}"; do
     input_directory="${directory}${subdirectory}/OG_Scans_bias_corr"
+    echo "input directory is: $input_directory"
     output_directory="${directory}${subdirectory}/${registration_space_name}_registered_scans"
+
+    # create bias correction output directory OG_Scans_bias_corr
+    if [ -d $output_directory ]; then
+        echo "Output directory ${output_directory} exists."
+    else
+        mkdir "${output_directory}"
+        echo "Output directory ${output_directory} created."
+    fi
 
     # Initialize variable to hold the name of the earliest file
     earliest_file=""
