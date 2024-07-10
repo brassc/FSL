@@ -106,7 +106,10 @@ chmod +x functrial1.sh
 # Perform_bias_correction "19978" "fast"
 
 # Arrays of patient IDs and timepoints
-patient_ids=("19978" "12345" "67890")  # Add more patient IDs as needed
+patient_ids=("19978" "12519" "13198" "13782" "13990" 
+"14324" "16577" "16754" "19344" "19575" "19978" 
+"19981" "20174" "20651" "20942" "21221" 
+"22725" "22785" "22875" "23348"  )  # Add more patient IDs as needed
 timepoints=("ultra-fast" "fast" "acute" "3mo" "6mo" "12mo" "24mo")
 
 # Iterate over each patient ID and timepoint
