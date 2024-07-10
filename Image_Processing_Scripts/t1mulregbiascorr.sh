@@ -21,6 +21,14 @@ for subdirectory in "${subdirectories[@]}"; do
 
     # Initialize variable to hold the name of the earliest file
     earliest_file=""
+    
+    # VERIFY INPUT DIR EXISTS
+    if [ ! -f "$input_directory" ]; then
+        echo "Error: input_directory ${input_directory} does not yet exist. Terminating program."
+        echo "Error: input_directory ${input_directory} does not yet exist. Terminating program." >> $log_file
+        exit 2
+    fi
+    
 
     # Loop through each keyword in order of priority
     for keyword in "${keywords[@]}"; do
@@ -52,15 +60,18 @@ for subdirectory in "${subdirectories[@]}"; do
         # Define the output path for the registered scan
         output_scan="$output_directory/${registration_space_name}_${scan_name}_registered.nii.gz"
 
-    if [ -f "$output_scan" ]; then
-        echo "Output scan already exists in $output_directory. Skipping flirt command."
-    else
-        # Perform registration using flirt or fnirt (adjust parameters as needed)
-	echo "Completing registration for $input_scan to $standard_template" >> $log_file
-        flirt -in "$input_scan" -ref "$standard_template" -out "$output_scan" -omat "$output_directory/${scan_name}_registration.mat" >> $log_file
+        if [ -f "$output_scan" ]; then
+            echo "Output scan already exists in $output_directory. Skipping flirt command."
+            echo "Output scan already exists in $output_directory. Skipping flirt command." >> $log_file
+        else
+            # Perform registration using flirt or fnirt (adjust parameters as needed)
+	    echo "Completing registration for $input_scan to $standard_template" >> $log_file
+            flirt -in "$input_scan" -ref "$standard_template" -out "$output_scan" -omat "$output_directory/${scan_name}_registration.mat" >> $log_file
+        fi
     done
 
     echo "Registration complete for subdirectory $subdirectory."
+    echo "Registration complete for subdirectory $subdirectory." >> $log_file
 done
 
 echo "All registrations complete."
