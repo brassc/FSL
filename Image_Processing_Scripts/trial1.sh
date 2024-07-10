@@ -7,11 +7,12 @@ patient_id="19978"
 input_directory="/home/cmb247/Desktop/Project_3/BET_Extractions/19978/OG_Scans/" # make sure to put / at end of directory
 timepoint="fast"
 input_basename="T1w_verio_P00030_19978_fast_20111027_U-ID22723.nii.gz"
+input_basename_without_extension="${input_basename%.*}"
 input_image="${input_directory}${input_basename}"
 
 # Define output parameters
 output_directory="/home/cmb247/Desktop/Project_3/BET_Extractions/19978/OG_Scans_bias_corr/" # make sure to put / at end of directory
-output_basename="${input_basename}_bias_corr.nii.gz"
+output_basename="${input_basename_without_extension}_bias_corr.nii.gz"
 output_image="${output_directory}${output_basename}"
 
 
