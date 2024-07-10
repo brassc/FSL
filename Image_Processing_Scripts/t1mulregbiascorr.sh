@@ -19,25 +19,23 @@ for subdirectory in "${subdirectories[@]}"; do
     input_directory="${directory}${subdirectory}/OG_Scans_bias_corr"
     echo "input directory is: $input_directory"
     output_directory="${directory}${subdirectory}/${registration_space_name}_registered_scans"
+    
+    # VERIFY INPUT DIR EXISTS
+    if [ ! -d $input_directory ]; then
+        echo "Error: input_directory ${input_directory} does not yet exist. Terminating program."
+        echo "Error: input_directory ${input_directory} does not yet exist. Terminating program." >> $log_file
+        exit 2
+    fi
+    
 
-    # create bias correction output directory OG_Scans_bias_corr
-    if [ -d $output_directory ]; then
-        echo "Output directory ${output_directory} exists."
-    else
+    # CREATE OUTPUT DIR OG_Scans_bias_corr (if necessary)
+    if [ ! -d $output_directory ]; then
         mkdir "${output_directory}"
         echo "Output directory ${output_directory} created."
     fi
 
     # Initialize variable to hold the name of the earliest file
     earliest_file=""
-    
-    # VERIFY INPUT DIR EXISTS
-    if [ ! -f "$input_directory" ]; then
-        echo "Error: input_directory ${input_directory} does not yet exist. Terminating program."
-        echo "Error: input_directory ${input_directory} does not yet exist. Terminating program." >> $log_file
-        exit 2
-    fi
-    
 
     # Loop through each keyword in order of priority
     for keyword in "${keywords[@]}"; do
@@ -49,7 +47,7 @@ for subdirectory in "${subdirectories[@]}"; do
         # Select the first file as the earliest (assuming any file matches the criteria)
         for file in $files; do
           earliest_file=$file
-          echo "$earliest_file"
+          #echo "$earliest_file"
           break 2 # Exit both loops since the earliest file is found
         done
       fi
@@ -57,24 +55,23 @@ for subdirectory in "${subdirectories[@]}"; do
      
     # Define the T1 template path 
     standard_template=$earliest_file
-	echo "$standard_template"
-    # Make sure the output directory exists; if not, create it
-    mkdir -p "$output_directory"
+    echo "Template set to: $standard_template"
+   
 
-    # Loop through the brain scans in the input directory
-    for input_scan in "$input_directory"/*.nii.gz; do
+    # Loop through the brain scans in the input directory ENDING IN restore.nii.gz
+    for input_scan in "$input_directory"/*restore.nii.gz; do 
         # Extract the scan filename without the path and extension
         scan_name=$(basename "${input_scan%.nii.gz}")
 
         # Define the output path for the registered scan
         output_scan="$output_directory/${registration_space_name}_${scan_name}_registered.nii.gz"
-
         if [ -f "$output_scan" ]; then
             echo "Output scan already exists in $output_directory. Skipping flirt command."
             echo "Output scan already exists in $output_directory. Skipping flirt command." >> $log_file
         else
             # Perform registration using flirt or fnirt (adjust parameters as needed)
-	    echo "Completing registration for $input_scan to $standard_template" >> $log_file
+            echo "Completing registration for $input_scan to $standard_template..."
+	    echo "Completing registration for $input_scan to $standard_template..." >> $log_file
             flirt -in "$input_scan" -ref "$standard_template" -out "$output_scan" -omat "$output_directory/${scan_name}_registration.mat" >> $log_file
         fi
     done
