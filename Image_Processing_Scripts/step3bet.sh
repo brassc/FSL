@@ -105,7 +105,7 @@ input_image="${input_directory}${input_basename}"
 echo "Input image: $input_image"
 
 # Define output parameters
-output_directory="/home/cmb247/Desktop/Project_3/BET_Extractions/$patient_id/T1w_time1_bias_corr_registered_scans/" # make sure to put / at end of directory
+output_directory="$input_directory/BET_Output/" # make sure to put / at end of directory
 output_basename="${input_basename_without_extension}_bet_rbc_${bet_params_filename}.nii.gz"
 mask_output_basename="${input_basename_without_extension}_bet_mask_rbc_${bet_params_filename}.nii.gz"
 output_image="${output_directory}${output_basename}"
@@ -120,17 +120,19 @@ fi
 
 echo "Checking if output file exists..."
 
-## CHECK IF OUTPUT FILE ALREADY EXISTS
+# Check output directory exists, if not make it
+mkdir -p "$output_directory" 
+
+## Check if output file already exists
 if [ -f "$output_image" ]; then
-    echo "Output file ${output_image} already exists. Skipping bet."
+    echo "Output file ${output_image} already exists. Skipping BET."
     exit 0
 else
     "Output file $output_image does not exist. Proceeding with BET"
 fi
 
-# List files in the output directory for verification
-echo "Listing files in output directory:"
-ls -l "$output_directory"
+echo "Input dir: $input_directory"
+echo "Output dir: $output_directory"
 
 ## EITHER THIS: (BET without neck)
 # 1. Cut neck
