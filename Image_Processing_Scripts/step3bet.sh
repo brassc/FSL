@@ -6,7 +6,7 @@ module load fsl
 
 # Function to display usage
 usage() {
-    echo "Usage: $0 -p PATIENT_ID -t TIMEPOINT -b BET_PARAMS"
+    echo "Usage: $0 -p PATIENT_ID -t TIMEPOINT -b BET_PARAMS [-c NECK_CUT]"
     echo "  -p PATIENT_ID    : Patient ID"
     echo "  -t TIMEPOINT     : Timepoint (e.g., fast)"
     echo "  -b BET_PARAMS    : BET parameters (e.g., '-f 0.70 -R')"
@@ -15,7 +15,7 @@ usage() {
 }
 
 # Parse input arguments
-while getopts ":p:t:b:" opt; do
+while getopts ":p:t:b:c:" opt; do
     case $opt in
         p) patient_id="$OPTARG" ;;
         t) timepoint="$OPTARG" ;;
@@ -33,18 +33,12 @@ fi
 
 # Set default neck cut if not provided
 if [ -z "$neck_cut" ]; then
-    neck_cut='0'
+    neck_cut=0
 fi
 
 
-
-## Define patient info input parameters
-#patient_id="19978"
-#timepoint="fast"
-
-# Define BET parameters
-#bet_params="-f 0.70 -R"
-bet_params_filename=$(echo "$bet_params" | tr ' ' '_') # remove spaces so bet_params can be used in filename
+# remove spaces so bet_params can be used in filename
+bet_params_filename=$(echo "$bet_params" | tr ' ' '_') 
 
 ## Define remaining input parameters
 input_directory="/home/cmb247/Desktop/Project_3/BET_Extractions/$patient_id/T1w_time1_bias_corr_registered_scans/"
@@ -97,18 +91,30 @@ perform_bet_and_crop_neck() {
     # 1. Cut neck
     echo "crop neck using fslroi..."
     fslroi $input_image $neckcut_image 0 -1 0 -1 $neck_cut -1
-    echo "fslroi neck crop complete"
+    echo "fslroi neck crop complete, neck cut: $neck_cut"
     echo "Performing BET on cropped image..." 
     bet $neckcut_image $output_image $bet_params
     echo "BET complete"
     fslmaths $output_image -bin $output_mask
     # 4. Delete neckcut image
-    echo "Deleting image $neckcut_image"
+    echo "Deleting temp file $neckcut_image"
     rm $neckcut_image
-    echo "$patient_id, $timepoint, $bet_params, biascorr=YES" >> $log_file
 }
 
+# Function to write or update log
+write_log() {
+    log_entry="$patient_id    $timepoint    $bet_params"
+    # Append neck_cut only if it is not equal to 0
+    [ "$neck_cut" -ne 0 ] && log_entry+="    crop $neck_cut"
 
+    if grep -q "^$patient_id    $timepoint" "$log_file"; then
+        # Entry exists, update it
+        sed -i "/^$patient_id $timepoint/c\\$log_entry" "$log_file"
+    else
+        # Entry does not exist, append it
+        echo "$log_entry" >> "$log_file"
+    fi
+}
 
 
 
@@ -126,8 +132,15 @@ echo "Input image: $input_image"
 
 # Define output parameters
 output_directory="$input_directory/BET_Output/" # make sure to put / at end of directory
-output_basename="${input_basename_without_extension}_bet_rbc_${bet_params_filename}.nii.gz"
-mask_output_basename="${input_basename_without_extension}_bet_mask_rbc_${bet_params_filename}.nii.gz"
+
+if [ $neckcut -eq 0 ]; then
+    output_basename="${input_basename_without_extension}_bet_rbc_${bet_params_filename}.nii.gz"
+    mask_output_basename="${input_basename_without_extension}_bet_mask_rbc_${bet_params_filename}.nii.gz"
+else
+    output_basename="${input_basename_without_extension}_bet_rbc_${bet_params_filename}_cropped_$neckcut.nii.gz"
+    mask_output_basename="${input_basename_without_extension}_bet_mask_rbc_${bet_params_filename}_cropped_$neckcut.nii.gz"
+fi
+    
 output_image="${output_directory}${output_basename}"
 output_mask="${output_directory}${mask_output_basename}"
 
@@ -146,6 +159,8 @@ mkdir -p "$output_directory"
 ## Check if output file already exists
 if [ -f "$output_image" ]; then
     echo "Output file ${output_image} already exists. Skipping BET."
+    echo "Writing to log..."
+    write_log #user defined function
     echo "Opening in fsleyes..."
     fsleyes $input_image $output_image $output_mask
     exit 0
@@ -175,7 +190,8 @@ fi
 # 2. BET
 perform_bet_and_crop_neck
 
-
+echo "Writing to log..."
+write_log
 
 # View with fsleyes
 echo "Opening in fsleyes..."
