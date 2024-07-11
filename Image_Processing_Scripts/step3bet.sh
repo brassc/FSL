@@ -86,48 +86,32 @@ perform_bet_with_neck() {
     echo "$patient_id, $timepoint, $bet_params, biascorr=YES" >> $log_file
 }
 
+
 # Function to perform BET with neck crop (default value is 0, neck not cropped without -c argument in function call). 
 perform_bet_and_crop_neck() {
     # 1. Cut neck
-    echo "crop neck using fslroi..."
-    fslroi $input_image $neckcut_image 0 -1 0 -1 $neck_cut -1
+    echo "crop neck using fslmaths -roi..."
+    # select lower portion of brain image i.e. neck
+    fslmaths_crop_dim="-roi 0 -1 0 -1 0 $neck_cut 0 1" 
+    fslmaths $input_image $fslmaths_crop_dim $lower_part_mask
+    # invert to get upper part of image
+    fslmaths $lower_part_mask -binv $upper_part_mask
+    # multiply original image with upper mask to get upper brain
+    fslmaths $input_image -mul $upper_part_mask $upper_brain
     echo "fslroi neck crop complete, neck cut: $neck_cut"
-    echo "adding in blank space..."
-    echo "blank image: $blank_image"
-    echo "output dir: $output_directory"
-    # Create a blank image with the same dimensions as the original input image, except for the z-dimension
-    # Assuming some typical values for an MRI image, replace these values with the actual numbers
-    xsize=256  # Replace with actual x dimension size of your input image
-    ysize=256  # Replace with actual y dimension size of your input image
-    zsize=$neck_cut
-    tsize=1
-    xvoxsize=1.0  # Replace with actual voxel size along x of your input image
-    yvoxsize=1.0  # Replace with actual voxel size along y of your input image
-    zvoxsize=1.0  # Replace with actual voxel size along z of your input image
-    tr=0.0
-    xorigin=0
-    yorigin=0
-    zorigin=0
-    datatype=16
-
-    # Create a blank image with the specified dimensions
-    fslcreatehd $xsize $ysize $zsize $tsize $xvoxsize $yvoxsize $zvoxsize $tr $xorigin $yorigin $zorigin $datatype $blank_image
-        
-
-
-
-
-    # Merge the cropped neck image with the blank image to restore original dimensions
+    #fsleyes $neckcut_image
+    fsleyes $upper_brain
     exit 1
-    fslmerge -z $restored_image $neckcut_image $blank_image
+
+
     echo "restoration of original dimensions complete."
     echo "Performing BET on cropped image..." 
-    bet $restored_image $output_image $bet_params
+    bet $upper_brain $output_image $bet_params
     echo "BET complete"
     fslmaths $output_image -bin $output_mask
     # 4. Delete neckcut image
     echo "Deleting temp files $neckcut_image"
-    rm $neckcut_image $restored_image $blank_image
+    rm $neckcut_image $lower_part_mask $upper_part_mask $upper_brain
 }
 
 # Function to write or update log
@@ -172,7 +156,10 @@ fi
 output_image="${output_directory}${output_basename}"
 output_mask="${output_directory}${mask_output_basename}"
 
-blank_image="${output_directory}blank.nii.gz"
+# cropping variables
+lower_part_mask="${output_directory}lower_part_mask.nii.gz"
+upper_part_mask="${output_directory}upper_part_mask.nii.gz"
+upper_brain="${output_directory}upper_brain.nii.gz"
 
 
 # Verify input image
