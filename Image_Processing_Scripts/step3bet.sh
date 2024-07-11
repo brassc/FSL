@@ -2,7 +2,7 @@
 #Load modules
 module load fsl
 
-## EXAMPLE USAGE: ./betregbiascorr.sh -p 19978 -t fast -b "-f 0.70 -R"
+## EXAMPLE USAGE: ./step3bet.sh -p 19978 -t fast -b "-f 0.70 -R"
 
 # Function to display usage
 usage() {
@@ -47,7 +47,7 @@ bet_params_filename=$(echo "$bet_params" | tr ' ' '_') # remove spaces so bet_pa
 neck_cut='56'
 
 ## Define remaining input parameters
-input_directory="/home/cmb247/Desktop/Project_3/BET_Extractions/$patient_id/T1_time1_bias_corr_registered_scans/"
+input_directory="/home/cmb247/Desktop/Project_3/BET_Extractions/$patient_id/T1w_time1_bias_corr_registered_scans/"
 input_basename="initialise"
 log_file="/home/cmb247/Desktop/Project_3/BET_Extractions/bias_bet_reg_log.txt"
 
@@ -55,18 +55,22 @@ log_file="/home/cmb247/Desktop/Project_3/BET_Extractions/bias_bet_reg_log.txt"
 
 # Function to find input scan basename based on timepoint
 find_input_basename() {
+    local input_basename
+    local found=0
+    
+    
     while IFS= read -r file; do
         basename=$(basename "$file")
-        if [[ "$basename" == "T1"* && "$basename" == *"$timepoint"* && "$basename" == *".nii.gz" ]]; then
+        if [[ "$basename" == "T1"* && "$basename" == *"$timepoint"* && "$basename" == *"restore_registered.nii.gz" ]]; then
             if [[ "$timepoint" == "fast" && "$basename" != *"ultra-fast"* ]]; then
                 input_basename=$basename
                 found=1
-                echo "Input basename set as $input_basename."
+                echo "$input_basename"
                 break
             elif [[ "$timepoint" != "fast" || "$basename" != *"ultra-fast"* ]]; then
                 input_basename=$basename
                 found=1
-                echo "Input basename set as $input_basename."
+                echo "$input_basename"
                 break
             fi
         fi
@@ -93,7 +97,7 @@ perform_bet_with_neck() {
 
 
 ## MAIN SCRIPT EXECUTION
-find_input_basename
+input_basename=$(find_input_basename)
 
 echo "Final input basename is $input_basename"
 input_basename_without_extension="${input_basename%.nii.gz}"
@@ -101,7 +105,7 @@ input_image="${input_directory}${input_basename}"
 echo "Input image: $input_image"
 
 # Define output parameters
-output_directory="/home/cmb247/Desktop/Project_3/BET_Extractions/$patient_id/T1_time1_bias_corr_registered_scans/" # make sure to put / at end of directory
+output_directory="/home/cmb247/Desktop/Project_3/BET_Extractions/$patient_id/T1w_time1_bias_corr_registered_scans/" # make sure to put / at end of directory
 output_basename="${input_basename_without_extension}_bet_rbc_${bet_params_filename}.nii.gz"
 mask_output_basename="${input_basename_without_extension}_bet_mask_rbc_${bet_params_filename}.nii.gz"
 output_image="${output_directory}${output_basename}"
@@ -114,11 +118,19 @@ if [ ! -f "$input_image" ]; then
     exit 1
 fi
 
+echo "Checking if output file exists..."
+
 ## CHECK IF OUTPUT FILE ALREADY EXISTS
 if [ -f "$output_image" ]; then
     echo "Output file ${output_image} already exists. Skipping bet."
-    return 0
+    exit 0
+else
+    "Output file $output_image does not exist. Proceeding with BET"
 fi
+
+# List files in the output directory for verification
+echo "Listing files in output directory:"
+ls -l "$output_directory"
 
 ## EITHER THIS: (BET without neck)
 # 1. Cut neck
