@@ -22,6 +22,7 @@ Pipeline:
 - Takes output from `T1_time1_bias_corr_registered_scans` directory.
 - log file for bet params (`bias_bet_reg_log.txt`) located at `BET_Extractions` directory level
 - bash script: `step3bet.sh`
+- implementation: `./step3bet.sh -p <patient_id> -t <timepoint>  -b '<bet parameters e.g. -f 0.55'' -c <crop voxel dimn>`
 
 
 
