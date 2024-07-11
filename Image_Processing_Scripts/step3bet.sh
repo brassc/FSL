@@ -99,18 +99,12 @@ perform_bet_and_crop_neck() {
     # multiply original image with upper mask to get upper brain
     fslmaths $input_image -mul $upper_part_mask $upper_brain
     echo "fslroi neck crop complete, neck cut: $neck_cut"
-    #fsleyes $neckcut_image
-    fsleyes $upper_brain
-    exit 1
-
-
-    echo "restoration of original dimensions complete."
     echo "Performing BET on cropped image..." 
     bet $upper_brain $output_image $bet_params
     echo "BET complete"
     fslmaths $output_image -bin $output_mask
     # 4. Delete neckcut image
-    echo "Deleting temp files $neckcut_image"
+    echo "Deleting temp files..."
     rm $neckcut_image $lower_part_mask $upper_part_mask $upper_brain
 }
 
@@ -186,25 +180,7 @@ else
 fi
 
 
-## EITHER THIS: (BET without neck)
-# 1. Cut neck
-#echo "crop neck fslroi..."
-#fslroi $input_image $neckcut_image 0 -1 0 -1 $neck_cut -1
-#echo "fslroi neck crop complete"
-# 2. Perform bet
-#bet $neckcut_image $output_image $bet_params
-# 3. Create mask
-#fslmaths $output_image -bin $output_mask
-# 4. Delete neckcut image
-#rm $neckcut_image
-# 5. Check output
-#fsleyes $output_mask $output_image $input_image
-# 6. Write to log file bet params
-#echo "$patient_id, $timepoint, $bet_params" >> $log_file
-
-
-## OR THIS: (BET with neck)
-# 2. BET
+# BET
 perform_bet_and_crop_neck
 
 echo "Writing to log..."
