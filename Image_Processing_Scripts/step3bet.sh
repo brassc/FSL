@@ -116,7 +116,7 @@ write_log() {
 
     if grep -q "^$patient_id    $timepoint" "$log_file"; then
         # Entry exists, update it
-        sed -i "/^$patient_id $timepoint/c\\$log_entry" "$log_file"
+        sed -i "/^$patient_id[[:space:]]\+$timepoint/c\\$log_entry" "$log_file"
     else
         # Entry does not exist, append it
         echo "$log_entry" >> "$log_file"
