@@ -92,13 +92,42 @@ perform_bet_and_crop_neck() {
     echo "crop neck using fslroi..."
     fslroi $input_image $neckcut_image 0 -1 0 -1 $neck_cut -1
     echo "fslroi neck crop complete, neck cut: $neck_cut"
+    echo "adding in blank space..."
+    echo "blank image: $blank_image"
+    echo "output dir: $output_directory"
+    # Create a blank image with the same dimensions as the original input image, except for the z-dimension
+    # Assuming some typical values for an MRI image, replace these values with the actual numbers
+    xsize=256  # Replace with actual x dimension size of your input image
+    ysize=256  # Replace with actual y dimension size of your input image
+    zsize=$neck_cut
+    tsize=1
+    xvoxsize=1.0  # Replace with actual voxel size along x of your input image
+    yvoxsize=1.0  # Replace with actual voxel size along y of your input image
+    zvoxsize=1.0  # Replace with actual voxel size along z of your input image
+    tr=0.0
+    xorigin=0
+    yorigin=0
+    zorigin=0
+    datatype=16
+
+    # Create a blank image with the specified dimensions
+    fslcreatehd $xsize $ysize $zsize $tsize $xvoxsize $yvoxsize $zvoxsize $tr $xorigin $yorigin $zorigin $datatype $blank_image
+        
+
+
+
+
+    # Merge the cropped neck image with the blank image to restore original dimensions
+    exit 1
+    fslmerge -z $restored_image $neckcut_image $blank_image
+    echo "restoration of original dimensions complete."
     echo "Performing BET on cropped image..." 
-    bet $neckcut_image $output_image $bet_params
+    bet $restored_image $output_image $bet_params
     echo "BET complete"
     fslmaths $output_image -bin $output_mask
     # 4. Delete neckcut image
-    echo "Deleting temp file $neckcut_image"
-    rm $neckcut_image
+    echo "Deleting temp files $neckcut_image"
+    rm $neckcut_image $restored_image $blank_image
 }
 
 # Function to write or update log
@@ -119,7 +148,6 @@ write_log() {
 
 
 
-
 ## MAIN SCRIPT EXECUTION
 input_basename=$(find_input_basename)
 
@@ -131,7 +159,7 @@ neckcut_image="${input_directory}BET_Output/${neckcut_temp}"
 echo "Input image: $input_image"
 
 # Define output parameters
-output_directory="$input_directory/BET_Output/" # make sure to put / at end of directory
+output_directory="${input_directory}BET_Output/" # make sure to put / at end of directory
 
 if [ $neckcut -eq 0 ]; then
     output_basename="${input_basename_without_extension}_bet_rbc_${bet_params_filename}.nii.gz"
@@ -143,6 +171,8 @@ fi
     
 output_image="${output_directory}${output_basename}"
 output_mask="${output_directory}${mask_output_basename}"
+
+blank_image="${output_directory}blank.nii.gz"
 
 
 # Verify input image
