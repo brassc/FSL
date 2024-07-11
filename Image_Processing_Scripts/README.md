@@ -9,16 +9,19 @@ Pipeline:
 - output bias corrected images to directory `OG_Scans_bias_corr`. 
 - log file (`bias_correction_log.txt`) located at `BET_Extractions` directory level
 - checks log file to see whether item has already been processed. i.e. once running do not delete
-- bash script: functrial1.sh
+- bash script: `step1biascorr.sh`
 
 2. FSL flirt to register bias corrected images to first time point available for each patient. First time point selected dynamically. 
 - takes `*restore.nii.gz` files from `OG_Scans_bias_corr` directory. 
 - output registered images to `T1_time1_bias_corr_registered_scans` directory.
 - checks output directory to see if `*$timepoint*registered.nii.gz` file is already present before proceeding with flirt
 - log file (`bias_reg_log.txt`) located at `BET_Extractions` directory level
-- bash script: t1mulregbiascorr.sh
+- bash script: `step2reg.sh`
 
 3. FSL bet. Extract brain, create mask. Manual, case by case basis. 
 - Takes output from `T1_time1_bias_corr_registered_scans` directory.
 - log file for bet params (`bias_bet_reg_log.txt`) located at `BET_Extractions` directory level
-- bash script: betregbiascorr.sh
+- bash script: `step3bet.sh`
+
+
+
