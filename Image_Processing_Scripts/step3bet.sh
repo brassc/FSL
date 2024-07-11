@@ -105,7 +105,7 @@ perform_bet_and_crop_neck() {
     fslmaths $output_image -bin $output_mask
     # 4. Delete neckcut image
     echo "Deleting temp files..."
-    rm $neckcut_image $lower_part_mask $upper_part_mask $upper_brain
+    rm $lower_part_mask $upper_part_mask $upper_brain
 }
 
 # Function to write or update log
@@ -132,19 +132,17 @@ input_basename=$(find_input_basename)
 echo "Final input basename is $input_basename"
 input_basename_without_extension="${input_basename%.nii.gz}"
 input_image="${input_directory}${input_basename}"
-neckcut_temp="neckcut_temp.nii.gz"
-neckcut_image="${input_directory}BET_Output/${neckcut_temp}"
 echo "Input image: $input_image"
 
 # Define output parameters
 output_directory="${input_directory}BET_Output/" # make sure to put / at end of directory
 
-if [ $neckcut -eq 0 ]; then
+if [ $neck_cut -eq 0 ]; then
     output_basename="${input_basename_without_extension}_bet_rbc_${bet_params_filename}.nii.gz"
     mask_output_basename="${input_basename_without_extension}_bet_mask_rbc_${bet_params_filename}.nii.gz"
 else
-    output_basename="${input_basename_without_extension}_bet_rbc_${bet_params_filename}_cropped_$neckcut.nii.gz"
-    mask_output_basename="${input_basename_without_extension}_bet_mask_rbc_${bet_params_filename}_cropped_$neckcut.nii.gz"
+    output_basename="${input_basename_without_extension}_bet_rbc_${bet_params_filename}_cropped_$neck_cut.nii.gz"
+    mask_output_basename="${input_basename_without_extension}_bet_mask_rbc_${bet_params_filename}_cropped_$neck_cut.nii.gz"
 fi
     
 output_image="${output_directory}${output_basename}"
