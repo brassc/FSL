@@ -102,6 +102,7 @@ perform_bias_correction() {
 chmod +x functrial1.sh
 
 
+
 # Call the function with patient ID and timepoint
 # Perform_bias_correction "19978" "fast"
 
@@ -112,9 +113,24 @@ patient_ids=("19978" "12519" "13198" "13782" "13990"
 "22725" "22785" "22875" "23348"  )  # Add more patient IDs as needed
 timepoints=("ultra-fast" "fast" "acute" "3mo" "6mo" "12mo" "24mo")
 
+log_file="/home/cmb247/Desktop/Project_3/BET_Extractions/bias_correction_log.txt"
+
+# Function to check if the pair has already been processed
+is_already_processed() {
+    local patient_id=$1
+    local timepoint=$2
+
+    grep -q "Bias field correction completed for ${patient_id} ${timepoint} successfully." $log_file
+}
+
+
 # Iterate over each patient ID and timepoint
 for patient_id in "${patient_ids[@]}"; do
     for timepoint in "${timepoints[@]}"; do
-        perform_bias_correction "$patient_id" "$timepoint"
+        if ! is_already_processed "$patient_id" "$timepoint"; then
+            perform_bias_correction "$patient_id" "$timepoint"
+        else
+            echo "Already processed $patient_id $timepoint"
+        fi
     done
 done
