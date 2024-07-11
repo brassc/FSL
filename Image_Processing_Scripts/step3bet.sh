@@ -126,13 +126,13 @@ mkdir -p "$output_directory"
 ## Check if output file already exists
 if [ -f "$output_image" ]; then
     echo "Output file ${output_image} already exists. Skipping BET."
+    echo "Opening in fsleyes..."
+    fsleyes $input_image $output_image $output_mask
     exit 0
 else
     "Output file $output_image does not exist. Proceeding with BET"
 fi
 
-echo "Input dir: $input_directory"
-echo "Output dir: $output_directory"
 
 ## EITHER THIS: (BET without neck)
 # 1. Cut neck
@@ -155,6 +155,11 @@ echo "Output dir: $output_directory"
 # 2. BET
 perform_bet_with_neck
 
+
+
+# View with fsleyes
+echo "Opening in fsleyes..."
+fsleyes $input_image $output_image $output_mask
 
 
 
