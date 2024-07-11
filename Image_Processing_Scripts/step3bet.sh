@@ -10,6 +10,7 @@ usage() {
     echo "  -p PATIENT_ID    : Patient ID"
     echo "  -t TIMEPOINT     : Timepoint (e.g., fast)"
     echo "  -b BET_PARAMS    : BET parameters (e.g., '-f 0.70 -R')"
+    echo "  -c NECK_CUT      : (Optional) z voxel dimension to crop out (e.g. 56)"
     exit 1
 }
 
@@ -19,6 +20,7 @@ while getopts ":p:t:b:" opt; do
         p) patient_id="$OPTARG" ;;
         t) timepoint="$OPTARG" ;;
         b) bet_params="$OPTARG" ;;
+        c) neck_cut="$OPTARG" ;;
         *) usage ;;
     esac
 done
@@ -29,11 +31,10 @@ if [ -z "$patient_id" ] || [ -z "$timepoint" ] || [ -z "$bet_params" ]; then
 fi
 
 
-
-
-
-
-
+# Set default neck cut if not provided
+if [ -z "$neck_cut" ]; then
+    neck_cut='0'
+fi
 
 
 
@@ -44,7 +45,6 @@ fi
 # Define BET parameters
 #bet_params="-f 0.70 -R"
 bet_params_filename=$(echo "$bet_params" | tr ' ' '_') # remove spaces so bet_params can be used in filename
-neck_cut='56'
 
 ## Define remaining input parameters
 input_directory="/home/cmb247/Desktop/Project_3/BET_Extractions/$patient_id/T1w_time1_bias_corr_registered_scans/"
@@ -92,6 +92,24 @@ perform_bet_with_neck() {
     echo "$patient_id, $timepoint, $bet_params, biascorr=YES" >> $log_file
 }
 
+# Function to perform BET with neck crop (default value is 0, neck not cropped without -c argument in function call). 
+perform_bet_and_crop_neck() {
+    # 1. Cut neck
+    echo "crop neck using fslroi..."
+    fslroi $input_image $neckcut_image 0 -1 0 -1 $neck_cut -1
+    echo "fslroi neck crop complete"
+    echo "Performing BET on cropped image..." 
+    bet $neckcut_image $output_image $bet_params
+    echo "BET complete"
+    fslmaths $output_image -bin $output_mask
+    # 4. Delete neckcut image
+    echo "Deleting image $neckcut_image"
+    rm $neckcut_image
+    echo "$patient_id, $timepoint, $bet_params, biascorr=YES" >> $log_file
+}
+
+
+
 
 
 
@@ -102,6 +120,8 @@ input_basename=$(find_input_basename)
 echo "Final input basename is $input_basename"
 input_basename_without_extension="${input_basename%.nii.gz}"
 input_image="${input_directory}${input_basename}"
+neckcut_temp="neckcut_temp.nii.gz"
+neckcut_image="${input_directory}BET_Output/${neckcut_temp}"
 echo "Input image: $input_image"
 
 # Define output parameters
@@ -153,7 +173,7 @@ fi
 
 ## OR THIS: (BET with neck)
 # 2. BET
-perform_bet_with_neck
+perform_bet_and_crop_neck
 
 
 
