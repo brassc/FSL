@@ -2,6 +2,7 @@
 module load fsl
 
 ## EXAMPLE USAGE: ./manualeditbet.sh -p 12519 -t 6mo -f segtocut.nii.gz
+## segtocut.nii.gz is mask of area to cut away created using itksnap
 
 # Function to display usage
 usage() {
