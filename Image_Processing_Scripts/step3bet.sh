@@ -93,16 +93,16 @@ perform_bet_and_crop_neck() {
     echo "crop neck using fslmaths -roi..."
     # select lower portion of brain image i.e. neck
     fslmaths_crop_dim="-roi 0 -1 0 -1 0 $neck_cut 0 1" 
-    fslmaths $input_image $fslmaths_crop_dim $lower_part_mask
+    fslmaths $input_image $fslmaths_crop_dim $lower_part_mask || exit 1
     # invert to get upper part of image
-    fslmaths $lower_part_mask -binv $upper_part_mask
+    fslmaths $lower_part_mask -binv $upper_part_mask || exit 1
     # multiply original image with upper mask to get upper brain
-    fslmaths $input_image -mul $upper_part_mask $upper_brain
+    fslmaths $input_image -mul $upper_part_mask $upper_brain || exit 1
     echo "fslroi neck crop complete, neck cut: $neck_cut"
     echo "Performing BET on cropped image..." 
-    bet $upper_brain $output_image $bet_params
+    bet $upper_brain $output_image $bet_params || exit 1
     echo "BET complete"
-    fslmaths $output_image -bin $output_mask
+    fslmaths $output_image -bin $output_mask || exit 1
     # 4. Delete neckcut image
     echo "Deleting temp files..."
     rm $lower_part_mask $upper_part_mask $upper_brain
