@@ -24,7 +24,7 @@ Pipeline:
 - bash script: `step3bet.sh`
 - implementation: `./step3bet.sh -p <patient_id> -t <timepoint>  -b '<bet parameters e.g. -f 0.55'' -c <crop voxel dimn>`
 
-4. Check bet output. If not satisfactory, run manual modification script.
+4. Check bet output. If not satisfactory, run [optional] manual modification script.
 - Create `segtocut.nii.gz` file - this is a binary mask of region to be removed. Do in ITKSNAP or similar.
 - output modified mask.nii.gz and modified bet.nii.gz with original basename & `maskmodified` or `modified` appended.
 - bash script: `manualeditbet.sh` 
