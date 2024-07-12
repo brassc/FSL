@@ -6,3 +6,8 @@ patient id, timepoint, bet params, crop
 12519, acute, -f 0.5, 56
 12519, 6mo, -f 0.5, 56, MODIFIED=YES
 12519, 24mo, -f 0.2 -R, 75
+13198, excluded, alternative pathology
+13782, ultra-fast, -f 0.45, 70, MODIFIED=YES
+13782, 3mo, -f 0.25, 90, MODIFIED=YES
+13990, fast, -f 0.5, 70
+13990, acute, -f 0.6, 70
