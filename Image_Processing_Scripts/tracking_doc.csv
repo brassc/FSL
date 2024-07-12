@@ -20,3 +20,9 @@ patient id, timepoint, bet params, crop
 19344, acute, -f 0.35, 80, MODIFIED=YES
 19575, fast, -f 0.5, 90
 19575, 12mo, -f 0.5, 90
+19981, ultra-fast, -f 0.55, 70
+19981, 6mo, -f 0.45, 70
+19981, 24mo, -f 0.45, 70
+20174, ultra-fast, -f 0.5, 70
+20174, acute, -f 0.5, 70
+20174, 3mo, -f 0.5, 94
