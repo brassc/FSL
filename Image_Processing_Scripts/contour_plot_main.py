@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import cv2
 import matplotlib.pyplot as plt
+import glob
 import os
 import nibabel as nib
 from PIL import Image
@@ -285,15 +286,63 @@ def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_of
 
 
 
+def search_for_bet_mask(directory, timepoint):
+    # Construct the search pattern
+    pattern = f"*{timepoint}*_bet_mask**.nii.gz"
+    # Search for files matching the pattern in the specified directory
+    files = glob.glob(os.path.join(directory, pattern))
+    return files
+
 
 
 # main script execution
 
 # import patient info .csv
 patient_info = pd.read_csv('Image_Processing_Scripts/included_patient_info.csv')
-print(patient_info.head())
+
+# Strip leading and trailing spaces from the column names
+patient_info.columns = patient_info.columns.str.strip()
+
+# Verify the exact column names
+print("Columns in the DataFrame:", patient_info.columns.tolist())
+
+# Strip leading and trailing spaces from the data in each column
+for col in patient_info.select_dtypes(include=['object']).columns:
+    patient_info[col] = patient_info[col].str.strip()
+
+# Rename columns to remove any hidden issues
+patient_info.rename(columns={
+    'patient ID': 'patient_id',
+    'z coord (slice)': 'z_coord_slice',
+    'anterior x coord': 'anterior_x_coord',
+    'anterior y coord': 'anterior_y_coord',
+    'posterior x coord': 'posterior_x_coord',
+    'posterior y coord': 'posterior_y_coord',
+    'side (L/R)': 'side_LR',
+    'excluded?': 'excluded'
+}, inplace=True)
+
+# Remove excluded patients, remove this column
+patient_info = patient_info[patient_info['excluded'] != 1]
+patient_info.drop(columns='excluded', inplace=True)
+
+
+"""
+# Iterate over each patient and timepoint
+for patient_id, timepoint in zip(patient_ids, timepoints):
+    # Define the bet_mask_file_path for each patient and timepoint
+    directory = f"/home/cmb247/Desktop/Project_3/BET_Extractions/{patient_id}/T1w_time1_bias_corr_registered_scans/BET_Output"
+    # Construct the search pattern
+    pattern = f"*{timepoint}*_bet_mask**.nii.gz"
+    # Search for files matching the pattern in the specified directory
+    file = glob.glob(os.path.join(directory, pattern))
+    
+    
+    # Call the auto_boundary_detect function for each patient and timepoint
+    auto_boundary_detect(patient_id, timepoint, bet_mask_file_path, x_offset, array_save_name)
 
 
 #bet_mask_file_path="/home/cmb247/Desktop/Project_3/BET_Extractions/"+str(patient_id)+"/T1w_time1_registered_scans/acute_restored_bet_mask-f0.5-R.nii.gz"
 
 
+"""
