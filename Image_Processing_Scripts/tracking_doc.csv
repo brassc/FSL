@@ -1,4 +1,4 @@
-patient id, timepoint, bet params, crop
+patient id, timepoint, bet params, crop, manual modification, inclusion (1/0)
 19978, ultra-fast, -f 0.55, 56
 19978, fast, -f 0.61, 56
 19978, acute, -f 0.55, 56
