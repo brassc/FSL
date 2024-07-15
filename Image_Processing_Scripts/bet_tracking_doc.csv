@@ -30,6 +30,8 @@ patient id, timepoint, bet params, crop, manual modification, inclusion (1/0)
 20651, acute, -f 0.6, 70
 20942, fast, -f 0.6, 70
 20942, acute, -f 0.5, 64
+20942, 6mo, -f 0.6 -R, 64, MODIFIED=YES
+20942, 24mo, -f 0.4, 64, MODIFIED=YES_MANUAL_ADD
 21221, fast, -f 0.6, 64
 21221, acute, -f 0.6, 64
 22725, ultra-fast, -f 0.55, 85
