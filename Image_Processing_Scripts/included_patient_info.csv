@@ -1,11 +1,11 @@
 excluded?, patient ID, timepoint, anterior x coord, anterior y coord, anterior z coord, posterior x coord, posterior y coord, posterior z coord, side (L/R)
-0, 12519, ultra-fast, x, y, z, x, y, z, L/R
-0, 12519, acute, x, y, z, x, y, z, L/R
-0, 12519, 6mo, x, y, z, x, y, z, L/R
-0, 12519, 24mo, x, y, z, x, y, z, L/R
+0, 12519, ultra-fast, 132, 160, 148, 144, 50, 148, L
+0, 12519, acute, 131, 158, 150, 143, 48, 150, L
+0, 12519, 6mo, 133, 160, 149, 146, 50, 149, L
+0, 12519, 24mo, 132, 158, 150, 144, 48, 150, L
 1, 13198, too much alternative pathology
 0, 13782, ultra-fast, x, y, z, x, y, z, L/R
 0, 13782, 3mo, x, y, z, x, y, z, L/R
-0, 13990, fast, x, y, z, x, y, z, L/R
-0, 13990, acute, x, y, z, x, y, z, L/R
+0, 13990, fast, 108, 178, 172, 135, 62, 172, L ?>????
+0, 13990, acute, 107, 176, 172, 134, 62, 172, L ?????
 
