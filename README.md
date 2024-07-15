@@ -6,7 +6,7 @@ The `Image_Processing_Scripts` folder contains bets script for processing origin
 Note: absolute paths specified so runs from repo location.
 
 
-####Pipeline:####
+### Pipeline: ###
 1. **FSL fast with -B option to bias correct raw images**
 - output bias corrected images to directory `OG_Scans_bias_corr`. 
 - log file (`bias_correction_log.txt`) located at `BET_Extractions` directory level
@@ -39,12 +39,14 @@ Takes .csv file of marked skull end points in voxel coordinates and extracts the
 
 Patients selected according to patient selection criteria, outlined below.
 
-#### Patient selection criteria: ####
+### Patient selection criteria: ###
 - 'Free' bulging i.e. no fluid accumulation, brain allowed to expand
 - Not too much other pathology e.g. 13198 fast vs. 3 mo scan
 - Easily identifiable skull 'end' points
 
 **Patient ID, timepoint, skull end point coordinates for all eligible patients documented in** `included_patient_info.csv`
+
+
 
 
 
