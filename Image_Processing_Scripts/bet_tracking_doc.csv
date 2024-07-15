@@ -36,6 +36,7 @@ patient id, timepoint, bet params, crop, manual modification, inclusion (1/0)
 21221, acute, -f 0.6, 64
 22725, ultra-fast, -f 0.55, 85
 22725, acute, -f 0.55, 85, MODIFIED=YES
+22725, 12mo, -f 0.50, 85
 22785, fast, -f 0.5 -R, 85, 
 22785, acute, -f 0.6, 85
 22785, 3mo, excluded, bad scan
