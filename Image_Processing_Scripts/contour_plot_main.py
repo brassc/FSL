@@ -327,22 +327,20 @@ patient_info = patient_info[patient_info['excluded'] != 1]
 patient_info.drop(columns='excluded', inplace=True)
 
 
-"""
 # Iterate over each patient and timepoint
 for patient_id, timepoint in zip(patient_ids, timepoints):
     # Define the bet_mask_file_path for each patient and timepoint
     directory = f"/home/cmb247/Desktop/Project_3/BET_Extractions/{patient_id}/T1w_time1_bias_corr_registered_scans/BET_Output"
     # Construct the search pattern
-    pattern = f"*{timepoint}*_bet_mask**.nii.gz"
+    pattern = f"*{timepoint}*_bet_mask*.nii.gz"
     # Search for files matching the pattern in the specified directory
     file = glob.glob(os.path.join(directory, pattern))
     
-    
+    print(file.path())
     # Call the auto_boundary_detect function for each patient and timepoint
-    auto_boundary_detect(patient_id, timepoint, bet_mask_file_path, x_offset, array_save_name)
+    #auto_boundary_detect(patient_id, timepoint, bet_mask_file_path, x_offset, array_save_name)
 
 
 #bet_mask_file_path="/home/cmb247/Desktop/Project_3/BET_Extractions/"+str(patient_id)+"/T1w_time1_registered_scans/acute_restored_bet_mask-f0.5-R.nii.gz"
 
 
-"""
