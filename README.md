@@ -25,6 +25,7 @@ Note: absolute paths specified so runs from repo location.
 - log file for bet params (`bias_bet_reg_log.txt`) located at `BET_Extractions` directory level
 - bash script: `step3bet.sh`
 - implementation: `./step3bet.sh -p <patient_id> -t <timepoint>  -b '<bet parameters e.g. -f 0.55'' -c <crop voxel dimn>`
+- recorded in `tracking_doc.csv`
 
 4. **Check bet output. If not satisfactory, run (optional) manual modification script.**
 - Create `segtocut.nii.gz` file - this is a binary mask of region to be removed. Do in ITKSNAP or similar.
