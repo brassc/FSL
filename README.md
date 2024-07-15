@@ -31,6 +31,7 @@ Note: absolute paths specified so runs from repo location.
 - output modified mask.nii.gz and modified bet.nii.gz with original basename & `maskmodified` or `modified` appended.
 - bash script: `manualeditbet.sh` 
 - implementation: `./manualeditbet.sh -p <patient id> -t <timepoint> -f <segmented area to be removed .nii.gz file>`
+- recorded in `tracking_doc.csv`
 
 
 # Contour points extraction #
@@ -39,9 +40,11 @@ Takes .csv file of marked skull end points in voxel coordinates and extracts the
 Patients selected according to patient selection criteria, outlined below.
 
 #### Patient selection criteria: ####
-- 
+- 'Free' bulging i.e. no fluid accumulation, brain allowed to expand
+- Not too much other pathology e.g. 13198 fast vs. 3 mo scan
+- Easily identifiable skull 'end' points
 
-
+**Patient ID, timepoint, skull end point coordinates for all eligible patients documented in** `included_patient_info.csv`
 
 
 
