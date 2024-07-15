@@ -6,6 +6,11 @@ excluded?, patient ID, timepoint, anterior x coord, anterior y coord, anterior z
 1, 13198, too much alternative pathology
 0, 13782, ultra-fast, 53, 169, 173, 57, 42, 173, R
 0, 13782, 3mo, 50, 171, 173, 54, 39, 173, R, COMMENT=VENTRICULOMEGALY
-0, 13990, fast, 108, 178, 172, 135, 62, 172, L ?>????
-0, 13990, acute, 107, 178, 172, 134, 62, 172, L ?????
+0, 13990, fast, 108, 178, 172, 135, 62, 172, L 
+0, 13990, acute, 107, 178, 172, 134, 62, 172, L 
+0, 14324, ultra-fast, 121, 179, 172, 148, 69, 172, L
+0, 14324, acute, 122, 180, 179, 149, 69, 179, L
+0, 14324, 12mo, 124, 187, 181, 158, 76, 181, L
+0, 16574, fast, 49, 191, 155, 35, 78, 155, R
+0, 16574, acute, 51, 194, 155, 35, 78, 155, R
 
