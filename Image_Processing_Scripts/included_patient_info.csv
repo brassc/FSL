@@ -34,4 +34,7 @@ excluded?, patient ID, timepoint, anterior x coord, anterior y coord, anterior z
 0, 22725, ultra-fast, 124, 158, 165, 134, 50, 165, L, COMMENT=POSTERIOR XY NOT SO VISIBLE
 0, 22725, acute, 125, 156, 169, 124, 46, 169, L
 0, 22725, 12mo, 129, 156, 169, 132, 47, 169, L
-
+1, 22785, poor quality 3mo scan
+0, 23348, fast, 50, 177, 176, 38, 71, 176, R
+0, 23348, acute, 53, 179, 176, 39, 71, 176, R
+0, 23348, 3mo, 60, 178, 185, 44, 66, 185, R
