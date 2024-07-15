@@ -47,7 +47,7 @@ Patients selected according to patient selection criteria, outlined below.
 
 **Patient ID, timepoint, skull end point coordinates for all eligible patients documented in** `included_patient_info.csv`
 
-### Patient slice selection process ###
+### Slice selection and end point extraction process ###
 1. Go to midline
 2. Select high point on inferior side of corpus callosum arch
 3. Select skull end points if visible. If not visible, exclude.
