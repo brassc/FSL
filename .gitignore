@@ -148,3 +148,12 @@ cython_debug/
 # DS_Store for macOS
 .DS_Store
 
+# repo files
+DTI_Scripts/-bin.nii.gz
+bet_log_file.txt
+points_plotting/points_dir/19978_acute/auto_baseline_array.npz
+points_plotting/points_dir/19978_acute/auto_deformed_array.npz
+points_plotting/points_dir/19978_acute/auto_reflected_array.npz
+points_plotting/sys
+
+
