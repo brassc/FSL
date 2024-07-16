@@ -46,7 +46,7 @@ def load_nifti(nifti_file_path):
 
 # THIS FUNCTION EXTRACTS AND DISPLAYS A SLICE FROM A NIFTI FILE
 # to do: decide what voxel_indices looks like
-def extract_and_display_slice(img, save_directory, z_coord, disp_flag='y'):
+def extract_and_display_slice(img, save_directory, patient_id, timepoint, z_coord, disp_flag='y'):
 
     #img, save_directory = load_nifti(nifti_file_path)
 
@@ -70,12 +70,15 @@ def extract_and_display_slice(img, save_directory, z_coord, disp_flag='y'):
     # Rotate 90 degrees to expected orientation (i.e., rotate counter-clockwise)
     rotated_slice_image = slice_image.rotate(90, expand=True)
 
-    # Save and display the image
+    # Save and optionally display the image
     save_path=os.path.join(save_directory, 'slice_extraction.png')
     rotated_slice_image.save(save_path)  # Save the corrected slice image
     
     if disp_flag=='y' or disp_flag=='yes':
-        rotated_slice_image.show()
+        plt.imshow(rotated_slice_image, cmap='gray')
+        plt.title(f"Slice {z_coord} for patient {patient_id} at {timepoint}")
+        plt.axis('off')
+        plt.show()
     elif disp_flag=='n' or disp_flag=='no':
          return normalized_slice
     else:
@@ -381,7 +384,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     print(f"posterior y coord: {posty}")
     print(f"craniectomy side: {side}")
 
-    slice_img = extract_and_display_slice(img, save_dir, z_coord, disp_flag='y')    
+    slice_img = extract_and_display_slice(img, save_dir, patient_id, timepoint, z_coord, disp_flag='y')    
 
 print(patient_info.head())
     #extract_and_display_slice(img, save_directory, voxel_indices)
