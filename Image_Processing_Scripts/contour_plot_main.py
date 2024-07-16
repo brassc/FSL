@@ -45,7 +45,7 @@ def load_nifti(nifti_file_path):
     return img, save_directory
 
 # THIS FUNCTION EXTRACTS AND DISPLAYS A SLICE FROM A NIFTI FILE
-# to do: decide what voxel_indices looks like
+# RETURNS SLICE IMAGE IN CORRECTED ORIENTATION
 def extract_and_display_slice(img, save_directory, patient_id, timepoint, z_coord, disp_flag='y'):
 
     #img, save_directory = load_nifti(nifti_file_path)
@@ -92,20 +92,19 @@ def extract_and_display_slice(img, save_directory, patient_id, timepoint, z_coor
 
 
 
-# maybe this function is unnecessary......
-def load_boundary_detection_features(patient_id, patient_timepoint, bet_mask_file_path):
-    directory_path = ensure_directory_exists(patient_id, patient_timepoint)
+# maybe this function is unnecessary......IT IS UNNECESSARY
+def load_boundary_detection_features(patient_id, patient_timepoint, adjusted_slice_image):
+    #directory_path = ensure_directory_exists(patient_id, patient_timepoint)
+    
+    """
+    # gets skull end points
     data_readout_loc = f"data_readout/{patient_id}_{patient_timepoint}"
     xa_coords, ya_coords = load_auto_data_readout(data_readout_loc, 'auto_deformed_array.npz')
     xb_coords, yb_coords = load_auto_data_readout(data_readout_loc, 'auto_baseline_array.npz')
     xr_coords, yb_coords = load_auto_data_readout(data_readout_loc, 'auto_reflected_array.npz')
-
+    """
         
-    mask_nifti = nib.load(bet_mask_file_path)
-
-    # Step 2: Access the image data
-    mask_data = mask_nifti.get_fdata()
-
+    mask_data = adjusted_slice_image
     # Step 3: Check for binary values
     unique_values = np.unique(mask_data)
     print("Unique values in the mask:", unique_values)
@@ -141,21 +140,21 @@ def load_boundary_detection_features(patient_id, patient_timepoint, bet_mask_fil
 
 # THIS FUNCTION OUTPUTS CONTOUR X AND Y COORDINATES
 # Edit what it takes in and why
-def auto_boundary_detect(patient_id, patient_timepoint, bet_mask_file_path, x_offset, array_save_name):
+def auto_boundary_detect(patient_id, patient_timepoint, adjusted_slice_image, antx, anty, postx, posty, side):
     
-    corrected_slice, xa_coords, ya_coords, xb_coords, yb_coords, xr_coords = load_boundary_detection_features(patient_id, patient_timepoint, bet_mask_file_path)
+    #UNNECESSARY FUNCTION corrected_slice, xa_coords, ya_coords, xb_coords, yb_coords, xr_coords = load_boundary_detection_features(patient_id, patient_timepoint, bet_mask_file_path)
 
     # PLOT REGION ONLY BASED ON x_offset VALUE 
 
     # Ensure the starting index is smaller than the ending index
-    start_y = int(min(yb_coords[-1], yb_coords[0]))
-    end_y = int(max(yb_coords[-1], yb_coords[0]))
+    start_y = posty
+    end_y = anty
     
     
-    if x_offset > 0.5 * corrected_slice.shape[1]:
-        trimmed_slice_data = corrected_slice[start_y:end_y, x_offset:]
+    if side == 'R':
+        trimmed_slice_data = corrected_slice[start_y:end_y, (0.5 * adjusted_slice_image.shape[1]):]
     else:
-        trimmed_slice_data = corrected_slice[start_y:end_y, :x_offset]
+        trimmed_slice_data = corrected_slice[start_y:end_y, :(0.5 * adjusted_slice_image.shape[1])]
     # Slice 'corrected_slice' between these y-coordinates and plot
     #trimmed_slice_data = corrected_slice[start_y:end_y, x_offset:]
     """
