@@ -57,6 +57,7 @@ def extract_and_display_slice(img, save_directory, z_coord):
     #voxel_indices = voxel_indices.astype(int)[:3]  # Extract integer voxel indices
 
     # Extract the axial slice at the z voxel index determined from the scanner coordinates
+    data = img.get_fdata()
     slice_data = data[:, :, z_coord]
 
     # Normalize the slice data for image display
@@ -372,7 +373,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     print(f"posterior y coord: {posty}")
     print(f"craniectomy side: {side}")
 
-    extract_and_display_slice(img, save_directory, z_coord):    
+    extract_and_display_slice(img, save_dir, z_coord)    
 
 print(patient_info.head())
     #extract_and_display_slice(img, save_directory, voxel_indices)
