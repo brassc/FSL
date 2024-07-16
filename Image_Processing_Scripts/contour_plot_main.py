@@ -68,24 +68,26 @@ def extract_and_display_slice(img, save_directory, patient_id, timepoint, z_coor
     slice_image = Image.fromarray(normalized_slice.astype(np.uint8))
 
     # Rotate 90 degrees to expected orientation (i.e., rotate counter-clockwise)
-    rotated_slice_image = slice_image.rotate(90, expand=True)
+    rotated_slice_image = slice_image.rotate(270, expand=True)
+    # Mirror this rotated image
+    adjusted_slice_image = rotated_slice_image.transpose(Image.FLIP_LEFT_RIGHT)
 
     # Save and optionally display the image
     save_path=os.path.join(save_directory, 'slice_extraction.png')
-    rotated_slice_image.save(save_path)  # Save the corrected slice image
+    adjusted_slice_image.save(save_path)  # Save the corrected slice image
     
     if disp_flag=='y' or disp_flag=='yes':
-        plt.imshow(rotated_slice_image, cmap='gray')
+        plt.imshow(adjusted_slice_image, cmap='gray', origin='lower')
         plt.title(f"Slice {z_coord} for patient {patient_id} at {timepoint}")
-        plt.axis('off')
+        #plt.axis('off')
         plt.show()
     elif disp_flag=='n' or disp_flag=='no':
-         return normalized_slice
+         return adjusted_slice_image
     else:
         print("ERROR: type 'y', 'yes', 'n' or 'no' to state whether to display slice. Default is 'y'")
         sys.exit(1)
 
-    return normalized_slice
+    return adjusted_slice_image
 
 
 
@@ -376,16 +378,28 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     postx = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'posterior_x_coord'].values[0]
     posty = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'posterior_y_coord'].values[0]
     side = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'side_LR'].values[0]
-
+    """
     print(f"z coord slice index: {z_coord}")
     print(f"anterior x coord: {antx}")
     print(f"anterior y coord: {anty}")
     print(f"posterior x coord: {postx}")
     print(f"posterior y coord: {posty}")
     print(f"craniectomy side: {side}")
+    """
+    slice_img = extract_and_display_slice(img, save_dir, patient_id, timepoint, z_coord, disp_flag='n')
 
-    slice_img = extract_and_display_slice(img, save_dir, patient_id, timepoint, z_coord, disp_flag='y')    
+      
+print(f"z coord slice index: {z_coord}")
+print(f"anterior x coord: {antx}")
+print(f"anterior y coord: {anty}")
+print(f"posterior x coord: {postx}")
+print(f"posterior y coord: {posty}")
+print(f"craniectomy side: {side}")
 
+
+plt.imshow(slice_img, cmap='gray',origin='lower' )
+plt.scatter([anty, posty], [antx, postx], color='r')
+plt.show()
 print(patient_info.head())
     #extract_and_display_slice(img, save_directory, voxel_indices)
     
