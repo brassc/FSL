@@ -45,9 +45,9 @@ def load_nifti(nifti_file_path):
 
 # THIS FUNCTION EXTRACTS AND DISPLAYS A SLICE FROM A NIFTI FILE
 # to do: decide what voxel_indices looks like
-def extract_and_display_slice(nifti_file_path, voxel_indices):
+def extract_and_display_slice(img, save_directory, voxel_indices):
 
-    img, save_directory = load_nifti(nifti_file_path)
+    #img, save_directory = load_nifti(nifti_file_path)
 
     # Get the affine transformation matrix
     affine = img.affine
@@ -297,8 +297,8 @@ def search_for_bet_mask(directory, timepoint):
 
 # main script execution
 
-# import patient info .csv
-patient_info = pd.read_csv('Image_Processing_Scripts/included_patient_info.csv')
+# import patient info .csv, cast numbers as integer type
+patient_info = pd.read_csv('Image_Processing_Scripts/included_patient_info.csv').apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
 
 # Strip leading and trailing spaces from the column names
 patient_info.columns = patient_info.columns.str.strip()
@@ -348,10 +348,19 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     else:
         print("No file found for patient_id", patient_id, "timepoint", timepoint)
     
+    # Load nifti file as img. img has attributes 
     print('Loading nifti...')
     img, save_dir = load_nifti(filepath)
-    print('nifti loaded')
 
+    # Extract voxel indices from patient_info csv
+    #print(patient_info.columns)
+    z_coord_slice = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'z_coord_slice'].values[0]
+    print(f"z coord slice index: {z_coord_slice}")
+
+    #extract_and_display_slice(img, save_directory, voxel_indices)
+    
+
+print(patient_info.head())
     
  
     # Call the auto_boundary_detect function for each patient and timepoint
