@@ -338,16 +338,21 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     pattern_priority = f"*{timepoint}*_bet_mask*modifiedmask*.nii.gz"
     # Search for files matching the pattern in the specified directory
     
-    file = glob.glob(os.path.join(directory, pattern_priority))
-    if not file:
-        file = glob.glob(os.path.join(directory, pattern))
+    filepath = glob.glob(os.path.join(directory, pattern_priority))
+    if not filepath:
+        filepath = glob.glob(os.path.join(directory, pattern))
 
-    if file:
-        file = file[0]
-        print (file)
+    if filepath:
+        filepath = filepath[0] # glob returns a list. this gets first element of list
+        print (filepath)
     else:
         print("No file found for patient_id", patient_id, "timepoint", timepoint)
+    
+    print('Loading nifti...')
+    img, save_dir = load_nifti(filepath)
+    print('nifti loaded')
 
+    
  
     # Call the auto_boundary_detect function for each patient and timepoint
     #auto_boundary_detect(patient_id, timepoint, bet_mask_file_path, x_offset, array_save_name)
