@@ -297,8 +297,13 @@ def search_for_bet_mask(directory, timepoint):
 
 # main script execution
 
-# import patient info .csv, cast numbers as integer type
-patient_info = pd.read_csv('Image_Processing_Scripts/included_patient_info.csv').apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
+# import patient info .csv
+patient_info = pd.read_csv('Image_Processing_Scripts/included_patient_info.csv')
+
+# Convert only numeric columns to integers
+numeric_cols = patient_info.select_dtypes(include=['number']).columns
+patient_info[numeric_cols] = patient_info[numeric_cols].apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
+
 
 # Strip leading and trailing spaces from the column names
 patient_info.columns = patient_info.columns.str.strip()
@@ -354,13 +359,25 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
 
     # Extract voxel indices from patient_info csv
     #print(patient_info.columns)
-    z_coord_slice = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'z_coord_slice'].values[0]
-    print(f"z coord slice index: {z_coord_slice}")
+    z_coord = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'z_coord_slice'].values[0]
+    antx = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'anterior_x_coord'].values[0]
+    anty = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'anterior_y_coord'].values[0]
+    postx = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'posterior_x_coord'].values[0]
+    posty = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'posterior_y_coord'].values[0]
+    side = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'side_LR']
 
+    print(f"z coord slice index: {z_coord}")
+    print(f"anterior x coord: {antx}")
+    print(f"anterior y coord: {anty}")
+    print(f"posterior x coord: {postx}")
+    print(f"posterior y coord: {posty}")
+    print(f"craniectomy side: {side}")
+
+print(patient_info.head())
     #extract_and_display_slice(img, save_directory, voxel_indices)
     
 
-print(patient_info.head())
+
     
  
     # Call the auto_boundary_detect function for each patient and timepoint
