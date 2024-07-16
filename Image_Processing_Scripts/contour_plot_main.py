@@ -45,7 +45,7 @@ def load_nifti(nifti_file_path):
 
 # THIS FUNCTION EXTRACTS AND DISPLAYS A SLICE FROM A NIFTI FILE
 # to do: decide what voxel_indices looks like
-def extract_and_display_slice(img, save_directory, voxel_indices):
+def extract_and_display_slice(img, save_directory, z_coord):
 
     #img, save_directory = load_nifti(nifti_file_path)
 
@@ -57,8 +57,7 @@ def extract_and_display_slice(img, save_directory, voxel_indices):
     #voxel_indices = voxel_indices.astype(int)[:3]  # Extract integer voxel indices
 
     # Extract the axial slice at the z voxel index determined from the scanner coordinates
-    z_index = voxel_indices[2]
-    slice_data = data[:, :, z_index]
+    slice_data = data[:, :, z_coord]
 
     # Normalize the slice data for image display
     normalized_slice = (slice_data - np.min(slice_data)) / (np.max(slice_data) - np.min(slice_data)) * 255
@@ -372,6 +371,8 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     print(f"posterior x coord: {postx}")
     print(f"posterior y coord: {posty}")
     print(f"craniectomy side: {side}")
+
+    extract_and_display_slice(img, save_directory, z_coord):    
 
 print(patient_info.head())
     #extract_and_display_slice(img, save_directory, voxel_indices)
