@@ -4,6 +4,7 @@ import cv2
 import matplotlib.pyplot as plt
 import glob
 import os
+import sys
 import nibabel as nib
 from PIL import Image
 
@@ -45,7 +46,7 @@ def load_nifti(nifti_file_path):
 
 # THIS FUNCTION EXTRACTS AND DISPLAYS A SLICE FROM A NIFTI FILE
 # to do: decide what voxel_indices looks like
-def extract_and_display_slice(img, save_directory, z_coord):
+def extract_and_display_slice(img, save_directory, z_coord, disp_flag='y'):
 
     #img, save_directory = load_nifti(nifti_file_path)
 
@@ -72,7 +73,14 @@ def extract_and_display_slice(img, save_directory, z_coord):
     # Save and display the image
     save_path=os.path.join(save_directory, 'slice_extraction.png')
     rotated_slice_image.save(save_path)  # Save the corrected slice image
-    rotated_slice_image.show()
+    
+    if disp_flag=='y' or disp_flag=='yes':
+        rotated_slice_image.show()
+    elif disp_flag=='n' or disp_flag=='no':
+         return normalized_slice
+    else:
+        print("ERROR: type 'y', 'yes', 'n' or 'no' to state whether to display slice. Default is 'y'")
+        sys.exit(1)
 
     return normalized_slice
 
@@ -373,7 +381,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     print(f"posterior y coord: {posty}")
     print(f"craniectomy side: {side}")
 
-    extract_and_display_slice(img, save_dir, z_coord)    
+    slice_img = extract_and_display_slice(img, save_dir, z_coord, disp_flag='y')    
 
 print(patient_info.head())
     #extract_and_display_slice(img, save_directory, voxel_indices)
