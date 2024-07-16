@@ -398,7 +398,8 @@ print(f"craniectomy side: {side}")
 
 
 plt.imshow(slice_img, cmap='gray',origin='lower' )
-plt.scatter([anty, posty], [antx, postx], color='r')
+plt.scatter(antx, anty, color='r')
+plt.scatter(postx, posty, color='b')
 plt.show()
 print(patient_info.head())
     #extract_and_display_slice(img, save_directory, voxel_indices)
