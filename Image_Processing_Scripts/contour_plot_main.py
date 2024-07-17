@@ -151,19 +151,13 @@ def load_boundary_detection_features(patient_id, patient_timepoint, adjusted_sli
 # THIS FUNCTION OUTPUTS CONTOUR X AND Y COORDINATES, INPUT REQUIRED IS THE SLICE IMAGE, PATIENT INFO + COORDS
 # Edit what it takes in and why
 def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjusted_slice_image, antx, anty, postx, posty, side):
-    
-    #UNNECESSARY FUNCTION corrected_slice, xa_coords, ya_coords, xb_coords, yb_coords, xr_coords = load_boundary_detection_features(patient_id, patient_timepoint, bet_mask_file_path)
 
-    # PLOT REGION ONLY BASED ON x_offset VALUE 
+    # STEP 1: EXTRACT AND PLOT REGION OF INTEREST ONLY (RETAIN ORIGINAL COORDINATE SYSTEM)
 
     # Ensure the starting index is smaller than the ending index
     start_y = posty
     end_y = anty
-    #start_x = postx
     
-    
-    #width, height = adjusted_slice_image.size
-    #image_center_x = 0.5 * width  # Calculate the center of the image
     image_center_x = int(0.5 * normalized_slice.shape[1]) # work with np style nii slice
     
     if side == 'R':
@@ -177,8 +171,6 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
     ## Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
     plt.show()
-    
-    
     
     # Assume adjusted_slice_image has the original dimensions, e.g., from a 256x256 slice
     original_shape = normalized_slice.shape
@@ -228,8 +220,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
     plt.show()
     
 
-    sys.exit(0)
-
+    # STEP 2: FIND CONTOURS
     #normalise trimmed data 
     norm_tr_slice = 255 * (trimmed_slice_data - np.min(trimmed_slice_data)) / (np.max(trimmed_slice_data) - np.min(trimmed_slice_data))
     norm_tr_slice = norm_tr_slice.astype(np.uint8)
@@ -256,6 +247,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
 
     plt.show()
     """
+    
 
     # Create an image based on the original image dimensions to position the contours correctly
     contour_img_original_ref = np.zeros(original_shape)
