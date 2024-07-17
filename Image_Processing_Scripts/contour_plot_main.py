@@ -99,7 +99,8 @@ def extract_and_display_slice(img, save_directory, patient_id, timepoint, z_coor
 
     return oriented_norm_slice, adjusted_slice_image
 
-def flipside(side):
+# THIS FUNCTION FLIPS 'SIDE' AND RETURNS IT AS 'FLIPSIDE'
+def flipside_func(side):
     if side == 'R':
         flipside = 'L'
     elif side == 'L':
@@ -311,6 +312,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
     plt.gca().invert_yaxis()
     
     plt.scatter(contour_x_coords, contour_y_coords, s=2, color='red')
+    plt.show()
         
     return contour_x_coords, contour_y_coords
 
@@ -420,9 +422,13 @@ plt.scatter(postx, posty, color='b')
 plt.show()
 print(patient_info.head())
 
-auto_boundary_detect(patient_id, timepoint, norm_nii_slice, slice_img, antx, anty, postx, posty, side)
+deformed_contour_x, deformed_contour_y = auto_boundary_detect(patient_id, timepoint, norm_nii_slice, slice_img, antx, anty, postx, posty, side)
     #extract_and_display_slice(img, save_directory, voxel_indices)
-    
+flipside = flipside_func(side)
+baseline_contour_x, baseline_contour_y = auto_boundary_detect(patient_id, timepoint, norm_nii_slice, slice_img, antx, anty, postx, posty, flipside)
+
+
+
 
 
     
