@@ -7,6 +7,7 @@ import os
 import sys
 import nibabel as nib
 from PIL import Image
+from sklearn.linear_model import LinearRegression
 
 
 # userdef functions
@@ -110,55 +111,10 @@ def flipside_func(side):
         sys.exit(1)
     return flipside
 
-# maybe this function is unnecessary......IT IS UNNECESSARY
-def load_boundary_detection_features(patient_id, patient_timepoint, adjusted_slice_image):
-    #directory_path = ensure_directory_exists(patient_id, patient_timepoint)
-    
-    """
-    # gets skull end points
-    data_readout_loc = f"data_readout/{patient_id}_{patient_timepoint}"
-    xa_coords, ya_coords = load_auto_data_readout(data_readout_loc, 'auto_deformed_array.npz')
-    xb_coords, yb_coords = load_auto_data_readout(data_readout_loc, 'auto_baseline_array.npz')
-    xr_coords, yb_coords = load_auto_data_readout(data_readout_loc, 'auto_reflected_array.npz')
-    """
-        
-    mask_data = adjusted_slice_image
-    # Step 3: Check for binary values
-    unique_values = np.unique(mask_data)
-    print("Unique values in the mask:", unique_values)
-
-    # Verify it's binary
-    if np.array_equal(unique_values, [0, 1]) or np.array_equal(unique_values, [0]) or np.array_equal(unique_values, [1]):
-        print("The mask is binary.")
-        mask_data = mask_data  # No change needed; just assign it directly
-    else:
-        print("The mask is not strictly binary. Binarizing now...")
-        # Correct binarization: Apply the condition to the entire mask_data array
-        mask_data = (mask_data > 0).astype(np.uint8)
-    
-    # Step 4: Visual inspection - plot at chosen slice index
-    file_loc = f"points_dir/{patient_id}_{patient_timepoint}/points_voxel_coords.csv"
-    # Load the CSV file using pandas
-    df = pd.read_csv(file_loc)
-    # Retrieve the slice index value assuming it's stored in the second row and fourth column (1,3 in 0-indexed)
-    print(df.head(2))
-    slice_index=int(df.iloc[0, 2])
-
-    corrected_slice=np.transpose(mask_data[:,:,slice_index])
-
-    # Plot the entire slice
-    plt.imshow(corrected_slice, cmap='gray')
-    plt.title(f'Slice at index {slice_index}')
-    # Adjust the y-axis to display in the original image's orientation
-    plt.gca().invert_yaxis()
-    plt.show()
-
-    return corrected_slice, xa_coords, ya_coords, xb_coords, yb_coords, xr_coords
-
-
-# THIS FUNCTION OUTPUTS CONTOUR X AND Y COORDINATES, INPUT REQUIRED IS THE SLICE IMAGE, PATIENT INFO + COORDS
-# Edit what it takes in and why
-def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjusted_slice_image, antx, anty, postx, posty, side):
+# THIS FUNCTION USES OPENCV TO DETECT BOUNDARY CONTOURS IN A GIVEN SLICE
+# INPUT REQUIRED IS THE SLICE IMAGE, PATIENT INFO + COORDS
+# RETURNS CONTOUR X AND Y COORDINATES
+def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, antx, anty, postx, posty, side):
 
     # STEP 1: EXTRACT AND PLOT REGION OF INTEREST ONLY (RETAIN ORIGINAL COORDINATE SYSTEM)
 
@@ -317,13 +273,80 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
     return contour_x_coords, contour_y_coords
 
 
+def get_mirror_line(y_coords, xa_coords, xb_coords):
+    #where b is baseline and a is expansion side
+    # returns gradient, m; x intercept, c; fit data, Y
+    y_coords_df = pd.DataFrame({'y': y_coords})
 
+    #avg_x = ((xa_coords + xb_coords) / 2)
+    # get first and last coordinates of contours
+    avg_x = xa_coords[0] + xb_coords[0] / 2
+    avg_x = avg_x.append(pd.Series([xa_coords[-1] + xb_coords[-1] / 2]))
+    
+    avg_x = pd.DataFrame({'avg_x': avg_x})
+
+    print('avg_x is:', avg_x)
+    sys.exit(0)
+
+    #TRIM TO ONLY INCLUDE FIRST AND LAST - LINE TO ONLY GO THROUGH FIRST AND LAST POINTS
+    first_row = avg_x.iloc[[0]]
+    last_row = avg_x.iloc[[-1]]
+    tr_avg_x = pd.concat([first_row, last_row])
+
+    firsty_row=y_coords_df.iloc[[0]]
+    lasty_row=y_coords_df.iloc[[-1]]
+    tr_y_coords_df=pd.concat([firsty_row, lasty_row])
+
+    # Reshape your x and y data for sklearn
+    x = tr_avg_x.values#.reshape(-1, 1)  # Reshaping is required for a single feature in sklearn
+    Y = tr_y_coords_df['y'].values.reshape(-1,1)
+
+    # Initialize the linear regression model
+    model = LinearRegression()
+
+    # Fit the model to your data
+    model.fit(Y, x)
+
+    # The slope (gradient m) and intercept (c) from the fitted model
+    m = model.coef_[0]
+    c = model.intercept_
+
+    print('Gradient (m) is:', m)
+    print('Intercept (c) is:', c)
+
+    return m, c, Y
+
+
+
+
+def reflect_across_line(m, c, xb_coords, yb_coords):
+    
+    #points on line:
+    xl = m * yb_coords + c 
+
+    print('***********xb_coords[0] is:',xb_coords[0])
+    # Difference between baseline x and points on line
+    if xb_coords[0] <= xl[0]:
+        d = np.abs(xl-xb_coords)
+        xr = xl + d
+    else:
+        d = np.abs(xb_coords - xl)
+        xr = xl - d
+        
+    return xr
+
+
+
+# THIS FUNCTION SEARCHES FOR A BET MASK FILE IN A GIVEN DIRECTORY
+# RETURNS FILE PATH AS A LIST OF STRINGS (uses glob)
 def search_for_bet_mask(directory, timepoint):
     # Construct the search pattern
     pattern = f"*{timepoint}*_bet_mask**.nii.gz"
     # Search for files matching the pattern in the specified directory
     files = glob.glob(os.path.join(directory, pattern))
     return files
+
+
 
 
 
@@ -422,13 +445,12 @@ plt.scatter(postx, posty, color='b')
 plt.show()
 print(patient_info.head())
 
-deformed_contour_x, deformed_contour_y = auto_boundary_detect(patient_id, timepoint, norm_nii_slice, slice_img, antx, anty, postx, posty, side)
+deformed_contour_x, deformed_contour_y = auto_boundary_detect(patient_id, timepoint, norm_nii_slice, antx, anty, postx, posty, side)
     #extract_and_display_slice(img, save_directory, voxel_indices)
 flipside = flipside_func(side)
-baseline_contour_x, baseline_contour_y = auto_boundary_detect(patient_id, timepoint, norm_nii_slice, slice_img, antx, anty, postx, posty, flipside)
+baseline_contour_x, baseline_contour_y = auto_boundary_detect(patient_id, timepoint, norm_nii_slice, antx, anty, postx, posty, flipside)
 
-
-
+get_mirror_line(baseline_contour_y, baseline_contour_x, deformed_contour_x)
 
 
     
