@@ -414,24 +414,44 @@ patient_info = patient_info[patient_info['patient_id'] == 23348]
 for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timepoint']):
     # Define the bet_mask_file_path for each patient and timepoint
     directory = f"/home/cmb247/Desktop/Project_3/BET_Extractions/{patient_id}/T1w_time1_bias_corr_registered_scans/BET_Output"
-    # Construct the search pattern
+    # Construct the search pattern - broad pattern first
+    # Define broader patterns
+    broad_pattern = f"*{timepoint}*_bet*.nii.gz"
+    broad_pattern_priority = f"*{timepoint}*_bet*modified*.nii.gz"
+
     pattern = f"*{timepoint}*_bet_mask*.nii.gz"
     pattern_priority = f"*{timepoint}*_bet_mask*modifiedmask*.nii.gz"
-    # Search for files matching the pattern in the specified directory
-    
-    filepath = glob.glob(os.path.join(directory, pattern_priority))
-    if not filepath:
-        filepath = glob.glob(os.path.join(directory, pattern))
+    # Search for bet files matching the pattern, excluding 'mask' files in the specified directory
+    img_filepath = [file for file in glob.glob(os.path.join(directory, broad_pattern_priority)) if 'mask' not in file]
+    if not img_filepath:
+        img_filepath = [file for file in glob.glob(os.path.join(directory, broad_pattern)) if 'mask' not in file]
 
-    if filepath:
-        filepath = filepath[0] # glob returns a list. this gets first element of list
-        print (filepath)
+    if img_filepath:
+        img_filepath = img_filepath[0] # glob returns a list. this gets first element of list
+        print (img_filepath)
     else:
         print("No file found for patient_id", patient_id, "timepoint", timepoint)
     
     # Load nifti file as img. img has attributes 
     print('Loading nifti...')
-    img, save_dir = load_nifti(filepath)
+    img, save_dir = load_nifti(img_filepath)
+
+    # Repeat for finding mask using pattern and pattern priority
+    mask_filepath = glob.glob(os.path.join(directory, pattern_priority))
+    if not mask_filepath:
+        mask_filepath = glob.glob(os.path.join(directory, pattern))
+
+    if mask_filepath:
+        mask_filepath = mask_filepath[0] # glob returns a list. this gets first element of list
+        print (mask_filepath)
+    else:
+        print("No file found for patient_id", patient_id, "timepoint", timepoint)
+    
+    # Load nifti file as img. img has attributes 
+    print('Loading nifti...')
+    mask, save_dir = load_nifti(mask_filepath)
+
+
 
     # Extract voxel indices from patient_info csv
     #print(patient_info.columns)
@@ -449,7 +469,8 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     print(f"posterior y coord: {posty}")
     print(f"craniectomy side: {side}")
     """
-    norm_nii_slice, slice_img = extract_and_display_slice(img, save_dir, patient_id, timepoint, z_coord, disp_flag='n')
+    norm_img_slice, slice_img = extract_and_display_slice(img, save_dir, patient_id, timepoint, z_coord, disp_flag='y')
+    norm_mask_slice, slice_mask = extract_and_display_slice(mask, save_dir, patient_id, timepoint, z_coord, disp_flag='y')
 
       
 print(f"z coord slice index: {z_coord}")
@@ -467,10 +488,11 @@ plt.show()
 print(patient_info.head())
 
 
-deformed_contour_x, deformed_contour_y = auto_boundary_detect(patient_id, timepoint, norm_nii_slice, antx, anty, postx, posty, side)
+# Use mask to do contours
+deformed_contour_x, deformed_contour_y = auto_boundary_detect(patient_id, timepoint, norm_mask_slice, antx, anty, postx, posty, side)
 
 flipside = flipside_func(side)
-baseline_contour_x, baseline_contour_y = auto_boundary_detect(patient_id, timepoint, norm_nii_slice, antx, anty, postx, posty, flipside)
+baseline_contour_x, baseline_contour_y = auto_boundary_detect(patient_id, timepoint, norm_mask_slice, antx, anty, postx, posty, flipside)
 m, c, Y = get_mirror_line(baseline_contour_y, baseline_contour_x, deformed_contour_x)
 
 reflected_contour_x, reflected_contour_y = reflect_across_line(m, c, baseline_contour_x, baseline_contour_y)
@@ -484,7 +506,7 @@ line_data = pd.DataFrame({
     'x': x_values
 })
 
-plt.imshow(norm_nii_slice, cmap='gray')
+plt.imshow(norm_img_slice, cmap='gray')
 ## Adjust the y-axis to display in the original image's orientation
 plt.gca().invert_yaxis()
 plt.plot(line_data['x'], line_data['y'], label=f'Line: y = {m}x + {c}', color='grey', lw=0.5, linestyle='dashed')
