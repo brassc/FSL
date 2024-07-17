@@ -279,7 +279,6 @@ def get_mirror_line(y_coords, xa_coords, xb_coords):
     #where b is baseline and a is expansion side
     # returns gradient, m; x intercept, c; fit data, Y
 
-    #avg_x = ((xa_coords + xb_coords) / 2)
     # get first and last coordinates of contours
     first_avg_x = (xa_coords[0] + xb_coords[0]) / 2
     last_avg_x = (xa_coords[-1] + xb_coords[-1]) / 2
@@ -295,11 +294,6 @@ def get_mirror_line(y_coords, xa_coords, xb_coords):
     # Prepare data for regression
     X = np.array([first_avg_x, last_avg_x]).reshape(-1, 1)  # Dependent variable
     Y = np.array([y_min, y_max]).reshape(-1, 1)          # Independent variable
-    
-
-    # Reshape your x and y data for sklearn
-    #x = avg_x_df.values#.reshape(-1, 1)  # Reshaping is required for a single feature in sklearn
-    #Y = y_df['y'].values.reshape(-1,1)
 
     # Initialize the linear regression model
     model = LinearRegression()
@@ -472,15 +466,18 @@ plt.scatter(postx, posty, color='b')
 plt.show()
 print(patient_info.head())
 
+
 deformed_contour_x, deformed_contour_y = auto_boundary_detect(patient_id, timepoint, norm_nii_slice, antx, anty, postx, posty, side)
 
 flipside = flipside_func(side)
 baseline_contour_x, baseline_contour_y = auto_boundary_detect(patient_id, timepoint, norm_nii_slice, antx, anty, postx, posty, flipside)
 m, c, Y = get_mirror_line(baseline_contour_y, baseline_contour_x, deformed_contour_x)
 
-x_values = [(y - c) / m for y in baseline_contour_y]
 reflected_contour_x, reflected_contour_y = reflect_across_line(m, c, baseline_contour_x, baseline_contour_y)
 
+
+# PLOTTING CONTOURS AND MIDLINE:
+x_values = [(y - c) / m for y in baseline_contour_y]
 # Create a DataFrame to store the y and corresponding x values
 line_data = pd.DataFrame({
     'y': baseline_contour_y,
