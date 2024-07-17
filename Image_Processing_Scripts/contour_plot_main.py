@@ -333,7 +333,7 @@ def reflect_across_line(m, c, xb_coords, y_coords):
     else:
         d = np.abs(xb_coords - xl)
         xr = xl - d
-        xr = int(xr)
+        
         
     return xr
 
@@ -453,15 +453,24 @@ flipside = flipside_func(side)
 baseline_contour_x, baseline_contour_y = auto_boundary_detect(patient_id, timepoint, norm_nii_slice, antx, anty, postx, posty, flipside)
 
 m, c, Y = get_mirror_line(baseline_contour_y, baseline_contour_x, deformed_contour_x)
+x_values = [(y - c) / m for y in baseline_contour_y]
+
+# Create a DataFrame to store the y and corresponding x values
+line_data = pd.DataFrame({
+    'y': baseline_contour_y,
+    'x': x_values
+})
 
 reflected_contour_x = reflect_across_line(m, c, baseline_contour_x, baseline_contour_y)
 
 plt.imshow(norm_nii_slice, cmap='gray')
 ## Adjust the y-axis to display in the original image's orientation
 plt.gca().invert_yaxis()
+plt.plot(line_data['x'], line_data['y'], label=f'Line: y = {m}x + {c}')
+plt.scatter(line_data['x'], line_data['y'], color='red')  # Mark the points
 plt.scatter(deformed_contour_x, deformed_contour_y, s=2, color='red')
-plt.scatter(baseline_contour_x, baseline_contour_y, s=2, color='blue')
-plt.scatter(reflected_contour_x, baseline_contour_y, s=2, color='green')
+plt.scatter(baseline_contour_x, baseline_contour_y, s=2, color='cyan')
+#plt.scatter(reflected_contour_x, baseline_contour_y, s=2, color='green')
 plt.show()
 
 
