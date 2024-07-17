@@ -142,11 +142,11 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, antx, 
 
     # Create a zero-filled array with the same dimensions as the original slice
     restored_slice = np.zeros(original_shape)
-
+    """
     print(f"trimmed slice data x shape: {trimmed_slice_data.shape[1]}")
     print(f"original x shape: {restored_slice.shape[1]}")
     print(f"image_center_x: {image_center_x}")
-
+    """
     # Insert the trimmed data back into the restored_slice at the original position
     end_y = start_y + trimmed_slice_data.shape[0]  # Calculated based on the trimmed data size
     if side == 'R':
@@ -168,11 +168,8 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, antx, 
     """
     # Display the restored slice such that trimmed area fills the plot
     # You can plot this data so it fills the plot but maintains its reference to the original coordinate system
-    if side == 'R':
-        plt.imshow(trimmed_slice_data, cmap='gray', extent=[start_x, end_x, end_y, start_y])
-    else:
-        plt.imshow(trimmed_slice_data, cmap='gray', extent=[start_x, end_x, end_y, start_y])
-
+    plt.imshow(trimmed_slice_data, cmap='gray', extent=[start_x, end_x, end_y, start_y])
+    
     # Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
 
@@ -264,6 +261,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, antx, 
     save_arrays_to_directory(data_readout_dir, array_save_name,
                                 xx_coords=contour_x_coords, yy_coords=contour_y_coords)
     """
+    """
     #no if statement necessary here because points are already adjustd
     plt.imshow(contour_img, cmap='gray', extent=[start_x, end_x, end_y, start_y])
     # Adjust the y-axis to display in the original image's orientation
@@ -271,7 +269,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, antx, 
     
     plt.scatter(contour_x_coords, contour_y_coords, s=2, color='red')
     plt.show()
-        
+    """    
     return contour_x_coords, contour_y_coords
 
 
@@ -282,14 +280,14 @@ def get_mirror_line(y_coords, xa_coords, xb_coords):
     # get first and last coordinates of contours
     first_avg_x = (xa_coords[0] + xb_coords[0]) / 2
     last_avg_x = (xa_coords[-1] + xb_coords[-1]) / 2
-    #central_x = (first_avg_x + last_avg_x) / 2
-    print("y coords is:", y_coords)
+    #print("y coords is:", y_coords)
+    
     # Select the top and bottom in range of y_coords
     y_min = min(y_coords)
     y_max = max(y_coords)
 
-    print(f"top line point is: ({last_avg_x},{y_min})")
-    print(f"bottom line point is: ({first_avg_x},{y_max})")
+    #print(f"top line point is: ({last_avg_x},{y_min})")
+    #print(f"bottom line point is: ({first_avg_x},{y_max})")
 
     # Prepare data for regression
     X = np.array([first_avg_x, last_avg_x]).reshape(-1, 1)  # Dependent variable
@@ -305,6 +303,9 @@ def get_mirror_line(y_coords, xa_coords, xb_coords):
     m = model.coef_[0][0]
     if m == 0:
         c = first_avg_x
+        print("No gradient found.")
+        print('x intercept (c) is:', c)
+        print("Performing simple reflection...")
     else:
         c = model.intercept_[0]
 
@@ -318,19 +319,18 @@ def get_mirror_line(y_coords, xa_coords, xb_coords):
 
 def reflect_across_line(m, c, xb_coords, yb_coords):
     
-    # number of points to reflect
-    n = len(xb_coords)
-
-
+    # if no gradient, then simple reflection (recall x and y directions are reversed...)
     if m == 0:
         yr = yb_coords
         xr = (c-xb_coords) + c
-        #if xb_coords[0] > c:
-         #   xr = (c-xb_coords) + c
-        #else:
-         #   xr = (c-xb_coords) + c
         return xr, yr
 
+    # if gradient present, then do 2D reflection
+    print("performing 2D reflection...")
+    
+    # number of points to reflect
+    n = len(xb_coords)
+    
     # Allocate space for new coords
     xr = np.zeros(n)
     yr = np.zeros(n)   
@@ -350,22 +350,8 @@ def reflect_across_line(m, c, xb_coords, yb_coords):
         # Calculating the reflected point
         xr[i] = 2 * x_i - x
         yr[i] = 2 * y_i - y
-
-
-
-    #points on line:
-    #xl = m * yb_coords + c 
-
-    """
-    # Difference between baseline x and points on line
-    if xb_coords[0] <= xl[0]:oords
-        d = np.abs(xl-xb_coords)
-        xr = xl + d
-    else:
-        d = np.abs(xb_coords - xl)
-        xr = xl - d
-        
-    """    
+   
+    print("reflection complete.")
     return xr, yr
 
 
