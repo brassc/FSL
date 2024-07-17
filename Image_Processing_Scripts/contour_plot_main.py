@@ -542,7 +542,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     # create input for side to do other side
     flipside = flipside_func(side)
     
-    # Use mask: extract baselien side
+    # Use mask: extract baseline side
     baseline_contour_x, baseline_contour_y = auto_boundary_detect(patient_id, timepoint, norm_mask_slice, antx, anty, postx, posty, flipside)
 
     # get mirror line from baseline vs deformed contours in x 
@@ -573,7 +573,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     plt.scatter(reflected_contour_x, reflected_contour_y, s=2, color='green')
     filename = save_dir + timepoint+".png"
     plt.savefig(filename)
-    plt.show()
+    #plt.show()
 
 
     print(f"Image {timepoint}.png saved to {save_dir}")
