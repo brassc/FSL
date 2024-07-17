@@ -407,7 +407,7 @@ patient_info.drop(columns='excluded', inplace=True)
 
 print(patient_info)
 
-#filter
+#filter for patient if desired
 patient_info = patient_info[patient_info['patient_id'] == 23348]
 
 
@@ -431,7 +431,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
 
     if img_filepath:
         img_filepath = img_filepath[0] # glob returns a list. this gets first element of list
-        print (img_filepath)
+        #print (img_filepath)
     else:
         print("No file found for patient_id", patient_id, "timepoint", timepoint)
     
@@ -508,6 +508,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
 
 
     # STEP 3: PLOT CONTOURS AND MIDLINE
+    # account for if gradient = 0
     if m == 0:
         x_values = [c for y in baseline_contour_y]
     else:
@@ -521,7 +522,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     plt.imshow(norm_img_slice, cmap='gray')
     ## Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
-    plt.plot(line_data['x'], line_data['y'], label=f'Line: y = {m}x + {c}', color='grey', lw=0.5, linestyle='dashed')
+    plt.plot(line_data['x'], line_data['y'], label=f'Line: y = {m}x + {c}', color='white', lw=0.5, linestyle='dashed')
     plt.scatter(deformed_contour_x, deformed_contour_y, s=2, color='red')
     plt.scatter(baseline_contour_x, baseline_contour_y, s=2, color='cyan')
     plt.scatter(reflected_contour_x, reflected_contour_y, s=2, color='green')
