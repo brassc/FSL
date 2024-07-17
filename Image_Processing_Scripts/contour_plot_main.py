@@ -459,13 +459,6 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
         print("No bet file found for patient_id", patient_id, "timepoint", timepoint, ". Using mask instead...")
     
 
-    print(f"Starting contour extraction for {patient_id} {timepoint}...")
-    
-    # Load nifti file as img. img has attributes 
-    if img_filepath:
-        print('Loading image nifti...')
-        img, save_dir = load_nifti(img_filepath)
-
     # Repeat for finding mask using pattern and pattern priority
     mask_filepath = glob.glob(os.path.join(directory, pattern_priority))
     if not mask_filepath:
@@ -495,7 +488,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     mask, save_dir = load_nifti(mask_filepath)
 
 
-
+    print(f"Starting contour extraction for {patient_id} {timepoint}..."
     # Extract voxel indices from patient_info csv
     #print(patient_info.columns)
     z_coord = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'z_coord_slice'].values[0]
