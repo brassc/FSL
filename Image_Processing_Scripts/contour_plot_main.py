@@ -573,7 +573,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     plt.scatter(reflected_contour_x, reflected_contour_y, s=2, color='green')
     filename = save_dir + timepoint+".png"
     plt.savefig(filename)
-    #plt.show()
+    plt.show()
 
 
     print(f"Image {timepoint}.png saved to {save_dir}")
