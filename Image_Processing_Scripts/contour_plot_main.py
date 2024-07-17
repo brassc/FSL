@@ -138,7 +138,7 @@ def load_boundary_detection_features(patient_id, patient_timepoint, adjusted_sli
     return corrected_slice, xa_coords, ya_coords, xb_coords, yb_coords, xr_coords
 
 
-# THIS FUNCTION OUTPUTS CONTOUR X AND Y COORDINATES
+# THIS FUNCTION OUTPUTS CONTOUR X AND Y COORDINATES, INPUT REQUIRED IS THE SLICE IMAGE, PATIENT INFO + COORDS
 # Edit what it takes in and why
 def auto_boundary_detect(patient_id, patient_timepoint, adjusted_slice_image, antx, anty, postx, posty, side):
     
@@ -150,22 +150,23 @@ def auto_boundary_detect(patient_id, patient_timepoint, adjusted_slice_image, an
     start_y = posty
     end_y = anty
     
+    image_center_x = 0.5 * adjusted_slice_image.shape[1]  # Calculate the center of the image
     
     if side == 'R':
-        trimmed_slice_data = corrected_slice[start_y:end_y, (0.5 * adjusted_slice_image.shape[1]):]
+        trimmed_slice_data = adjusted_slice_image[start_y:end_y, image_center_x:] # 0.5 * adjusted_slice_image.shape[1]) is the middle of the image
     else:
-        trimmed_slice_data = corrected_slice[start_y:end_y, :(0.5 * adjusted_slice_image.shape[1])]
+        trimmed_slice_data = adjusted_slice_image[start_y:end_y, :image_center_x]
     # Slice 'corrected_slice' between these y-coordinates and plot
-    #trimmed_slice_data = corrected_slice[start_y:end_y, x_offset:]
-    """
+    #trimmed_slice_data = adjusted_slice_image[start_y:end_y, x_offset:]
+    
     plt.imshow(trimmed_slice_data, cmap='gray')
-    # Adjust the y-axis to display in the original image's orientation
-    plt.gca().invert_yaxis()
+    ## Adjust the y-axis to display in the original image's orientation
+    #plt.gca().invert_yaxis()
     plt.show()
-    """
-
-    # Assume corrected_slice has the original dimensions, e.g., from a 256x256 slice
-    original_shape = corrected_slice.shape
+    
+    sys.exit(0)
+    # Assume adjusted_slice_image has the original dimensions, e.g., from a 256x256 slice
+    original_shape = adjusted_slice_image.shape
 
     # Create a zero-filled array with the same dimensions as the original slice
     restored_slice = np.zeros(original_shape)
@@ -173,9 +174,9 @@ def auto_boundary_detect(patient_id, patient_timepoint, adjusted_slice_image, an
 
     # Insert the trimmed data back into the restored_slice at the original position
     end_y = start_y + trimmed_slice_data.shape[0]  # Calculated based on the trimmed data size
-    end_x = x_offset + trimmed_slice_data.shape[1]  # Calculated based on the trimmed data size
+    end_x = image_center_x + trimmed_slice_data.shape[1]  # Calculated based on the trimmed data size
 
-    restored_slice[start_y:end_y, x_offset:end_x] = trimmed_slice_data
+    restored_slice[start_y:end_y, image_center_x:end_x] = trimmed_slice_data
 
     """
     # Display the restored slice such that trimmed area fills the plot
@@ -232,14 +233,14 @@ def auto_boundary_detect(patient_id, patient_timepoint, adjusted_slice_image, an
     contour_img_original_ref = np.zeros(original_shape)
     # Insert the trimmed data back into the restored_slice at the original position
     end_y = start_y + contour_img.shape[0]  # Calculated based on the trimmed data size
-    end_x = x_offset + contour_img.shape[1]  # Calculated based on the trimmed data size
+    end_x = image_center_x + contour_img.shape[1]  # Calculated based on the trimmed data size
 
-    contour_img_original_ref[start_y:end_y, x_offset:end_x] = contour_img
+    contour_img_original_ref[start_y:end_y, image_center_x:end_x] = contour_img
 
     if x_offset > 0.5 * corrected_slice.shape[1]:
-        plt.imshow(contour_img, cmap='gray', extent=[x_offset, x_offset + contour_img.shape[1], end_y, start_y])
+        plt.imshow(contour_img, cmap='gray', extent=[image_center_x, image_center_x + contour_img.shape[1], end_y, start_y])
     else:
-        plt.imshow(contour_img, cmap='gray', extent=[x_offset - contour_img.shape[1], x_offset, end_y, start_y])
+        plt.imshow(contour_img, cmap='gray', extent=[image_center_x - contour_img.shape[1], image_center_x, end_y, start_y])
 
     # Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
@@ -268,7 +269,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, adjusted_slice_image, an
         for point in contour.reshape(-1, 2):
         
             # Adjust the x coordinate
-            adjusted_x = point[0] + x_offset
+            adjusted_x = point[0] + image_center_x
             # Adjust the y coordinate - note that y-coordinates need to consider the image's orientation
             adjusted_y = point[1] + start_y
             contour_points.append([adjusted_x, adjusted_y])
@@ -278,17 +279,17 @@ def auto_boundary_detect(patient_id, patient_timepoint, adjusted_slice_image, an
     contour_points_array = np.array(contour_points)
     contour_x_coords = contour_points_array[:,0]
     contour_y_coords = contour_points_array[:,1]
-
+    """
     # Save np arrays to to file.npz in given directory data_readout_dir using np.savez
     data_readout_dir=f"data_readout/{patient_id}_{patient_timepoint}"
     save_arrays_to_directory(data_readout_dir, array_save_name,
                                 xx_coords=contour_x_coords, yy_coords=contour_y_coords)
-
+    """
     #no if statement necessary here because points are already adjustd
     plt.imshow(contour_img, cmap='gray', extent=[x_offset, x_offset + contour_img.shape[1], end_y, start_y])
     # Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
-    if x_offset > 0.5 * corrected_slice.shape[1]:
+    if side == 'R':
         plt.scatter(contour_x_coords, contour_y_coords, s=2, color='red')
     else:
         plt.scatter(contour_x_coords, contour_y_coords, s=2, color='cyan')
@@ -401,6 +402,8 @@ plt.scatter(antx, anty, color='r')
 plt.scatter(postx, posty, color='b')
 plt.show()
 print(patient_info.head())
+
+auto_boundary_detect(patient_id, timepoint, slice_img, antx, anty, postx, posty, side)
     #extract_and_display_slice(img, save_directory, voxel_indices)
     
 
