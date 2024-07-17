@@ -150,18 +150,23 @@ def auto_boundary_detect(patient_id, patient_timepoint, adjusted_slice_image, an
     start_y = posty
     end_y = anty
     
-    image_center_x = 0.5 * adjusted_slice_image.shape[1]  # Calculate the center of the image
+    width, height = adjusted_slice_image.size
+    image_center_x = 0.5 * width  # Calculate the center of the image
     
     if side == 'R':
-        trimmed_slice_data = adjusted_slice_image[start_y:end_y, image_center_x:] # 0.5 * adjusted_slice_image.shape[1]) is the middle of the image
+        crop_box = (0, start_y, image_center_x, end_y)
+        #trimmed_slice_data = adjusted_slice_image[start_y:end_y, image_center_x:] # 0.5 * adjusted_slice_image.shape[1]) is the middle of the image
     else:
-        trimmed_slice_data = adjusted_slice_image[start_y:end_y, :image_center_x]
+        crop_box = (image_center_x, start_y, width, end_y)        
+#trimmed_slice_data = adjusted_slice_image[start_y:end_y, :image_center_x]
     # Slice 'corrected_slice' between these y-coordinates and plot
     #trimmed_slice_data = adjusted_slice_image[start_y:end_y, x_offset:]
     
+    # Perform the cropping
+    trimmed_slice_data = adjusted_slice_image.crop(crop_box)
     plt.imshow(trimmed_slice_data, cmap='gray')
     ## Adjust the y-axis to display in the original image's orientation
-    #plt.gca().invert_yaxis()
+    plt.gca().invert_yaxis()
     plt.show()
     
     sys.exit(0)
