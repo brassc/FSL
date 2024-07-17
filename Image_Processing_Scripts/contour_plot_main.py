@@ -446,7 +446,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
 
     if mask_filepath:
         mask_filepath = mask_filepath[0] # glob returns a list. this gets first element of list
-        print (mask_filepath)
+        #print (mask_filepath)
     else:
         print("No file found for patient_id", patient_id, "timepoint", timepoint)
     
