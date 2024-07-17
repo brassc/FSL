@@ -159,6 +159,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
     # Ensure the starting index is smaller than the ending index
     start_y = posty
     end_y = anty
+    start_x = postx
     
     #width, height = adjusted_slice_image.size
     #image_center_x = 0.5 * width  # Calculate the center of the image
@@ -170,12 +171,12 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
 
     else:
         trimmed_slice_data = normalized_slice[start_y:end_y, image_center_x:]
-    """    
+        
     plt.imshow(trimmed_slice_data, cmap='gray')
     ## Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
     plt.show()
-    """
+    
     
     
     # Assume adjusted_slice_image has the original dimensions, e.g., from a 256x256 slice
@@ -184,13 +185,27 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
     # Create a zero-filled array with the same dimensions as the original slice
     restored_slice = np.zeros(original_shape)
 
+    print(f"trimmed slice data x shape: {trimmed_slice_data.shape[1]}")
+    print(f"original x shape: {restored_slice.shape[1]}")
+    print(f"image_center_x: {image_center_x}")
 
     # Insert the trimmed data back into the restored_slice at the original position
     end_y = start_y + trimmed_slice_data.shape[0]  # Calculated based on the trimmed data size
-    end_x = image_center_x + trimmed_slice_data.shape[1]  # Calculated based on the trimmed data size
+    if side == 'R':
+        start_x = 0
+        end_x = image_center_x #+ trimmed_slice_data.shape[1]  # Calculated based on the trimmed data size
+    else:
+        start_x = image_center_x
+        end_x = image_center_x + trimmed_slice_data.shape[1] 
+    
 
-    restored_slice[start_y:end_y, image_center_x:end_x] = trimmed_slice_data
+    restored_slice[start_y:end_y, start_x:end_x] = trimmed_slice_data
 
+    plt.imshow(restored_slice, cmap='gray')
+    ## Adjust the y-axis to display in the original image's orientation
+    plt.gca().invert_yaxis()
+    plt.show()
+    sys.exit(0)
     
     # Display the restored slice such that trimmed area fills the plot
     # You can plot this data so it fills the plot but maintains its reference to the original coordinate system
