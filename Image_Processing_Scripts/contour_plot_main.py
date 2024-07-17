@@ -191,8 +191,18 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, antx, 
     """
 
     # STEP 2: FIND CONTOURS
-    #normalise trimmed data 
-    norm_tr_slice = 255 * (trimmed_slice_data - np.min(trimmed_slice_data)) / (np.max(trimmed_slice_data) - np.min(trimmed_slice_data))
+    #normalise trimmed data
+    try: 
+        norm_tr_slice = 255 * (trimmed_slice_data - np.min(trimmed_slice_data)) / (np.max(trimmed_slice_data) - np.min(trimmed_slice_data))
+    except ValueError as e:
+        print(f"Error processing slice: {e}")
+        print(f"Skipping {patient_id} {timepoint} and continuing with the remaining scans.")
+        if not np.any(trimmed_slice_data):
+            print("Warning: Empty or zero-sized trimmed_slice_data array encountered.")
+        return None, None
+    
+
+
     norm_tr_slice = norm_tr_slice.astype(np.uint8)
 
     # Apply Canny edge detection to find edges in the image
@@ -526,6 +536,8 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     # STEP 2: EXTRACT CONTOURS
     # Use mask: extract deformed side
     deformed_contour_x, deformed_contour_y = auto_boundary_detect(patient_id, timepoint, norm_mask_slice, antx, anty, postx, posty, side)
+    if np.all(np.array(deformed_contour_x) == None):
+        continue
 
     # create input for side to do other side
     flipside = flipside_func(side)
