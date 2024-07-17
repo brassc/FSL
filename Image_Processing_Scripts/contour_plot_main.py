@@ -63,6 +63,15 @@ def extract_and_display_slice(img, save_directory, patient_id, timepoint, z_coor
 
     # Normalize the slice data for image display - RETURN NORMALISED SLICE NP ARRAY
     normalized_slice = (slice_data - np.min(slice_data)) / (np.max(slice_data) - np.min(slice_data)) * 255
+    rotated_norm_slice=np.rot90(normalized_slice, k=1) # rotate 90 degrees once (k=1)
+    oriented_norm_slice = np.fliplr(rotated_norm_slice)
+
+    plt.imshow(oriented_norm_slice, cmap='gray')
+    ## Adjust the y-axis to display in the original image's orientation
+    plt.gca().invert_yaxis()
+    plt.show()
+    
+    sys.exit(0)
 
     # FOR DISPLAY PURPOSES
     # Convert the normalized slice to a PIL image for saving or displaying
@@ -150,23 +159,16 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
     # Ensure the starting index is smaller than the ending index
     start_y = posty
     end_y = anty
-
-    plt.imshow(normalized_slice, cmap='gray')
-    ## Adjust the y-axis to display in the original image's orientation
-    plt.gca().invert_yaxis()
-    plt.show()
-    
-    sys.exit(0)
     
     #width, height = adjusted_slice_image.size
     #image_center_x = 0.5 * width  # Calculate the center of the image
-    image_center_x = int(0.5 * normalized_slice.shape[1]) # work with np style nii slice
+    image_center_x = 0.5 * adjusted_slice_image.shape[1] # work with np style nii slice
     
     if side == 'R':
         #crop_box = (0, start_y, image_center_x, end_y)
-        trimmed_slice_data = normalized_slice[start_y:end_y, image_center_x:]
+        trimmed_slice_data = adjusted_slice_image[start_y:end_y, image_center_x:]
     else:
-        trimmed_slice_data = normalized_slice[start_y:end_y, :image_center_x]
+        trimmed_slice_data = adjusted_slice_image[start_y:end_y, :image_center_x]
         # crop_box = (image_center_x, start_y, width, end_y)        
 #trimmed_slice_data = adjusted_slice_image[start_y:end_y, :image_center_x]
     # Slice 'corrected_slice' between these y-coordinates and plot
