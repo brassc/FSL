@@ -568,5 +568,5 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     print(f"Contour point extraction for {patient_id} {timepoint} complete. \n")
 
 print("Plots completed for all specified timepoints.")
-print("specify run only particular patient id by doing \n python contour_plot_main <patient_id>")
+print("specify run only particular patient id by doing \n python contour_plot_main.py <patient_id>")
 
