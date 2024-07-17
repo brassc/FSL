@@ -150,6 +150,13 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
     # Ensure the starting index is smaller than the ending index
     start_y = posty
     end_y = anty
+
+    plt.imshow(normalized_slice, cmap='gray')
+    ## Adjust the y-axis to display in the original image's orientation
+    plt.gca().invert_yaxis()
+    plt.show()
+    
+    sys.exit(0)
     
     #width, height = adjusted_slice_image.size
     #image_center_x = 0.5 * width  # Calculate the center of the image
