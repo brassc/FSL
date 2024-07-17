@@ -456,14 +456,15 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
         img_filepath = img_filepath[0] # glob returns a list. this gets first element of list
         #print (img_filepath)
     else:
-        print("No file found for patient_id", patient_id, "timepoint", timepoint)
+        print("No bet file found for patient_id", patient_id, "timepoint", timepoint, ". Using mask instead...")
     
 
     print(f"Starting contour extraction for {patient_id} {timepoint}...")
     
     # Load nifti file as img. img has attributes 
-    print('Loading image nifti...')
-    img, save_dir = load_nifti(img_filepath)
+    if img_filepath:
+        print('Loading image nifti...')
+        img, save_dir = load_nifti(img_filepath)
 
     # Repeat for finding mask using pattern and pattern priority
     mask_filepath = glob.glob(os.path.join(directory, pattern_priority))
@@ -476,7 +477,20 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     else:
         print("No file found for patient_id", patient_id, "timepoint", timepoint)
     
-    # Load nifti file as img. img has attributes 
+
+
+        # Load nifti file as img. img has attributes 
+    if img_filepath:
+        print('Loading image nifti...')
+        img, save_dir = load_nifti(img_filepath)
+    elif not img_filepath and mask_filepath:
+        print('Loading available mask as img...')
+        img, save_dir=load_nifti(mask_filepath)
+    else:
+        print(f"neither img nor mask found for {patient_id} {timepoint}. Exiting.")
+        sys.exit(1)
+    
+    # Load nifti file as img type - img has attributes 
     print('Loading mask nifti...')
     mask, save_dir = load_nifti(mask_filepath)
 
