@@ -159,7 +159,8 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
     # Ensure the starting index is smaller than the ending index
     start_y = posty
     end_y = anty
-    start_x = postx
+    #start_x = postx
+    
     
     #width, height = adjusted_slice_image.size
     #image_center_x = 0.5 * width  # Calculate the center of the image
@@ -205,14 +206,14 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
     ## Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
     plt.show()
-    sys.exit(0)
+    
     
     # Display the restored slice such that trimmed area fills the plot
     # You can plot this data so it fills the plot but maintains its reference to the original coordinate system
     if side == 'R':
-        plt.imshow(trimmed_slice_data, cmap='gray', extent=[image_center_x, image_center_x + trimmed_slice_data.shape[1], end_y, start_y])
+        plt.imshow(trimmed_slice_data, cmap='gray', extent=[start_x, end_x, end_y, start_y])
     else:
-        plt.imshow(trimmed_slice_data, cmap='gray', extent=[image_center_x - trimmed_slice_data.shape[1], image_center_x, end_y, start_y])
+        plt.imshow(trimmed_slice_data, cmap='gray', extent=[start_x, end_x, end_y, start_y])
 
     # Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
