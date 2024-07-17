@@ -435,6 +435,9 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     else:
         print("No file found for patient_id", patient_id, "timepoint", timepoint)
     
+
+    print(f"Starting contour extraction for {patient_id} {timepoint}...")
+    
     # Load nifti file as img. img has attributes 
     print('Loading image nifti...')
     img, save_dir = load_nifti(img_filepath)
@@ -532,5 +535,6 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
 
 
     print(f"Image {timepoint}.png saved to {save_dir}")
+    print(f"Contour point extraction for {patient_id} {timepoint} complete. \n")
 
 
