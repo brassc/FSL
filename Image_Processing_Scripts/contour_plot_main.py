@@ -251,9 +251,6 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
 
     # Create an image based on the original image dimensions to position the contours correctly
     contour_img_original_ref = np.zeros(original_shape)
-    # Insert the trimmed data back into the restored_slice at the original position
-    #end_y = start_y + contour_img.shape[0]  # Calculated based on the trimmed data size
-    #end_x = image_center_x + contour_img.shape[1]  # Calculated based on the trimmed data size
 
     contour_img_original_ref[start_y:end_y, start_x:end_x] = contour_img
 
@@ -262,10 +259,6 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
     else:
         plt.imshow(contour_img, cmap='gray', extent=[start_x, end_x, end_y, start_y])
 
-#    if x_offset > 0.5 * corrected_slice.shape[1]:
-#        plt.imshow(contour_img, cmap='gray', extent=[image_center_x, image_center_x + contour_img.shape[1], end_y, start_y])
-#    else:
-#        plt.imshow(contour_img, cmap='gray', extent=[image_center_x - contour_img.shape[1], image_center_x, end_y, start_y])
 
     # Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
@@ -282,9 +275,9 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
 
     plt.show()
 
-    sys.exit(0)
+    
     #GET POINTS IN ARRAY
-    # Assuming 'contours' is obtained from cv2.findContours as per your provided code
+    
     # Initialize an empty list to collect all points
     contour_points = []
 
@@ -295,7 +288,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
         for point in contour.reshape(-1, 2):
         
             # Adjust the x coordinate
-            adjusted_x = point[0] + image_center_x
+            adjusted_x = point[0] + start_x
             # Adjust the y coordinate - note that y-coordinates need to consider the image's orientation
             adjusted_y = point[1] + start_y
             contour_points.append([adjusted_x, adjusted_y])
@@ -315,12 +308,9 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
     plt.imshow(contour_img, cmap='gray', extent=[start_x, end_x, end_y, start_y])
     # Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
-    if side == 'R':
-        plt.scatter(contour_x_coords, contour_y_coords, s=2, color='red')
-    else:
-        plt.scatter(contour_x_coords, contour_y_coords, s=2, color='cyan')
-    plt.show()
-
+    
+    plt.scatter(contour_x_coords, contour_y_coords, s=2, color='red')
+        
     return contour_x_coords, contour_y_coords
 
 
