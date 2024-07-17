@@ -130,11 +130,12 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, antx, 
 
     else:
         trimmed_slice_data = normalized_slice[start_y:end_y, image_center_x:]
-        
+    """    
     plt.imshow(trimmed_slice_data, cmap='gray')
     ## Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
     plt.show()
+    """
     
     # Assume adjusted_slice_image has the original dimensions, e.g., from a 256x256 slice
     original_shape = normalized_slice.shape
@@ -157,13 +158,14 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, antx, 
     
 
     restored_slice[start_y:end_y, start_x:end_x] = trimmed_slice_data
-
+    """
     plt.imshow(restored_slice, cmap='gray')
     ## Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
     plt.show()
-    
-    
+    """    
+
+    """
     # Display the restored slice such that trimmed area fills the plot
     # You can plot this data so it fills the plot but maintains its reference to the original coordinate system
     if side == 'R':
@@ -182,7 +184,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, antx, 
     plt.scatter(postx, posty, s=2, color='cyan')
     
     plt.show()
-    
+    """
 
     # STEP 2: FIND CONTOURS
     #normalise trimmed data 
@@ -217,7 +219,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, antx, 
     contour_img_original_ref = np.zeros(original_shape)
 
     contour_img_original_ref[start_y:end_y, start_x:end_x] = contour_img
-
+    """
     if side == 'R':
         plt.imshow(contour_img, cmap='gray', extent=[start_x, end_x, end_y, start_y])
     else:
@@ -232,7 +234,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, antx, 
     plt.ylabel('Y coordinate in original image')
     plt.title('Trimmed Slice Boundary Displayed in Original Coordinates')
     plt.show()
-
+    """
     
     #GET POINTS IN ARRAY
     
@@ -280,26 +282,26 @@ def get_mirror_line(y_coords, xa_coords, xb_coords):
 
     #avg_x = ((xa_coords + xb_coords) / 2)
     # get first and last coordinates of contours
-    avg_x = xa_coords[0] + xb_coords[0] / 2
-    avg_x = avg_x.append(pd.Series([xa_coords[-1] + xb_coords[-1] / 2]))
+    first_avg_x = (xa_coords[0] + xb_coords[0]) / 2
+    last_avg_x = (xa_coords[-1] + xb_coords[-1]) / 2
+
+    avg_x_series=pd.Series([first_avg_x, last_avg_x])
     
-    avg_x = pd.DataFrame({'avg_x': avg_x})
+    avg_x_df = pd.DataFrame({'avg_x': avg_x_series})
 
-    print('avg_x is:', avg_x)
-    sys.exit(0)
-
-    #TRIM TO ONLY INCLUDE FIRST AND LAST - LINE TO ONLY GO THROUGH FIRST AND LAST POINTS
-    first_row = avg_x.iloc[[0]]
-    last_row = avg_x.iloc[[-1]]
-    tr_avg_x = pd.concat([first_row, last_row])
+    print('avg_x_df is:', avg_x_df)
+    
 
     firsty_row=y_coords_df.iloc[[0]]
     lasty_row=y_coords_df.iloc[[-1]]
-    tr_y_coords_df=pd.concat([firsty_row, lasty_row])
+    y_df=pd.concat([firsty_row, lasty_row])
+
+    print('y_df is: ', y_df)
+
 
     # Reshape your x and y data for sklearn
-    x = tr_avg_x.values#.reshape(-1, 1)  # Reshaping is required for a single feature in sklearn
-    Y = tr_y_coords_df['y'].values.reshape(-1,1)
+    x = avg_x_df.values#.reshape(-1, 1)  # Reshaping is required for a single feature in sklearn
+    Y = y_df['y'].values.reshape(-1,1)
 
     # Initialize the linear regression model
     model = LinearRegression()
@@ -312,7 +314,7 @@ def get_mirror_line(y_coords, xa_coords, xb_coords):
     c = model.intercept_
 
     print('Gradient (m) is:', m)
-    print('Intercept (c) is:', c)
+    print('x intercept (c) is:', c)
 
     return m, c, Y
 
