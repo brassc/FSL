@@ -288,8 +288,8 @@ def get_mirror_line(y_coords, xa_coords, xb_coords):
     y_min = min(y_coords)
     y_max = max(y_coords)
 
-    print(f"top point is: ({last_avg_x},{y_min})")
-    print(f"bottom point is: ({first_avg_x},{y_max})")
+    print(f"top line point is: ({last_avg_x},{y_min})")
+    print(f"bottom line point is: ({first_avg_x},{y_max})")
 
     # Prepare data for regression
     X = np.array([first_avg_x, last_avg_x]).reshape(-1, 1)  # Dependent variable
@@ -303,7 +303,10 @@ def get_mirror_line(y_coords, xa_coords, xb_coords):
 
     # The slope (gradient m) and intercept (c) from the fitted model
     m = model.coef_[0][0]
-    c = model.intercept_[0]
+    if m == 0:
+        c = first_avg_x
+    else:
+        c = model.intercept_[0]
 
     print('Gradient (m) is:', m)
     print('x intercept (c) is:', c)
@@ -318,6 +321,15 @@ def reflect_across_line(m, c, xb_coords, yb_coords):
     # number of points to reflect
     n = len(xb_coords)
 
+
+    if m == 0:
+        yr = yb_coords
+        if xb_coords[0] > c:
+            xr = (c-xb_coords) + c
+        else:
+            xr = (c-xb_coords) + c
+        return xr, yr
+
     # Allocate space for new coords
     xr = np.zeros(n)
     yr = np.zeros(n)   
@@ -328,8 +340,10 @@ def reflect_across_line(m, c, xb_coords, yb_coords):
 
         # Calculating the intersection point
         # Solve for x_i: (y +(1/m) * x - c) / (m + 1/m) = x_i
+
         denom = m + (1/m)
         x_i = (y + (1/m) * x - c) / denom
+        
         y_i = m * x_i + c
 
         # Calculating the reflected point
