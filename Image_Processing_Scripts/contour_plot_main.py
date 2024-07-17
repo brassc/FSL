@@ -436,7 +436,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
         print("No file found for patient_id", patient_id, "timepoint", timepoint)
     
     # Load nifti file as img. img has attributes 
-    print('Loading nifti...')
+    print('Loading image nifti...')
     img, save_dir = load_nifti(img_filepath)
 
     # Repeat for finding mask using pattern and pattern priority
@@ -451,7 +451,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
         print("No file found for patient_id", patient_id, "timepoint", timepoint)
     
     # Load nifti file as img. img has attributes 
-    print('Loading nifti...')
+    print('Loading mask nifti...')
     mask, save_dir = load_nifti(mask_filepath)
 
 
