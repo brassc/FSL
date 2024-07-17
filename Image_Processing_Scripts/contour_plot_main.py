@@ -488,7 +488,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     mask, save_dir = load_nifti(mask_filepath)
 
 
-    print(f"Starting contour extraction for {patient_id} {timepoint}..."
+    print(f"Starting contour extraction for {patient_id} {timepoint}...")
     # Extract voxel indices from patient_info csv
     #print(patient_info.columns)
     z_coord = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'z_coord_slice'].values[0]
