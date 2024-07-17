@@ -321,12 +321,11 @@ def get_mirror_line(y_coords, xa_coords, xb_coords):
 
 
 
-def reflect_across_line(m, c, xb_coords, yb_coords):
+def reflect_across_line(m, c, xb_coords, y_coords):
     
     #points on line:
-    xl = m * yb_coords + c 
+    xl = m * y_coords + c 
 
-    print('***********xb_coords[0] is:',xb_coords[0])
     # Difference between baseline x and points on line
     if xb_coords[0] <= xl[0]:
         d = np.abs(xl-xb_coords)
@@ -334,6 +333,7 @@ def reflect_across_line(m, c, xb_coords, yb_coords):
     else:
         d = np.abs(xb_coords - xl)
         xr = xl - d
+        xr = int(xr)
         
     return xr
 
@@ -448,11 +448,15 @@ plt.show()
 print(patient_info.head())
 
 deformed_contour_x, deformed_contour_y = auto_boundary_detect(patient_id, timepoint, norm_nii_slice, antx, anty, postx, posty, side)
-    #extract_and_display_slice(img, save_directory, voxel_indices)
+
 flipside = flipside_func(side)
 baseline_contour_x, baseline_contour_y = auto_boundary_detect(patient_id, timepoint, norm_nii_slice, antx, anty, postx, posty, flipside)
 
-get_mirror_line(baseline_contour_y, baseline_contour_x, deformed_contour_x)
+m, c, Y = get_mirror_line(baseline_contour_y, baseline_contour_x, deformed_contour_x)
+
+reflected_contour_x = reflect_across_line(m, c, baseline_contour_x, baseline_contour_y)
+
+
 
 
     
