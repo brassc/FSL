@@ -153,13 +153,13 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
     
     #width, height = adjusted_slice_image.size
     #image_center_x = 0.5 * width  # Calculate the center of the image
-    image_center_x = 0.5 * adjusted_slice_image.shape[1] # work with np style nii slice
+    image_center_x = int(0.5 * normalized_slice.shape[1]) # work with np style nii slice
     
     if side == 'R':
         #crop_box = (0, start_y, image_center_x, end_y)
-        trimmed_slice_data = adjusted_slice_image[start_y:end_y, image_center_x:]
+        trimmed_slice_data = normalized_slice[start_y:end_y, image_center_x:]
     else:
-        trimmed_slice_data = adjusted_slice_image[start_y:end_y, :image_center_x]
+        trimmed_slice_data = normalized_slice[start_y:end_y, :image_center_x]
         # crop_box = (image_center_x, start_y, width, end_y)        
 #trimmed_slice_data = adjusted_slice_image[start_y:end_y, :image_center_x]
     # Slice 'corrected_slice' between these y-coordinates and plot
