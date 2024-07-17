@@ -170,21 +170,16 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
 
     else:
         trimmed_slice_data = normalized_slice[start_y:end_y, image_center_x:]
-        # crop_box = (image_center_x, start_y, width, end_y)        
-#trimmed_slice_data = adjusted_slice_image[start_y:end_y, :image_center_x]
-    # Slice 'corrected_slice' between these y-coordinates and plot
-    #trimmed_slice_data = adjusted_slice_image[start_y:end_y, x_offset:]
-    
-    # Perform the cropping
-    #trimmed_slice_data = adjusted_slice_image.crop(crop_box)
+    """    
     plt.imshow(trimmed_slice_data, cmap='gray')
     ## Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
     plt.show()
+    """
     
-    sys.exit(0)
+    
     # Assume adjusted_slice_image has the original dimensions, e.g., from a 256x256 slice
-    original_shape = adjusted_slice_image.shape
+    original_shape = normalized_slice.shape
 
     # Create a zero-filled array with the same dimensions as the original slice
     restored_slice = np.zeros(original_shape)
@@ -196,7 +191,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
 
     restored_slice[start_y:end_y, image_center_x:end_x] = trimmed_slice_data
 
-    """
+    
     # Display the restored slice such that trimmed area fills the plot
     # You can plot this data so it fills the plot but maintains its reference to the original coordinate system
     if x_offset > 0.5 * corrected_slice.shape[1]:
@@ -218,7 +213,9 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
         plt.scatter(xb_coords, yb_coords, s=2, color='cyan')
         
     plt.show()
-    """
+    
+
+    sys.exit(0)
 
     #normalise trimmed data 
     norm_tr_slice = 255 * (trimmed_slice_data - np.min(trimmed_slice_data)) / (np.max(trimmed_slice_data) - np.min(trimmed_slice_data))
