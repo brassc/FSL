@@ -456,7 +456,13 @@ m, c, Y = get_mirror_line(baseline_contour_y, baseline_contour_x, deformed_conto
 
 reflected_contour_x = reflect_across_line(m, c, baseline_contour_x, baseline_contour_y)
 
-
+plt.imshow(norm_nii_slice, cmap='gray')
+## Adjust the y-axis to display in the original image's orientation
+plt.gca().invert_yaxis()
+plt.scatter(deformed_contour_x, deformed_contour_y, s=2, color='red')
+plt.scatter(baseline_contour_x, baseline_contour_y, s=2, color='blue')
+plt.scatter(reflected_contour_x, baseline_contour_y, s=2, color='green')
+plt.show()
 
 
     
