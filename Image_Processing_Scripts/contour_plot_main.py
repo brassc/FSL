@@ -65,12 +65,12 @@ def extract_and_display_slice(img, save_directory, patient_id, timepoint, z_coor
     normalized_slice = (slice_data - np.min(slice_data)) / (np.max(slice_data) - np.min(slice_data)) * 255
     rotated_norm_slice=np.rot90(normalized_slice, k=3) # rotate 90 degrees three times (k=3)
     oriented_norm_slice = np.fliplr(rotated_norm_slice)
-
+    """
     plt.imshow(oriented_norm_slice, cmap='gray')
     ## Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
     plt.show()
-    
+    """
     
 
     # FOR DISPLAY PURPOSES
