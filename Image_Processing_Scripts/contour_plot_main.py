@@ -508,7 +508,10 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
 
 
     # STEP 3: PLOT CONTOURS AND MIDLINE
-    x_values = [(y - c) / m for y in baseline_contour_y]
+    if m == 0:
+        x_values = [c for y in baseline_contour_y]
+    else:
+        x_values = [(y - c) / m for y in baseline_contour_y]
     # Create a DataFrame to store the y and corresponding x values
     line_data = pd.DataFrame({
         'y': baseline_contour_y,
@@ -522,9 +525,11 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     plt.scatter(deformed_contour_x, deformed_contour_y, s=2, color='red')
     plt.scatter(baseline_contour_x, baseline_contour_y, s=2, color='cyan')
     plt.scatter(reflected_contour_x, reflected_contour_y, s=2, color='green')
+    filename = save_dir + timepoint+".png"
+    plt.savefig(filename)
     plt.show()
 
 
-    print("save_dir: ", save_dir)
+    print(f"Image {timepoint}.png saved to {save_dir}")
 
 
