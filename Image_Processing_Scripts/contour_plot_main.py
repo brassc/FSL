@@ -11,6 +11,13 @@ from sklearn.linear_model import LinearRegression
 
 
 # userdef functions
+
+# USAGE
+def print_usage():
+    print("Usage: python contour_plot_main.py [patient_id]")
+    print("If no patient_id is provided, the script will plot contours for all patient timepoints.")
+
+
 # THIS FUNCTION LOADS A NIFTI FILE AND RETURNS IT 
 def load_nifti(nifti_file_path):
     # Extract the directory from nifti_file_path
@@ -408,7 +415,23 @@ patient_info.drop(columns='excluded', inplace=True)
 print(patient_info)
 
 #filter for patient if desired
-patient_info = patient_info[patient_info['patient_id'] == 23348]
+#patient_info = patient_info[patient_info['patient_id'] == 23348]
+
+# Check if the user provided an argument (patient_id)
+if len(sys.argv) > 1:
+    try:
+        patient_id = int(sys.argv[1])  # Convert argument to an integer
+        # Filter the data for the specified patient_id
+        patient_info = patient_info[patient_info['patient_id'] == patient_id]
+        print(f"Plotting contours for patient_id {patient_id}")
+    except ValueError:
+        print("Invalid patient_id provided. It must be an integer.")
+        print_usage()
+        sys.exit(1)
+else:
+    print("No patient_id provided. Default will plot contours for all patient timepoints.")
+    print_usage()
+    input("Press any key to continue... (CTRL+C to cancel)")
 
 
 # Iterate over each patient and timepoint
@@ -537,4 +560,6 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     print(f"Image {timepoint}.png saved to {save_dir}")
     print(f"Contour point extraction for {patient_id} {timepoint} complete. \n")
 
+print("Plots completed for all specified timepoints.")
+print("specify run only particular patient id by doing \n python contour_plot_main <patient_id>")
 
