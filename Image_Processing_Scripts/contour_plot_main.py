@@ -324,10 +324,11 @@ def reflect_across_line(m, c, xb_coords, yb_coords):
 
     if m == 0:
         yr = yb_coords
-        if xb_coords[0] > c:
-            xr = (c-xb_coords) + c
-        else:
-            xr = (c-xb_coords) + c
+        xr = (c-xb_coords) + c
+        #if xb_coords[0] > c:
+         #   xr = (c-xb_coords) + c
+        #else:
+         #   xr = (c-xb_coords) + c
         return xr, yr
 
     # Allocate space for new coords
