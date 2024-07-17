@@ -61,9 +61,10 @@ def extract_and_display_slice(img, save_directory, patient_id, timepoint, z_coor
     data = img.get_fdata()
     slice_data = data[:, :, z_coord]
 
-    # Normalize the slice data for image display
+    # Normalize the slice data for image display - RETURN NORMALISED SLICE NP ARRAY
     normalized_slice = (slice_data - np.min(slice_data)) / (np.max(slice_data) - np.min(slice_data)) * 255
 
+    # FOR DISPLAY PURPOSES
     # Convert the normalized slice to a PIL image for saving or displaying
     slice_image = Image.fromarray(normalized_slice.astype(np.uint8))
 
@@ -82,12 +83,12 @@ def extract_and_display_slice(img, save_directory, patient_id, timepoint, z_coor
         #plt.axis('off')
         plt.show()
     elif disp_flag=='n' or disp_flag=='no':
-         return adjusted_slice_image
+         return normalized_slice, adjusted_slice_image
     else:
         print("ERROR: type 'y', 'yes', 'n' or 'no' to state whether to display slice. Default is 'y'")
         sys.exit(1)
 
-    return adjusted_slice_image
+    return normalized_slice, adjusted_slice_image
 
 
 
@@ -140,7 +141,7 @@ def load_boundary_detection_features(patient_id, patient_timepoint, adjusted_sli
 
 # THIS FUNCTION OUTPUTS CONTOUR X AND Y COORDINATES, INPUT REQUIRED IS THE SLICE IMAGE, PATIENT INFO + COORDS
 # Edit what it takes in and why
-def auto_boundary_detect(patient_id, patient_timepoint, adjusted_slice_image, antx, anty, postx, posty, side):
+def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjusted_slice_image, antx, anty, postx, posty, side):
     
     #UNNECESSARY FUNCTION corrected_slice, xa_coords, ya_coords, xb_coords, yb_coords, xr_coords = load_boundary_detection_features(patient_id, patient_timepoint, bet_mask_file_path)
 
@@ -150,20 +151,22 @@ def auto_boundary_detect(patient_id, patient_timepoint, adjusted_slice_image, an
     start_y = posty
     end_y = anty
     
-    width, height = adjusted_slice_image.size
-    image_center_x = 0.5 * width  # Calculate the center of the image
+    #width, height = adjusted_slice_image.size
+    #image_center_x = 0.5 * width  # Calculate the center of the image
+    image_center_x = 0.5 * adjusted_slice_image.shape[1] # work with np style nii slice
     
     if side == 'R':
-        crop_box = (0, start_y, image_center_x, end_y)
-        #trimmed_slice_data = adjusted_slice_image[start_y:end_y, image_center_x:] # 0.5 * adjusted_slice_image.shape[1]) is the middle of the image
+        #crop_box = (0, start_y, image_center_x, end_y)
+        trimmed_slice_data = adjusted_slice_image[start_y:end_y, image_center_x:]
     else:
-        crop_box = (image_center_x, start_y, width, end_y)        
+        trimmed_slice_data = adjusted_slice_image[start_y:end_y, :image_center_x]
+        # crop_box = (image_center_x, start_y, width, end_y)        
 #trimmed_slice_data = adjusted_slice_image[start_y:end_y, :image_center_x]
     # Slice 'corrected_slice' between these y-coordinates and plot
     #trimmed_slice_data = adjusted_slice_image[start_y:end_y, x_offset:]
     
     # Perform the cropping
-    trimmed_slice_data = adjusted_slice_image.crop(crop_box)
+    #trimmed_slice_data = adjusted_slice_image.crop(crop_box)
     plt.imshow(trimmed_slice_data, cmap='gray')
     ## Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
@@ -391,7 +394,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     print(f"posterior y coord: {posty}")
     print(f"craniectomy side: {side}")
     """
-    slice_img = extract_and_display_slice(img, save_dir, patient_id, timepoint, z_coord, disp_flag='n')
+    norm_nii_slice, slice_img = extract_and_display_slice(img, save_dir, patient_id, timepoint, z_coord, disp_flag='n')
 
       
 print(f"z coord slice index: {z_coord}")
@@ -408,7 +411,7 @@ plt.scatter(postx, posty, color='b')
 plt.show()
 print(patient_info.head())
 
-auto_boundary_detect(patient_id, timepoint, slice_img, antx, anty, postx, posty, side)
+auto_boundary_detect(patient_id, timepoint, norm_nii_slice, slice_img, antx, anty, postx, posty, side)
     #extract_and_display_slice(img, save_directory, voxel_indices)
     
 
