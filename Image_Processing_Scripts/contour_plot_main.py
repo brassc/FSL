@@ -319,11 +319,35 @@ def get_mirror_line(y_coords, xa_coords, xb_coords):
 
 
 
-def reflect_across_line(m, c, xb_coords, y_coords):
+def reflect_across_line(m, c, xb_coords, yb_coords):
     
-    #points on line:
-    xl = m * y_coords + c 
+    # number of points to reflect
+    n = len(xb_coords)
 
+    # Allocate space for new coords
+    xr = np.zeros(n)
+    yr = np.zeros(n)   
+
+    for i in range(n):
+        x = x_coords[i]
+        y = y_coords[i]
+
+        # Calculating the intersection point
+        # Solve for x_i: (y +(1/m) * x - c) / (m + 1/m) = x_i
+        denom = m + (1/m)
+        x_i = (y + (1/m) * x - c) / denom
+        y_i = m * x_i + c
+
+        # Calculating the reflected point
+        xr[i] = 2 * x_i - x
+        yr[i] = 2 * y_i - y
+
+
+
+    #points on line:
+    #xl = m * yb_coords + c 
+
+    """
     # Difference between baseline x and points on line
     if xb_coords[0] <= xl[0]:
         d = np.abs(xl-xb_coords)
@@ -332,8 +356,8 @@ def reflect_across_line(m, c, xb_coords, y_coords):
         d = np.abs(xb_coords - xl)
         xr = xl - d
         
-        
-    return xr
+    """    
+    return xr, yr
 
 
 
@@ -452,10 +476,10 @@ deformed_contour_x, deformed_contour_y = auto_boundary_detect(patient_id, timepo
 
 flipside = flipside_func(side)
 baseline_contour_x, baseline_contour_y = auto_boundary_detect(patient_id, timepoint, norm_nii_slice, antx, anty, postx, posty, flipside)
-
 m, c, Y = get_mirror_line(baseline_contour_y, baseline_contour_x, deformed_contour_x)
+
 x_values = [(y - c) / m for y in baseline_contour_y]
-reflected_contour_x = reflect_across_line(m, c, baseline_contour_x, baseline_contour_y)
+reflected_contour_x, reflected_contour_y = reflect_across_line(m, c, baseline_contour_x, baseline_contour_y)
 
 # Create a DataFrame to store the y and corresponding x values
 line_data = pd.DataFrame({
@@ -469,7 +493,7 @@ plt.gca().invert_yaxis()
 plt.plot(line_data['x'], line_data['y'], label=f'Line: y = {m}x + {c}', color='grey', lw=0.5, linestyle='dashed')
 plt.scatter(deformed_contour_x, deformed_contour_y, s=2, color='red')
 plt.scatter(baseline_contour_x, baseline_contour_y, s=2, color='cyan')
-#plt.scatter(reflected_contour_x, baseline_contour_y, s=2, color='green')
+plt.scatter(reflected_contour_x, reflected_contour_y, s=2, color='green')
 plt.show()
 
 
