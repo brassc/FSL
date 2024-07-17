@@ -99,8 +99,15 @@ def extract_and_display_slice(img, save_directory, patient_id, timepoint, z_coor
 
     return oriented_norm_slice, adjusted_slice_image
 
-
-
+def flipside(side):
+    if side == 'R':
+        flipside = 'L'
+    elif side == 'L':
+        flipside = 'R'
+    else:
+        print("ERROR: side must be 'R' or 'L'")
+        sys.exit(1)
+    return flipside
 
 # maybe this function is unnecessary......IT IS UNNECESSARY
 def load_boundary_detection_features(patient_id, patient_timepoint, adjusted_slice_image):
@@ -267,12 +274,6 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
     plt.xlabel('X coordinate in original image')
     plt.ylabel('Y coordinate in original image')
     plt.title('Trimmed Slice Boundary Displayed in Original Coordinates')
-   # if x_offset > 0.5 * corrected_slice.shape[1]:
-   #     plt.scatter(xa_coords, ya_coords, s=2, color='red')
-   #     plt.scatter(xr_coords, yb_coords, s=2, color ='cyan')
-   # else:   
-   #     plt.scatter(xb_coords, yb_coords, s=2, color='cyan')
-
     plt.show()
 
     
