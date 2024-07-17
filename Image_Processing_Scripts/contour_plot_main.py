@@ -194,10 +194,10 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
     
     # Display the restored slice such that trimmed area fills the plot
     # You can plot this data so it fills the plot but maintains its reference to the original coordinate system
-    if x_offset > 0.5 * corrected_slice.shape[1]:
-        plt.imshow(trimmed_slice_data, cmap='gray', extent=[x_offset, x_offset + trimmed_slice_data.shape[1], end_y, start_y])
+    if side == 'R':
+        plt.imshow(trimmed_slice_data, cmap='gray', extent=[image_center_x, image_center_x + trimmed_slice_data.shape[1], end_y, start_y])
     else:
-        plt.imshow(trimmed_slice_data, cmap='gray', extent=[x_offset - trimmed_slice_data.shape[1], x_offset, end_y, start_y])
+        plt.imshow(trimmed_slice_data, cmap='gray', extent=[image_center_x - trimmed_slice_data.shape[1], image_center_x, end_y, start_y])
 
     # Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
@@ -206,12 +206,9 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, adjust
     plt.xlabel('X coordinate in original image')
     plt.ylabel('Y coordinate in original image')
     plt.title('Trimmed Slice Displayed in Original Coordinates')
-    if x_offset > 0.5 * corrected_slice.shape[1]:
-        plt.scatter(xa_coords, ya_coords, s=2, color='red')
-        plt.scatter(xr_coords, yb_coords, s=2, color='cyan')
-    else:   
-        plt.scatter(xb_coords, yb_coords, s=2, color='cyan')
-        
+    plt.scatter(antx, anty, s=2, color='red')
+    plt.scatter(postx, posty, s=2, color='cyan')
+    
     plt.show()
     
 
