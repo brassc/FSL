@@ -329,8 +329,8 @@ def reflect_across_line(m, c, xb_coords, yb_coords):
     yr = np.zeros(n)   
 
     for i in range(n):
-        x = x_coords[i]
-        y = y_coords[i]
+        x = xb_coords[i]
+        y = yb_coords[i]
 
         # Calculating the intersection point
         # Solve for x_i: (y +(1/m) * x - c) / (m + 1/m) = x_i
@@ -349,7 +349,7 @@ def reflect_across_line(m, c, xb_coords, yb_coords):
 
     """
     # Difference between baseline x and points on line
-    if xb_coords[0] <= xl[0]:
+    if xb_coords[0] <= xl[0]:oords
         d = np.abs(xl-xb_coords)
         xr = xl + d
     else:
