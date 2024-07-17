@@ -414,6 +414,8 @@ patient_info = patient_info[patient_info['patient_id'] == 23348]
 for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timepoint']):
     # Define the bet_mask_file_path for each patient and timepoint
     directory = f"/home/cmb247/Desktop/Project_3/BET_Extractions/{patient_id}/T1w_time1_bias_corr_registered_scans/BET_Output"
+    
+    # SEARCH FOR FILEPATH
     # Construct the search pattern - broad pattern first
     # Define broader patterns
     broad_pattern = f"*{timepoint}*_bet*.nii.gz"
@@ -469,59 +471,59 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     print(f"posterior y coord: {posty}")
     print(f"craniectomy side: {side}")
     """
-    norm_img_slice, slice_img = extract_and_display_slice(img, save_dir, patient_id, timepoint, z_coord, disp_flag='y')
-    norm_mask_slice, slice_mask = extract_and_display_slice(mask, save_dir, patient_id, timepoint, z_coord, disp_flag='y')
+    norm_img_slice, slice_img = extract_and_display_slice(img, save_dir, patient_id, timepoint, z_coord, disp_flag='n')
+    norm_mask_slice, slice_mask = extract_and_display_slice(mask, save_dir, patient_id, timepoint, z_coord, disp_flag='n')
 
       
-print(f"z coord slice index: {z_coord}")
-print(f"anterior x coord: {antx}")
-print(f"anterior y coord: {anty}")
-print(f"posterior x coord: {postx}")
-print(f"posterior y coord: {posty}")
-print(f"craniectomy side: {side}")
+    print(f"z coord slice index: {z_coord}")
+    print(f"anterior x coord: {antx}")
+    print(f"anterior y coord: {anty}")
+    print(f"posterior x coord: {postx}")
+    print(f"posterior y coord: {posty}")
+    print(f"craniectomy side: {side}")
 
+    """
+    plt.imshow(slice_img, cmap='gray',origin='lower' )
+    plt.scatter(antx, anty, color='r')
+    plt.scatter(postx, posty, color='b')
+    plt.show()
+    """
 
-plt.imshow(slice_img, cmap='gray',origin='lower' )
-plt.scatter(antx, anty, color='r')
-plt.scatter(postx, posty, color='b')
-plt.show()
-print(patient_info.head())
+    # STEP 2: EXTRACT CONTOURS
+    # Use mask: extract deformed side
+    deformed_contour_x, deformed_contour_y = auto_boundary_detect(patient_id, timepoint, norm_mask_slice, antx, anty, postx, posty, side)
 
-
-# Use mask to do contours
-deformed_contour_x, deformed_contour_y = auto_boundary_detect(patient_id, timepoint, norm_mask_slice, antx, anty, postx, posty, side)
-
-flipside = flipside_func(side)
-baseline_contour_x, baseline_contour_y = auto_boundary_detect(patient_id, timepoint, norm_mask_slice, antx, anty, postx, posty, flipside)
-m, c, Y = get_mirror_line(baseline_contour_y, baseline_contour_x, deformed_contour_x)
-
-reflected_contour_x, reflected_contour_y = reflect_across_line(m, c, baseline_contour_x, baseline_contour_y)
-
-
-# PLOTTING CONTOURS AND MIDLINE:
-x_values = [(y - c) / m for y in baseline_contour_y]
-# Create a DataFrame to store the y and corresponding x values
-line_data = pd.DataFrame({
-    'y': baseline_contour_y,
-    'x': x_values
-})
-
-plt.imshow(norm_img_slice, cmap='gray')
-## Adjust the y-axis to display in the original image's orientation
-plt.gca().invert_yaxis()
-plt.plot(line_data['x'], line_data['y'], label=f'Line: y = {m}x + {c}', color='grey', lw=0.5, linestyle='dashed')
-plt.scatter(deformed_contour_x, deformed_contour_y, s=2, color='red')
-plt.scatter(baseline_contour_x, baseline_contour_y, s=2, color='cyan')
-plt.scatter(reflected_contour_x, reflected_contour_y, s=2, color='green')
-plt.show()
-
-
+    # create input for side to do other side
+    flipside = flipside_func(side)
     
- 
-    # Call the auto_boundary_detect function for each patient and timepoint
-    #auto_boundary_detect(patient_id, timepoint, bet_mask_file_path, x_offset, array_save_name)
+    # Use mask: extract baselien side
+    baseline_contour_x, baseline_contour_y = auto_boundary_detect(patient_id, timepoint, norm_mask_slice, antx, anty, postx, posty, flipside)
+
+    # get mirror line from baseline vs deformed contours in x 
+    m, c, Y = get_mirror_line(baseline_contour_y, baseline_contour_x, deformed_contour_x)
+
+    # create reflected contours across line
+    reflected_contour_x, reflected_contour_y = reflect_across_line(m, c, baseline_contour_x, baseline_contour_y)
 
 
-#bet_mask_file_path="/home/cmb247/Desktop/Project_3/BET_Extractions/"+str(patient_id)+"/T1w_time1_registered_scans/acute_restored_bet_mask-f0.5-R.nii.gz"
+    # STEP 3: PLOT CONTOURS AND MIDLINE
+    x_values = [(y - c) / m for y in baseline_contour_y]
+    # Create a DataFrame to store the y and corresponding x values
+    line_data = pd.DataFrame({
+        'y': baseline_contour_y,
+        'x': x_values
+    })
+
+    plt.imshow(norm_img_slice, cmap='gray')
+    ## Adjust the y-axis to display in the original image's orientation
+    plt.gca().invert_yaxis()
+    plt.plot(line_data['x'], line_data['y'], label=f'Line: y = {m}x + {c}', color='grey', lw=0.5, linestyle='dashed')
+    plt.scatter(deformed_contour_x, deformed_contour_y, s=2, color='red')
+    plt.scatter(baseline_contour_x, baseline_contour_y, s=2, color='cyan')
+    plt.scatter(reflected_contour_x, reflected_contour_y, s=2, color='green')
+    plt.show()
+
+
+    print("save_dir: ", save_dir)
 
 
