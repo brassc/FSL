@@ -63,7 +63,7 @@ def extract_and_display_slice(img, save_directory, patient_id, timepoint, z_coor
 
     # Normalize the slice data for image display - RETURN NORMALISED SLICE NP ARRAY
     normalized_slice = (slice_data - np.min(slice_data)) / (np.max(slice_data) - np.min(slice_data)) * 255
-    rotated_norm_slice=np.rot90(normalized_slice, k=1) # rotate 90 degrees once (k=1)
+    rotated_norm_slice=np.rot90(normalized_slice, k=3) # rotate 90 degrees three times (k=3)
     oriented_norm_slice = np.fliplr(rotated_norm_slice)
 
     plt.imshow(oriented_norm_slice, cmap='gray')
@@ -71,7 +71,7 @@ def extract_and_display_slice(img, save_directory, patient_id, timepoint, z_coor
     plt.gca().invert_yaxis()
     plt.show()
     
-    sys.exit(0)
+    
 
     # FOR DISPLAY PURPOSES
     # Convert the normalized slice to a PIL image for saving or displaying
@@ -92,12 +92,12 @@ def extract_and_display_slice(img, save_directory, patient_id, timepoint, z_coor
         #plt.axis('off')
         plt.show()
     elif disp_flag=='n' or disp_flag=='no':
-         return normalized_slice, adjusted_slice_image
+         return oriented_norm_slice, adjusted_slice_image
     else:
         print("ERROR: type 'y', 'yes', 'n' or 'no' to state whether to display slice. Default is 'y'")
         sys.exit(1)
 
-    return normalized_slice, adjusted_slice_image
+    return oriented_norm_slice, adjusted_slice_image
 
 
 
