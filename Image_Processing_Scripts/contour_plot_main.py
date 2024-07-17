@@ -278,40 +278,38 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, antx, 
 def get_mirror_line(y_coords, xa_coords, xb_coords):
     #where b is baseline and a is expansion side
     # returns gradient, m; x intercept, c; fit data, Y
-    y_coords_df = pd.DataFrame({'y': y_coords})
 
     #avg_x = ((xa_coords + xb_coords) / 2)
     # get first and last coordinates of contours
     first_avg_x = (xa_coords[0] + xb_coords[0]) / 2
     last_avg_x = (xa_coords[-1] + xb_coords[-1]) / 2
+    #central_x = (first_avg_x + last_avg_x) / 2
+    print("y coords is:", y_coords)
+    # Select the top and bottom in range of y_coords
+    y_min = min(y_coords)
+    y_max = max(y_coords)
 
-    avg_x_series=pd.Series([first_avg_x, last_avg_x])
+    print(f"top point is: ({last_avg_x},{y_min})")
+    print(f"bottom point is: ({first_avg_x},{y_max})")
+
+    # Prepare data for regression
+    X = np.array([first_avg_x, last_avg_x]).reshape(-1, 1)  # Dependent variable
+    Y = np.array([y_min, y_max]).reshape(-1, 1)          # Independent variable
     
-    avg_x_df = pd.DataFrame({'avg_x': avg_x_series})
-
-    print('avg_x_df is:', avg_x_df)
-    
-
-    firsty_row=y_coords_df.iloc[[0]]
-    lasty_row=y_coords_df.iloc[[-1]]
-    y_df=pd.concat([firsty_row, lasty_row])
-
-    print('y_df is: ', y_df)
-
 
     # Reshape your x and y data for sklearn
-    x = avg_x_df.values#.reshape(-1, 1)  # Reshaping is required for a single feature in sklearn
-    Y = y_df['y'].values.reshape(-1,1)
+    #x = avg_x_df.values#.reshape(-1, 1)  # Reshaping is required for a single feature in sklearn
+    #Y = y_df['y'].values.reshape(-1,1)
 
     # Initialize the linear regression model
     model = LinearRegression()
 
     # Fit the model to your data
-    model.fit(Y, x)
+    model.fit(X, Y)
 
     # The slope (gradient m) and intercept (c) from the fitted model
-    m = model.coef_[0]
-    c = model.intercept_
+    m = model.coef_[0][0]
+    c = model.intercept_[0]
 
     print('Gradient (m) is:', m)
     print('x intercept (c) is:', c)
@@ -390,6 +388,9 @@ patient_info.drop(columns='excluded', inplace=True)
 
 print(patient_info)
 
+#filter
+patient_info = patient_info[patient_info['patient_id'] == 23348]
+
 
 # Iterate over each patient and timepoint
 for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timepoint']):
@@ -454,6 +455,7 @@ baseline_contour_x, baseline_contour_y = auto_boundary_detect(patient_id, timepo
 
 m, c, Y = get_mirror_line(baseline_contour_y, baseline_contour_x, deformed_contour_x)
 x_values = [(y - c) / m for y in baseline_contour_y]
+reflected_contour_x = reflect_across_line(m, c, baseline_contour_x, baseline_contour_y)
 
 # Create a DataFrame to store the y and corresponding x values
 line_data = pd.DataFrame({
@@ -461,13 +463,10 @@ line_data = pd.DataFrame({
     'x': x_values
 })
 
-reflected_contour_x = reflect_across_line(m, c, baseline_contour_x, baseline_contour_y)
-
 plt.imshow(norm_nii_slice, cmap='gray')
 ## Adjust the y-axis to display in the original image's orientation
 plt.gca().invert_yaxis()
-plt.plot(line_data['x'], line_data['y'], label=f'Line: y = {m}x + {c}')
-plt.scatter(line_data['x'], line_data['y'], color='red')  # Mark the points
+plt.plot(line_data['x'], line_data['y'], label=f'Line: y = {m}x + {c}', color='grey', lw=0.5, linestyle='dashed')
 plt.scatter(deformed_contour_x, deformed_contour_y, s=2, color='red')
 plt.scatter(baseline_contour_x, baseline_contour_y, s=2, color='cyan')
 #plt.scatter(reflected_contour_x, baseline_contour_y, s=2, color='green')
