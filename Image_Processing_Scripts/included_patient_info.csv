@@ -1,5 +1,5 @@
 excluded?, patient ID, timepoint, z coord (slice), anterior x coord, anterior y coord, posterior x coord, posterior y coord, side (L/R), baseline anterior x coord, baseline posterior x coord, COMMENTS
-0, 12519, ultra-fast, 148, 132, 160, 143, 50, L, 89, 86
+0, 12519, ultra-fast, 148, 132, 160, 143, 50, L, 48, 31
 0, 12519, acute, 150, 132, 158, 142, 48, L, 47, 28, COMMENT=HAEMATOMA SQUASH
 0, 12519, 6mo, 149, 133, 160, 146, 50, L, 45, 27
 0, 12519, 24mo, 150, 132, 158, 144, 48, L, 46, 28
