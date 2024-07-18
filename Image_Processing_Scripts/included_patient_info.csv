@@ -16,9 +16,9 @@ excluded?, patient ID, timepoint, z coord (slice), anterior x coord, anterior y 
 0, 19344, fast, 153, 33, 147, 62, 42, R, 136, 115
 0, 19344, acute, 153, 33, 147, 62, 42, R, 136, 115
 1, 19575, no deformation
-0, 19978, ultra-fast, 142, 136, 165, 147, 75, L
-0, 19978, fast, 145, 136, 165, 143, 73, L
-0, 19978, acute, 145, 132, 167, 143, 73, L
+0, 19978, ultra-fast, 142, 136, 165, 147, 75, L, 38, 35
+0, 19978, fast, 145, 136, 165, 143, 73, L, 41, 37
+0, 19978, acute, 145, 132, 167, 143, 73, L, 42, 37
 1, 19981, no deformation
 0, 20174, ultra-fast, 175, 103, 195, 140, 59, L
 0, 20174, fast, 175, 100, 196, 138, 58, L
