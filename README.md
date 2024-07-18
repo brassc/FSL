@@ -59,7 +59,24 @@ Patients selected according to patient selection criteria, outlined below.
 
 
 ### Contour line extraction using contour_plot_main.py ###
+This program extracts the contour line and creates an array of points that lie on this line. It works recursively per patient and timepoint, extracted from `included_patient_info.csv`. 
 
+Usage: `python contour_plot_main.py <patient id>` or `python contour_plot_main.py` to default to all included patients. 
+
+1. Import `included_patient_info.csv`
+2. Filter according to exclusion flag (first column)
+3. Iterate over each patient and timepoint to produce contour points array for deformed and baseline sides, and also a reflected array.
+
+For each patient id and timepoint iteration, the steps are as follows:
+1. Find bet image and mask dynamically according to patient id and timepoint
+2. Load files using `load_nifti` bespoke function for each file of interest. `load_nifti` loads .nii.gz using `nibabel` library
+3. Extract point and side information from filtered `included_patient_info.csv`
+4. Extract bet image and mask slices according to recorded z coordinate using `extract_and_display_slice`
+5. Extract contours using `auto_boundary_detect` for each contour of interest i.e. twice per patient id and timepoint.
+- uses `flipside_func` to flip recorded side prior to calling `auto_boundary_detect` the second time for baseline
+6. Create reflected contour - a reflection of the extracted baseline contour. Uses `get_mirror_line` function and `reflect_across_line` function. 
+- `reflect_across_line` function handles both 1 and 2 dimensional reflections according to whether the mirror line extracted via `get_mirror_line` has a gradient or not. 
+7. Slice is plotted and saved to each patient's directory on the cluster. 
 
 
 
