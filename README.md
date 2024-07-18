@@ -52,15 +52,15 @@ Patients selected according to patient selection criteria, outlined below.
 ### Slice selection and end point extraction process ###
 1. Go to midline
 2. Select high point on inferior side of corpus callosum arch
-3. Select skull end points if visible. If not visible, exclude.
+3. Select skull end points if visible. If not visible, exclude patient from analysis.
 - `x1, y1` = anterior skull end point
 - `x2, y2` = posterior skull end point
 - These `y` values will also be used to extract corresponding contour on non-craniectomy side.
 
 
-Optional: 4. For a y given by skull end points, extract x value that picks up skull/brain interface on opposite side of skull. 
-- `x3, y1` = anterior skull-brain interface point (non-craneictomy side)
-- `x4, y2` = posterior skull-brain interface point (non-craniectomy side)
+### Contour line extraction using contour_plot_main.py ###
+
+
 
 
 
