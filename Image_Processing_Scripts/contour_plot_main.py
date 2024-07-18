@@ -587,6 +587,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     plt.plot(line_data['x'], line_data['y'], label=f'Line: y = {m}x + {c}', color='white', lw=0.5, linestyle='dashed')
     plt.scatter(deformed_contour_x, deformed_contour_y, s=2, color='red')
     plt.scatter([antx, postx], [anty, posty], s=10, color='magenta')
+    plt.scatter([bantx, bpostx], [banty, bposty], s=10, color='magenta')
     plt.scatter(baseline_contour_x, baseline_contour_y, s=2, color='cyan')
     plt.scatter(reflected_contour_x, reflected_contour_y, s=2, color='green')
     filename = save_dir +"/" + timepoint+".png"
