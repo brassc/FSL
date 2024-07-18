@@ -11,8 +11,8 @@ excluded?, patient ID, timepoint, z coord (slice), anterior x coord, anterior y 
 0, 14324, ultra-fast, 172, 121, 179, 148, 69, L, 43, 26
 0, 14324, acute, 179, 122, 180, 149, 69, L, 42, 22
 0, 14324, 12mo, 181, 124, 187, 158, 76, L, 51, 22
-0, 16754, fast, 155, 49, 191, 35, 78, R, COMMENT=4 DEGREE POLYNOMIAL SHAPE
-0, 16754, acute, 155, 51, 194, 35, 78, R
+0, 16754, fast, 155, 49, 191, 35, 78, R, 125, 143, COMMENT=4 DEGREE POLYNOMIAL SHAPE
+0, 16754, acute, 155, 51, 194, 35, 78, R, 122, 144
 0, 19344, fast, 153, 33, 47, 60, 42, R
 0, 19344, acute, 153, 33, 147, 60, 42, R
 1, 19575, no deformation
