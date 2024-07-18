@@ -297,6 +297,10 @@ def get_mirror_line(y_coords, xa_coords, xb_coords):
     # get first and last coordinates of contours
     first_avg_x = (xa_coords[0] + xb_coords[0]) / 2
     last_avg_x = (xa_coords[-1] + xb_coords[-1]) / 2
+    #first_avg_x = xb_coords[0]
+    #last_avg_x = xb_coords[-1]
+    #print("xB_coords[0]", xb_coords[0])
+    #print("xB_coords[-1]", xb_coords[-1])
     #print("y coords is:", y_coords)
     
     # Select the top and bottom in range of y_coords
@@ -307,9 +311,10 @@ def get_mirror_line(y_coords, xa_coords, xb_coords):
     #print(f"bottom line point is: ({first_avg_x},{y_max})")
 
     # Prepare data for regression
-    X = np.array([first_avg_x, last_avg_x]).reshape(-1, 1)  # Dependent variable
+    X = np.array([last_avg_x, first_avg_x]).reshape(-1, 1)  # Dependent variable
     Y = np.array([y_min, y_max]).reshape(-1, 1)          # Independent variable
-
+    print("X is: ",X)
+    print("Y is: ", Y)
     # Initialize the linear regression model
     model = LinearRegression()
 
@@ -574,6 +579,8 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     print("baseline_skull_end_x type: ", type(baseline_skull_end_x))
     
     m, c, Y = get_mirror_line(skull_end_y, skull_end_x, baseline_skull_end_x)
+    #m, c, Y = get_mirror_line(deformed_contour_y, deformed_contour_x, baseline_contour_x)
+
 
     # create reflected contours across line
     reflected_contour_x, reflected_contour_y = reflect_across_line(m, c, baseline_contour_x, baseline_contour_y)
