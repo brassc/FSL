@@ -6,8 +6,8 @@ excluded?, patient ID, timepoint, z coord (slice), anterior x coord, anterior y 
 1, 13198, too much alternative pathology
 0, 13782, ultra-fast, 173, 56, 169, 57, 42, R, 122, 117
 0, 13782, 3mo, 173, 50, 171, 54, 39, R, 127, 117, COMMENT=VENTRICULOMEGALY
-0, 13990, fast, 172, 108, 178, 135, 62, L 
-0, 13990, acute, 172, 107, 178, 134, 62, L 
+0, 13990, fast, 172, 108, 178, 135, 62, L, 60, 39, COMMENT=SKEWED SCAN ORIENTATION
+0, 13990, acute, 172, 107, 178, 134, 62, L , 61, 40, COMMENT=SKEWED SCAN ORIENTATION
 0, 14324, ultra-fast, 172, 121, 179, 148, 69, L
 0, 14324, acute, 179, 122, 180, 149, 69, L
 0, 14324, 12mo, 181, 124, 187, 158, 76, L
