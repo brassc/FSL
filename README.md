@@ -72,10 +72,11 @@ For each patient id and timepoint iteration, the steps are as follows:
 2. Load files using `load_nifti` bespoke function for each file of interest. `load_nifti` loads .nii.gz using `nibabel` library
 3. Extract point and side information from filtered `included_patient_info.csv`
 4. Extract bet image and mask slices according to recorded z coordinate using `extract_and_display_slice`
-5. Extract contours using `auto_boundary_detect` for each contour of interest i.e. twice per patient id and timepoint.
-- uses `flipside_func` to flip recorded side prior to calling `auto_boundary_detect` the second time for baseline
+5. Extract contour from mask edge using `auto_boundary_detect` for each contour of interest i.e. twice per patient id and timepoint.
+    - uses `flipside_func` to flip recorded side prior to calling `auto_boundary_detect` the second time for baseline
 6. Create reflected contour - a reflection of the extracted baseline contour. Uses `get_mirror_line` function and `reflect_across_line` function. 
-- `reflect_across_line` function handles both 1 and 2 dimensional reflections according to whether the mirror line extracted via `get_mirror_line` has a gradient or not. 
+    - `get_mirror_line` uses first and last points extracted from contour to draw a line centrally located.  
+    - `reflect_across_line` function handles both 1 and 2 dimensional reflections according to whether the mirror line extracted via `get_mirror_line` has a gradient or not. 
 7. Slice is plotted and saved to each patient's directory on the cluster. 
 
 
