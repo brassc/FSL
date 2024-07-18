@@ -502,11 +502,17 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     # Extract voxel indices from patient_info csv
     #print(patient_info.columns)
     z_coord = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'z_coord_slice'].values[0]
+    # craniectomy skull end points
     antx = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'anterior_x_coord'].values[0]
     anty = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'anterior_y_coord'].values[0]
     postx = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'posterior_x_coord'].values[0]
     posty = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'posterior_y_coord'].values[0]
     side = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'side_LR'].values[0]
+    # corresponding baseline skull points
+    bantx = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'baseline_anterior_x_coord'].values[0]
+    banty = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'baseline_anterior_y_coord'].values[0]
+    bpostx = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'baseline_posterior_x_coord'].values[0]
+    bposty = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'baseline_posterior_y_coord'].values[0]
     """
     print(f"z coord slice index: {z_coord}")
     print(f"anterior x coord: {antx}")
@@ -526,10 +532,17 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     print(f"posterior y coord: {posty}")
     print(f"craniectomy side: {side}")
 
+    print(f"baseline anterior x coord: {bantx}")
+    print(f"baseline anterior y coord: {banty}")
+    print(f"baseline posterior x coord: {bpostx}")
+    print(f"baseline posterior y coord: {bposty}")
+
     """
     plt.imshow(slice_img, cmap='gray',origin='lower' )
     plt.scatter(antx, anty, color='r')
-    plt.scatter(postx, posty, color='b')
+    plt.scatter(postx, posty, color='r')
+    plt.scatter(bantx, banty, color='b')
+    plt.scatter(bpostx, bposty, color='b')
     plt.show()
     """
 
@@ -544,9 +557,13 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     
     # Use mask: extract baseline side
     baseline_contour_x, baseline_contour_y = auto_boundary_detect(patient_id, timepoint, norm_mask_slice, antx, anty, postx, posty, flipside)
+    #print(baseline_contour_x)
 
     # get mirror line from baseline vs deformed contours in x 
-    m, c, Y = get_mirror_line(baseline_contour_y, baseline_contour_x, deformed_contour_x)
+    skull_end_x = antx, postx
+    skull_end_y = anty, posty
+    baseline_skull_end_x = bantx, bposty
+    m, c, Y = get_mirror_line(skull_end_y, baseline_skull_end_x, skull_end_x)
 
     # create reflected contours across line
     reflected_contour_x, reflected_contour_y = reflect_across_line(m, c, baseline_contour_x, baseline_contour_y)
@@ -569,7 +586,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     plt.gca().invert_yaxis()
     plt.plot(line_data['x'], line_data['y'], label=f'Line: y = {m}x + {c}', color='white', lw=0.5, linestyle='dashed')
     plt.scatter(deformed_contour_x, deformed_contour_y, s=2, color='red')
-    plt.scatter([antx, postx], [anty, posty], s=5, color='r')
+    plt.scatter([antx, postx], [anty, posty], s=10, color='magenta')
     plt.scatter(baseline_contour_x, baseline_contour_y, s=2, color='cyan')
     plt.scatter(reflected_contour_x, reflected_contour_y, s=2, color='green')
     filename = save_dir +"/" + timepoint+".png"
