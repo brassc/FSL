@@ -26,10 +26,10 @@ excluded?, patient ID, timepoint, z coord (slice), anterior x coord, anterior y 
 0, 20174, 3mo, 174, 109, 196, 141, 62, L, 72, 30, COMMENT = VENTRICULOMEGALY // IPSILATERAL HAEMATOMA
 0, 20651, fast, 136, 40, 158, 64, 54, R, 136, 124
 0, 20651, acute, 134, 41, 158, 63, 54, R, 140, 130
-0, 20942, fast, 147, 122, 176, 143, 60, L 
-0, 20942, acute, 147, 22, 177, 145, 62, L 
-0, 20942, 6mo, 153, 124, 178, 156, 64, L 
-0, 20942, 24mo, 156, 118, 182, 152, 62, L
+0, 20942, fast, 147, 122, 176, 143, 60, L, 45, 38 
+0, 20942, acute, 147, 22, 177, 145, 62, L, 45, 36
+0, 20942, 6mo, 153, 124, 178, 156, 64, L, 47, 34
+0, 20942, 24mo, 156, 118, 182, 152, 62, L, 56, 39
 1, 21221, no deformation
 0, 22725, ultra-fast, 165, 124, 158, 134, 50, L, COMMENT=POSTERIOR XY NOT SO VISIBLE
 0, 22725, acute, 169, 125, 156, 124, 46, L
