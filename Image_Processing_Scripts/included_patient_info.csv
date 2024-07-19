@@ -31,9 +31,9 @@ excluded?, patient ID, timepoint, z coord (slice), anterior x coord, anterior y 
 0, 20942, 6mo, 153, 124, 178, 156, 64, L, 47, 34
 0, 20942, 24mo, 156, 118, 182, 152, 62, L, 56, 39
 1, 21221, no deformation
-0, 22725, ultra-fast, 165, 124, 158, 134, 50, L, COMMENT=POSTERIOR XY NOT SO VISIBLE
-0, 22725, acute, 169, 125, 156, 124, 46, L
-0, 22725, 12mo, 169, 129, 156, 132, 47, L
+0, 22725, ultra-fast, 165, 124, 158, 134, 50, L, 43, 42, COMMENT=POSTERIOR XY NOT SO VISIBLE
+0, 22725, acute, 169, 125, 156, 124, 46, L, 42, 45
+0, 22725, 12mo, 169, 129, 156, 132, 47, L, 42, 46
 1, 22785, poor quality 3mo scan
 0, 23348, fast, 176, 50, 177, 38, 71, R
 0, 23348, acute, 176, 53, 179, 39, 71, R
