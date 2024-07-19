@@ -393,6 +393,7 @@ def search_for_bet_mask(directory, timepoint):
 
 # main script execution
 
+# DATA CLEANING
 # import patient info .csv
 patient_info = pd.read_csv('Image_Processing_Scripts/included_patient_info.csv')
 
@@ -470,8 +471,13 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
         img_filepath = [file for file in glob.glob(os.path.join(directory, broad_pattern)) if 'mask' not in file]
 
     if img_filepath:
-        img_filepath = img_filepath[0] # glob returns a list. this gets first element of list
-        #print (img_filepath)
+        if timepoint=='fast':
+            filtered_paths = [path for path in img_filepath if "fast" in path and "ultra-fast" not in path]
+            if filtered_paths:
+                img_filepath=filtered_paths[0]
+        else:
+            img_filepath = img_filepath[0] # glob returns a list. this gets first element of list
+        print (f"timepoint: {timepoint} \nfilepath: {img_filepath}")
     else:
         print("No bet file found for patient_id", patient_id, "timepoint", timepoint, ". Using mask instead...")
     
@@ -482,8 +488,13 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
         mask_filepath = glob.glob(os.path.join(directory, pattern))
 
     if mask_filepath:
-        mask_filepath = mask_filepath[0] # glob returns a list. this gets first element of list
-        #print (mask_filepath)
+        if timepoint=='fast':
+            filtered_paths = [path for path in mask_filepath if "fast" in path and "ultra-fast" not in path]
+            if filtered_paths:
+                mask_filepath=filtered_paths[0]
+        else: 
+            mask_filepath = mask_filepath[0] # glob returns a list. this gets first element of list
+        print (f"timepoint: {timepoint} \nmask filepath: {mask_filepath}")
     else:
         print("No file found for patient_id", patient_id, "timepoint", timepoint)
     
