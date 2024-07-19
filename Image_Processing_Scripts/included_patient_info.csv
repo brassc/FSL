@@ -35,6 +35,6 @@ excluded?, patient ID, timepoint, z coord (slice), anterior x coord, anterior y 
 0, 22725, acute, 169, 125, 156, 124, 46, L, 42, 45
 0, 22725, 12mo, 169, 129, 156, 132, 47, L, 42, 46
 1, 22785, poor quality 3mo scan
-0, 23348, fast, 176, 50, 177, 38, 71, R
-0, 23348, acute, 176, 53, 179, 39, 71, R
-0, 23348, 3mo, 185, 60, 178, 44, 66, R, COMMENT=VENTRICULOMEGALY
+0, 23348, fast, 176, 50, 177, 38, 71, R, 139, 158
+0, 23348, acute, 176, 53, 179, 39, 71, R, 139, 160
+0, 23348, 3mo, 185, 60, 178, 44, 66, R, 132, 156, COMMENT=VENTRICULOMEGALY
