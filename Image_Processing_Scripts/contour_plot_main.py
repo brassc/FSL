@@ -493,7 +493,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     if img_filepath:
         print('Loading image nifti...')
         img, save_dir = load_nifti(img_filepath)
-    elif not img_filepath and mask_filepath:
+    elif mask_filepath and not img_filepath:
         print('Loading available mask as img...')
         img, save_dir=load_nifti(mask_filepath)
     else:
@@ -501,8 +501,12 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
         sys.exit(1)
     
     # Load nifti file as img type - img has attributes 
-    print('Loading mask nifti...')
-    mask, save_dir = load_nifti(mask_filepath)
+    if mask_filepath:
+        print('Loading mask nifti...')
+        mask, save_dir = load_nifti(mask_filepath)
+    else:    
+        print(f"mask not found for {patient_id} {timepoint}. Exiting.")
+        sys.exit(1)
 
 
     print(f"Starting contour extraction for {patient_id} {timepoint}...")
@@ -558,6 +562,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
 
     # STEP 2: EXTRACT CONTOURS
     # Use mask: extract deformed side
+    print("*****timepoint is:",timepoint)
     deformed_contour_x, deformed_contour_y = auto_boundary_detect(patient_id, timepoint, norm_mask_slice, antx, anty, postx, posty, side)
     if np.all(np.array(deformed_contour_x) == None):
         continue
