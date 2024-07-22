@@ -714,7 +714,6 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
         for i, (x, y) in enumerate(zip(contour_x, contour_y)):
             # remove points below posterior y coord
             if y > skull_end_y[1]: 
-                print(f"y {y} > end_y {end_y[1]}")
                 trimmed_x.append(x)
                 trimmed_y.append(y)
         return trimmed_x, trimmed_y
