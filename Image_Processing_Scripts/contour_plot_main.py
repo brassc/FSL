@@ -8,6 +8,7 @@ import sys
 import nibabel as nib
 from PIL import Image
 from sklearn.linear_model import LinearRegression
+import json
 
 
 # userdef functions
@@ -522,6 +523,9 @@ patient_info.rename(columns={
 patient_info = patient_info[patient_info['excluded'] != 1]
 patient_info.drop(columns='excluded', inplace=True)
 
+# Create dataframe to hold the output data
+df = pd.DataFrame(columns=["patient_id", "timepoint", "deformed_contour_x_vals", "deformed_contour_y_vals", "reflected_contour_x_vals", "reflected_contour_y_vals"])
+
 #print(patient_info)
 
 #filter for patient if desired
@@ -764,11 +768,40 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     #print("file path: ",filename)
     plt.show()
     #plt.close()
-    
-
 
     print(f"Image {timepoint}.png saved to {save_dir}")
     print(f"Contour point extraction for {patient_id} {timepoint} complete. \n")
+    """
+    data_list=[]
+
+    data_entry={
+        "patient_id": patient_id,
+        "timepoint": timepoint,
+        "deformed_contour_x_vals": deformed_combi_x,
+        "deformed_contour_y_vals": deformed_combi_y,
+        "reflected_contour_x_vals": reflected_combi_x,
+        "reflected_contour_y_vals": reflected_combi_y
+    }
+    data_list.append(data_entry)
+
+    #add_data(patient_id, timepoint, deformed_combi_x, deformed_combi_y, reflected_combi_x, reflected_combi_y)
+
+# Print the stored data
+print(json.dumps(data_list, indent=4))
+
+# Save data to a JSON file
+with open('data.json', 'w') as f:
+    json.dump(data_list, f, indent=4)
+
+# Load data from a JSON file
+with open('data.json', 'r') as f:
+    loaded_data = json.load(f)
+
+# Print the loaded data
+print(json.dumps(loaded_data, indent=4))
+
+    """
+    
 
 print("Plots completed for all specified timepoints.")
 print("specify run only particular patient id by doing \n python contour_plot_main.py <patient_id>")
