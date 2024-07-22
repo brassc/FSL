@@ -689,6 +689,40 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     # create reflected contours across line
     reflected_contour_x, reflected_contour_y = reflect_across_line(m, c, baseline_trimmed_x, baseline_trimmed_y)
 
+    # trim ends off 
+
+
+    def trim_reflected(end_y, contour_x, contour_y):
+        trimmed_x = []
+        trimmed_y = []
+        """
+        end_indices=find_contour_ends(contour_x, contour_y)
+        end1 = (contour_x[end_indices[0]], contour_y[end_indices[0]])
+        end2 = (contour_x[end_indices[1]], contour_y[end_indices[1]])
+
+       # Determine which is anterior and which is posterior 
+        if end1[1] > end2[1]:
+            ant_end=end1
+            post_end=end2
+        else:
+            ant_end=end2
+            post_end=end1
+        print("ant_end", ant_end)
+        print("post_end", post_end)
+        """
+
+        for i, (x, y) in enumerate(zip(contour_x, contour_y)):
+            # remove points below posterior y coord
+            if y > skull_end_y[1]: 
+                print(f"y {y} > end_y {end_y[1]}")
+                trimmed_x.append(x)
+                trimmed_y.append(y)
+        return trimmed_x, trimmed_y
+
+    print("skull_end_y: ",skull_end_y)
+    reflected_trimmed_x, reflected_trimmed_y = trim_reflected(skull_end_y, reflected_contour_x, reflected_contour_y)
+
+
 
 
 
@@ -719,6 +753,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     plt.scatter(baseline_trimmed_x, baseline_trimmed_y, s=2, color='cyan')
     plt.scatter(deformed_trimmed_x, deformed_trimmed_y, s=2, color='red')
     plt.scatter(reflected_contour_x, reflected_contour_y, s=2, color='green')
+    plt.scatter(reflected_trimmed_x, reflected_trimmed_y, s=2, color='yellow')
     plt.title(f"{patient_id} {timepoint}")
     filename = save_dir +"/" + timepoint+".png"
     plt.savefig(filename)
