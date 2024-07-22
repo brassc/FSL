@@ -609,7 +609,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     else:
         x_values = [(y - c) / m for y in baseline_contour_y]
     # Create a DataFrame to store the y and corresponding x values
-    line_data = pd.DataFrame({
+    midline_data = pd.DataFrame({
         'y': baseline_contour_y,
         'x': x_values
     })
@@ -617,7 +617,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     plt.imshow(norm_img_slice, cmap='gray')
     ## Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
-    plt.plot(line_data['x'], line_data['y'], label=f'Line: y = {m}x + {c}', color='white', lw=0.5, linestyle='dashed')
+    plt.plot(midline_data['x'], midline_data['y'], label=f'Line: y = {m}x + {c}', color='white', lw=0.5, linestyle='dashed')
     plt.scatter(deformed_contour_x, deformed_contour_y, s=2, color='red')
     plt.scatter(skull_end_x, skull_end_y, s=10, color='magenta')
     plt.scatter(baseline_skull_end_x, skull_end_y, s=10, color='magenta')
