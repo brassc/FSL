@@ -390,7 +390,9 @@ def search_for_bet_mask(directory, timepoint):
 def find_contour_ends(contour_x, contour_y):
    # Find the indices of the two farthest points (find the ends)
     contour_points = np.array(list(zip(contour_x, contour_y)))
+    # Calculate pairwise Euclidean distances between all points
     distances = np.linalg.norm(contour_points[:, np.newaxis] - contour_points, axis=2)
+    # Find max distance
     max_dist_indices = np.unravel_index(np.argmax(distances), distances.shape)
     
     return max_dist_indices
@@ -399,25 +401,68 @@ def find_contour_ends(contour_x, contour_y):
 def trim_contours(end_x, contour_x, contour_y, side, threshold=20):
     trimmed_x = []
     trimmed_y = []
+    print("end_x[0] is: ", end_x[0])
+    print("end_x[1] is: ", end_x[1])
+    print("if x < end_x[0] and (dist_to_end1 <= threshold) or (x < end_x[1] and dist_to_end2 <= threshold):")
     
     # Identify the ends of the contour
     end_indices = find_contour_ends(contour_x, contour_y)
     end1 = (contour_x[end_indices[0]], contour_y[end_indices[0]])
     end2 = (contour_x[end_indices[1]], contour_y[end_indices[1]])
-    
+    print("end1", end1)
+    print("end2", end2)
+    if end1[1] > end2[1]:
+        ant_end=end1
+        post_end=end2
+    else:
+        ant_end=end2
+        post_end=end1
+    print("ant_end", ant_end)
+    print("post_end", post_end)
+        
+    # Determine which is left and which is right most  
+
     for i, (x, y) in enumerate(zip(contour_x, contour_y)):
         # Calculate voxel distances to the ends
-        dist_to_end1 = np.hypot(x - end1[0], y - end1[1])
-        dist_to_end2 = np.hypot(x - end2[0], y - end2[1])
+        # WORKS FOR LEFT SIDE:
+        dist_to_ant_end = np.hypot(x - ant_end[0], y - ant_end[1])
+        dist_to_post_end = np.hypot(x - post_end[0], y - post_end[1])
         
+
+
         # Apply condition based on side and proximity to the ends
-        if side == 'R':
-            if x > end_x[0] and (dist_to_end1 <= threshold) or (x > end_x[1] and dist_to_end2 <= threshold):
-                continue
+        #if side == 'R':
+            #if (x > end_x[0] and dist_to_end1 <= threshold) or (x > end_x[1] and dist_to_end2 <= threshold):
+           # Apply condition based on side and proximity to the ends
+        #if side == 'R':
+        """
+            if x > right_end[0] and dist_to_right_end <= threshold:
+                continue # dont store
         elif side == 'L':
-            if x < end_x[0] and (dist_to_end1 <= threshold) or (x < end_x[1] and dist_to_end2 <= threshold):
-                continue
+            if x < left_end[0] and dist_to_left_end <= threshold:
+                continue # dont store
+        """
+        if side == 'R':
+            if x > end_x[0]: # end_x[0] is always anterior x
+                if dist_to_ant_end <= threshold:
+                    continue
+            elif x > end_x[1]:
+                if dist_to_post_end <= threshold:
+                    continue
         
+        elif side == 'L':
+
+        
+            if x < end_x[0]: # end_x[0] is always anterior x
+                if dist_to_ant_end <= threshold:
+                    continue
+            elif x < end_x[1]:
+                if dist_to_post_end <= threshold:    
+                    continue
+        """            
+            #if (x < end_x[0] and dist_to_end1 <= threshold) or (x < end_x[1] and dist_to_end2 <= threshold):
+               # continue
+        """
         # If not trimmed, add to the trimmed contours
         trimmed_x.append(x)
         trimmed_y.append(y)
@@ -620,14 +665,26 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     baseline_contour_x, baseline_contour_y = auto_boundary_detect(patient_id, timepoint, norm_mask_slice, antx, anty, postx, posty, flipside)
     #print("baseline_contour_x type: ", type(baseline_contour_x))
 
-    # get mirror line from baseline vs deformed contours in x 
+
+    # STEP 3: TRIM CONTOURS
+
     skull_end_x = np.array([antx, postx], dtype=int)
     skull_end_y = np.array([anty, posty], dtype=int)
     baseline_skull_end_x = np.array([bantx, bpostx], dtype=int)
 
-    #print("skull_end_x type: ", type(skull_end_x))
-    #print("skull_end_y type: ", type(skull_end_y))
-    #print("baseline_skull_end_x type: ", type(baseline_skull_end_x))
+    deformed_trimmed_x, deformed_trimmed_y=trim_contours(skull_end_x, deformed_contour_x, deformed_contour_y, side, threshold=50)
+
+    baseline_trimmed_x, baseline_trimmed_y =trim_contours(baseline_skull_end_x, baseline_contour_x, baseline_contour_y, flipside, threshold=50)
+
+
+
+
+
+    # STEP 4: REFLECT TRIMMED CONTOURS
+
+    # get mirror line from baseline vs deformed contours in x 
+
+
     
     m, c, Y = get_mirror_line(skull_end_y, skull_end_x, baseline_skull_end_x)
     #m, c, Y = get_mirror_line(deformed_contour_y, deformed_contour_x, baseline_contour_x)
@@ -637,29 +694,10 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     reflected_contour_x, reflected_contour_y = reflect_across_line(m, c, baseline_contour_x, baseline_contour_y)
 
 
-    # STEP 3: TRIM CONTOURS
-    """
-    def trim_contours(end_x, contour_x, contour_y, side):
-        # e.g. skull_end_x, baseline_skull_end_x
-    for x_point in contour_x:
-        if side ='R':
-            if x_point > end_x[0]:
-                
-    """        
-    #print("contour type:", type(reflected_contour_x))
-    print("x contour: ", deformed_contour_x)
-    print("y_contour: ", deformed_contour_y)
-    print
 
 
 
-    baseline_trimmed_x, baseline_trimmed_y =trim_contours(baseline_skull_end_x, baseline_contour_x, baseline_contour_y, flipside)
-
-
-
-
-
-    # STEP 4: PLOT CONTOURS AND MIDLINE
+    # STEP 5: PLOT CONTOURS AND MIDLINE
     # account for if gradient = 0
     if m == 0:
         x_values = [c for y in baseline_contour_y]
@@ -678,11 +716,12 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     ## Adjust the y-axis to display in the original image's orientation
     plt.gca().invert_yaxis()
     plt.plot(midline_data['x'], midline_data['y'], label=f'Line: y = {m}x + {c}', color='white', lw=0.5, linestyle='dashed')
-    plt.scatter(deformed_contour_x, deformed_contour_y, s=2, color='red')
+    #plt.scatter(deformed_contour_x, deformed_contour_y, s=2, color='red')
     plt.scatter(skull_end_x, skull_end_y, s=10, color='magenta')
     plt.scatter(baseline_skull_end_x, skull_end_y, s=10, color='magenta')
-    plt.scatter(baseline_contour_x, baseline_contour_y, s=2, color='cyan')
+    #plt.scatter(baseline_contour_x, baseline_contour_y, s=2, color='cyan')
     plt.scatter(baseline_trimmed_x, baseline_trimmed_y, s=2, color='blue')
+    plt.scatter(deformed_trimmed_x, deformed_trimmed_y, s=2, color='orange')
     plt.scatter(reflected_contour_x, reflected_contour_y, s=2, color='green')
     plt.title(f"{patient_id} {timepoint}")
     filename = save_dir +"/" + timepoint+".png"
