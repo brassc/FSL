@@ -74,10 +74,13 @@ For each patient id and timepoint iteration, the steps are as follows:
 4. Extract bet image and mask slices according to recorded z coordinate using `extract_and_display_slice`
 5. Extract contour from mask edge using `auto_boundary_detect` for each contour of interest i.e. twice per patient id and timepoint.
     - uses `flipside_func` to flip recorded side prior to calling `auto_boundary_detect` the second time for baseline
-6. Create reflected contour - a reflection of the extracted baseline contour. Uses `get_mirror_line` function and `reflect_across_line` function. 
+6. Trim contours where necessary e.g. where they overlap into the center falx fold. 
+    - `find_contour_ends` function calculates pairwise Euclidean distances between all points on a contour, returns the indices of the maximum distance found
+    - `trim_contours` function calls `find_contour_ends` function, identifies anterior and posterior ends of function by comparison to known/input skull end point values, adds point to trimmed array if it satisfies the condition of being on the correct side of supplied anterior or posterior end point x value, and is outside the area defined by the `threshold` parameter supplied to `trim_contours` function. Returns trimmed x and y points as two 1D numpy arrays. 
+7. Create reflected contour - a reflection of the extracted (trimmed) baseline contour. Uses `get_mirror_line` function and `reflect_across_line` function. 
     - `get_mirror_line` uses first and last points extracted from contour to draw a line centrally located.  
     - `reflect_across_line` function handles both 1 and 2 dimensional reflections according to whether the mirror line extracted via `get_mirror_line` has a gradient or not. 
-7. Slice is plotted and saved to each patient's directory on the cluster. 
+8. Slice is plotted and saved to each patient's directory on the cluster. 
 
 
 
