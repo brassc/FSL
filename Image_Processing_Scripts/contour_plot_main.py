@@ -431,20 +431,36 @@ def trim_contours(end_x, contour_x, contour_y, side, threshold=20):
 
         # Apply condition based on side and proximity to the anterior and posterior ends
         if side == 'R':
-            if x > end_x[0]: # end_x[0] is always anterior x
-                if dist_to_ant_end <= threshold:
-                    continue
-            elif x > end_x[1]:
-                if dist_to_post_end <= threshold:
-                    continue
+            if end_x[0] > end_x[1]: # Evaluate most lax condition first
+                if x > end_x[0]: # end_x[0] is always anterior x
+                    if dist_to_ant_end <= threshold:
+                        continue
+                elif x > end_x[1]:
+                    if dist_to_post_end <= threshold:
+                        continue
+            else:
+                if x > end_x[1]:
+                    if dist_to_post_end <= threshold:
+                        continue
+                elif x > end_x[0]: 
+                    if dist_to_ant_end <= threshold:
+                        continue
         
-        elif side == 'L':      
-            if x < end_x[0]: # end_x[0] is always anterior x
-                if dist_to_ant_end <= threshold:
-                    continue
-            elif x < end_x[1]:
-                if dist_to_post_end <= threshold:    
-                    continue
+        elif side == 'L':  
+            if end_x[0] < end_x[1]:  # Evaluate most lax condition first
+                if x < end_x[0]: # end_x[0] is always anterior x
+                    if dist_to_ant_end <= threshold:
+                        continue
+                elif x < end_x[1]:
+                    if dist_to_post_end <= threshold:   
+                        continue
+            else:
+                if x < end_x[1]: # end_x[0] is always anterior x
+                    if dist_to_post_end <= threshold:
+                        continue
+                elif x < end_x[0]:
+                    if dist_to_ant_end <= threshold: 
+                        continue
 
         # If not trimmed, add to the trimmed contours
         trimmed_x.append(x)
@@ -697,9 +713,9 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     plt.gca().invert_yaxis()
     plt.plot(midline_data['x'], midline_data['y'], label=f'Line: y = {m}x + {c}', color='white', lw=0.5, linestyle='dashed')
     #plt.scatter(deformed_contour_x, deformed_contour_y, s=2, color='orange')
-    #plt.scatter(skull_end_x, skull_end_y, s=10, color='magenta')
-    #plt.scatter(baseline_skull_end_x, skull_end_y, s=10, color='magenta')
-    #plt.scatter(baseline_contour_x, baseline_contour_y, s=2, color='blue')
+    plt.scatter(skull_end_x, skull_end_y, s=10, color='magenta')
+    plt.scatter(baseline_skull_end_x, skull_end_y, s=10, color='magenta')
+    plt.scatter(baseline_contour_x, baseline_contour_y, s=2, color='blue')
     plt.scatter(baseline_trimmed_x, baseline_trimmed_y, s=2, color='cyan')
     plt.scatter(deformed_trimmed_x, deformed_trimmed_y, s=2, color='red')
     plt.scatter(reflected_contour_x, reflected_contour_y, s=2, color='green')
@@ -708,6 +724,8 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     plt.savefig(filename)
     #print("file path: ",filename)
     plt.show()
+    #plt.close()
+    
 
 
     print(f"Image {timepoint}.png saved to {save_dir}")
