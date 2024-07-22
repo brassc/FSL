@@ -24,8 +24,8 @@ excluded?, patient ID, timepoint, z coord (slice), anterior x coord, anterior y 
 0, 20174, fast, 175, 100, 196, 138, 58, L, 69, 35
 0, 20174, acute, 177, 100, 200, 140, 60, L, 77, 34, COMMENT = VENTRICULOMEGALY // CONTRALATERAL LESION
 0, 20174, 3mo, 174, 109, 196, 141, 62, L, 72, 30, COMMENT = VENTRICULOMEGALY // IPSILATERAL HAEMATOMA
-0, 20651, fast, 136, 40, 158, 64, 54, R, 136, 120
-0, 20651, acute, 134, 41, 158, 63, 54, R, 140, 130
+0, 20651, fast, 136, 40, 158, 64, 54, R, 133, 117
+0, 20651, acute, 134, 41, 158, 63, 54, R, 135, 127
 0, 20942, fast, 147, 122, 176, 141, 60, L, 47, 36 
 0, 20942, acute, 147, 122, 177, 145, 62, L, 52, 33
 0, 20942, 6mo, 153, 117, 178, 156, 64, L, 60, 31
