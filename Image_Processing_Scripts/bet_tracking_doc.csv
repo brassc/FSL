@@ -2,10 +2,10 @@ patient id, timepoint, bet params, crop, manual modification, inclusion (1/0)
 19978, ultra-fast, -f 0.55, 56
 19978, fast, -f 0.61, 56
 19978, acute, -f 0.55, 56
-12519, ultra-fast, -f 0.6, 56
+12519, ultra-fast, -f 0.6, 56, MODIFIED=YES
 12519, acute, -f 0.5, 56
 12519, 6mo, -f 0.5, 56, MODIFIED=YES
-12519, 24mo, -f 0.2 -R, 75
+12519, 24mo, -f 0.2 -R, 75, MODIFIED=YES
 13198, excluded, alternative pathology
 13782, ultra-fast, -f 0.45, 70, MODIFIED=YES
 13782, 3mo, -f 0.25, 90, MODIFIED=YES
@@ -13,9 +13,9 @@ patient id, timepoint, bet params, crop, manual modification, inclusion (1/0)
 13990, acute, -f 0.6, 70
 14324, ultra-fast, -f 0.45, 70
 14324, acute, -f 0.43, 70
-14324, 12mo, -f 0.43, 90
-16754, fast, -f 0.45, 90
-16754, acute, -f 0.5, 80
+14324, 12mo, -f 0.43, 90, MODIFIED=YES
+16754, fast, -f 0.45, 90, MODIFIED=YES
+16754, acute, -f 0.5, 80, MODIFIED=YES
 19344, fast, -f 0.45, 80
 19344, acute, -f 0.35, 80, MODIFIED=YES
 19575, fast, -f 0.5, 90
