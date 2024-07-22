@@ -14,7 +14,7 @@ from sklearn.linear_model import LinearRegression
 
 # USAGE
 def print_usage():
-    print("Usage: python contour_plot_main.py [patient_id]")
+    print("Usage: python contour_plot_main.py <patient_id>")
     print("If no patient_id is provided, the script will plot contours for all patient timepoints.")
 
 
@@ -430,7 +430,7 @@ patient_info.rename(columns={
 patient_info = patient_info[patient_info['excluded'] != 1]
 patient_info.drop(columns='excluded', inplace=True)
 
-print(patient_info)
+#print(patient_info)
 
 #filter for patient if desired
 #patient_info = patient_info[patient_info['patient_id'] == 23348]
@@ -590,9 +590,9 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     skull_end_y = np.array([anty, posty], dtype=int)
     baseline_skull_end_x = np.array([bantx, bpostx], dtype=int)
 
-    print("skull_end_x type: ", type(skull_end_x))
-    print("skull_end_y type: ", type(skull_end_y))
-    print("baseline_skull_end_x type: ", type(baseline_skull_end_x))
+    #print("skull_end_x type: ", type(skull_end_x))
+    #print("skull_end_y type: ", type(skull_end_y))
+    #print("baseline_skull_end_x type: ", type(baseline_skull_end_x))
     
     m, c, Y = get_mirror_line(skull_end_y, skull_end_x, baseline_skull_end_x)
     #m, c, Y = get_mirror_line(deformed_contour_y, deformed_contour_x, baseline_contour_x)
@@ -623,6 +623,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     plt.scatter(baseline_skull_end_x, skull_end_y, s=10, color='magenta')
     plt.scatter(baseline_contour_x, baseline_contour_y, s=2, color='cyan')
     plt.scatter(reflected_contour_x, reflected_contour_y, s=2, color='green')
+    plt.title(f"{patient_id} {timepoint}")
     filename = save_dir +"/" + timepoint+".png"
     plt.savefig(filename)
     #print("file path: ",filename)
