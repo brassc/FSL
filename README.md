@@ -80,6 +80,7 @@ For each patient id and timepoint iteration, the steps are as follows:
 7. Create reflected contour - a reflection of the extracted (trimmed) baseline contour. Uses `get_mirror_line` function and `reflect_across_line` function. 
     - `get_mirror_line` uses first and last points extracted from contour to draw a line centrally located.  
     - `reflect_across_line` function handles both 1 and 2 dimensional reflections according to whether the mirror line extracted via `get_mirror_line` has a gradient or not. 
+    - `trim_reflected` function removes any portion of reflected contour that is below the posterior skull end point y value.
 8. Slice is plotted and saved to each patient's directory on the cluster. 
 
 
