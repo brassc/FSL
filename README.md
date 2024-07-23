@@ -82,6 +82,7 @@ For each patient id and timepoint iteration, the steps are as follows:
     - `reflect_across_line` function handles both 1 and 2 dimensional reflections according to whether the mirror line extracted via `get_mirror_line` has a gradient or not. 
     - `trim_reflected` function removes any portion of reflected contour that is below the posterior skull end point y value.
 8. Slice is plotted and saved to each patient's directory on the cluster. 
+9. Local patient id, timepoint and corresponding contour points are saved to global dictionary `data_entries` using `add_data_entry` function. Key format is `data_entry_{patient_id}_{timepoint}`, key dynamically updates. 
 
 
 
