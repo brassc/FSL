@@ -150,11 +150,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, antx, 
 
     # Create a zero-filled array with the same dimensions as the original slice
     restored_slice = np.zeros(original_shape)
-    """
-    print(f"trimmed slice data x shape: {trimmed_slice_data.shape[1]}")
-    print(f"original x shape: {restored_slice.shape[1]}")
-    print(f"image_center_x: {image_center_x}")
-    """
+
     # Insert the trimmed data back into the restored_slice at the original position
     end_y = start_y + trimmed_slice_data.shape[0]  # Calculated based on the trimmed data size
     if side == 'R':
@@ -279,15 +275,7 @@ def auto_boundary_detect(patient_id, patient_timepoint, normalized_slice, antx, 
     save_arrays_to_directory(data_readout_dir, array_save_name,
                                 xx_coords=contour_x_coords, yy_coords=contour_y_coords)
     """
-    """
-    #no if statement necessary here because points are already adjustd
-    plt.imshow(contour_img, cmap='gray', extent=[start_x, end_x, end_y, start_y])
-    # Adjust the y-axis to display in the original image's orientation
-    plt.gca().invert_yaxis()
-    
-    plt.scatter(contour_x_coords, contour_y_coords, s=2, color='red')
-    plt.show()
-    """    
+   
     return contour_x_coords, contour_y_coords
 
 
@@ -410,9 +398,6 @@ def trim_contours(end_x, contour_x, contour_y, side, threshold=20):
     end_indices = find_contour_ends(contour_x, contour_y)
     end1 = (contour_x[end_indices[0]], contour_y[end_indices[0]])
     end2 = (contour_x[end_indices[1]], contour_y[end_indices[1]])
-    #print("end1", end1)
-    #print("end2", end2)
-
 
     # Determine which is anterior and which is posterior 
     if end1[1] > end2[1]:
@@ -483,8 +468,17 @@ def trim_reflected(end_y, contour_x, contour_y):
     return trimmed_x, trimmed_y
 
 
+   
+def add_data_entry(patient_id, timepoint, data):
+    key = f"data_entry_{patient_id}_{timepoint}"
+    data_entries[key] = data
+    print("data entry has been added/updated")
+    return 0
+
 
 # main script execution
+# initialise data_entries dictionary storage for arrays
+data_entries = {}
 
 # DATA CLEANING
 # import patient info .csv
@@ -526,10 +520,6 @@ patient_info.drop(columns='excluded', inplace=True)
 # Create dataframe to hold the output data
 df = pd.DataFrame(columns=["patient_id", "timepoint", "deformed_contour_x_vals", "deformed_contour_y_vals", "reflected_contour_x_vals", "reflected_contour_y_vals"])
 
-#print(patient_info)
-
-#filter for patient if desired
-#patient_info = patient_info[patient_info['patient_id'] == 23348]
 
 # Check if the user provided an argument (patient_id)
 if len(sys.argv) > 1:
@@ -626,22 +616,11 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     postx = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'posterior_x_coord'].values[0]
     posty = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'posterior_y_coord'].values[0]
     side = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'side_LR'].values[0]
-    # corresponding baseline skull points
+    # corresponding baseline skull x points (y is the same)
     bantx = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'baseline_anterior_x_coord'].values[0]
-    #banty = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'baseline_anterior_y_coord'].values[0]
     bpostx = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'baseline_posterior_x_coord'].values[0]
-    #bposty = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'baseline_posterior_y_coord'].values[0]
-
-    #print("bpostx type: ",type(bpostx))
-    #print("postx type: ",type(postx))
-    """
-    print(f"z coord slice index: {z_coord}")
-    print(f"anterior x coord: {antx}")
-    print(f"anterior y coord: {anty}")
-    print(f"posterior x coord: {postx}")
-    print(f"posterior y coord: {posty}")
-    print(f"craniectomy side: {side}")
-    """
+    
+    # Extracting image and mask slices
     norm_img_slice, slice_img = extract_and_display_slice(img, save_dir, patient_id, timepoint, z_coord, disp_flag='n')
     norm_mask_slice, slice_mask = extract_and_display_slice(mask, save_dir, patient_id, timepoint, z_coord, disp_flag='n')
 
@@ -771,37 +750,25 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
 
     print(f"Image {timepoint}.png saved to {save_dir}")
     print(f"Contour point extraction for {patient_id} {timepoint} complete. \n")
-    """
-    data_list=[]
-
-    data_entry={
+    print(f"adding to data_entries dictionary with key format data_entry_{patient_id}_{timepoint}..")
+ 
+    data_entry = {
         "patient_id": patient_id,
         "timepoint": timepoint,
-        "deformed_contour_x_vals": deformed_combi_x,
-        "deformed_contour_y_vals": deformed_combi_y,
-        "reflected_contour_x_vals": reflected_combi_x,
-        "reflected_contour_y_vals": reflected_combi_y
+        "deformed_contour_x": deformed_combi_x,
+        "deformed_contour_y": deformed_combi_y,
+        "reflected_contour_x": reflected_combi_x,
+        "reflected_contour_y": reflected_combi_y
     }
-    data_list.append(data_entry)
 
-    #add_data(patient_id, timepoint, deformed_combi_x, deformed_combi_y, reflected_combi_x, reflected_combi_y)
-
-# Print the stored data
-print(json.dumps(data_list, indent=4))
-
-# Save data to a JSON file
-with open('data.json', 'w') as f:
-    json.dump(data_list, f, indent=4)
-
-# Load data from a JSON file
-with open('data.json', 'r') as f:
-    loaded_data = json.load(f)
-
-# Print the loaded data
-print(json.dumps(loaded_data, indent=4))
-
-    """
+    # Add data entry for {patient_id} and {timepoint} to data_entries dictionary
+    add_data_entry(patient_id, timepoint, data_entry)
     
+
+        
+
+#print(data_entries)
+#print(data_entries["data_entry_20651_fast"])
 
 print("Plots completed for all specified timepoints.")
 print("specify run only particular patient id by doing \n python contour_plot_main.py <patient_id>")
