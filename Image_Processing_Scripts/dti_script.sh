@@ -111,7 +111,9 @@ echo "applying brainmask to T1 to create brain.mgz..."
 mri_mask "${destination_dir}T1.mgz" "${destination_dir}brainmask.mgz" "${destination_dir}brain.mgz"
 echo "BET complete."
 
-exit 0
+# rename T1 as 001 and place inside orig folder
+cp "${destination_dir}T1.mgz" "${destination_dir}orig/001.mgz"
+
 # Starting recon-all
 echo "Starting recon-all with BET brain.mgz..."
 recon-all -s "${patient_id}_${timepoint}" -all 
