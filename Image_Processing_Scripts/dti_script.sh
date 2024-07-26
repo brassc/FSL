@@ -146,11 +146,27 @@ echo "normalising intensities..."
 
 # Starting recon-all
 echo "Starting recon-all with BET brain.mgz, without registration"
-recon-all -s "${patient_id}_${timepoint}" -autorecon1 -notalairach -noskullstrip 
+#recon-all -s "${patient_id}_${timepoint}" -autorecon1 -notalairach -noskullstrip 
 echo "Stage 1 complete, starting stage 2..."
-recon-all -s "${patient_id}_${timepoint}" -autorecon2 -noskullstrip 
-echo "Stage 2 complete, starting stage 3..."
-recon-all -s "${patient_id}_${timepoint}" -autorecon3 -noskullstrip
+echo "force generate aseg.presurf.mgz..."
+#mri_watershed -surf "${destination_dir}aseg.presurf.mgz" "${destination_dir}T1.mgz" "${destination_dir}brainmask.mgz"
+
+
+# White matter segmentation
+echo "starting white matter seg..."
+recon-all -s "${patient_id}_${timepoint}" -autorecon2-cp -noaseg
+echo "completed cp"
+recon-all -s "${patient_id}_${timepoint}" -autorecon2-wm
+# Create surface models
+#echo "starting surface models -autorecon2-pial"
+#recon-all -s "${patient_id}_${timepoint}" -autorecon2-pial
+#echo "completed surface modelling"
+# Run the remaining surface-based steps
+#echo "transforming to sphere..."
+#recon-all -s "${patient_id}_${timepoint}" -sphere -surfreg -jacobian_white -avgcurv -cortparc
+#recon-all -s "${patient_id}_${timepoint}" -autorecon2 -noskullstrip 
+#echo "Stage 2 complete, starting stage 3..."
+#recon-all -s "${patient_id}_${timepoint}" -autorecon3 -noskullstrip
 echo "recon-all complete!"
 
 
