@@ -91,30 +91,30 @@ fi
 
 
 # Copy the file to the destination directory
-cp "$input_directory$input_basename" "${destination_dir}orig/"
+#cp "$input_directory$input_basename" "${destination_dir}orig/"
 echo "T1 copied to ${destination_dir}orig/"
 
 # Copy brain mask to destination dir
-cp "${input_bet_directory}$mask_basename" "${destination_dir}orig/"
+#cp "${input_bet_directory}$mask_basename" "${destination_dir}orig/"
 echo "BET mask copied to $destination_dir"
 
 
 
 # Converting to freesurfer .mgz format
 echo "Converting .nii to freesurfer .mgz..."
-mri_convert "${destination_dir}orig/$input_basename" "${destination_dir}T1.mgz"
-mri_convert "${destination_dir}orig/$mask_basename" "${destination_dir}brainmask.mgz"
+#mri_convert "${destination_dir}orig/$input_basename" "${destination_dir}T1.mgz"
+#mri_convert "${destination_dir}orig/$mask_basename" "${destination_dir}brainmask.mgz"
 echo "conversion complete."
 
 # apply mask:
 echo "applying brainmask to T1 to create brain.mgz..."
-mri_mask "${destination_dir}T1.mgz" "${destination_dir}brainmask.mgz" "${destination_dir}brain.mgz"
+#mri_mask "${destination_dir}T1.mgz" "${destination_dir}brainmask.mgz" "${destination_dir}brain.mgz"
 echo "BET complete."
 
 # rename T1 as orig and nu, place inside orig folder as 001
-cp "${destination_dir}T1.mgz" "${destination_dir}orig/001.mgz"
-cp "${destination_dir}T1.mgz" "${destination_dir}nu.mgz"
-mv "${destination_dir}T1.mgz" "${destination_dir}orig.mgz"
+#cp "${destination_dir}T1.mgz" "${destination_dir}orig/001.mgz"
+#cp "${destination_dir}T1.mgz" "${destination_dir}nu.mgz"
+#mv "${destination_dir}T1.mgz" "${destination_dir}orig.mgz"
 
 # DO AUTORECON1 OPERATIONS:
 # Normalise the intensities of bias corrected image
@@ -122,22 +122,11 @@ echo "normalising intensities..."
 #mri_normalize -g 1 -mprage -mask "${destination_dir}/brainmask.mgz" "${destination_dir}/orig/001.mgz" "${destination_dir}/norm.mgz"
 
 
-# Bypass Talairach reg
-echo "1 0 0 0" > ${destination_dir}transforms/talairach.xfm
-echo "0 1 0 0" >> ${destination_dir}transforms/talairach.xfm
-echo "0 0 1 0" >> ${destination_dir}transforms/talairach.xfm
-echo "0 0 0 1" >> ${destination_dir}transforms/talairach.xfm
-
-
-
-
-
-
 # register brain.mgz to talairach
 #talairach_avi --i "${destination_dir}/brain.mgz" --xfm "${destination_dir}/transforms/talairach.xfm"
 
-## RUNNING INDIVIDUAL AUTORECON2 STEPS
-recon-all -s "${patient_id}_${timepoint}" -autorecon1 -notalairach -noskullstrip 
+
+
 # Surface generation
 #recon-all -s "${patient_id}_${timepoint}" -fill
 #recon-all -s "${patient_id}_${timepoint}" -tessellate
@@ -156,12 +145,13 @@ recon-all -s "${patient_id}_${timepoint}" -autorecon1 -notalairach -noskullstrip
 
 
 # Starting recon-all
-#echo "Starting recon-all with BET brain.mgz"
-#recon-all -s "${patient_id}_${timepoint}" -autorecon2-cp
-#echo "recon-all -s "${patient_id}_${timepoint}" -autorecon2 complete."
-#echo "Starting stage 3, no atlas..."
-#recon-all -s "${patient_id}_${timepoint}" -autorecon3-noaseg
-#echo "recon-all complete!"
+echo "Starting recon-all with BET brain.mgz, without registration"
+recon-all -s "${patient_id}_${timepoint}" -autorecon1 -notalairach -noskullstrip 
+echo "Stage 1 complete, starting stage 2..."
+recon-all -s "${patient_id}_${timepoint}" -autorecon2 -noskullstrip 
+echo "Stage 2 complete, starting stage 3..."
+recon-all -s "${patient_id}_${timepoint}" -autorecon3 -noskullstrip
+echo "recon-all complete!"
 
 
 
