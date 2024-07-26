@@ -46,7 +46,7 @@ find_input_basename() {
 
 
 input_basename=$(find_input_basename)
-destination_dir="/home/cmb247/Desktop/Project_3/Freesurfer/${patient_id}_$timepoint/"
+destination_dir="/home/cmb247/Desktop/Project_3/Freesurfer/${patient_id}_$timepoint/mri/"
 
 # Check if the destination directory exists, if not, create it
 if [ ! -d "$destination_dir" ]; then
@@ -58,8 +58,16 @@ cp "$input_directory$input_basename" "$destination_dir"
 
 echo "File copied to $destination_dir"
 
+
+
+# Converting to freesurfer .mgz format
+echo "Converting .nii to freesurfer .mgz..."
+echo $destination_dir$input_basename
+mri_convert $destination_dir$input_basename "${destination_dir}T1.mgz"
+echo "conversion complete."
+
 # Starting recon-all
-recon-all -i $destination_dir$input_basename -s "${patient_id}_${timepoint}" -all 
+#recon-all -i $destination_dir$input_basename -s "${patient_id}_${timepoint}" -all 
 
 
 
