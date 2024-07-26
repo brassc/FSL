@@ -111,14 +111,22 @@ echo "applying brainmask to T1 to create brain.mgz..."
 mri_mask "${destination_dir}T1.mgz" "${destination_dir}brainmask.mgz" "${destination_dir}brain.mgz"
 echo "BET complete."
 
-# rename T1 as 001 and place inside orig folder
+# rename T1 as orig and nu, place inside orig folder as 001
 cp "${destination_dir}T1.mgz" "${destination_dir}orig/001.mgz"
+cp "${destination_dir}T1.mgz" "${destination_dir}nu.mgz"
+mv "${destination_dir}T1.mgz" "${destination_dir}orig.mgz"
 
 # DO AUTORECON1 OPERATIONS:
 # Normalise the intensities of bias corrected image
 echo "normalising intensities..."
-mri_normalize -g 1 -mprage -mask "${destination_dir}/brainmask.mgz" "${destination_dir}/orig/001.mgz" "${destination_dir}/norm.mgz"
+#mri_normalize -g 1 -mprage -mask "${destination_dir}/brainmask.mgz" "${destination_dir}/orig/001.mgz" "${destination_dir}/norm.mgz"
 
+
+# Bypass Talairach reg
+echo "1 0 0 0" > ${destination_dir}transforms/talairach.xfm
+echo "0 1 0 0" >> ${destination_dir}transforms/talairach.xfm
+echo "0 0 1 0" >> ${destination_dir}transforms/talairach.xfm
+echo "0 0 0 1" >> ${destination_dir}transforms/talairach.xfm
 
 
 
@@ -128,6 +136,18 @@ mri_normalize -g 1 -mprage -mask "${destination_dir}/brainmask.mgz" "${destinati
 # register brain.mgz to talairach
 #talairach_avi --i "${destination_dir}/brain.mgz" --xfm "${destination_dir}/transforms/talairach.xfm"
 
+## RUNNING INDIVIDUAL AUTORECON2 STEPS
+recon-all -s "${patient_id}_${timepoint}" -autorecon1 -notalairach -noskullstrip 
+# Surface generation
+#recon-all -s "${patient_id}_${timepoint}" -fill
+#recon-all -s "${patient_id}_${timepoint}" -tessellate
+#recon-all -s "${patient_id}_${timepoint}" -smooth1
+#recon-all -s "${patient_id}_${timepoint}" -inflate1
+#recon-all -s "${patient_id}_${timepoint}" -qsphere
+#recon-all -s "${patient_id}_${timepoint}" -fix
+#recon-all -s "${patient_id}_${timepoint}" -white
+#recon-all -s "${patient_id}_${timepoint}" -smooth2
+#recon-all -s "${patient_id}_${timepoint}" -inflate2
 
 
 
@@ -136,9 +156,9 @@ mri_normalize -g 1 -mprage -mask "${destination_dir}/brainmask.mgz" "${destinati
 
 
 # Starting recon-all
-echo "Starting recon-all with BET brain.mgz, no atlas..."
-recon-all -s "${patient_id}_${timepoint}" -autorecon2-noaseg
-echo "recon-all -s "${patient_id}_${timepoint}" -autorecon2-noaseg complete."
+#echo "Starting recon-all with BET brain.mgz"
+#recon-all -s "${patient_id}_${timepoint}" -autorecon2-cp
+#echo "recon-all -s "${patient_id}_${timepoint}" -autorecon2 complete."
 #echo "Starting stage 3, no atlas..."
 #recon-all -s "${patient_id}_${timepoint}" -autorecon3-noaseg
 #echo "recon-all complete!"
