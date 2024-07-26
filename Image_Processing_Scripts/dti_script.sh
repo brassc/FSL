@@ -114,10 +114,34 @@ echo "BET complete."
 # rename T1 as 001 and place inside orig folder
 cp "${destination_dir}T1.mgz" "${destination_dir}orig/001.mgz"
 
+# DO AUTORECON1 OPERATIONS:
+# Normalise the intensities of bias corrected image
+echo "normalising intensities..."
+mri_normalize -g 1 -mprage -mask "${destination_dir}/brainmask.mgz" "${destination_dir}/orig/001.mgz" "${destination_dir}/norm.mgz"
+
+
+
+
+
+
+
+# register brain.mgz to talairach
+#talairach_avi --i "${destination_dir}/brain.mgz" --xfm "${destination_dir}/transforms/talairach.xfm"
+
+
+
+
+
+
+
+
 # Starting recon-all
-echo "Starting recon-all with BET brain.mgz..."
-recon-all -s "${patient_id}_${timepoint}" -all 
-echo "recon-all complete!"
+echo "Starting recon-all with BET brain.mgz, no atlas..."
+recon-all -s "${patient_id}_${timepoint}" -autorecon2-noaseg
+echo "recon-all -s "${patient_id}_${timepoint}" -autorecon2-noaseg complete."
+#echo "Starting stage 3, no atlas..."
+#recon-all -s "${patient_id}_${timepoint}" -autorecon3-noaseg
+#echo "recon-all complete!"
 
 
 
