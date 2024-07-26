@@ -85,24 +85,25 @@ mask_basename=$(find_mask_input_basename)
 destination_dir="/home/cmb247/Desktop/Project_3/Freesurfer/${patient_id}_$timepoint/mri/"
 
 # Check if the destination directory exists, if not, create it
-if [ ! -d "$destination_dir" ]; then
-    mkdir -p "$destination_dir"
+if [ ! -d "${destination_dir}orig/" ]; then
+    mkdir -p "${destination_dir}orig/"
 fi
 
+
 # Copy the file to the destination directory
-cp "$input_directory$input_basename" "$destination_dir"
-echo "T1 copied to $destination_dir"
+cp "$input_directory$input_basename" "${destination_dir}orig/"
+echo "T1 copied to ${destination_dir}orig/"
 
 # Copy brain mask to destination dir
-cp "${input_bet_directory}$mask_basename" "$destination_dir"
+cp "${input_bet_directory}$mask_basename" "${destination_dir}orig/"
 echo "BET mask copied to $destination_dir"
 
 
 
 # Converting to freesurfer .mgz format
 echo "Converting .nii to freesurfer .mgz..."
-mri_convert $destination_dir$input_basename "${destination_dir}T1.mgz"
-mri_convert $destination_dir$mask_basename "${destination_dir}brainmask.mgz"
+mri_convert "${destination_dir}orig/$input_basename" "${destination_dir}T1.mgz"
+mri_convert "${destination_dir}orig/$mask_basename" "${destination_dir}brainmask.mgz"
 echo "conversion complete."
 
 # apply mask:
@@ -110,7 +111,7 @@ echo "applying brainmask to T1 to create brain.mgz..."
 mri_mask "${destination_dir}T1.mgz" "${destination_dir}brainmask.mgz" "${destination_dir}brain.mgz"
 echo "BET complete."
 
-
+exit 0
 # Starting recon-all
 echo "Starting recon-all with BET brain.mgz..."
 recon-all -s "${patient_id}_${timepoint}" -all 
