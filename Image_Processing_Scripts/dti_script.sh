@@ -112,9 +112,9 @@ echo "BET complete."
 
 
 # Starting recon-all
-#recon-all -i $destination_dir$input_basename -s "${patient_id}_${timepoint}" -all 
-
-
+echo "Starting recon-all with BET brain.mgz..."
+recon-all -s "${patient_id}_${timepoint}" -all 
+echo "recon-all complete!"
 
 
 
