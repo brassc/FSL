@@ -105,6 +105,12 @@ mri_convert $destination_dir$input_basename "${destination_dir}T1.mgz"
 mri_convert $destination_dir$mask_basename "${destination_dir}brainmask.mgz"
 echo "conversion complete."
 
+# apply mask:
+echo "applying brainmask to T1 to create brain.mgz..."
+mri_mask "${destination_dir}T1.mgz" "${destination_dir}brainmask.mgz" "${destination_dir}brain.mgz"
+echo "BET complete."
+
+
 # Starting recon-all
 #recon-all -i $destination_dir$input_basename -s "${patient_id}_${timepoint}" -all 
 
