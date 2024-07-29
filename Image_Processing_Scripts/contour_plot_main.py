@@ -844,13 +844,13 @@ df = pd.DataFrame({
 })
 
 
-print(df.iloc[0, 4])
+#print(df.iloc[0, 4])
 #print(df.iloc[3, :])
 # Save the DataFrame to a CSV file
 df.to_csv('Image_Processing_Scripts/data_entries.csv', index=False)
 
-data=pd.read_csv('Image_Processing_Scripts/data_entries.csv')
-print(data.iloc[0,4])
+#data=pd.read_csv('Image_Processing_Scripts/data_entries.csv')
+#print(data.iloc[0,4])
 
 print("Plots completed for all specified timepoints.")
 print("specify run only particular patient id by doing \n python contour_plot_main.py <patient_id>")
