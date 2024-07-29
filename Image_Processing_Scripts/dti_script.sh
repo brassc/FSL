@@ -156,7 +156,8 @@ echo "force generate aseg.presurf.mgz..."
 echo "starting white matter seg..."
 recon-all -s "${patient_id}_${timepoint}" -autorecon2-cp -noaseg
 echo "completed cp"
-recon-all -s "${patient_id}_${timepoint}" -autorecon2-wm
+#recon-all -s "${patient_id}_${timepoint}" -autorecon2-wm -noaseg
+#echo "completed wm"
 # Create surface models
 #echo "starting surface models -autorecon2-pial"
 #recon-all -s "${patient_id}_${timepoint}" -autorecon2-pial
@@ -167,7 +168,7 @@ recon-all -s "${patient_id}_${timepoint}" -autorecon2-wm
 #recon-all -s "${patient_id}_${timepoint}" -autorecon2 -noskullstrip 
 #echo "Stage 2 complete, starting stage 3..."
 #recon-all -s "${patient_id}_${timepoint}" -autorecon3 -noskullstrip
-echo "recon-all complete!"
+#echo "recon-all complete!"
 
 
 
