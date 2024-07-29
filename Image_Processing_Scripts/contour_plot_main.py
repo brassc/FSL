@@ -470,15 +470,68 @@ def trim_reflected(end_y, contour_x, contour_y):
 
    
 def add_data_entry(patient_id, timepoint, data):
-    key = f"data_entry_{patient_id}_{timepoint}"
-    data_entries[key] = data
+    #key = f"data_entry_{patient_id}_{timepoint}"
+    data_entries.append(data)
     print("data entry has been added/updated")
     return 0
+
+## Orientation switching
+# new x coord is vertical new y coord is horizontal
+def switch_orientation(x_values, y_values):
+    v_values=np.abs(x_values)
+    h_values=y_values
+    
+    return v_values, h_values
+
+def switch_x_sign(x_values):
+    x_values= -1*(x_values)
+    return x_values
+
+
+
+def move(h, v, poly=0):
+    rotation_angle = np.arctan((v[-1]-v[0])/(h[0]-h[-1]))
+
+    # rotation matrix
+    rotation_matrix = np.array([[np.cos(rotation_angle), -np.sin(rotation_angle)],
+                            [np.sin(rotation_angle), np.cos(rotation_angle)],
+                            ])
+    
+    group_coords=np.vstack((h, v))
+    rot_coords=np.dot(rotation_matrix, group_coords)
+
+    left_magnitude=rot_coords[0,-1]
+    down_magnitude=rot_coords[1, 0]  
+    tr_v_coords=rot_coords[1]-down_magnitude
+    tr_h_coords=rot_coords[0]-left_magnitude
+
+    print(f"Rotation angle: {rotation_angle}, Translation by ({left_magnitude}, {down_magnitude})")
+
+    if poly != 0:
+        coefficients_rotated = np.dot(rotation_matrix, poly.coef)
+        poly_rotated = Polynomial(coefficients_rotated)
+        translation_vector = np.array([left_magnitude, down_magnitude])
+        poly_rt_coef = poly_rotated + translation_vector
+        poly_rt=Polynomial(poly_rt_coef)
+        print(f"Polynomial:\n {poly_rt}")
+        return tr_h_coords, tr_v_coords, poly_rt
+    else:
+        return tr_h_coords, tr_v_coords, None
+
+
+def center(h):
+    # find centre value of horizontal points
+    c_val = h[-1] + h[0] / 2
+    h_centered = h - c_val
+
+    return h_centered, c_val
+
+
 
 
 # main script execution
 # initialise data_entries dictionary storage for arrays
-data_entries = {}
+data_entries = []
 
 # DATA CLEANING
 # import patient info .csv
@@ -745,8 +798,8 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     filename = save_dir +"/" + timepoint+".png"
     plt.savefig(filename)
     #print("file path: ",filename)
-    plt.show()
-    #plt.close()
+    #plt.show()
+    plt.close()
 
     print(f"Image {timepoint}.png saved to {save_dir}")
     print(f"Contour point extraction for {patient_id} {timepoint} complete. \n")
@@ -767,8 +820,39 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
 
         
 
-#print(data_entries)
-#print(data_entries["data_entry_20651_fast"])
+#Convert data_entries to pd.DataFrame
+# Initialize lists to store data for each column
+patient_ids = []
+timepoints = []
+defcon_x = []
+defcon_y = []
+refcon_x = []
+refcon_y = []
+
+# Iterate over the data entries and append values to the lists
+for entry in data_entries:
+    patient_ids.append(entry['patient_id'])
+    timepoints.append(entry['timepoint'])
+    defcon_x.append(entry['deformed_contour_x'])
+    defcon_y.append(entry['deformed_contour_y'])
+    refcon_x.append(entry['reflected_contour_x'])
+    refcon_y.append(entry['reflected_contour_y'])
+
+# Create a DataFrame from the lists
+df = pd.DataFrame({
+    'patient_id': patient_ids,
+    'timepoint': timepoints,
+    'deformed_contour_x': defcon_x,
+    'deformed_contour_y': defcon_y,
+    'reflected_contour_x': refcon_x,
+    'reflected_contour_y': refcon_y
+})
+
+
+print(df.head())
+# Save the DataFrame to a CSV file
+df.to_csv('Image_Processing_Scripts/data_entries.csv', index=False)
+#print(data_entries["data_entry_19978_fast"])
 
 print("Plots completed for all specified timepoints.")
 print("specify run only particular patient id by doing \n python contour_plot_main.py <patient_id>")
