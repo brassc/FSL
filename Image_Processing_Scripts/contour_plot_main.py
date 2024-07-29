@@ -533,6 +533,14 @@ def center(h):
 # initialise data_entries dictionary storage for arrays
 data_entries = []
 
+# Initialize lists to store data for each df column
+patient_ids = []
+timepoints = []
+defcon_x = []
+defcon_y = []
+refcon_x = []
+refcon_y = []
+
 # DATA CLEANING
 # import patient info .csv
 patient_info = pd.read_csv('Image_Processing_Scripts/included_patient_info.csv')
@@ -816,27 +824,14 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
 
     # Add data entry for {patient_id} and {timepoint} to data_entries dictionary
     add_data_entry(patient_id, timepoint, data_entry)
+    patient_ids.append(data_entry['patient_id'])
+    timepoints.append(data_entry['timepoint'])
+    defcon_x.append(data_entry['deformed_contour_x'])
+    defcon_y.append(data_entry['deformed_contour_y'])
+    refcon_x.append(data_entry['reflected_contour_x'])
+    refcon_y.append(data_entry['reflected_contour_y'])
     
 
-        
-
-#Convert data_entries to pd.DataFrame
-# Initialize lists to store data for each column
-patient_ids = []
-timepoints = []
-defcon_x = []
-defcon_y = []
-refcon_x = []
-refcon_y = []
-
-# Iterate over the data entries and append values to the lists
-for entry in data_entries:
-    patient_ids.append(entry['patient_id'])
-    timepoints.append(entry['timepoint'])
-    defcon_x.append(entry['deformed_contour_x'])
-    defcon_y.append(entry['deformed_contour_y'])
-    refcon_x.append(entry['reflected_contour_x'])
-    refcon_y.append(entry['reflected_contour_y'])
 
 # Create a DataFrame from the lists
 df = pd.DataFrame({
@@ -849,10 +844,10 @@ df = pd.DataFrame({
 })
 
 
-print(df.head())
+#print(df.iloc[0, :])
+#print(df.iloc[3, :])
 # Save the DataFrame to a CSV file
 df.to_csv('Image_Processing_Scripts/data_entries.csv', index=False)
-#print(data_entries["data_entry_19978_fast"])
 
 print("Plots completed for all specified timepoints.")
 print("specify run only particular patient id by doing \n python contour_plot_main.py <patient_id>")
