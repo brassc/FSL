@@ -91,7 +91,7 @@ For each patient id and timepoint iteration, the steps are as follows:
 # DTI Processing #
 Path: `/home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi/19978/ultra-fast/Hour_00034.8016-Date_20111024/U-ID22691/nipype/DATASINK/DTIspace/dwi_proc/`
 
-
+Freesurfer location: `/home/cmb247/Desktop/Project_3/Freesurfer/`
 
 
 
