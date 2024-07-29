@@ -154,7 +154,7 @@ echo "force generate aseg.presurf.mgz..."
 
 # White matter segmentation
 echo "starting white matter seg..."
-recon-all -s "${patient_id}_${timepoint}" -autorecon2-cp -noaseg
+recon-all -s "${patient_id}_${timepoint}" -autorecon2-cp -noaseg -nofix
 echo "completed cp"
 #recon-all -s "${patient_id}_${timepoint}" -autorecon2-wm -noaseg
 #echo "completed wm"
