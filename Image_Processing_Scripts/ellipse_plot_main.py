@@ -40,13 +40,14 @@ def transform_points(data):
         data['v_ref_tr'] = pd.Series([np.array([])] * len(data['v_ref']), index=data.index)
 
     print("Data columns:", data.columns)
-    if (data['side'].iloc[0] == 'R'):
+    #if (data['side'].iloc[0] == 'R'):
+    #put posterior point to (0,0)
         #print(data['h_def'].iloc[0][-1])
-        data['h_def_tr'] = data.apply(lambda row: row['h_def'] - row['h_def'][-1], axis=1)
-        data['v_def_tr'] = data.apply(lambda row: row['v_def'] - row['v_def'][-1], axis=1)
-        data['h_ref_tr'] = data.apply(lambda row: row['h_ref'] - row['h_ref'][-1], axis=1)
-        data['v_ref_tr'] = data.apply(lambda row: row['v_ref'] - row['v_ref'][-1], axis=1)
-        
+    data['h_def_tr'] = data.apply(lambda row: row['h_def'] - row['h_def'][-1], axis=1)
+    data['v_def_tr'] = data.apply(lambda row: row['v_def'] - row['v_def'][-1], axis=1)
+    data['h_ref_tr'] = data.apply(lambda row: row['h_ref'] - row['h_ref'][-1], axis=1)
+    data['v_ref_tr'] = data.apply(lambda row: row['v_ref'] - row['v_ref'][-1], axis=1)
+    """    
     elif (data['side'].iloc[0] == 'L'):
         #print(data['h_def'].iloc[0][-2])
         print(data['h_def'].iloc[0])
@@ -62,14 +63,15 @@ def transform_points(data):
     else:
         print('side data type is: *****', type(data['side']))
         raise ValueError('Side must be either "R" or "L"')
-    print('inside function after data transformation', data)
-    print(data.columns)
+    """
+    #print('inside function after data transformation', data)
+    #print(data.columns)
     return data
 
 def rotate_points(data):
     # rotate points so that anterior point lies on x axis
     if (data['side'] == 'R').any():
-        angle = np.arctan(data['v_def_tr'].iloc[0][-2]/data['h_def_tr'].iloc[0][-2])
+        angle = np.arctan(data['v_def_tr'].iloc[0][-2]/data['h_def_tr'].iloc[0][-1])
         angle=angle*-1
     elif (data['side'] == 'L').any():
         angle = np.arctan(data['v_def_tr'].iloc[0][-1]/data['h_def_tr'].iloc[0][-1])
@@ -122,8 +124,8 @@ def center_points(data):
     average_h = (h_def_rot_min + h_def_rot_max) / 2 # only one averager required - translate both h_def and h_ref by same amount
     
     if (data['side'] == 'R').any():
-        data['h_def_rot'] = data['h_def_rot'] + average_h
-        data['h_ref_rot'] = data['h_ref_rot'] + average_h
+        data['h_def_rot'] = data['h_def_rot'] - average_h
+        data['h_ref_rot'] = data['h_ref_rot'] - average_h
     elif (transformed_data['side'] == 'L').any():
         data['h_def_rot'] = data['h_def_rot'] - average_h
         data['h_ref_rot'] = data['h_ref_rot'] - average_h
@@ -149,82 +151,86 @@ data['deformed_contour_x'] = data['deformed_contour_x'].apply(convert_to_numpy_a
 data['deformed_contour_y'] = data['deformed_contour_y'].apply(convert_to_numpy_array)
 data['reflected_contour_x'] = data['reflected_contour_x'].apply(convert_to_numpy_array)
 data['reflected_contour_y'] = data['reflected_contour_y'].apply(convert_to_numpy_array)
-print(data.head())
-print('Type of contour data in df', type(data['deformed_contour_x']))
-print('Type of first element:', type(data['deformed_contour_x'].iloc[0]))
+#print(data.head())
+#print('Type of contour data in df', type(data['deformed_contour_x']))
+#print('Type of first element:', type(data['deformed_contour_x'].iloc[0]))
 
-
+# Create new variables as copy of original contour data
 h_def=data['deformed_contour_x']
 v_def=data['deformed_contour_y']
 h_ref=data['reflected_contour_x']
 v_ref=data['reflected_contour_y']
-print('h_def:', h_def)
 
+# Create new data frame from these variables to add to original data frame
 hv_df = pd.DataFrame({'h_def':h_def, 'v_def':v_def, 'h_ref':h_ref, 'v_ref':v_ref})
-#print(hv_df.iloc[0,1])
+# Add data frames together
 total_df=pd.concat([data, hv_df], axis=1)
-print("*********************")
-print(total_df['h_def'].iloc[0])
+#print(total_df['h_def'].iloc[0])
 
 
 
 # Transform data points such that posterior point lies on (0, 0) and anterior lies on y=0 (x axis) (for R side craniectomy) 
 #   or anterior point lies on (0,0) and posterior lies on y=0 (x axis) (for L side craniectomy)
 #       Recall baseline coords are at end of contour anterior, posterior (last two points in list in that order)
-"""
-# Get start and end points of contour
-def get_start_end_points(contour):
-    start = contour.iloc[-2]
-    end = contour.iloc[-1]
-    return start, end
-"""
+
+
+# Initialise data frame to add to
 transformed_df = pd.DataFrame()
+
+# Loop through each row in the total_df
 for i in range (len(total_df)):
-    print(total_df.iloc[i])
-    # drop data from total_df that isn't row i, save as data
+    #print(total_df.iloc[i])
     
+    # get copy of slice of total_df line by line
     data = total_df.iloc[[i]].copy()
+    print(data)
     data.columns=total_df.columns
-    #print('side data is of type: ',type(data['side'].iloc[0]))
     
-    transformed_data=transform_points(data)
-    #print('transformed data:', transformed_data)
-    print(transformed_data.columns)
-    transformed_data=rotate_points(transformed_data)
-    print(transformed_data.columns)
-
-
-
-    transformed_data=center_points(transformed_data)
+    plt.scatter(data['h_def'].iloc[0], data['v_def'].iloc[0], color='red', s=1)
+    plt.scatter(data['h_ref'].iloc[0], data['v_ref'].iloc[0], color='cyan', s=1)
+    plt.scatter(data['h_def'].iloc[0][-2], data['v_def'].iloc[0][-2], color='magenta', s=20) # anterior point
+    plt.title(f"{data['patient_id'].iloc[0]} {data['timepoint'].iloc[0]}")
+    # Set the aspect ratio of the plot to be equal
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.show()
+    transformed_data=transform_points(data) # Translate function, puts in <>_<>ef_tr columns
+    
+    #transformed_data=rotate_points(transformed_data) # Rotate function
+    #transformed_data=center_points(transformed_data) # Center function (parks data back into rotated column)
 
     transformed_df = pd.concat([transformed_df, transformed_data], ignore_index=True)
     print(transformed_df.iloc[i])
 
-    # plot data
-    plt.scatter(transformed_df['h_def_rot'].iloc[i], transformed_df['v_def_rot'].iloc[i], color='red')
-    plt.scatter(transformed_df['h_ref_rot'].iloc[i], transformed_df['v_ref_rot'].iloc[i], color='cyan')
-    plt.title(f"{transformed_data['patient_id']} {transformed_data['timepoint']}")
+    anterior_pt_h=transformed_df['h_ref_tr'].iloc[i][-2]
+    anterior_pt_v=transformed_df['v_ref_tr'].iloc[i][-2]
+    print('Anterior point:', anterior_pt_h)
+    posterior_pt=transformed_df['h_def_tr'].iloc[i][-1]
+    print('Posterior point:', posterior_pt)
+
+    plt.scatter(transformed_df['h_def_tr'].iloc[i], transformed_df['v_def_tr'].iloc[i], color='red', s=1)
+    plt.scatter(transformed_df['h_def_tr'].iloc[i][-2], transformed_df['v_def_tr'].iloc[i][-2], color='magenta', s=20) # anterior point
+    plt.scatter(transformed_df['h_ref_tr'].iloc[i], transformed_df['v_ref_tr'].iloc[i], color='cyan', s=1)
+    plt.title(f"{transformed_data['patient_id'].iloc[0]} {transformed_data['timepoint'].iloc[0]}")
+    # Set the aspect ratio of the plot to be equal
+    plt.gca().set_aspect('equal', adjustable='box')
     #plt.xlim(0)
-    plt.ylim(0)
+    #plt.ylim(0)
     plt.show()
+
+    # plot data
+    #plt.scatter(transformed_df['h_def_rot'].iloc[i], transformed_df['v_def_rot'].iloc[i], color='red')
+    #plt.scatter(transformed_df['h_ref_rot'].iloc[i], transformed_df['v_ref_rot'].iloc[i], color='cyan')
+    #plt.title(f"{transformed_data['patient_id']} {transformed_data['timepoint']}")
+    #plt.xlim(0)
+    #plt.ylim(0)
+    #plt.show()
 
     
 
 print('*****')
-print(total_df.columns)
-print(transformed_df.columns)
+#print(total_df.columns)
+#print(transformed_df.columns)
 
-#for i in range(len(side_data)):
-    # if data has exclusion mark, pop it from the data
- #   if side_data.iloc[i, 0] == 1:
-  #      side_data = side_data.drop(i)
-
-
-
-
-
-
-# Find average of start and end y, position about center
 
 # Make y values positive if necessary
 
