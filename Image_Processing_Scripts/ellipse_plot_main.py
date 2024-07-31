@@ -3,6 +3,9 @@ pd.options.mode.copy_on_write = True # to avoid SettingWithCopyWarning
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
+from matplotlib.patches import Ellipse
+from scipy.linalg import eig
+from scipy.optimize import curve_fit
 
 def convert_to_numpy_array(s):
     # Remove extra whitespace and split by spaces
@@ -18,7 +21,6 @@ def convert_to_numpy_array(s):
             return float(value)
     
     return np.array([convert_value(value) for value in s.split()])
-
 
 def transform_points(data):
     # move to origin
@@ -47,23 +49,7 @@ def transform_points(data):
     data['v_def_tr'] = data.apply(lambda row: row['v_def'] - row['v_def'][-1], axis=1)
     data['h_ref_tr'] = data.apply(lambda row: row['h_ref'] - row['h_ref'][-1], axis=1)
     data['v_ref_tr'] = data.apply(lambda row: row['v_ref'] - row['v_ref'][-1], axis=1)
-    """    
-    elif (data['side'].iloc[0] == 'L'):
-        #print(data['h_def'].iloc[0][-2])
-        print(data['h_def'].iloc[0])
-        print(data['h_def'].iloc[0][-2])
-        
-        #data.at[0, 'h_def_tr'] = data['h_def'].iloc[0] - data['h_def'].iloc[0][-2]
-        data['h_def_tr'] = data.apply(lambda row: row['h_def'] - row['h_def'][-2], axis=1)
-        print(data['h_def_tr'].iloc[0])
-        data['v_def_tr'] = data.apply(lambda row: row['v_def'] - row['v_def'][-2], axis=1)
-        data['h_ref_tr'] = data.apply(lambda row: row['h_ref'] - row['h_ref'][-2], axis=1)
-        data['v_ref_tr'] = data.apply(lambda row: row['v_ref'] - row['v_ref'][-2], axis=1)
-        
-    else:
-        print('side data type is: *****', type(data['side']))
-        raise ValueError('Side must be either "R" or "L"')
-    """
+
     #print('inside function after data transformation', data)
     #print(data.columns)
     return data
@@ -148,6 +134,33 @@ def center_points(data):
 
     return data
 
+def find_intersection_height(h_coords, v_coords):
+    """
+    Find the height at which a linear interpolation between two h_coords either side of the y axis cuts the y axis.
+
+    Parameters:
+        h_coords (array-like): Horizontal coordinates.
+        v_coords (array-like): Vertical coordinates.
+
+    Returns:
+        intersection_height (float): Height at which the linear interpolation intersects the y-axis.
+    """
+    # Find indices of the points closest to the y-axis
+    left_index = np.abs(h_coords).argmin()
+    right_index = len(h_coords) - np.abs(h_coords[::-1]).argmin() - 2
+    print(f"Left index: {left_index}\nRight index: {right_index}")
+
+    # Perform linear interpolation between the points
+    slope = (v_coords[right_index] - v_coords[left_index]) / (h_coords[right_index] - h_coords[left_index])
+    intersection_height = v_coords[left_index] - slope * h_coords[left_index]
+
+    return intersection_height
+
+def func1(x, h, a, b, c=0, d=0):
+    # To ensure we only deal with the upper portion, we return NaN if the inside of the sqrt becomes negative
+    with np.errstate(invalid='ignore'):
+        y = h * np.sqrt(np.maximum(0, a**2 - (x-c)**2))*(1+(b/a)*x)+d
+    return y
 
 
 ## MAIN SCRIPT TO PLOT ELLIPSE FORM
@@ -213,20 +226,12 @@ for i in range (len(total_df)):
 
     
     # Plot transformed data
-    anterior_pt_h=transformed_data['h_ref_tr'].iloc[0][-2]
-    anterior_pt_v=transformed_data['v_ref_tr'].iloc[0][-2]
-    print('Anterior point:', anterior_pt_h)
-    posterior_pt_h=transformed_data['h_def_tr'].iloc[0][-1]
-    print('Posterior point:', posterior_pt_h)
-
     plt.scatter(transformed_data['h_def_tr'].iloc[0], transformed_data['v_def_tr'].iloc[0], color='red', s=1)
     plt.scatter(transformed_data['h_def_tr'].iloc[0][-2], transformed_data['v_def_tr'].iloc[0][-2], color='magenta', s=20) # anterior point
     plt.scatter(transformed_data['h_ref_tr'].iloc[0], transformed_data['v_ref_tr'].iloc[0], color='cyan', s=1)
     plt.title(f"{transformed_data['patient_id'].iloc[0]} {transformed_data['timepoint'].iloc[0]}")
     # Set the aspect ratio of the plot to be equal
     plt.gca().set_aspect('equal', adjustable='box')
-    #plt.xlim(0)
-    #plt.ylim(0)
     plt.close()
 
    
@@ -240,8 +245,6 @@ for i in range (len(total_df)):
     plt.scatter(transformed_data['h_ref_rot'].iloc[0], transformed_data['v_ref_rot'].iloc[0], color='cyan', s=1)
     plt.title(f"{transformed_data['patient_id']} {transformed_data['timepoint']}")
     plt.gca().set_aspect('equal', adjustable='box')
-    #plt.xlim(0)
-    #plt.ylim(0)
     plt.close()
 
     
@@ -256,11 +259,126 @@ for i in range (len(total_df)):
     plt.scatter(transformed_data['h_def_rot'].iloc[0][-1], transformed_data['v_def_rot'].iloc[0][-1], color='green', s=20)
     plt.title(f"{transformed_data['patient_id']} {transformed_data['timepoint']}")
     plt.gca().set_aspect('equal', adjustable='box')
-    #plt.xlim(0)
-    #plt.ylim(0)
     plt.close()
 
     # Fit ellipse using least squares method - store data / parameters line by line
+    # Fit ellipse through transformed_data['h_def_rot'] and transformed_data['v_def_rot']
+    print(transformed_data['h_def_rot'].iloc[0])
+    print(transformed_data['v_def_rot'].iloc[0])
+
+    # Define the weights
+    weights = np.ones_like(transformed_data['h_def_rot'].iloc[0])
+    weights[0] = 1 # Increase weight for the first point
+    weights[-1] = 1  # Increase weight for the last point
+    print(transformed_data['h_def_rot'].iloc[0][-2])
+
+    
+
+    # BOUNDS FOR A
+    lower_bound_a = np.abs(transformed_data['h_def_rot'].iloc[0][-1])
+    upper_bound_a = np.abs(transformed_data['h_def_rot'].iloc[0][-2]*2 + 20)
+    print(f"Lower bound a: {lower_bound_a} \nUpper bound a: {upper_bound_a}")
+
+    # BOUNDS FOR H
+    intersection_height = find_intersection_height(transformed_data['h_def_rot'].iloc[0], transformed_data['v_def_rot'].iloc[0])
+    lower_bound_h = intersection_height / lower_bound_a
+    print(f"Intersection height: {lower_bound_h}")
+
+    # BOUNDS FOR B
+    if transformed_data['side'].any()== 'L':
+        lower_bound_b = -np.inf
+        upper_bound_b = -0.2
+        b=upper_bound_b
+    else:
+        lower_bound_b = 0
+        upper_bound_b = np.inf
+        b=lower_bound_b
+        
+    print(f"Side: {transformed_data['side'].iloc[0]}\nLower bound b: {lower_bound_b}\nUpper bound b: {upper_bound_b}")
+
+
+    lower_bounds = [lower_bound_h, lower_bound_a, lower_bound_b]#, -np.inf, -np.inf]
+    upper_bounds = [np.inf, upper_bound_a, upper_bound_b]#, np.inf, np.inf]  
+    #upper_bounds = [upper_bound_h, upper_bound_a, upper_bound_b, upper_bound_c, upper_bound_d]
+    bounds = (lower_bounds, upper_bounds)
+    desired_width = np.abs(transformed_data['h_def_rot'].iloc[0][-1] - transformed_data['h_def_rot'].iloc[0][-2])  # Desired width for the function
+    print(f"Desired width: {desired_width}")
+
+    # Perform curve fitting
+    # initial_guess = (10, 80, -180, 2500, 2500)
+    h = transformed_data['v_def_rot'].iloc[0].max()
+        #a = h_coords.max() - h_coords.min()
+    a = upper_bound_a#np.abs(transformed_data['h_def_rot'].iloc[0][-2] - transformed_data['h_def_rot'].iloc[0][-1])
+    c = a / 2 # middle value
+    b = b #as above in if statement 
+    c=0
+    d = transformed_data['v_def_rot'].iloc[0].min()
+    d=0
+    initial_guess=(h, a, b) 
+    print(f"Initial guess: {initial_guess}")
+    #updated_initial_guess = update_c(initial_guess, h_coords, v_coords, weights)
+    params, covariance = curve_fit(func1, transformed_data['h_def_rot'].iloc[0], transformed_data['v_def_rot'].iloc[0], p0=initial_guess, sigma=weights, bounds=bounds)
+    print('***COVARIANCE: ***')
+    np.linalg.cond(covariance)
+    print(covariance)
+
+    print(f"fitted parameters: h={params[0]}, a={params[1]}, b={params[2]}")
+
+    
+
+    sys.exit()
+
+
+    initial_guess = [0, 1, 1, 0, 0]
+    popt, pcov = curve_fit(func1, transformed_data['h_def_rot'].iloc[0], transformed_data['v_def_rot'].iloc[0], p0=initial_guess)
+    h_fit, a_fit, b_fit, c_fit, d_fit = popt
+
+    print(f"fitted parameters: h={h_fit}, a={a_fit}, b={b_fit}, c={c_fit}, d={d_fit}")
+
+    x = np.linspace(transformed_data['h_def_rot'].iloc[0].min(), transformed_data['h_def_rot'].iloc[0].max(), 1000)
+    y_fit=func1(transformed_data['h_def_rot'].iloc[0], h_fit, a_fit, b_fit, c_fit, d_fit)
+
+    # Ensure 'ellipse_h_def' and 'ellipse_v_def' columns exist in the DataFrame
+    if 'ellipse_h_def' not in transformed_data.columns:
+        transformed_data['ellipse_h_def'] = pd.Series([np.array([])] * len(transformed_data['h_def_rot']), index=transformed_data.index)
+    if 'ellipse_v_def' not in transformed_data.columns:
+        transformed_data['ellipse_v_def'] = pd.Series([np.array([])] * len(transformed_data['v_def_rot']), index=transformed_data.index)
+
+    transformed_data['ellipse_h_def'].iloc[0] = x
+    transformed_data['ellipse_v_def'].iloc[0] = y_fit
+
+    plt.scatter(transformed_data['ellipse_h_def'].iloc[0], transformed_data['ellipse_v_def'].iloc[0], color='red', s=1)
+    #plt.scatter(transformed_data['ellipse_h_ref'].iloc[0], transformed_data['ellipse_v_ref'].iloc[0], color='cyan', s=1)
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.show()
+
+    """
+    def fit_ellipse(data):
+        h = data['h_def_rot'].iloc[0]
+        v = data['v_def_rot'].iloc[0]
+
+        if data['ellipse_h_def'] not in data.columns:
+            data['ellipse_h_def'] = pd.Series([np.array([])] * len(data['h_def_rot']), index=data.index)
+        if data['ellipse_v_def'] not in data.columns:
+            data['ellipse_v_def'] = pd.Series([np.array([])] * len(data['v_def_rot']), index=data.index)
+
+        # Formulate and solve the least squares problem ||Ax - b ||^2
+        # Check if x and y have the same length
+        if len(h) != len(v):
+            raise ValueError("x and y must have the same length.")
+
+
+
+
+        return data
+    """
+
+    ellipse_data = fit_ellipse(transformed_data)
+    print(ellipse_data)
+    # Fit ellipse through transformed_data['h_ref_rot'] and transformed_data['v_ref_rot']
+
+    # Plot both ellipses on the same plot
+
 
     # Find change in area between two ellipses
 
@@ -282,3 +400,95 @@ print('*****')
 # Reverse transform data points, save to df / .csv
 
 # Plot on image.
+"""
+
+def fit_ellipse(x, y, bb):
+    # Check if x and y have the same length
+    if len(x) != len(y):
+        raise ValueError("x and y must have the same length.")
+    
+    # Build design matrix
+    D = np.column_stack((x*x, x*y, y*y, x, y, np.ones_like(x)))
+    # Build scatter matrix
+    S = np.dot(D.T, D)
+    # Build 6x6 constraint matrix
+    b8 = 8 / (bb*bb)
+    b64 = b8*b8
+    C = np.zeros((6, 6))
+    C[(0, 0)] = 1
+    C[(0, 2)] = 1
+    C[(1, 1)] = -1
+    C[(2, 0)] = 1
+    C[(2, 2)] = 1
+    C[(0, 5)] = b8
+    C[(5, 0)] = b8
+    C[(5, 2)] = b8
+    C[(2, 5)] = b8
+    C[(5, 5)] = b64
+    # Solve eigensystem
+    geval, gevec = eig(S, C)
+    geval = np.real_if_close(geval)
+    print("geval:", geval)
+    print("gevec:", gevec)
+    dminindex = np.argmax(np.real(geval))
+    print("dminindex:", dminindex)
+    # Extract eigenvector corresponding to negative eigenvalue
+    A = np.real(gevec[:, dminindex])
+    print('A in fit_ellipse is')
+    print(A)
+    # Get ellipse parameters
+    par = getpar(A)
+    return par
+
+
+
+def getpar(A):
+    a, b, c, d, e, f = A
+    # Compute ellipse parameters
+    num = 2 * (a*f*f + c*d*d + e*b*b - 2*b*d*e - a*c*f)
+    den = (b*b - a*c) * np.sqrt((a - c)*(a - c) + 4*b*b) - (a + c)*(a + c)
+    
+    if den <= 0 or np.isclose(den, 0):
+        # Handle case where denominator is non-positive
+        A = 0
+        B = 0
+    else:
+        A = np.sqrt(num / den)
+        B = np.sqrt(num / den)
+        
+    cx = (2*c*d - 2*b*e) / (b*b - a*c)
+    cy = (2*a*e - 2*b*d) / (b*b - a*c)
+    # Angle
+    theta = 0.5 * np.arctan((2*b) / (a - c))
+    # Return parameters
+    return {'A': A, 'B': B, 'center': (cx, cy), 'angle': theta}
+"""
+
+"""
+# Example usage
+x = np.array([95.46967004, 84.46234386, 73.90504033, 63.45198863, 53.10513761, 42.94686109,
+ 32.89706958, 23.14972321, 13.60400694,  6.53311059,  0.        ])
+x = x/10
+y = np.array([ 0.,          9.60073879, 14.59072159, 18.55264902, 21.46727314, 22.52237299,
+ 22.50764317, 19.51042042, 14.52486903,  8.78589364,  0.        ])
+y=y/10
+bb = 6
+result = fit_ellipse(x, y, bb)
+print(result)
+
+# Plot data points
+plt.scatter(x, y, color='blue', label='Data points')
+
+# Plot ellipse
+ellipse = Ellipse(result['center'], result['A']*2, result['B']*2, angle=np.degrees(result['angle']),
+                  edgecolor='red', fill=False, label='Fitted Ellipse')
+plt.gca().add_patch(ellipse)
+print('result is')
+print(result)
+
+
+plt.legend()
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.show()
+"""
