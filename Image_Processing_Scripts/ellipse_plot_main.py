@@ -183,20 +183,41 @@ for i in range (len(total_df)):
     
     transformed_data=transform_points(data)
     #print('transformed data:', transformed_data)
-    
     print(transformed_data.columns)
     transformed_data=rotate_points(transformed_data)
     print(transformed_data.columns)
+
+
+    # Centering about 0
+    # Get smallest h_<>ef_rot value
+    h_def_rot_min = transformed_data['h_def_rot'].iloc[0].min()
+    #h_ref_rot_min = transformed_data['h_ref_rot'].iloc[0].min()
+    # Get max h_<>ef_rot value
+    h_def_rot_max = transformed_data['h_def_rot'].iloc[0].max()
+    #h_ref_rot_max = transformed_data['h_ref_rot'].iloc[0].max()
+
+    average_h = (h_def_rot_min + h_def_rot_max) / 2
+    #average_h_ref_rot = (h_ref_rot_min + h_ref_rot_max) / 2
+
+    if (transformed_data['side'] == 'R').any():
+        transformed_data['h_def_rot'] = transformed_data['h_def_rot'] + average_h
+        transformed_data['h_ref_rot'] = transformed_data['h_ref_rot'] + average_h
+    elif (transformed_data['side'] == 'L').any():
+        transformed_data['h_def_rot'] = transformed_data['h_def_rot'] - average_h
+        transformed_data['h_ref_rot'] = transformed_data['h_ref_rot'] - average_h
+    else:
+        raise ValueError('Side must be either "R" or "L"')
+
+
     transformed_df = pd.concat([transformed_df, transformed_data], ignore_index=True)
     print(transformed_df.iloc[i])
 
-
     # plot data
-    #h_def_rot = transformed_data['h_def_rot'].iloc[0]
-    #v_def_rot = transformed_data['v_def_rot'].iloc[0]
     plt.scatter(transformed_df['h_def_rot'].iloc[i], transformed_df['v_def_rot'].iloc[i], color='red')
     plt.scatter(transformed_df['h_ref_rot'].iloc[i], transformed_df['v_ref_rot'].iloc[i], color='cyan')
     plt.title(f"{transformed_data['patient_id']} {transformed_data['timepoint']}")
+    #plt.xlim(0)
+    plt.ylim(0)
     plt.show()
 
     
