@@ -78,17 +78,30 @@ def rotate_points(data):
         data['h_ref_rot'] = pd.Series([np.array([])] * len(data['h_ref']), index=data.index)
     if 'v_ref_rot' not in data.columns:
         data['v_ref_rot'] = pd.Series([np.array([])] * len(data['v_ref']), index=data.index)
+
+    # Ensure 'angle' column exists in the DataFrame
+    if 'angle' not in data.columns:
+        data['angle'] = pd.Float32Dtype()   # Create a new column with float32 data type
     
     # rotate points so that anterior point lies on x axis
-    if (data['side'] == 'R').any():
-        angle = np.arctan(data['v_def_tr'].iloc[0][-2]/data['h_def_tr'].iloc[0][-2])
+    angle = np.arctan(data['v_def_tr'].iloc[0][-2]/data['h_def_tr'].iloc[0][-2])
+    
+    if (data['side'] == 'L').any():
         #angle=angle*-1
-    elif (data['side'] == 'L').any():
-        angle = np.arctan(data['v_def_tr'].iloc[0][-2]/data['h_def_tr'].iloc[0][-2])
-        angle=angle*-1
+        print('preprocessed angle:', angle)
+        if angle < 0:
+            angle=(2*np.pi)-angle
+        else:
+            angle=(np.pi)-angle
+       
+    elif(data['side'] == 'R').any():
+        print('preprocessed angle:', angle)
+        if angle < 0:
+            angle=(np.pi)-angle
+        else:
+            angle=(2*np.pi)-angle
     else:
         raise ValueError('Side must be either "R" or "L"')
-
 
     # rotate points by this angle
      # rotation matrix for anticlockwise rotation
@@ -110,10 +123,10 @@ def rotate_points(data):
     #v_ref_rot=ref_rot_coords[1]
     data['h_ref_rot'] = data.apply(lambda row: np.dot(rotation_matrix, np.array([row['h_ref_tr'], row['v_ref_tr']]))[0], axis=1)
     data['v_ref_rot'] = data.apply(lambda row: np.dot(rotation_matrix, np.array([row['h_ref_tr'], row['v_ref_tr']]))[1], axis=1)
-
-    print("****HERE****")
-    print(data.columns)
-    print(data)
+    
+    # Assign angle to DataFrame
+    data['angle'] = angle
+    #print(f"coordinates: \n anterior: ({data['h_def_rot'].iloc[0][-2]}, {data['v_def_rot'].iloc[0][-2]} \n posterior: ({data['h_def_rot'].iloc[0][-1]}, {data['v_def_rot'].iloc[0][-1]})")
     print(f"Rotation angle: {angle}")
     return data
 
@@ -218,6 +231,7 @@ for i in range (len(total_df)):
 
    
     transformed_data=rotate_points(transformed_data) # Rotate function
+    
 
 
     # plot rotated data
@@ -239,11 +253,13 @@ for i in range (len(total_df)):
     # plot data
     plt.scatter(transformed_df['h_def_rot'].iloc[i], transformed_df['v_def_rot'].iloc[i], color='red', s=1)
     plt.scatter(transformed_df['h_ref_rot'].iloc[i], transformed_df['v_ref_rot'].iloc[i], color='cyan', s=1)
+    plt.scatter(transformed_df['h_def_rot'].iloc[i][-2], transformed_df['v_def_rot'].iloc[i][-2], color='magenta', s=20)
+    plt.scatter(transformed_df['h_def_rot'].iloc[i][-1], transformed_df['v_def_rot'].iloc[i][-1], color='green', s=20)
     plt.title(f"{transformed_data['patient_id']} {transformed_data['timepoint']}")
     plt.gca().set_aspect('equal', adjustable='box')
     #plt.xlim(0)
     #plt.ylim(0)
-    plt.show()
+    plt.close()
 
     
 
