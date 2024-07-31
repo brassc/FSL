@@ -194,12 +194,9 @@ for i in range (len(total_df)):
     plt.title(f"{data['patient_id'].iloc[0]} {data['timepoint'].iloc[0]}")
     # Set the aspect ratio of the plot to be equal
     plt.gca().set_aspect('equal', adjustable='box')
-    plt.show()
+    plt.close()
 
     transformed_data=transform_points(data) # Translate function, puts in <>_<>ef_tr columns
-    
-    
-    #transformed_data=center_points(transformed_data) # Center function (parks data back into rotated column)
 
     
     # Plot transformed data
@@ -217,11 +214,13 @@ for i in range (len(total_df)):
     plt.gca().set_aspect('equal', adjustable='box')
     #plt.xlim(0)
     #plt.ylim(0)
-    plt.show()
+    plt.close()
 
-    # plot rotated data
+   
     transformed_data=rotate_points(transformed_data) # Rotate function
 
+
+    # plot rotated data
     plt.scatter(transformed_data['h_def_rot'].iloc[0], transformed_data['v_def_rot'].iloc[0], color='red', s=1)
     plt.scatter(transformed_data['h_def_rot'].iloc[0][-2], transformed_data['v_def_rot'].iloc[0][-2], color='magenta', s=20) # anterior point
     plt.scatter(transformed_data['h_ref_rot'].iloc[0], transformed_data['v_ref_rot'].iloc[0], color='cyan', s=1)
@@ -229,20 +228,22 @@ for i in range (len(total_df)):
     plt.gca().set_aspect('equal', adjustable='box')
     #plt.xlim(0)
     #plt.ylim(0)
-    plt.show()
+    plt.close()
 
-
+    
+    transformed_data=center_points(transformed_data) # Center function (parks data back into rotated column)
 
     transformed_df = pd.concat([transformed_df, transformed_data], ignore_index=True)
     #print(transformed_df.iloc[i])
 
     # plot data
-    #plt.scatter(transformed_df['h_def_rot'].iloc[i], transformed_df['v_def_rot'].iloc[i], color='red')
-    #plt.scatter(transformed_df['h_ref_rot'].iloc[i], transformed_df['v_ref_rot'].iloc[i], color='cyan')
-    #plt.title(f"{transformed_data['patient_id']} {transformed_data['timepoint']}")
+    plt.scatter(transformed_df['h_def_rot'].iloc[i], transformed_df['v_def_rot'].iloc[i], color='red', s=1)
+    plt.scatter(transformed_df['h_ref_rot'].iloc[i], transformed_df['v_ref_rot'].iloc[i], color='cyan', s=1)
+    plt.title(f"{transformed_data['patient_id']} {transformed_data['timepoint']}")
+    plt.gca().set_aspect('equal', adjustable='box')
     #plt.xlim(0)
     #plt.ylim(0)
-    #plt.show()
+    plt.show()
 
     
 
