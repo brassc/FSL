@@ -111,21 +111,27 @@ def rotate_points(data):
     print("****HERE****")
     print(data.columns)
     print(data)
-
-
     print(f"Rotation angle: {angle}")
+    return data
 
-    # Assign rotated coordinates back to dataframe
-    #data.at[0, 'h_def_rot'] = h_def_rot
-    print("****HERE****")
-    #print(type(h_def_rot))
-    #print(len(h_def_rot))
-    #print(h_def_rot)
-    #data.at[0,'v_def_rot'] = v_def_rot
-    #data.at[0,'h_ref_rot'] = h_ref_rot
-    #data.at[0,'v_ref_rot'] = v_ref_rot
+def center_points(data):
+    # Centering about 0
+    h_def_rot_min = data['h_def_rot'].iloc[0].min()  # Get smallest h_<>ef_rot value
+    h_def_rot_max = data['h_def_rot'].iloc[0].max()  # Get max h_<>ef_rot value
+
+    average_h = (h_def_rot_min + h_def_rot_max) / 2 # only one averager required - translate both h_def and h_ref by same amount
+    
+    if (data['side'] == 'R').any():
+        data['h_def_rot'] = data['h_def_rot'] + average_h
+        data['h_ref_rot'] = data['h_ref_rot'] + average_h
+    elif (transformed_data['side'] == 'L').any():
+        data['h_def_rot'] = data['h_def_rot'] - average_h
+        data['h_ref_rot'] = data['h_ref_rot'] - average_h
+    else:
+        raise ValueError('Side must be either "R" or "L"')
 
     return data
+
 
 
 ## MAIN SCRIPT TO PLOT ELLIPSE FORM
@@ -188,26 +194,8 @@ for i in range (len(total_df)):
     print(transformed_data.columns)
 
 
-    # Centering about 0
-    # Get smallest h_<>ef_rot value
-    h_def_rot_min = transformed_data['h_def_rot'].iloc[0].min()
-    #h_ref_rot_min = transformed_data['h_ref_rot'].iloc[0].min()
-    # Get max h_<>ef_rot value
-    h_def_rot_max = transformed_data['h_def_rot'].iloc[0].max()
-    #h_ref_rot_max = transformed_data['h_ref_rot'].iloc[0].max()
 
-    average_h = (h_def_rot_min + h_def_rot_max) / 2
-    #average_h_ref_rot = (h_ref_rot_min + h_ref_rot_max) / 2
-
-    if (transformed_data['side'] == 'R').any():
-        transformed_data['h_def_rot'] = transformed_data['h_def_rot'] + average_h
-        transformed_data['h_ref_rot'] = transformed_data['h_ref_rot'] + average_h
-    elif (transformed_data['side'] == 'L').any():
-        transformed_data['h_def_rot'] = transformed_data['h_def_rot'] - average_h
-        transformed_data['h_ref_rot'] = transformed_data['h_ref_rot'] - average_h
-    else:
-        raise ValueError('Side must be either "R" or "L"')
-
+    transformed_data=center_points(transformed_data)
 
     transformed_df = pd.concat([transformed_df, transformed_data], ignore_index=True)
     print(transformed_df.iloc[i])
