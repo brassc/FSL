@@ -69,17 +69,7 @@ def transform_points(data):
     return data
 
 def rotate_points(data):
-    # rotate points so that anterior point lies on x axis
-    if (data['side'] == 'R').any():
-        angle = np.arctan(data['v_def_tr'].iloc[0][-2]/data['h_def_tr'].iloc[0][-1])
-        angle=angle*-1
-    elif (data['side'] == 'L').any():
-        angle = np.arctan(data['v_def_tr'].iloc[0][-1]/data['h_def_tr'].iloc[0][-1])
-        angle=angle*-1
-    else:
-        raise ValueError('Side must be either "R" or "L"')
-
-# Ensure 'h_<>ef_rot' column exists in the DataFrame
+    # Ensure 'h_<>ef_rot' column exists in the DataFrame
     if 'h_def_rot' not in data.columns:
         data['h_def_rot'] = pd.Series([np.array([])] * len(data['h_def']), index=data.index)
     if 'v_def_rot' not in data.columns:
@@ -89,6 +79,17 @@ def rotate_points(data):
     if 'v_ref_rot' not in data.columns:
         data['v_ref_rot'] = pd.Series([np.array([])] * len(data['v_ref']), index=data.index)
     
+    # rotate points so that anterior point lies on x axis
+    if (data['side'] == 'R').any():
+        angle = np.arctan(data['v_def_tr'].iloc[0][-2]/data['h_def_tr'].iloc[0][-2])
+        #angle=angle*-1
+    elif (data['side'] == 'L').any():
+        angle = np.arctan(data['v_def_tr'].iloc[0][-2]/data['h_def_tr'].iloc[0][-2])
+        angle=angle*-1
+    else:
+        raise ValueError('Side must be either "R" or "L"')
+
+
     # rotate points by this angle
      # rotation matrix for anticlockwise rotation
     rotation_matrix = np.array([[np.cos(angle), -np.sin(angle)],
@@ -186,6 +187,7 @@ for i in range (len(total_df)):
     print(data)
     data.columns=total_df.columns
     
+    #Plot original data
     plt.scatter(data['h_def'].iloc[0], data['v_def'].iloc[0], color='red', s=1)
     plt.scatter(data['h_ref'].iloc[0], data['v_ref'].iloc[0], color='cyan', s=1)
     plt.scatter(data['h_def'].iloc[0][-2], data['v_def'].iloc[0][-2], color='magenta', s=20) # anterior point
@@ -193,29 +195,46 @@ for i in range (len(total_df)):
     # Set the aspect ratio of the plot to be equal
     plt.gca().set_aspect('equal', adjustable='box')
     plt.show()
+
     transformed_data=transform_points(data) # Translate function, puts in <>_<>ef_tr columns
     
-    #transformed_data=rotate_points(transformed_data) # Rotate function
+    
     #transformed_data=center_points(transformed_data) # Center function (parks data back into rotated column)
 
-    transformed_df = pd.concat([transformed_df, transformed_data], ignore_index=True)
-    print(transformed_df.iloc[i])
-
-    anterior_pt_h=transformed_df['h_ref_tr'].iloc[i][-2]
-    anterior_pt_v=transformed_df['v_ref_tr'].iloc[i][-2]
+    
+    # Plot transformed data
+    anterior_pt_h=transformed_data['h_ref_tr'].iloc[0][-2]
+    anterior_pt_v=transformed_data['v_ref_tr'].iloc[0][-2]
     print('Anterior point:', anterior_pt_h)
-    posterior_pt=transformed_df['h_def_tr'].iloc[i][-1]
-    print('Posterior point:', posterior_pt)
+    posterior_pt_h=transformed_data['h_def_tr'].iloc[0][-1]
+    print('Posterior point:', posterior_pt_h)
 
-    plt.scatter(transformed_df['h_def_tr'].iloc[i], transformed_df['v_def_tr'].iloc[i], color='red', s=1)
-    plt.scatter(transformed_df['h_def_tr'].iloc[i][-2], transformed_df['v_def_tr'].iloc[i][-2], color='magenta', s=20) # anterior point
-    plt.scatter(transformed_df['h_ref_tr'].iloc[i], transformed_df['v_ref_tr'].iloc[i], color='cyan', s=1)
+    plt.scatter(transformed_data['h_def_tr'].iloc[0], transformed_data['v_def_tr'].iloc[0], color='red', s=1)
+    plt.scatter(transformed_data['h_def_tr'].iloc[0][-2], transformed_data['v_def_tr'].iloc[0][-2], color='magenta', s=20) # anterior point
+    plt.scatter(transformed_data['h_ref_tr'].iloc[0], transformed_data['v_ref_tr'].iloc[0], color='cyan', s=1)
     plt.title(f"{transformed_data['patient_id'].iloc[0]} {transformed_data['timepoint'].iloc[0]}")
     # Set the aspect ratio of the plot to be equal
     plt.gca().set_aspect('equal', adjustable='box')
     #plt.xlim(0)
     #plt.ylim(0)
     plt.show()
+
+    # plot rotated data
+    transformed_data=rotate_points(transformed_data) # Rotate function
+
+    plt.scatter(transformed_data['h_def_rot'].iloc[0], transformed_data['v_def_rot'].iloc[0], color='red', s=1)
+    plt.scatter(transformed_data['h_def_rot'].iloc[0][-2], transformed_data['v_def_rot'].iloc[0][-2], color='magenta', s=20) # anterior point
+    plt.scatter(transformed_data['h_ref_rot'].iloc[0], transformed_data['v_ref_rot'].iloc[0], color='cyan', s=1)
+    plt.title(f"{transformed_data['patient_id']} {transformed_data['timepoint']}")
+    plt.gca().set_aspect('equal', adjustable='box')
+    #plt.xlim(0)
+    #plt.ylim(0)
+    plt.show()
+
+
+
+    transformed_df = pd.concat([transformed_df, transformed_data], ignore_index=True)
+    #print(transformed_df.iloc[i])
 
     # plot data
     #plt.scatter(transformed_df['h_def_rot'].iloc[i], transformed_df['v_def_rot'].iloc[i], color='red')
