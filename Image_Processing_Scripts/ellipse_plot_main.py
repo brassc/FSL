@@ -247,19 +247,26 @@ for i in range (len(total_df)):
     
     transformed_data=center_points(transformed_data) # Center function (parks data back into rotated column)
 
-    transformed_df = pd.concat([transformed_df, transformed_data], ignore_index=True)
-    #print(transformed_df.iloc[i])
+    
 
     # plot data
-    plt.scatter(transformed_df['h_def_rot'].iloc[i], transformed_df['v_def_rot'].iloc[i], color='red', s=1)
-    plt.scatter(transformed_df['h_ref_rot'].iloc[i], transformed_df['v_ref_rot'].iloc[i], color='cyan', s=1)
-    plt.scatter(transformed_df['h_def_rot'].iloc[i][-2], transformed_df['v_def_rot'].iloc[i][-2], color='magenta', s=20)
-    plt.scatter(transformed_df['h_def_rot'].iloc[i][-1], transformed_df['v_def_rot'].iloc[i][-1], color='green', s=20)
+    plt.scatter(transformed_data['h_def_rot'].iloc[0], transformed_data['v_def_rot'].iloc[0], color='red', s=1)
+    plt.scatter(transformed_data['h_ref_rot'].iloc[0], transformed_data['v_ref_rot'].iloc[0], color='cyan', s=1)
+    plt.scatter(transformed_data['h_def_rot'].iloc[0][-2], transformed_data['v_def_rot'].iloc[0][-2], color='magenta', s=20)
+    plt.scatter(transformed_data['h_def_rot'].iloc[0][-1], transformed_data['v_def_rot'].iloc[0][-1], color='green', s=20)
     plt.title(f"{transformed_data['patient_id']} {transformed_data['timepoint']}")
     plt.gca().set_aspect('equal', adjustable='box')
     #plt.xlim(0)
     #plt.ylim(0)
     plt.close()
+
+    # Fit ellipse using least squares method - store data / parameters line by line
+
+    # Find change in area between two ellipses
+
+    # Store data as one big df
+    transformed_df = pd.concat([transformed_df, transformed_data], ignore_index=True)
+    #print(transformed_df.iloc[i])
 
     
 
@@ -268,11 +275,7 @@ print('*****')
 #print(transformed_df.columns)
 
 
-# Make y values positive if necessary
 
-# fit ellipse using least squares method
-
-# Find change in area between two ellipses
 
 # Plot change in area over time for each patient (x axis: time, y axis: area)
 
