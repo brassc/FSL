@@ -268,8 +268,8 @@ for i in range (len(total_df)):
 
     # Define the weights
     weights = np.ones_like(transformed_data['h_def_rot'].iloc[0])
-    weights[0] = 1 # Increase weight for the first point
-    weights[-1] = 1  # Increase weight for the last point
+    #weights[0] = 1 # Increase weight for the first point
+    #weights[-1] = 1  # Increase weight for the last point
     print(transformed_data['h_def_rot'].iloc[0][-2])
 
     
@@ -321,11 +321,62 @@ for i in range (len(total_df)):
     print('***COVARIANCE: ***')
     np.linalg.cond(covariance)
     print(covariance)
+    params[2]=0
 
     print(f"fitted parameters: h={params[0]}, a={params[1]}, b={params[2]}")
 
-    
+    # Extract the optimal parameter
+    if len(params) == 4:
+        print('***4PARAMETERS***')
+        h_optimal_init, a_optimal_init, b_optimal_init, d_optimal_init = params #, c_optimal_init, d_optimal_init = params
+        print(h_optimal_init)
+        print(a_optimal_init)
+        print(b_optimal_init)
+        #print(c_optimal_init)
+        print(d_optimal_init)
+        #print(e_optimal)
+        h_optimal, a_optimal, b_optimal, d_optimal = params
+    elif len(params) == 5:
+        print('***5PARAMETERS***')
+        h_optimal, a_optimal, b_optimal, c_optimal, d_optimal = params
+    elif len(params) == 3:
+        print('****3PARAMETERS****')
+        h_optimal, a_optimal, b_optimal = params
+        print(f"h_optimal (height at x=0): {h_optimal}")
+        print(f"a_optimal (width): {a_optimal}")
+        print(f"b_optimal (skew): {b_optimal}")
+            
+    elif len(params) == 2:
+        h_optimal, a_optimal = params
+        print(h_optimal)
+        print(a_optimal)
+    else:
+        print('userdeferror: number of parameters ! = number of variables')
 
+    # plot ellipse
+    h_values = np.linspace(min(transformed_data['h_def_rot'].iloc[0]), max(transformed_data['h_def_rot'].iloc[0]), 1000)
+    if len(params) == 2:
+        v_fitted = func1(h_values, h_optimal, a_optimal)
+    elif len(params) == 3:
+        v_fitted = func1(h_values, h_optimal, a_optimal, b_optimal)
+    elif len(params) == 4:
+        v_fitted = func(h_values, h_optimal, a_optimal, b_optimal, d_optimal)
+    elif len(params) == 5:
+        v_fitted = func(h_values, h_optimal, a_optimal, b_optimal, c_optimal, d_optimal)
+    else:
+        print(f"userdeferror: v_fitted not calculated, number of parameters, {len(params)}!= number of function variables")
+
+
+    plt.scatter(transformed_data['h_def_rot'].iloc[0], transformed_data['v_def_rot'].iloc[0], label='translated and rotated data points', color='cyan', s=2)
+    print(f"h_values len: {len(h_values)}")
+    print(f"v_fitted len: {len(v_fitted)}")
+    print(f"v_fitted first 10: {v_fitted[:10]}")
+
+    plt.plot(h_values, v_fitted, label='Fitted curve', color='red')
+    #plt.scatter(ctr_h_coords[0], tr_v_coords[0], c='black')
+    #plt.scatter(ctr_h_coords[-1], tr_v_coords[-1], c='orange', label='h[-1], v[-1]')
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.show()
     sys.exit()
 
 
