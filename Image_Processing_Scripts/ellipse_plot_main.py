@@ -156,12 +156,18 @@ def find_intersection_height(h_coords, v_coords):
 
     return intersection_height
 
-def func1(x, h, a, b, c=0, d=0):
+def funcb(x, h, a, b, c=0, d=0):
     # To ensure we only deal with the upper portion, we return NaN if the inside of the sqrt becomes negative
     with np.errstate(invalid='ignore'):
         y = h * np.sqrt(np.maximum(0, a**2 - (x-c)**2))*(1+(b/a)*x)+d
     return y
 
+# Define the function that represents the upper portion of an ellipse
+def func(x, h, a, c=0, d=0):
+    # To ensure we only deal with the upper portion, we return NaN if the inside of the sqrt becomes negative
+    with np.errstate(invalid='ignore'):
+        y = h * np.sqrt(np.maximum(0, a**2 - (x - c)**2)) + d
+    return y
 
 ## MAIN SCRIPT TO PLOT ELLIPSE FORM
 data = pd.read_csv('Image_Processing_Scripts/data_entries.csv')
@@ -297,10 +303,7 @@ for i in range (len(total_df)):
     print(f"Side: {transformed_data['side'].iloc[0]}\nLower bound b: {lower_bound_b}\nUpper bound b: {upper_bound_b}")
 
 
-    lower_bounds = [lower_bound_h, lower_bound_a, lower_bound_b]#, -np.inf, -np.inf]
-    upper_bounds = [np.inf, upper_bound_a, upper_bound_b]#, np.inf, np.inf]  
-    #upper_bounds = [upper_bound_h, upper_bound_a, upper_bound_b, upper_bound_c, upper_bound_d]
-    bounds = (lower_bounds, upper_bounds)
+
     desired_width = np.abs(transformed_data['h_def_rot'].iloc[0][-1] - transformed_data['h_def_rot'].iloc[0][-2])  # Desired width for the function
     print(f"Desired width: {desired_width}")
 
@@ -310,6 +313,15 @@ for i in range (len(total_df)):
         #a = h_coords.max() - h_coords.min()
     a = upper_bound_a#np.abs(transformed_data['h_def_rot'].iloc[0][-2] - transformed_data['h_def_rot'].iloc[0][-1])
     c = a / 2 # middle value
+    
+    
+    # WITH B:
+    """
+    lower_bounds = [lower_bound_h, lower_bound_a, lower_bound_b]#, -np.inf, -np.inf]
+    upper_bounds = [np.inf, upper_bound_a, upper_bound_b]#, np.inf, np.inf]  
+    #upper_bounds = [upper_bound_h, upper_bound_a, upper_bound_b, upper_bound_c, upper_bound_d]
+    bounds = (lower_bounds, upper_bounds)
+    
     b = b #as above in if statement 
     c=0
     d = transformed_data['v_def_rot'].iloc[0].min()
@@ -317,13 +329,28 @@ for i in range (len(total_df)):
     initial_guess=(h, a, b) 
     print(f"Initial guess: {initial_guess}")
     #updated_initial_guess = update_c(initial_guess, h_coords, v_coords, weights)
-    params, covariance = curve_fit(func1, transformed_data['h_def_rot'].iloc[0], transformed_data['v_def_rot'].iloc[0], p0=initial_guess, sigma=weights, bounds=bounds)
+    #params, covariance = curve_fit(funcb, transformed_data['h_def_rot'].iloc[0], transformed_data['v_def_rot'].iloc[0], p0=initial_guess, sigma=weights, bounds=bounds)
+    """
+    lower_bounds = [lower_bound_h, lower_bound_a]#, -np.inf, -np.inf]
+    upper_bounds = [np.inf, upper_bound_a]#, np.inf, np.inf]  
+    #upper_bounds = [upper_bound_h, upper_bound_a, upper_bound_b, upper_bound_c, upper_bound_d]
+    bounds = (lower_bounds, upper_bounds)
+    initial_guess=(h, a) 
+    print(f"lower bounds: {lower_bounds}")
+    print(f"upper bounds: {upper_bounds}")
+    print(f"Initial guess: {initial_guess}")
+    #updated_initial_guess = update_c(initial_guess, h_coords, v_coords, weights)
+
+    params, covariance = curve_fit(func, transformed_data['h_def_rot'].iloc[0], transformed_data['v_def_rot'].iloc[0], p0=initial_guess, sigma=weights, bounds=bounds)
+
     print('***COVARIANCE: ***')
     np.linalg.cond(covariance)
     print(covariance)
-    params[2]=0
+    #print(params[2])
+    #sys.exit()
 
-    print(f"fitted parameters: h={params[0]}, a={params[1]}, b={params[2]}")
+    #print(f"fitted parameters: h={params[0]}, a={params[1]}, b={params[2]}")
+    print(f"fitted parameters: h={params[0]}, a={params[1]}")
 
     # Extract the optimal parameter
     if len(params) == 4:
@@ -356,23 +383,36 @@ for i in range (len(total_df)):
     # plot ellipse
     h_values = np.linspace(min(transformed_data['h_def_rot'].iloc[0]), max(transformed_data['h_def_rot'].iloc[0]), 1000)
     if len(params) == 2:
-        v_fitted = func1(h_values, h_optimal, a_optimal)
+        v_fitted = func(h_values, h_optimal, a_optimal)
     elif len(params) == 3:
-        v_fitted = func1(h_values, h_optimal, a_optimal, b_optimal)
+        v_fitted = funcb(h_values, h_optimal, a_optimal, b_optimal)
     elif len(params) == 4:
         v_fitted = func(h_values, h_optimal, a_optimal, b_optimal, d_optimal)
     elif len(params) == 5:
-        v_fitted = func(h_values, h_optimal, a_optimal, b_optimal, c_optimal, d_optimal)
+        v_fitted = funcb(h_values, h_optimal, a_optimal, b_optimal, c_optimal, d_optimal)
     else:
         print(f"userdeferror: v_fitted not calculated, number of parameters, {len(params)}!= number of function variables")
 
 
-    plt.scatter(transformed_data['h_def_rot'].iloc[0], transformed_data['v_def_rot'].iloc[0], label='translated and rotated data points', color='cyan', s=2)
+    plt.scatter(transformed_data['h_def_rot'].iloc[0], transformed_data['v_def_rot'].iloc[0], label='translated and rotated data points', color='red', s=2)
     print(f"h_values len: {len(h_values)}")
     print(f"v_fitted len: {len(v_fitted)}")
-    print(f"v_fitted first 10: {v_fitted[:10]}")
+    #remove 0 values from v_fitted (retaining a 0 at either end)
+    # Identify the last non-zero element in v_fitted
+    last_non_zero_index = np.max(np.nonzero(v_fitted))
+    first_non_zero_index = np.min(np.nonzero(v_fitted))
+    first_index=first_non_zero_index-1
+    last_index=last_non_zero_index+2
 
-    plt.plot(h_values, v_fitted, label='Fitted curve', color='red')
+    # v_fitted filter / sliced between first and last index
+    v_fitted_filtered = v_fitted[first_index:last_index]
+    h_values_filtered = h_values[first_index:last_index]
+
+    
+    #h_values_padded = np.append(h_values_filtered, h_values_filtered[-1] + 1)
+
+    #plt.plot(h_values, v_fitted, label='Fitted curve', color='red')
+    plt.plot(h_values_filtered, v_fitted_filtered, label='Fitted curve', color='red')
     #plt.scatter(ctr_h_coords[0], tr_v_coords[0], c='black')
     #plt.scatter(ctr_h_coords[-1], tr_v_coords[-1], c='orange', label='h[-1], v[-1]')
     plt.gca().set_aspect('equal', adjustable='box')
