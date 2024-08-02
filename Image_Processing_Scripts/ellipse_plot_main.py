@@ -219,69 +219,211 @@ def get_fit_params(data, name='<>ef_rot'): # name e.g. 'def_rot'
 
     return initial_guess, weights, bounds
 
+# Approximates the difference between the difference of the first two elements and the last two elements. 
+    # Used to provide estimation of what h would be (extend ellipse if necessary)
+def difference_between_difference(h_values):
+    difference = h_values[1]-h_values[0]
+    difference2=h_values[2]-h_values[1]
+    diff_diff=difference2-difference
+    start_diff=diff_diff-difference
 
-def fit_ellipse(data, name='<>ef_rot'):
-    h_name = 'h_' + name
-    v_name = 'v_' + name
+    end_diff=h_values[-2]-h_values[-1]
+    end_diff2=h_values[-3]-h_values[-2]
+    end_diff_diff=end_diff2-end_diff
+    end_diff=end_diff_diff-end_diff
+    return np.abs(start_diff), np.abs(end_diff)
 
-    initial_guesses, weights, bounds = get_fit_params(data, name)
-    #ref_ig, ref_weights, ref_bounds = get_fit_params(data, name='ref_rot')
+
+def fit_ellipse(data):
+
+    # Ensure 'ellipse_h_<>ef' and 'ellipse_v_<>ef' columns exist in the DataFrame
+    if 'ellipse_h_def' not in data.columns: 
+        data['ellipse_h_def'] = pd.Series([np.array([])] * len(data['h_def_rot']), index=data.index)
+    if 'ellipse_v_def' not in data.columns:
+        data['ellipse_v_def'] = pd.Series([np.array([])] * len(data['v_def_rot']), index=data.index)
+    if 'ellipse_h_ref' not in data.columns:
+        data['ellipse_h_ref'] = pd.Series([np.array([])] * len(data['h_ref_rot']), index=data.index)
+    if 'ellipse_v_ref' not in data.columns:
+        data['ellipse_v_ref'] = pd.Series([np.array([])] * len(data['v_ref_rot']), index=data.index)
+
+
+    # Get intial guesses, weights and bounds for the fit
+    def_initial_guesses, def_weights, def_bounds = get_fit_params(data, name='def_rot')
+    ref_initial_guesses, ref_weights, ref_bounds = get_fit_params(data, name='ref_rot')
+
     
-    params, covariance = curve_fit(func, transformed_data['h_def_rot'].iloc[0], transformed_data['v_def_rot'].iloc[0], p0=initial_guesses, bounds=bounds)
-    #ref_params, ref_covariance = curve_fit(func, transformed_data['h_ref_rot'].iloc[0], transformed_data['v_ref_rot'].iloc[0], p0=ref_ig, sigma=ref_weights, bounds=ref_bounds)
+    def_params, def_covariance = curve_fit(func, data['h_def_rot'].iloc[0], data['v_def_rot'].iloc[0], p0=def_initial_guesses, bounds=def_bounds)
+    ref_params, ref_covariance = curve_fit(func, data['h_ref_rot'].iloc[0], data['v_ref_rot'].iloc[0], p0=ref_initial_guesses, bounds=ref_bounds)
 
     print('***COVARIANCE: ***')
-    np.linalg.cond(covariance)
-    print(covariance)
-    #np.linalg.cond(ref_covariance)
-    #print(ref_covariance)
-    #print(params[2])
-    #sys.exit()
-
+    np.linalg.cond(def_covariance)
+    print(def_covariance)
+    np.linalg.cond(ref_covariance)
+    print(ref_covariance)
+    print('***PARAMS: ***')
     #print(f"fitted parameters: h={params[0]}, a={params[1]}, b={params[2]}")
-    print(f"fitted parameters: h={params[0]}, a={params[1]}")
+    print(f"patient id: {data['patient_id'].iloc[0]}, timepoint: {data['timepoint'].iloc[0]}")
+    print(f"def fitted parameters: h={def_params[0]}, a={def_params[1]}")
+    print(f"ref fitted parameters: h={ref_params[0]}, a={ref_params[1]}")
 
     # Extract the optimal parameter
-    
-    if len(params) == 3:
-        print('****3PARAMETERS****')
-        h_optimal, a_optimal, b_optimal = params
-        print(f"h_optimal (height at x=0): {h_optimal}")
-        print(f"a_optimal (width): {a_optimal}")
-        print(f"b_optimal (skew): {b_optimal}")
+    def check_params(params):
+
+        if len(params) == 3:
+            print('****3PARAMETERS****')
+            h_optimal, a_optimal, b_optimal = params
+            print(f"h_optimal (height at x=0): {h_optimal}")
+            print(f"a_optimal (width): {a_optimal}")
+            print(f"b_optimal (skew): {b_optimal}")
+            return h_optimal, a_optimal, b_optimal
             
-    elif len(params) == 2:
-        h_optimal, a_optimal = params
-        print(h_optimal)
-        print(a_optimal)
-    else:
-        print('userdeferror: number of parameters ! = number of variables')
+        elif len(params) == 2:
+            h_optimal, a_optimal = params
+            print(h_optimal)
+            print(a_optimal)
+            return h_optimal, a_optimal
+        else:
+            print('userdeferror: number of parameters ! = number of variables')
+            return None
+    
+    h_optimal_def, a_optimal_def = check_params(def_params)
+    h_optimal_ref, a_optimal_ref = check_params(ref_params)
 
     # plot ellipse
-    h_values = np.linspace(min(data[h_name].iloc[0]), max(data[h_name].iloc[0]), 1000)
-    if len(params) == 2:
-        v_fitted = func(h_values, h_optimal, a_optimal)
-    elif len(params) == 3:
-        v_fitted = funcb(h_values, h_optimal, a_optimal, b_optimal)
+    def_h_values = np.linspace(min(data['h_def_rot'].iloc[0]), max(data['h_def_rot'].iloc[0]), 1000)
+    print(f"min: {min(data['h_def_rot'].iloc[0])}, max: {max(data['h_def_rot'].iloc[0])}")
+    #print(f"def_h_values: {def_h_values}")
+    ref_h_values = np.linspace(min(data['h_ref_rot'].iloc[0]), max(data['h_ref_rot'].iloc[0]), 1000)
+    if len(def_params) == 2:
+        def_v_fitted = func(def_h_values, h_optimal_def, a_optimal_def)
+    #elif len(ref_params) == 2:
+    #    v_fitted = func(def_h_values, h_optimal_def, a_optimal_def, b_optimal_def)
+    #elif len(params) == 3:
+    #    v_fitted = funcb(h_values, h_optimal, a_optimal, b_optimal)
     else:
-        print(f"userdeferror: v_fitted not calculated, number of parameters, {len(params)}!= number of function variables")
+        print(f"userdeferror: v_fitted not calculated, number of parameters, {len(def_params)}!= number of function variables")
+    
+    if len(ref_params) == 2:
+        ref_v_fitted = func(ref_h_values, h_optimal_ref, a_optimal_ref)
+    else:
+        print(f"userdeferror: v_fitted not calculated, number of parameters, {len(ref_params)}!= number of function variables")
+
 
 
     #
-    print(f"h_values len: {len(h_values)}")
-    print(f"v_fitted len: {len(v_fitted)}")
+    print("**********TESTING")
+    print(f"def_h_values len: {len(def_h_values)}")
+    print(f"first few values of def_h_values: {def_h_values[:5]}")
+    print(f"def_v_fitted len: {len(def_v_fitted)}")
+    print(f"first few values of def_v_fitted: {def_v_fitted[:5]}")
+    print(f"ref_h_values len: {len(ref_h_values)}")
+    print(f"first few values of ref_h_values: {ref_h_values[:5]}")
+    print(f"ref_v_fitted len: {len(ref_v_fitted)}")
+    print(f"first few values of ref_v_fitted: {ref_v_fitted[:5]}")
     #remove 0 values from v_fitted (retaining a 0 at either end)
     # Identify the last non-zero element in v_fitted
-    last_non_zero_index = np.max(np.nonzero(v_fitted))
-    first_non_zero_index = np.min(np.nonzero(v_fitted))
-    first_index=first_non_zero_index-1
-    last_index=last_non_zero_index+2
+    if def_v_fitted[0] == 0: # end points of array (or all points if not skew ellipse) are generally symmetrical
+        last_non_zero_index_def = np.max(np.nonzero(def_v_fitted))
+        first_non_zero_index_def = np.min(np.nonzero(def_v_fitted))
+        first_index_def=first_non_zero_index_def-1
+        last_index_def=last_non_zero_index_def+2
+    else:
+        first_index_def=0
+        # add zero to def_v_fitted[0]
+        def_v_fitted=np.insert(def_v_fitted, 0, 0)
+        # add zero to def_v_fitted[-1]
+        def_v_fitted=np.append(def_v_fitted, 0)
+        # get corresponding h_values (approximate using linear interpolation)
+        
+        start_diff, end_diff=difference_between_difference(def_h_values)
+        def_h_values=np.insert(def_h_values, 0, def_h_values[0]-start_diff)
+        def_h_values=np.append(def_h_values, def_h_values[-1]-end_diff)
+
+        last_index_def=len(def_v_fitted)
+    
+    if ref_v_fitted[0] == 0:
+        last_non_zero_index_ref = np.max(np.nonzero(ref_v_fitted))
+        first_non_zero_index_ref = np.min(np.nonzero(ref_v_fitted))
+        first_index_ref=first_non_zero_index_ref-1
+        last_index_ref=last_non_zero_index_ref+2
+    else:
+        print("inside else")
+        first_index_ref=0
+        # add zero to def_v_fitted[0]
+        ref_v_fitted=np.insert(ref_v_fitted, 0, 0)
+        # add zero to def_v_fitted[-1]
+        ref_v_fitted=np.append(ref_v_fitted, 0)
+        # get corresponding h_values (approximate using linear interpolation)
+        ref_start_diff, ref_end_diff=difference_between_difference(ref_h_values)
+        ref_h_values=np.insert(ref_h_values, 0, ref_h_values[0]-ref_start_diff)
+        ref_h_values=np.append(ref_h_values, ref_h_values[-1]-ref_end_diff)
+
+
+        last_index_ref=len(ref_v_fitted)
+
 
     # v_fitted filter / sliced between first and last index
-    v_fitted_filtered = v_fitted[first_index:last_index]
-    h_values_filtered = h_values[first_index:last_index]
+    def_v_fitted_filtered = def_v_fitted[first_index_def:last_index_def]
+    print(f"def_v_fitted_filtered len: {len(def_v_fitted_filtered)}")
+    print(f"first few values of def_v_fitted_filtered: {def_v_fitted_filtered[:5]}")
+    def_h_values_filtered = def_h_values[first_index_def:last_index_def]
+    print(f"def_h_values_filtered len: {len(def_h_values_filtered)}")
+    print(f"first few values of def_h_values_filtered: {def_h_values_filtered[:5]}")
+    ref_v_fitted_filtered = ref_v_fitted[first_index_ref:last_index_ref]
+    print(f"ref_v_fitted_filtered len: {len(ref_v_fitted_filtered)}")
+    print(f"first few values of ref_v_fitted_filtered: {ref_v_fitted_filtered[:5]}")
+    ref_h_values_filtered = ref_h_values[first_index_ref:last_index_ref]
+    print(f"ref_h_values_filtered len: {len(ref_h_values_filtered)}")
+    print(f"first few values of ref_h_values_filtered: {ref_h_values_filtered[:5]}")
 
-    return h_values_filtered, v_fitted_filtered
+    # get first character of name
+    location_h_name_def=f"ellipse_h_def"
+    location_v_name_def=f"ellipse_v_def"
+    location_h_name_ref=f"ellipse_h_ref"
+    location_v_name_ref=f"ellipse_v_ref"
+    # Put into df
+
+    print(f"data index: {data.index}")
+    print(f"data index is 0: {0 in data.index}")
+    if 0 in data.index and location_h_name_def in data.columns and location_v_name_def in data.columns:
+        data.at[0, location_h_name_def] = def_h_values_filtered
+        data.at[0, location_v_name_def] = def_v_fitted_filtered
+    else:
+        print("Index or column name does not exist.")
+        print(f"Index: {0} in data: {0 in data.index}")
+        data.at[0, location_h_name_def] = def_h_values_filtered
+        data.at[0, location_v_name_def] = def_v_fitted_filtered
+        
+        """
+        print(f"Column name: {location_h_name} in data: {location_h_name in data.columns}")
+
+        print("resetting index...")
+        data=data.reset_index(drop=True)
+        print(f"Index: {0} in data: {0 in data.index}")
+        print(f"Column name: {location_h_name} in data: {location_h_name in data.columns}")
+        data.at[0, location_h_name] = h_values_filtered
+        data.at[0, location_v_name] = v_fitted_filtered
+        """
+        #sys.exit()
+    
+    if 0 in data.index and location_h_name_ref in data.columns and location_v_name_ref in data.columns:
+        data.at[0, location_h_name_ref] = ref_h_values_filtered
+        data.at[0, location_v_name_ref] = ref_v_fitted_filtered
+    else:
+        print("Index or column name does not exist.")
+        print(f"Index: {0} in data: {0 in data.index}")
+        data.at[0, location_h_name_ref] = ref_h_values_filtered
+        data.at[0, location_v_name_ref] = ref_v_fitted_filtered
+
+    print("data after fitting ellipse: \n", data)
+    #data.at[0, location_h_name] = h_values_filtered 
+    #data.at[0,location_v_name] = v_fitted_filtered
+    #print(f"data.at[0, {location_h_name}]: {data.at[0, location_h_name]}")
+    #print(f"data.at[0, {location_v_name}]: {data.at[0, location_v_name]}")
+
+    
+    
+    return data#, h_values_filtered, v_fitted_filtered
 
 
 
@@ -345,7 +487,8 @@ for i in range (len(total_df)):
     plt.close()
 
     transformed_data=transform_points(data) # Translate function, puts in <>_<>ef_tr columns
-
+    print(f"transformed data shape: {transformed_data.shape}")
+    
     
     # Plot transformed data
     plt.scatter(transformed_data['h_def_tr'].iloc[0], transformed_data['v_def_tr'].iloc[0], color='red', s=1)
@@ -359,7 +502,8 @@ for i in range (len(total_df)):
    
     transformed_data=rotate_points(transformed_data) # Rotate function
     
-
+    print(f"transformed data shape: {transformed_data.shape}")
+    
 
     # plot rotated data
     plt.scatter(transformed_data['h_def_rot'].iloc[0], transformed_data['v_def_rot'].iloc[0], color='red', s=1)
@@ -371,7 +515,7 @@ for i in range (len(total_df)):
 
     
     transformed_data=center_points(transformed_data) # Center function (parks data back into rotated column)
-
+    print(f"transformed data shape: {transformed_data.shape}")
     
 
     # plot data
@@ -383,71 +527,98 @@ for i in range (len(total_df)):
     plt.gca().set_aspect('equal', adjustable='box')
     plt.close()
 
+    
+
     # Fit ellipse using least squares method - store data / parameters line by line
     # Fit ellipse through transformed_data['h_def_rot'] and transformed_data['v_def_rot']
     
-
     
     
+    print(f"transformed data index: {transformed_data.index}")
+    print(f"transformed data index is 0: {0 in transformed_data.index}")
+    if not 0 in transformed_data.index:
+        transformed_data=transformed_data.reset_index(drop=True)
+        print(f"pre function reset index: {transformed_data.index}")
 
 
-    def_h_values, def_v_fitted = fit_ellipse(transformed_data, name='def_rot')
-    ref_h_values, ref_v_fitted = fit_ellipse(transformed_data, name='ref_rot')    
+    ellipse_data = fit_ellipse(transformed_data)
+    #ellipse_data, ref_h_values, ref_v_fitted = fit_ellipse(transformed_data)    
     #h_values_padded = np.append(h_values_filtered, h_values_filtered[-1] + 1)
+    print(f"transformed_data_shape post ellipse: {ellipse_data.shape}")
+    print(f"ellipse data: \n {ellipse_data}")
+    #print(f"def_h_values: {def_h_values}")
+    #print(f"def_v_fitted: {def_v_fitted}")
+    #print(f"ref_h_values: {ref_h_values}")
+    #print(f"ref_v_fitted: {ref_v_fitted}")
+    print(f"ellipse_data columns: {ellipse_data.columns}")
+    
+    
+    
 
-    #plt.plot(h_values, v_fitted, label='Fitted curve', color='red')
-    plt.scatter(transformed_data['h_def_rot'].iloc[0], transformed_data['v_def_rot'].iloc[0], label='translated and rotated data points', color='red', s=2)
-    plt.plot(def_h_values, def_v_fitted, label='Fitted curve', color='red')
+
+    # PLOT FITTED ELLIPSE
+    plt.scatter(ellipse_data['h_def_rot'].iloc[0], ellipse_data['v_def_rot'].iloc[0], label='translated and rotated data points', color='red', s=2)
+    plt.plot(ellipse_data['ellipse_h_def'].iloc[0], ellipse_data['ellipse_v_def'].iloc[0], label='Fitted curve', color='red')
     plt.scatter(transformed_data['h_ref_rot'].iloc[0], transformed_data['v_ref_rot'].iloc[0], label='translated and rotated data points', color='cyan', s=2)
-    plt.plot(ref_h_values, ref_v_fitted, label='Fitted curve', color='cyan')
+    plt.plot(ellipse_data['ellipse_h_ref'].iloc[0], ellipse_data['ellipse_v_ref'].iloc[0], label='Fitted curve', color='cyan')
 
     plt.gca().set_aspect('equal', adjustable='box')
     plt.title(f"{transformed_data['patient_id'].iloc[0]} {transformed_data['timepoint'].iloc[0]}")
     plt.show()
+    
 
         
     # Store fitted ellipse data in DataFrame
-    # Ensure 'ellipse_h_<>ef' and 'ellipse_v_<>ef' columns exist in the DataFrame
-    if 'ellipse_h_def' not in transformed_data.columns:
-        transformed_data['ellipse_h_def'] = pd.Series([np.array([])] * len(transformed_data['h_def_rot']), index=transformed_data.index, dtype=object)
-    if 'ellipse_v_def' not in transformed_data.columns:
-        transformed_data['ellipse_v_def'] = pd.Series([np.array([])] * len(transformed_data['v_def_rot']), index=transformed_data.index)
-    if 'ellipse_h_ref' not in transformed_data.columns:
-        transformed_data['ellipse_h_ref'] = pd.Series([np.array([])] * len(transformed_data['h_ref_rot']), index=transformed_data.index)
-    if 'ellipse_v_ref' not in transformed_data.columns:
-        transformed_data['ellipse_v_ref'] = pd.Series([np.array([])] * len(transformed_data['v_ref_rot']), index=transformed_data.index)
-
-
+    print("HERE HERE HERE")
     print(transformed_data.columns)
-    #print(f"transformed_data['ellipse_h_def'].iloc[0]: {transformed_data.loc[0,'ellipse_h_def']}")
+    
+    #print(f"transformed_data.at[0,'ellipse_h_def']: {transformed_data.at[0,'ellipse_h_def']}")
+    #transformed_data = put_in_df(transformed_data, def_h_values, def_v_fitted, ref_h_values, ref_v_fitted)
+    
     #print(F"H VALUES FILTERED: {def_h_values}")
     #print("H_VALUES_FILTERED TYPE: ", type(def_h_values))
+    #transformed_data.at[0, 'ellipse_h_def'] = def_h_values.copy()
+    #transformed_data.at[0,'ellipse_v_def'] = def_v_fitted.copy()
+    #transformed_data.at[0,'ellipse_h_ref'] = ref_h_values.copy()  
+    #transformed_data.at[0,'ellipse_v_ref'] = ref_v_fitted.copy()
     
-    transformed_data.at[0,'ellipse_h_def'] = def_h_values.copy()
-    transformed_data.at[0,'ellipse_v_def'] = def_v_fitted.copy()
-    transformed_data.at[0,'ellipse_h_ref'] = ref_h_values.copy()
-    transformed_data.at[0,'ellipse_v_ref'] = ref_v_fitted.copy()
-    print(f"transformed_data.at[0, :]: {transformed_data.at[0,:]}")
+   
+    #print(f"transformed_data first row: \n {transformed_data.iloc[0]}")
     
-
+    new_row = ellipse_data.iloc[0]
+    """
+    for i in range(len(total_df)):
+        
+        print(f"Currently at patient id and timepoint {new_row['patient_id']} {new_row['timepoint']}")
+        print("new_row: \n", new_row)
+        if i < len(total_df)-1:
+            input("Press Enter to continue... ")
+            break
+        else:
+            print("End of loop.")
+    #print(f"new_row: \n {new_row}")
+    #sys.exit()
+    """
     #plt.scatter(transformed_data['ellipse_h_def'].iloc[0], transformed_data['ellipse_v_def'].iloc[0], color='red', s=1)
     #plt.scatter(transformed_data['ellipse_h_ref'].iloc[0], transformed_data['ellipse_v_ref'].iloc[0], color='cyan', s=1)
     #plt.gca().set_aspect('equal', adjustable='box')
     #plt.show()
 
-    
+    transformed_df = pd.concat([transformed_df, new_row], axis=1, ignore_index=True)
+    #print(f"transformed_df: \n {transformed_df}")
+    #sys.exit()
 
     # Find change in area between two ellipses
     
     # Store data as one big df
-    transformed_df = pd.concat([transformed_df, transformed_data], ignore_index=True)
+    #transformed_df = transformed_df.append(transformed_data.iloc[0], ignore_index=True)
     #print(transformed_df.iloc[i])
 
     
 
 print('*****')
 #print(total_df.columns)
-#print(transformed_df.columns)
+print(transformed_df.head)
 
 
 
@@ -457,95 +628,3 @@ print('*****')
 # Reverse transform data points, save to df / .csv
 
 # Plot on image.
-"""
-
-def fit_ellipse(x, y, bb):
-    # Check if x and y have the same length
-    if len(x) != len(y):
-        raise ValueError("x and y must have the same length.")
-    
-    # Build design matrix
-    D = np.column_stack((x*x, x*y, y*y, x, y, np.ones_like(x)))
-    # Build scatter matrix
-    S = np.dot(D.T, D)
-    # Build 6x6 constraint matrix
-    b8 = 8 / (bb*bb)
-    b64 = b8*b8
-    C = np.zeros((6, 6))
-    C[(0, 0)] = 1
-    C[(0, 2)] = 1
-    C[(1, 1)] = -1
-    C[(2, 0)] = 1
-    C[(2, 2)] = 1
-    C[(0, 5)] = b8
-    C[(5, 0)] = b8
-    C[(5, 2)] = b8
-    C[(2, 5)] = b8
-    C[(5, 5)] = b64
-    # Solve eigensystem
-    geval, gevec = eig(S, C)
-    geval = np.real_if_close(geval)
-    print("geval:", geval)
-    print("gevec:", gevec)
-    dminindex = np.argmax(np.real(geval))
-    print("dminindex:", dminindex)
-    # Extract eigenvector corresponding to negative eigenvalue
-    A = np.real(gevec[:, dminindex])
-    print('A in fit_ellipse is')
-    print(A)
-    # Get ellipse parameters
-    par = getpar(A)
-    return par
-
-
-
-def getpar(A):
-    a, b, c, d, e, f = A
-    # Compute ellipse parameters
-    num = 2 * (a*f*f + c*d*d + e*b*b - 2*b*d*e - a*c*f)
-    den = (b*b - a*c) * np.sqrt((a - c)*(a - c) + 4*b*b) - (a + c)*(a + c)
-    
-    if den <= 0 or np.isclose(den, 0):
-        # Handle case where denominator is non-positive
-        A = 0
-        B = 0
-    else:
-        A = np.sqrt(num / den)
-        B = np.sqrt(num / den)
-        
-    cx = (2*c*d - 2*b*e) / (b*b - a*c)
-    cy = (2*a*e - 2*b*d) / (b*b - a*c)
-    # Angle
-    theta = 0.5 * np.arctan((2*b) / (a - c))
-    # Return parameters
-    return {'A': A, 'B': B, 'center': (cx, cy), 'angle': theta}
-"""
-
-"""
-# Example usage
-x = np.array([95.46967004, 84.46234386, 73.90504033, 63.45198863, 53.10513761, 42.94686109,
- 32.89706958, 23.14972321, 13.60400694,  6.53311059,  0.        ])
-x = x/10
-y = np.array([ 0.,          9.60073879, 14.59072159, 18.55264902, 21.46727314, 22.52237299,
- 22.50764317, 19.51042042, 14.52486903,  8.78589364,  0.        ])
-y=y/10
-bb = 6
-result = fit_ellipse(x, y, bb)
-print(result)
-
-# Plot data points
-plt.scatter(x, y, color='blue', label='Data points')
-
-# Plot ellipse
-ellipse = Ellipse(result['center'], result['A']*2, result['B']*2, angle=np.degrees(result['angle']),
-                  edgecolor='red', fill=False, label='Fitted Ellipse')
-plt.gca().add_patch(ellipse)
-print('result is')
-print(result)
-
-
-plt.legend()
-plt.xlabel('X')
-plt.ylabel('Y')
-plt.show()
-"""
