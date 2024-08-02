@@ -236,6 +236,136 @@ def difference_between_difference(h_values):
 
 def fit_ellipse(data):
 
+    def initialize_columns(data, name):
+        h_col = f'ellipse_h_{name}'
+        v_col = f'ellipse_v_{name}'
+        if h_col not in data.columns:
+            data[h_col] = pd.Series([np.array([])] * len(data[f'h_{name}_rot']), index=data.index)
+        if v_col not in data.columns:
+            data[v_col] = pd.Series([np.array([])] * len(data[f'v_{name}_rot']), index=data.index)
+        return h_col, v_col
+
+    
+    def fit_data(data, name)
+        # Get initial guesses, weights and bounds for the fit
+        initial_guesses, weights, bounds = get_fit_params(data, name=f'{name}_rot')
+
+        # Perform the curve fitting
+        params, covariance = curve_fit(
+            func,
+            data[f'h_{name}_rot'].iloc[0],
+            data[f'v_{name}_rot'].iloc[0],
+            p0=initial_guesses,
+            bounds=bounds
+        )
+        # Display covariance matrix and condition number
+        print(f'*** {name.upper()} COVARIANCE: ***')
+        print('Condition Number:', np.linalg.cond(covariance))
+        print('Covariance Matrix:\n', covariance)
+
+        return params
+
+    def check_params(params):
+        if len(params) == 3:
+            print('**** 3 PARAMETERS ****')
+            h_optimal, a_optimal, b_optimal = params
+            print(f"h_optimal (height at x=0): {h_optimal}")
+            print(f"a_optimal (width): {a_optimal}")
+            print(f"b_optimal (skew): {b_optimal}")
+            return h_optimal, a_optimal, b_optimal
+        elif len(params) == 2:
+            h_optimal, a_optimal = params
+            print(f"h_optimal: {h_optimal}")
+            print(f"a_optimal: {a_optimal}")
+            return h_optimal, a_optimal
+        else:
+            print('userdeferror: number of parameters != number of variables')
+            return None
+
+
+
+
+
+
+    def calculate_fitted_values(data, params, name):
+        h_values = np.linspace(min(data[f'h_{name}_rot'].iloc[0]), max(data[f'h_{name}_rot'].iloc[0]), 1000)
+        
+        if len(params) == 2:
+            v_fitted = func(h_values, *params)
+        else:
+            print(f"userdeferror: v_fitted not calculated, number of parameters, {len(params)} != number of function variables")
+            return None, None
+        return h_values, v_fitted
+    
+    def filter_fitted_values(h_values, v_fitted):
+        if v_fitted[0] == 0:
+            last_non_zero_index = np.max(np.nonzero(v_fitted))
+            first_non_zero_index = np.min(np.nonzero(v_fitted))
+            first_index = first_non_zero_index - 1
+            last_index = last_non_zero_index + 2
+        else:
+            first_index = 0
+            # Insert zero at the start
+            v_fitted = np.insert(v_fitted, 0, 0)
+            # Append zero at the end
+            v_fitted = np.append(v_fitted, 0)
+
+            # Approximate corresponding h_values using linear interpolation
+            start_diff, end_diff = difference_between_difference(h_values)
+            h_values = np.insert(h_values, 0, h_values[0] - start_diff)
+            h_values = np.append(h_values, h_values[-1] + end_diff)
+
+            last_index = len(v_fitted)
+        
+        # Slice the h_values and v_fitted between the first and last index
+        h_values_filtered = h_values[first_index:last_index]
+        v_fitted_filtered = v_fitted[first_index:last_index]
+
+        return h_values_filtered, v_fitted_filtered
+    
+
+    # Function to update DataFrame with fitted values
+    def update_dataframe(data, h_values_filtered, v_fitted_filtered, h_col, v_col):
+        if 0 in data.index and h_col in data.columns and v_col in data.columns:
+            data.at[0, h_col] = h_values_filtered
+            data.at[0, v_col] = v_fitted_filtered
+        else:
+            print("Index or column name does not exist.")
+            data.at[0, h_col] = h_values_filtered
+            data.at[0, v_col] = v_fitted_filtered
+
+        return data
+
+
+
+
+    for name in ['def', 'ref']:
+        # Initialize the columns
+        h_col, v_col = initialize_columns(data, name)
+
+        # Fit the data
+        params = fit_data(data, name)
+
+        # Display fitted params
+        print(f"*** {name.upper()} PARAMS: ***")
+        print(f"Patient ID: {data['patient_id'].iloc[0]}, Timepoint: {data['timepoint'].iloc[0]}")
+        print(f"Fitted parameters: h={params[0]}, a={params[1]}")
+
+        # Extract the optimal parameters
+        h_optimal, a_optimal = check_params(params)
+
+        # Calculate the fitted values
+        h_values, v_fitted = calculate_fitted_values(data, [h_optimal, a_optimal], name)
+
+        # Filter the fitted values
+        h_values_filtered, v_fitted_filtered = filter_fitted_values(h_values, v_fitted)
+
+        # Update the DataFrame with the fitted values
+        data = update_dataframe(data, h_values_filtered, v_fitted_filtered, h_col, v_col)
+
+    print("Data after fitting ellipse: \n", data)
+    return data
+
     # Ensure 'ellipse_h_<>ef' and 'ellipse_v_<>ef' columns exist in the DataFrame
     if 'ellipse_h_def' not in data.columns: 
         data['ellipse_h_def'] = pd.Series([np.array([])] * len(data['h_def_rot']), index=data.index)
