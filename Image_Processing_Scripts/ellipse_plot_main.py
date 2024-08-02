@@ -337,7 +337,7 @@ def fit_ellipse(data):
         
         start_diff, end_diff=difference_between_difference(def_h_values)
         def_h_values=np.insert(def_h_values, 0, def_h_values[0]-start_diff)
-        def_h_values=np.append(def_h_values, def_h_values[-1]-end_diff)
+        def_h_values=np.append(def_h_values, def_h_values[-1]+end_diff)
 
         last_index_def=len(def_v_fitted)
     
@@ -356,7 +356,7 @@ def fit_ellipse(data):
         # get corresponding h_values (approximate using linear interpolation)
         ref_start_diff, ref_end_diff=difference_between_difference(ref_h_values)
         ref_h_values=np.insert(ref_h_values, 0, ref_h_values[0]-ref_start_diff)
-        ref_h_values=np.append(ref_h_values, ref_h_values[-1]-ref_end_diff)
+        ref_h_values=np.append(ref_h_values, ref_h_values[-1]+ref_end_diff)
 
 
         last_index_ref=len(ref_v_fitted)
