@@ -476,19 +476,10 @@ for i in range (len(total_df)):
 
 
     ellipse_data = fit_ellipse(transformed_data)
-    #ellipse_data, ref_h_values, ref_v_fitted = fit_ellipse(transformed_data)    
-    #h_values_padded = np.append(h_values_filtered, h_values_filtered[-1] + 1)
     print(f"transformed_data_shape post ellipse: {ellipse_data.shape}")
-    print(f"ellipse data: \n {ellipse_data}")
-    #print(f"def_h_values: {def_h_values}")
-    #print(f"def_v_fitted: {def_v_fitted}")
-    #print(f"ref_h_values: {ref_h_values}")
-    #print(f"ref_v_fitted: {ref_v_fitted}")
+    #print(f"ellipse data: \n {ellipse_data}")
     print(f"ellipse_data columns: {ellipse_data.columns}")
     
-    
-    
-
 
     # PLOT FITTED ELLIPSE
     plt.scatter(ellipse_data['h_def_rot'].iloc[0], ellipse_data['v_def_rot'].iloc[0], label='translated and rotated data points', color='red', s=2)
@@ -500,54 +491,13 @@ for i in range (len(total_df)):
     plt.title(f"{transformed_data['patient_id'].iloc[0]} {transformed_data['timepoint'].iloc[0]}")
     plt.show()
     
-
         
     # Store fitted ellipse data in DataFrame
-    print("HERE HERE HERE")
-    print(transformed_data.columns)
-    
-    #print(f"transformed_data.at[0,'ellipse_h_def']: {transformed_data.at[0,'ellipse_h_def']}")
-    #transformed_data = put_in_df(transformed_data, def_h_values, def_v_fitted, ref_h_values, ref_v_fitted)
-    
-    #print(F"H VALUES FILTERED: {def_h_values}")
-    #print("H_VALUES_FILTERED TYPE: ", type(def_h_values))
-    #transformed_data.at[0, 'ellipse_h_def'] = def_h_values.copy()
-    #transformed_data.at[0,'ellipse_v_def'] = def_v_fitted.copy()
-    #transformed_data.at[0,'ellipse_h_ref'] = ref_h_values.copy()  
-    #transformed_data.at[0,'ellipse_v_ref'] = ref_v_fitted.copy()
-    
-   
-    #print(f"transformed_data first row: \n {transformed_data.iloc[0]}")
-    
+    #print(transformed_data.columns)
     new_row = ellipse_data.iloc[0]
-    """
-    for i in range(len(total_df)):
-        
-        print(f"Currently at patient id and timepoint {new_row['patient_id']} {new_row['timepoint']}")
-        print("new_row: \n", new_row)
-        if i < len(total_df)-1:
-            input("Press Enter to continue... ")
-            break
-        else:
-            print("End of loop.")
-    #print(f"new_row: \n {new_row}")
-    #sys.exit()
-    """
-    #plt.scatter(transformed_data['ellipse_h_def'].iloc[0], transformed_data['ellipse_v_def'].iloc[0], color='red', s=1)
-    #plt.scatter(transformed_data['ellipse_h_ref'].iloc[0], transformed_data['ellipse_v_ref'].iloc[0], color='cyan', s=1)
-    #plt.gca().set_aspect('equal', adjustable='box')
-    #plt.show()
-
-    transformed_df = pd.concat([transformed_df, new_row], axis=1, ignore_index=True)
-    #print(f"transformed_df: \n {transformed_df}")
-    #sys.exit()
-
-    # Find change in area between two ellipses
     
-    # Store data as one big df
-    #transformed_df = transformed_df.append(transformed_data.iloc[0], ignore_index=True)
-    #print(transformed_df.iloc[i])
-
+    transformed_df = pd.concat([transformed_df, new_row], axis=1, ignore_index=True)
+    print("transformed_df shape: ", transformed_df.shape)
     
 
 print('*****')
