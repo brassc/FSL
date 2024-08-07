@@ -99,10 +99,20 @@ Program `ellipse_plot_main.py` takes contour data stored in `data_entries.csv`, 
 4. Loop through each DataFrame line by line and extract the fitted ellipse data, added to each line as four new columns per ellipse fit, or eight in total (`h_def_rot`, `v_def_rot`, `ellipse_h_def`, `ellipse_v_def`, `h_ref_rot`, `v_ref_rot`, `ellipse_h_ref`, `ellipse_v_ref`). Append this new line to DataFrame `transformed_df`.
 
 The loop in step 4 performs the following processes:
-1. Get line of DataFrame as slice containing only data for a patient ID at a specific timepoint. 
+1. Get copy of line of DataFrame as slice containing only data for a patient ID at a specific timepoint. 
 2. Transform data points contained in slice such that posterior point lies at (0, 0) using `transform_points` function
+    - `transform_points` takes copy of slice of DataFrame, creates four new columns to store translated contours in.
+    - It then computes where the points should be moved to such that the last point in the contour lies at 0 and applies it using a lambda function. 
+    - These new points are stored in the four new columns created at beginning of function (`h_def_tr`, `v_def_tr`, `h_ref_tr`, `v_ref_tr`), and the new slice is returned. 
 3. Rotate about (0,0) so that anterior point lies on $y=0$ using `rotate_points` function
+    - `rotate_points` takes the new slice from `transform_points` and creates four new columns to store rotated contours in in addition to an `angle` column. 
+    - Angle is computed via trigonometry, direction adjusted according to which side the craniectomy is on. (L craniectomy rotates anticlockwise, R craniectomy rotates clockwise, both about $(0,0)$). 
+    - Rotation angle is applied using a two dimensional rotation matrix for deformed and reference coordinates (pairs of contours) multiplied together using a lambda function. 
+    - These new points are stored in the four new columns created at beginning of function (`h_def_rot`, `v_def_rot`, `h_ref_rot`, `v_ref_rot`), and this new slice is returned.
 4. Center these points about $x=0$ using `center_points` function
+    - `center_points` takes data slice from `rotate_points` function and computes average of horizontal deformed contour. 
+    - This average is applied to both reference and deformed horizontal contour points to center about $x=0$.
+    - The centered horizontal contours are stored in `h_def_rot` and `h_ref_rot` and the data slice is returned.
 5. Fit ellipse using least squares method in `fit_ellipse` function
 6. Store in `transformed_df` DataFrame. 
 
