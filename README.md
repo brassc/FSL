@@ -129,7 +129,7 @@ The loop in step 4 performs the following processes:
         - Due to the square root inherent to the ellipse formula, sometimes `func` would return imaginary values, represented as flat, horizontal trailing lines either side of the ellipse. These values were trimmed using `filter_fitted_values` function, ensuring to retain the starting and ending $0$ in the `v_fitted` array and corresponding `h_values` at the relevant index. 
         - Data slice is updated using `update_dataframe` function, adding the filtered data to `ellipse_h_def`, `ellipse_v_def`, `ellipse_h_ref`, `ellipse_v_ref`.
     - The data is then returned to main program as `ellipse_data`.
-6. `ellipse_data` is stored in `transformed_df` DataFrame. 
+6. `ellipse_data` is stored in `transformed_df` DataFrame. Collects all data line by line back together. 
 
 
 
