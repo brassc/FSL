@@ -89,7 +89,7 @@ For each patient id and timepoint iteration, the steps are as follows:
 
 
 # Ellipse fitting #
-Program `ellipse_plot_main.py` takes contour data stored in `data_entries.csv`, transforms each whole contour such that anterior and posterior points lie on $y=0$ and are symmetrical about $x=0$, fits and returns ellipse in `transformed_df` according to $y=h\sqrt(a^2-x^2)$. There is an option to include skew, $b$: $y=h\sqrt(a^2-(1+\frac{b}{a}x))$.
+Program `ellipse_plot_main.py` takes contour data stored in `data_entries.csv`, transforms each whole contour such that anterior and posterior points lie on $y=0$ and are symmetrical about $x=0$, fits and returns ellipse in `transformed_df` according to $y=h\sqrt(a^2-x^2)$ defined in `func` function. There is an option to include skew, defined in `funcb` function and represented by the $b$ parameter: $y=h\sqrt(a^2-(1+\frac{b}{a}x))$.
 
 ### Ellipse points extraction using ellipse_plot_main.py ###
 
@@ -98,11 +98,13 @@ Program `ellipse_plot_main.py` takes contour data stored in `data_entries.csv`, 
 3. Create empty DataFrame `transformed_df`. This is mutable and ready to be accessed within the following for loop. 
 4. Loop through each DataFrame line by line and extract the fitted ellipse data, added to each line as four new columns per ellipse fit, or eight in total (`h_def_rot`, `v_def_rot`, `ellipse_h_def`, `ellipse_v_def`, `h_ref_rot`, `v_ref_rot`, `ellipse_h_ref`, `ellipse_v_ref`). Append this new line to DataFrame `transformed_df`.
 
-The for loop in step 4. performs the following processes:
-1. Transform data points such that posterior point lies at (0, 0) using `transform_points` function
-2. Rotate about (0,0) so that anterior point lies on $y=0$ using `rotate_points` function
-3. Center these points about $x=0$ using `center_points` function
-4. Fit ellipse using least squares method in `fit_ellipse` function
+The loop in step 4 performs the following processes:
+1. Get line of DataFrame as slice containing only data for a patient ID at a specific timepoint. 
+2. Transform data points contained in slice such that posterior point lies at (0, 0) using `transform_points` function
+3. Rotate about (0,0) so that anterior point lies on $y=0$ using `rotate_points` function
+4. Center these points about $x=0$ using `center_points` function
+5. Fit ellipse using least squares method in `fit_ellipse` function
+6. Store in `transformed_df` DataFrame. 
 
 
 
