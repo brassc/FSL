@@ -126,7 +126,7 @@ def center_points(data):
     if (data['side'] == 'R').any():
         data['h_def_rot'] = data['h_def_rot'] - average_h
         data['h_ref_rot'] = data['h_ref_rot'] - average_h
-    elif (transformed_data['side'] == 'L').any():
+    elif (data['side'] == 'L').any():
         data['h_def_rot'] = data['h_def_rot'] - average_h
         data['h_ref_rot'] = data['h_ref_rot'] - average_h
     else:
@@ -394,8 +394,8 @@ total_df=pd.concat([data, hv_df], axis=1)
 
 
 
-# Transform data points such that posterior point lies on (0, 0) and anterior lies on y=0 (x axis) (for R side craniectomy) 
-#   or anterior point lies on (0,0) and posterior lies on y=0 (x axis) (for L side craniectomy)
+# Transform data points such that posterior point lies on (0, 0) and anterior lies on y=0 (x axis) 
+#    using transform_points function and rotate_points function
 #       Recall baseline coords are at end of contour anterior, posterior (last two points in list in that order)
 
 
