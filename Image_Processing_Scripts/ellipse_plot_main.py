@@ -237,11 +237,17 @@ def difference_between_difference(h_values):
 def initialize_columns(data, name):
     h_col = f'ellipse_h_{name}'
     v_col = f'ellipse_v_{name}'
+    h_param_col = f'h_param_{name}'
+    a_param_col = f'a_param_{name}'
     if h_col not in data.columns:
         data[h_col] = pd.Series([np.array([])] * len(data[f'h_{name}_rot']), index=data.index)
     if v_col not in data.columns:
         data[v_col] = pd.Series([np.array([])] * len(data[f'v_{name}_rot']), index=data.index)
-    return h_col, v_col
+    if h_param_col not in data.columns:
+        data[h_param_col] = pd.Float32Dtype()
+    if a_param_col not in data.columns:
+        data[a_param_col] = pd.Float32Dtype()
+    return h_col, v_col, h_param_col, a_param_col
 
 def fit_data(data, name):
     # Get initial guesses, weights and bounds for the fit
@@ -317,14 +323,18 @@ def filter_fitted_values(h_values, v_fitted):
     return h_values_filtered, v_fitted_filtered
 
 # Function to update DataFrame with fitted values
-def update_dataframe(data, h_values_filtered, v_fitted_filtered, h_col, v_col):
+def update_dataframe(data, h_values_filtered, v_fitted_filtered, h_col, v_col, h_param_col, a_param_col, h_optimal, a_optimal):
     if 0 in data.index and h_col in data.columns and v_col in data.columns:
         data.at[0, h_col] = h_values_filtered
         data.at[0, v_col] = v_fitted_filtered
+        data.at[0, h_param_col] = h_optimal
+        data.at[0, a_param_col] = a_optimal
     else:
         print("Index or column name does not exist.")
         data.at[0, h_col] = h_values_filtered
         data.at[0, v_col] = v_fitted_filtered
+        data.at[0, h_param_col] = h_optimal
+        data.at[0, a_param_col] = a_optimal
 
     return data
 
@@ -334,7 +344,7 @@ def fit_ellipse(data):
 
     for name in ['def', 'ref']:
         # Initialize the columns
-        h_col, v_col = initialize_columns(data, name)
+        h_col, v_col, h_param_col, a_param_col = initialize_columns(data, name)
 
         # Fit the data
         params = fit_data(data, name)
@@ -354,7 +364,7 @@ def fit_ellipse(data):
         h_values_filtered, v_fitted_filtered = filter_fitted_values(h_values, v_fitted)
 
         # Update the DataFrame with the fitted values
-        data = update_dataframe(data, h_values_filtered, v_fitted_filtered, h_col, v_col)
+        data = update_dataframe(data, h_values_filtered, v_fitted_filtered, h_col, v_col, h_param_col, a_param_col, h_optimal, a_optimal)
 
     print("Data after fitting ellipse: \n", data)
     return data
@@ -505,6 +515,7 @@ for i in range (len(total_df)):
     print("transformed_df shape: ", transformed_df.shape)
     
     
+    
 
 print('*****')
 transformed_df = transformed_df.T
@@ -512,7 +523,8 @@ print(transformed_df.columns)
 # remove 'h_def_tr', 'v_def_tr', 'h_ref_tr', 'v_ref_tr' columns
 transformed_df = transformed_df.drop(columns=['h_def', 'v_def', 'h_ref', 'v_ref', 'h_def_tr', 'v_def_tr', 'h_ref_tr', 'v_ref_tr'])
 print(transformed_df.columns)
-print(transformed_df.head)
+print(transformed_df.T.head)
+#print(transformed_df.head)
 # Save to .csv
 transformed_df.to_csv('Image_Processing_Scripts/ellipse_data.csv', index=False)
 
