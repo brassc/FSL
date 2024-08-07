@@ -489,7 +489,8 @@ for i in range (len(total_df)):
 
     plt.gca().set_aspect('equal', adjustable='box')
     plt.title(f"{transformed_data['patient_id'].iloc[0]} {transformed_data['timepoint'].iloc[0]}")
-    plt.show()
+    plt.savefig(f"Image_Processing_Scripts/ellipse_plots/{transformed_data['patient_id'].iloc[0]}_{transformed_data['timepoint'].iloc[0]}_ellipse.png")
+    plt.close()
     
         
     # Store fitted ellipse data in DataFrame
@@ -503,6 +504,11 @@ for i in range (len(total_df)):
 print('*****')
 #print(total_df.columns)
 print(transformed_df.head)
+# remove 'h_def_tr', 'v_def_tr', 'h_ref_tr', 'v_ref_tr' columns
+transformed_df = transformed_df.drop(columns=['h_def', 'v_def', 'h_ref', 'v_ref', 'h_def_tr', 'v_def_tr', 'h_ref_tr', 'v_ref_tr'])
+print(transformed_df.columns)
+# Save to .csv
+#transformed_df.to_csv('Image_Processing_Scripts/ellipse_data.csv', index=False)
 
 
 
