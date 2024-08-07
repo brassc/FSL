@@ -60,7 +60,7 @@ Patients selected according to patient selection criteria, outlined below.
 - `x4, y2` = posterior baseline skull point
 
 
-### Contour line extraction using contour_plot_main.py ###
+### Contour points extraction using contour_plot_main.py ###
 This program extracts the contour line and creates an array of points that lie on this line. It works recursively per patient and timepoint, extracted from `included_patient_info.csv`. 
 
 Usage: `python contour_plot_main.py <patient id>` or `python contour_plot_main.py` to default to all included patients. 
@@ -85,6 +85,19 @@ For each patient id and timepoint iteration, the steps are as follows:
     - `trim_reflected` function removes any portion of reflected contour that is below the posterior skull end point y value.
 8. Slice is plotted and saved to each patient's directory on the cluster. 
 9. Local patient id, timepoint and corresponding contour points are saved to global dictionary `data_entries` using `add_data_entry` function. Key format is `data_entry_{patient_id}_{timepoint}`, key dynamically updates. 
+
+
+### Ellipse fitting and plotting using ellipse_plot_main.py ###
+1. Import data from `data_entries.csv` and import and extract side data from `included_patient_info.csv`. Create one pandas DataFrame. 
+2. Convert contour arrays from pd.Series to numpy type, convert y to be horizontal and x to be vertical.
+3. Create empty DataFrame `transformed_df`. This is mutable and ready to be accessed within the following for loop. 
+4. Loop through each DataFrame line by line and extract the fitted ellipse data, added to each line as four new columns per ellipse fit, or eight in total (`h_def_rot`, `v_def_rot`, `ellipse_h_def`, `ellipse_v_def`, `h_ref_rot`, `v_ref_rot`, `ellipse_h_ref`, `ellipse_v_ref`). Append this new line to DataFrame `transformed_df`.
+
+The for loop in step 4. performs the following processes:
+1. Transform data points such that posterior point lies at (0, 0) using `transform_points` function
+2. Rotate about (0,0) so that anterior point lies on $y=0$ using `rotate_points` function
+3. Center these points about $x=0$ using `center_points` function
+4. Fit ellipse using least squares method in `fit_ellipse` function
 
 
 
