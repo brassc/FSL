@@ -400,7 +400,13 @@ total_df=pd.concat([data, hv_df], axis=1)
 
 
 # Initialise data frame to add to
-transformed_df = pd.DataFrame()
+transformed_df = pd.DataFrame(columns=['patient_id', 'timepoint', 'deformed_contour_x', 'deformed_contour_y',
+       'reflected_contour_x', 'reflected_contour_y', 'side', 'h_def', 'v_def',
+       'h_ref', 'v_ref', 'h_def_tr', 'v_def_tr', 'h_ref_tr', 'v_ref_tr',
+       'h_def_rot', 'v_def_rot', 'h_ref_rot', 'v_ref_rot', 'angle',
+       'ellipse_h_def', 'ellipse_v_def', 'ellipse_h_ref', 'ellipse_v_ref'])
+print(transformed_df.columns)
+sys.exit()
 
 # Loop through each row in the total_df
 for i in range (len(total_df)):
@@ -499,13 +505,18 @@ for i in range (len(total_df)):
     
     transformed_df = pd.concat([transformed_df, new_row], axis=1, ignore_index=True)
     print("transformed_df shape: ", transformed_df.shape)
+    break
     
 
 print('*****')
 #print(total_df.columns)
 print(transformed_df.head)
+
+
+
+print(transformed_df.columns)
 # remove 'h_def_tr', 'v_def_tr', 'h_ref_tr', 'v_ref_tr' columns
-transformed_df = transformed_df.drop(columns=['h_def', 'v_def', 'h_ref', 'v_ref', 'h_def_tr', 'v_def_tr', 'h_ref_tr', 'v_ref_tr'])
+#transformed_df = transformed_df.drop(columns=['h_def', 'v_def', 'h_ref', 'v_ref', 'h_def_tr', 'v_def_tr', 'h_ref_tr', 'v_ref_tr'])
 print(transformed_df.columns)
 # Save to .csv
 #transformed_df.to_csv('Image_Processing_Scripts/ellipse_data.csv', index=False)
