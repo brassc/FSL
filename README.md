@@ -85,9 +85,14 @@ For each patient id and timepoint iteration, the steps are as follows:
     - `trim_reflected` function removes any portion of reflected contour that is below the posterior skull end point y value.
 8. Slice is plotted and saved to each patient's directory on the cluster. 
 9. Local patient id, timepoint and corresponding contour points are saved to global dictionary `data_entries` using `add_data_entry` function. Key format is `data_entry_{patient_id}_{timepoint}`, key dynamically updates. 
+10. `data_entries` is saved as `data_entries.csv` file. 
 
 
-### Ellipse fitting and plotting using ellipse_plot_main.py ###
+# Ellipse fitting #
+Program `ellipse_plot_main.py` takes contour data stored in `data_entries.csv`, transforms each whole contour such that anterior and posterior points lie on $y=0$ and are symmetrical about $x=0$, fits and returns ellipse in `transformed_df` according to $y=h\sqrt(a^2-x^2)$. (There is an option to include skew: $y=h\sqrt(a^2-(1+\frac{b}{a}x))$).
+
+### Ellipse points extraction using ellipse_plot_main.py ###
+
 1. Import data from `data_entries.csv` and import and extract side data from `included_patient_info.csv`. Create one pandas DataFrame. 
 2. Convert contour arrays from pd.Series to numpy type, convert y to be horizontal and x to be vertical.
 3. Create empty DataFrame `transformed_df`. This is mutable and ready to be accessed within the following for loop. 
