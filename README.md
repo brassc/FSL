@@ -89,7 +89,7 @@ For each patient id and timepoint iteration, the steps are as follows:
 
 
 # Ellipse fitting #
-Program `ellipse_plot_main.py` takes contour data stored in `data_entries.csv`, transforms each whole contour such that anterior and posterior points lie on $y=0$ and are symmetrical about $x=0$, fits and returns ellipse in `transformed_df` according to $y=h\sqrt(a^2-x^2)$. (There is an option to include skew: $y=h\sqrt(a^2-(1+\frac{b}{a}x))$).
+Program `ellipse_plot_main.py` takes contour data stored in `data_entries.csv`, transforms each whole contour such that anterior and posterior points lie on $y=0$ and are symmetrical about $x=0$, fits and returns ellipse in `transformed_df` according to $y=h\sqrt(a^2-x^2)$. (There is an option to include skew: $y=h\sqrt(a^2-(1+(b/a)x))$).
 
 ### Ellipse points extraction using ellipse_plot_main.py ###
 
