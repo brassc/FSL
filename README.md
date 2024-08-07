@@ -114,7 +114,22 @@ The loop in step 4 performs the following processes:
     - This average is applied to both reference and deformed horizontal contour points to center about $x=0$.
     - The centered horizontal contours are stored in `h_def_rot` and `h_ref_rot` and the data slice is returned.
 5. Fit ellipse using least squares method in `fit_ellipse` function
-6. Store in `transformed_df` DataFrame. 
+    - For each set of contours marked by `def` and `ref`, the `fit_ellipse` function takes a given data slice and returns a new data slice with added `ellipse_h_def`, `ellipse_v_def`, `ellipse_h_ref`, `ellipse_v_ref` columns as `ellipse_data`.
+        - The columns are initialised using `initialize_columns` function. 
+        - Data is fitted using `fit_data` function, returning `params` (a tuple of $h$ and $a$ values). 
+            - `fit_data` gets initial guesses using `get_fit_params` function
+                - `get_fit_params` returns starting estimates by extracting key data e.g. highest and lowest values of horizontal contour to estimate upper and lower bounds for $a$, uses `find_intersection_height` function to extract an estimate for $h$. 
+                    - `find_intersection_height` function finds the height at which a linear interpolation between two h_coords either side of the y axis cuts the y axis.
+            - `fit_data` returns $h$ and $a$ as `initial_guess` array, upper and lower bounds for $a$ as `bounds` array.
+            - Curve fitting is performed using `curve_fit` from `scipy.optimize` python library. 
+                - `curve_fit` takes `func`, a user-defined function defining the ellipse curve in square root form $y=h\sqrt(x^2-a^2)$, `p0=initial_guesses` and `bounds` and returns `params` and `covariance`. 
+        - `params` is returned to `fit_ellipse` function, checked using `check_params`function
+            - `check_params` prints the $h$, $a$ and optionally $b$ parameters according to the length of the `params` array
+        - Data and `params` are used by `calculate_fitted_values` function to return `h_values`, a linear spaced array between minimum and maximum values in the horizontal contour, and `v_fitted`, where the ellipse function defined in `func` is used to calculate a corresponding vertical array from `h_values`. 
+        - Due to the square root inherent to the ellipse formula, sometimes `func` would return imaginary values, represented as flat, horizontal trailing lines either side of the ellipse. These values were trimmed using `filter_fitted_values` function, ensuring to retain the starting and ending $0$ in the `v_fitted` array and corresponding `h_values` at the relevant index. 
+        - Data slice is updated using `update_dataframe` function, adding the filtered data to `ellipse_h_def`, `ellipse_v_def`, `ellipse_h_ref`, `ellipse_v_ref`.
+    - The data is then returned to main program as `ellipse_data`.
+6. `ellipse_data` is stored in `transformed_df` DataFrame. 
 
 
 
