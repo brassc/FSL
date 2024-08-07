@@ -116,7 +116,7 @@ The loop in step 4 performs the following processes:
 5. Fit ellipse using least squares method in `fit_ellipse` function
     - For each set of contours marked by `def` and `ref`, the `fit_ellipse` function takes a given data slice and returns a new data slice with added `ellipse_h_def`, `ellipse_v_def`, `ellipse_h_ref`, `ellipse_v_ref` columns as `ellipse_data`.
         - The columns are initialised using `initialize_columns` function. 
-        - Data is fitted using `fit_data` function, returning `params` (a tuple of $h$ and $a$ values). 
+        - Data is fitted using `fit_data` function, returning `params` (an array of $h$ and $a$ values). 
             - `fit_data` gets initial guesses using `get_fit_params` function
                 - `get_fit_params` returns starting estimates by extracting key data e.g. highest and lowest values of horizontal contour to estimate upper and lower bounds for $a$, uses `find_intersection_height` function to extract an estimate for $h$. 
                     - `find_intersection_height` function finds the height at which a linear interpolation between two h_coords either side of the y axis cuts the y axis.
