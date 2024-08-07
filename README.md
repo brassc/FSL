@@ -97,6 +97,7 @@ Program `ellipse_plot_main.py` takes contour data stored in `data_entries.csv`, 
 2. Convert contour arrays from pd.Series to numpy type, convert y to be horizontal and x to be vertical.
 3. Create empty DataFrame `transformed_df`. This is mutable and ready to be accessed within the following for loop. 
 4. Loop through each DataFrame line by line and extract the fitted ellipse data, added to each line as four new columns per ellipse fit, or eight in total (`h_def_rot`, `v_def_rot`, `ellipse_h_def`, `ellipse_v_def`, `h_ref_rot`, `v_ref_rot`, `ellipse_h_ref`, `ellipse_v_ref`). Append this new line to DataFrame `transformed_df`.
+5. Save DataFrame as `ellipse_data.csv`. 
 
 The loop in step 4 performs the following processes:
 1. Get copy of line of DataFrame as slice containing only data for a patient ID at a specific timepoint. 
@@ -129,7 +130,10 @@ The loop in step 4 performs the following processes:
         - Due to the square root inherent to the ellipse formula, sometimes `func` would return imaginary values, represented as flat, horizontal trailing lines either side of the ellipse. These values were trimmed using `filter_fitted_values` function, ensuring to retain the starting and ending $0$ in the `v_fitted` array and corresponding `h_values` at the relevant index. 
         - Data slice is updated using `update_dataframe` function, adding the filtered data to `ellipse_h_def`, `ellipse_v_def`, `ellipse_h_ref`, `ellipse_v_ref`.
     - The data is then returned to main program as `ellipse_data`.
-6. `ellipse_data` is appended to `transformed_df` DataFrame. 
+6. `ellipse_data` is appended to `transformed_df` DataFrame.
+
+## Ellipse analysis ##
+Analysis of ellipse parameters is completed in script `longitudinal_data.py`. This imports the `ellipse_data.csv` data, converts from wide to long format, creates global plots of `h_optimal` for both deformed and reference configurations grouped by patient ID and also grouped by timepoint. 
 
 
 
