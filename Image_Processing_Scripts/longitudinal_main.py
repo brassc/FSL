@@ -47,7 +47,7 @@ def plot_longitudinal_data(long_df, name):
     plt.xticks(long_df.index, long_df['unique_label'], rotation=90, fontsize=8)
     plt.xlabel('Timepoint')
     plt.ylabel(name)
-    plt.title(f"{name} by timepoint")
+    plt.title(f"{name} by patient")
     # Create legend
     handles = [plt.Line2D([0], [0], color=color_map[pid], lw=4) for pid in unique_patient_ids]
     labels = [str(pid) for pid in unique_patient_ids]
