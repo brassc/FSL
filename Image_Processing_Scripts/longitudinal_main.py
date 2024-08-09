@@ -54,7 +54,9 @@ def plot_longitudinal_data(long_df, name):
     plt.legend(handles, labels, title="Patient ID")
     plt.tight_layout()  # Adjust layout to fit labels
     # Show the plot
-    plt.ylim([0, 1.0])
+    if name == 'h_param_def' or name == 'h_param_ref':
+        plt.ylim([0, 1.0])
+    #plt.ylim([0, 1.0])
     plt.show()
 
   
@@ -72,7 +74,8 @@ def plot_longitudinal_data(long_df, name):
     plt.legend(title='Patient ID')
     plt.xticks(rotation=45)
     plt.tight_layout()
-    plt.ylim([0, 1.0])
+    if name == 'h_param_def' or name == 'h_param_ref':
+        plt.ylim([0, 1.0])
     plt.show()
 
     return 0
@@ -83,7 +86,6 @@ def plot_longitudinal_data(long_df, name):
 
 # Load the ellipse data
 data=pd.read_csv('Image_Processing_Scripts/ellipse_data.csv')
-
 print(data.columns)
 
 # get possible patient IDs
@@ -92,23 +94,25 @@ patient_ids = data['patient_id'].unique()
 # array of timepoints
 timepoints = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
 
-# patient id has all timepoints. if h_param_def data exists, put into a dictionary
-
-
-
+# h param plots
 h_param_def_dict = get_dictionary(data, patient_ids, timepoints, subset_name='h_param_def')
 h_param_ref_dict = get_dictionary(data, patient_ids, timepoints, subset_name='h_param_ref')
-
 
 def_df = convert_dict_to_long_df(h_param_def_dict, timepoints, value_name='h_param_def')
 ref_df = convert_dict_to_long_df(h_param_ref_dict, timepoints, value_name='h_param_ref')
 
-
-
-
 plot_longitudinal_data(def_df, name='h_param_def')
 plot_longitudinal_data(ref_df, name='h_param_ref')
 
+# a param plots (note a_param_ref should be the same as a_param_def)
+a_param_def_dict = get_dictionary(data, patient_ids, timepoints, subset_name='a_param_def')
+#a_param_ref_dict = get_dictionary(data, patient_ids, timepoints, subset_name='a_param_ref')
+
+defa_df = convert_dict_to_long_df(a_param_def_dict, timepoints, value_name='a_param_def')
+#refa_df = convert_dict_to_long_df(a_param_ref_dict, timepoints, value_name='a_param_ref')
+
+plot_longitudinal_data(defa_df, name='a_param_def')
+#plot_longitudinal_data(refa_df, name='a_param_ref')
 
 sys.exit()
 # PLOTTING
