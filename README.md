@@ -133,7 +133,7 @@ The loop in step 4 performs the following processes:
 6. `ellipse_data` is appended to `transformed_df` DataFrame.
 
 ## Ellipse analysis ##
-Analysis of ellipse parameters is completed in script `longitudinal_data.py`. This imports the `ellipse_data.csv` data, converts from wide to long format, creates global plots of `h_optimal` for both deformed and reference configurations grouped by patient ID and also grouped by timepoint. 
+Analysis of ellipse parameters is completed in script `longitudinal_data.py`. This imports the `ellipse_data.csv` data, converts from wide to long format, creates global plots of `h_optimal` for both deformed and reference configurations grouped by patient ID and also grouped by timepoint. A plot of `a_optimal` is also created grouped by patient ID. 
 
 
 
