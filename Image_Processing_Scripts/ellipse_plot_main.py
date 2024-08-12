@@ -370,163 +370,163 @@ def fit_ellipse(data):
     return data
 
     
+if __name__=='__main__':
+    ## MAIN SCRIPT TO PLOT ELLIPSE FORM
+    data = pd.read_csv('Image_Processing_Scripts/data_entries.csv')
+    side_data=pd.read_csv('Image_Processing_Scripts/included_patient_info.csv')
+    # filtered according to exclusion flag (first column)
+    side_data=side_data[side_data['excluded?'] == 0]
+    side_data = side_data.rename(columns={' side (L/R)': 'side'})
+    side_series = side_data['side'].reset_index(drop=True)
+    side_series=side_series.str.strip()
+    data=pd.concat([data, side_series], axis=1)
 
-## MAIN SCRIPT TO PLOT ELLIPSE FORM
-data = pd.read_csv('Image_Processing_Scripts/data_entries.csv')
-side_data=pd.read_csv('Image_Processing_Scripts/included_patient_info.csv')
-# filtered according to exclusion flag (first column)
-side_data=side_data[side_data['excluded?'] == 0]
-side_data = side_data.rename(columns={' side (L/R)': 'side'})
-side_series = side_data['side'].reset_index(drop=True)
-side_series=side_series.str.strip()
-data=pd.concat([data, side_series], axis=1)
+    #Converting pd.Series to np for contour data
+    data['deformed_contour_x'] = data['deformed_contour_x'].apply(convert_to_numpy_array)
+    data['deformed_contour_y'] = data['deformed_contour_y'].apply(convert_to_numpy_array)
+    data['reflected_contour_x'] = data['reflected_contour_x'].apply(convert_to_numpy_array)
+    data['reflected_contour_y'] = data['reflected_contour_y'].apply(convert_to_numpy_array)
+    #print(data.head())
+    #print('Type of contour data in df', type(data['deformed_contour_x']))
+    #print('Type of first element:', type(data['deformed_contour_x'].iloc[0]))
 
-#Converting pd.Series to np for contour data
-data['deformed_contour_x'] = data['deformed_contour_x'].apply(convert_to_numpy_array)
-data['deformed_contour_y'] = data['deformed_contour_y'].apply(convert_to_numpy_array)
-data['reflected_contour_x'] = data['reflected_contour_x'].apply(convert_to_numpy_array)
-data['reflected_contour_y'] = data['reflected_contour_y'].apply(convert_to_numpy_array)
-#print(data.head())
-#print('Type of contour data in df', type(data['deformed_contour_x']))
-#print('Type of first element:', type(data['deformed_contour_x'].iloc[0]))
+    # Create new variables as copy of original contour data
+    h_def=data['deformed_contour_x']
+    v_def=data['deformed_contour_y']
+    h_ref=data['reflected_contour_x']
+    v_ref=data['reflected_contour_y']
 
-# Create new variables as copy of original contour data
-h_def=data['deformed_contour_x']
-v_def=data['deformed_contour_y']
-h_ref=data['reflected_contour_x']
-v_ref=data['reflected_contour_y']
-
-# Create new data frame from these variables to add to original data frame
-hv_df = pd.DataFrame({'h_def':h_def, 'v_def':v_def, 'h_ref':h_ref, 'v_ref':v_ref})
-# Add data frames together
-total_df=pd.concat([data, hv_df], axis=1)
-#print(total_df['h_def'].iloc[0])
-
-
-
-# Transform data points such that posterior point lies on (0, 0) and anterior lies on y=0 (x axis) 
-#    using transform_points function and rotate_points function
-#       Recall baseline coords are at end of contour anterior, posterior (last two points in list in that order)
+    # Create new data frame from these variables to add to original data frame
+    hv_df = pd.DataFrame({'h_def':h_def, 'v_def':v_def, 'h_ref':h_ref, 'v_ref':v_ref})
+    # Add data frames together
+    total_df=pd.concat([data, hv_df], axis=1)
+    #print(total_df['h_def'].iloc[0])
 
 
-# Initialise data frame to add to
-transformed_df = pd.DataFrame()#columns=['patient_id', 'timepoint', 'deformed_contour_x', 'deformed_contour_y',
-       #'reflected_contour_x', 'reflected_contour_y', 'side', 'h_def', 'v_def',
-       #'h_ref', 'v_ref', 'h_def_tr', 'v_def_tr', 'h_ref_tr', 'v_ref_tr',
-       #'h_def_rot', 'v_def_rot', 'h_ref_rot', 'v_ref_rot', 'angle',
-       #'ellipse_h_def', 'ellipse_v_def', 'ellipse_h_ref', 'ellipse_v_ref'])
 
-# Loop through each row in the total_df
-for i in range (len(total_df)):
-    #print(total_df.iloc[i])
-    
-    # get copy of slice of total_df line by line
-    data = total_df.iloc[[i]].copy()
-    print(data)
-    data.columns=total_df.columns
-    
-    #Plot original data
-    plt.scatter(data['h_def'].iloc[0], data['v_def'].iloc[0], color='red', s=1)
-    plt.scatter(data['h_ref'].iloc[0], data['v_ref'].iloc[0], color='cyan', s=1)
-    plt.scatter(data['h_def'].iloc[0][-2], data['v_def'].iloc[0][-2], color='magenta', s=20) # anterior point
-    plt.title(f"{data['patient_id'].iloc[0]} {data['timepoint'].iloc[0]}")
-    # Set the aspect ratio of the plot to be equal
-    plt.gca().set_aspect('equal', adjustable='box')
-    plt.close()
-
-    transformed_data=transform_points(data) # Translate function, puts in <>_<>ef_tr columns
-    print(f"transformed data shape: {transformed_data.shape}")
-    
-    
-    # Plot transformed data
-    plt.scatter(transformed_data['h_def_tr'].iloc[0], transformed_data['v_def_tr'].iloc[0], color='red', s=1)
-    plt.scatter(transformed_data['h_def_tr'].iloc[0][-2], transformed_data['v_def_tr'].iloc[0][-2], color='magenta', s=20) # anterior point
-    plt.scatter(transformed_data['h_ref_tr'].iloc[0], transformed_data['v_ref_tr'].iloc[0], color='cyan', s=1)
-    plt.title(f"{transformed_data['patient_id'].iloc[0]} {transformed_data['timepoint'].iloc[0]}")
-    # Set the aspect ratio of the plot to be equal
-    plt.gca().set_aspect('equal', adjustable='box')
-    plt.close()
-
-   
-    transformed_data=rotate_points(transformed_data) # Rotate function
-    
-    print(f"transformed data shape: {transformed_data.shape}")
-    
-
-    # plot rotated data
-    plt.scatter(transformed_data['h_def_rot'].iloc[0], transformed_data['v_def_rot'].iloc[0], color='red', s=1)
-    plt.scatter(transformed_data['h_def_rot'].iloc[0][-2], transformed_data['v_def_rot'].iloc[0][-2], color='magenta', s=20) # anterior point
-    plt.scatter(transformed_data['h_ref_rot'].iloc[0], transformed_data['v_ref_rot'].iloc[0], color='cyan', s=1)
-    plt.title(f"{transformed_data['patient_id']} {transformed_data['timepoint']}")
-    plt.gca().set_aspect('equal', adjustable='box')
-    plt.close()
-
-    
-    transformed_data=center_points(transformed_data) # Center function (parks data back into rotated column)
-    print(f"transformed data shape: {transformed_data.shape}")
-    
-
-    # plot data
-    plt.scatter(transformed_data['h_def_rot'].iloc[0], transformed_data['v_def_rot'].iloc[0], color='red', s=1)
-    plt.scatter(transformed_data['h_ref_rot'].iloc[0], transformed_data['v_ref_rot'].iloc[0], color='cyan', s=1)
-    plt.scatter(transformed_data['h_def_rot'].iloc[0][-2], transformed_data['v_def_rot'].iloc[0][-2], color='magenta', s=20)
-    plt.scatter(transformed_data['h_def_rot'].iloc[0][-1], transformed_data['v_def_rot'].iloc[0][-1], color='green', s=20)
-    plt.title(f"{transformed_data['patient_id'].iloc[0]} {transformed_data['timepoint'].iloc[0]}")
-    plt.gca().set_aspect('equal', adjustable='box')
-    plt.close()
-
-    
-
-    # Fit ellipse using least squares method - store data / parameters line by line
-    # Fit ellipse through transformed_data['h_def_rot'] and transformed_data['v_def_rot']
-    
-    
-    
-    print(f"transformed data index: {transformed_data.index}")
-    print(f"transformed data index is 0: {0 in transformed_data.index}")
-    if not 0 in transformed_data.index:
-        transformed_data=transformed_data.reset_index(drop=True)
-        print(f"pre function reset index: {transformed_data.index}")
+    # Transform data points such that posterior point lies on (0, 0) and anterior lies on y=0 (x axis) 
+    #    using transform_points function and rotate_points function
+    #       Recall baseline coords are at end of contour anterior, posterior (last two points in list in that order)
 
 
-    ellipse_data = fit_ellipse(transformed_data)
-    print(f"transformed_data_shape post ellipse: {ellipse_data.shape}")
-    #print(f"ellipse data: \n {ellipse_data}")
-    print(f"ellipse_data columns: {ellipse_data.columns}")
-    
+    # Initialise data frame to add to
+    transformed_df = pd.DataFrame()#columns=['patient_id', 'timepoint', 'deformed_contour_x', 'deformed_contour_y',
+        #'reflected_contour_x', 'reflected_contour_y', 'side', 'h_def', 'v_def',
+        #'h_ref', 'v_ref', 'h_def_tr', 'v_def_tr', 'h_ref_tr', 'v_ref_tr',
+        #'h_def_rot', 'v_def_rot', 'h_ref_rot', 'v_ref_rot', 'angle',
+        #'ellipse_h_def', 'ellipse_v_def', 'ellipse_h_ref', 'ellipse_v_ref'])
 
-    # PLOT FITTED ELLIPSE
-    plt.scatter(ellipse_data['h_def_rot'].iloc[0], ellipse_data['v_def_rot'].iloc[0], label='translated and rotated data points', color='red', s=2)
-    plt.plot(ellipse_data['ellipse_h_def'].iloc[0], ellipse_data['ellipse_v_def'].iloc[0], label='Fitted curve', color='red')
-    plt.scatter(transformed_data['h_ref_rot'].iloc[0], transformed_data['v_ref_rot'].iloc[0], label='translated and rotated data points', color='cyan', s=2)
-    plt.plot(ellipse_data['ellipse_h_ref'].iloc[0], ellipse_data['ellipse_v_ref'].iloc[0], label='Fitted curve', color='cyan')
-
-    plt.gca().set_aspect('equal', adjustable='box')
-    plt.title(f"{transformed_data['patient_id'].iloc[0]} {transformed_data['timepoint'].iloc[0]}")
-    plt.savefig(f"Image_Processing_Scripts/ellipse_plots/{transformed_data['patient_id'].iloc[0]}_{transformed_data['timepoint'].iloc[0]}_ellipse.png")
-    plt.close()
-    
+    # Loop through each row in the total_df
+    for i in range (len(total_df)):
+        #print(total_df.iloc[i])
         
-    # Store fitted ellipse data in DataFrame
-    #print(transformed_data.columns)
-    new_row = ellipse_data.iloc[0]
-    
-    transformed_df = pd.concat([transformed_df, new_row], axis=1, ignore_index=True)
-    print("transformed_df shape: ", transformed_df.shape)
-    
-    
-    
+        # get copy of slice of total_df line by line
+        data = total_df.iloc[[i]].copy()
+        print(data)
+        data.columns=total_df.columns
+        
+        #Plot original data
+        plt.scatter(data['h_def'].iloc[0], data['v_def'].iloc[0], color='red', s=1)
+        plt.scatter(data['h_ref'].iloc[0], data['v_ref'].iloc[0], color='cyan', s=1)
+        plt.scatter(data['h_def'].iloc[0][-2], data['v_def'].iloc[0][-2], color='magenta', s=20) # anterior point
+        plt.title(f"{data['patient_id'].iloc[0]} {data['timepoint'].iloc[0]}")
+        # Set the aspect ratio of the plot to be equal
+        plt.gca().set_aspect('equal', adjustable='box')
+        plt.close()
 
-print('*****')
-transformed_df = transformed_df.T
-print(transformed_df.columns)
-# remove 'h_def_tr', 'v_def_tr', 'h_ref_tr', 'v_ref_tr' columns
-transformed_df = transformed_df.drop(columns=['h_def', 'v_def', 'h_ref', 'v_ref', 'h_def_tr', 'v_def_tr', 'h_ref_tr', 'v_ref_tr'])
-print(transformed_df.columns)
-print(transformed_df.T.head)
-#print(transformed_df.head)
-# Save to .csv
-transformed_df.to_csv('Image_Processing_Scripts/ellipse_data.csv', index=False)
+        transformed_data=transform_points(data) # Translate function, puts in <>_<>ef_tr columns
+        print(f"transformed data shape: {transformed_data.shape}")
+        
+        
+        # Plot transformed data
+        plt.scatter(transformed_data['h_def_tr'].iloc[0], transformed_data['v_def_tr'].iloc[0], color='red', s=1)
+        plt.scatter(transformed_data['h_def_tr'].iloc[0][-2], transformed_data['v_def_tr'].iloc[0][-2], color='magenta', s=20) # anterior point
+        plt.scatter(transformed_data['h_ref_tr'].iloc[0], transformed_data['v_ref_tr'].iloc[0], color='cyan', s=1)
+        plt.title(f"{transformed_data['patient_id'].iloc[0]} {transformed_data['timepoint'].iloc[0]}")
+        # Set the aspect ratio of the plot to be equal
+        plt.gca().set_aspect('equal', adjustable='box')
+        plt.close()
+
+    
+        transformed_data=rotate_points(transformed_data) # Rotate function
+        
+        print(f"transformed data shape: {transformed_data.shape}")
+        
+
+        # plot rotated data
+        plt.scatter(transformed_data['h_def_rot'].iloc[0], transformed_data['v_def_rot'].iloc[0], color='red', s=1)
+        plt.scatter(transformed_data['h_def_rot'].iloc[0][-2], transformed_data['v_def_rot'].iloc[0][-2], color='magenta', s=20) # anterior point
+        plt.scatter(transformed_data['h_ref_rot'].iloc[0], transformed_data['v_ref_rot'].iloc[0], color='cyan', s=1)
+        plt.title(f"{transformed_data['patient_id']} {transformed_data['timepoint']}")
+        plt.gca().set_aspect('equal', adjustable='box')
+        plt.close()
+
+        
+        transformed_data=center_points(transformed_data) # Center function (parks data back into rotated column)
+        print(f"transformed data shape: {transformed_data.shape}")
+        
+
+        # plot data
+        plt.scatter(transformed_data['h_def_rot'].iloc[0], transformed_data['v_def_rot'].iloc[0], color='red', s=1)
+        plt.scatter(transformed_data['h_ref_rot'].iloc[0], transformed_data['v_ref_rot'].iloc[0], color='cyan', s=1)
+        plt.scatter(transformed_data['h_def_rot'].iloc[0][-2], transformed_data['v_def_rot'].iloc[0][-2], color='magenta', s=20)
+        plt.scatter(transformed_data['h_def_rot'].iloc[0][-1], transformed_data['v_def_rot'].iloc[0][-1], color='green', s=20)
+        plt.title(f"{transformed_data['patient_id'].iloc[0]} {transformed_data['timepoint'].iloc[0]}")
+        plt.gca().set_aspect('equal', adjustable='box')
+        plt.close()
+
+        
+
+        # Fit ellipse using least squares method - store data / parameters line by line
+        # Fit ellipse through transformed_data['h_def_rot'] and transformed_data['v_def_rot']
+        
+        
+        
+        print(f"transformed data index: {transformed_data.index}")
+        print(f"transformed data index is 0: {0 in transformed_data.index}")
+        if not 0 in transformed_data.index:
+            transformed_data=transformed_data.reset_index(drop=True)
+            print(f"pre function reset index: {transformed_data.index}")
+
+
+        ellipse_data = fit_ellipse(transformed_data)
+        print(f"transformed_data_shape post ellipse: {ellipse_data.shape}")
+        #print(f"ellipse data: \n {ellipse_data}")
+        print(f"ellipse_data columns: {ellipse_data.columns}")
+        
+
+        # PLOT FITTED ELLIPSE
+        plt.scatter(ellipse_data['h_def_rot'].iloc[0], ellipse_data['v_def_rot'].iloc[0], label='translated and rotated data points', color='red', s=2)
+        plt.plot(ellipse_data['ellipse_h_def'].iloc[0], ellipse_data['ellipse_v_def'].iloc[0], label='Fitted curve', color='red')
+        plt.scatter(transformed_data['h_ref_rot'].iloc[0], transformed_data['v_ref_rot'].iloc[0], label='translated and rotated data points', color='cyan', s=2)
+        plt.plot(ellipse_data['ellipse_h_ref'].iloc[0], ellipse_data['ellipse_v_ref'].iloc[0], label='Fitted curve', color='cyan')
+
+        plt.gca().set_aspect('equal', adjustable='box')
+        plt.title(f"{transformed_data['patient_id'].iloc[0]} {transformed_data['timepoint'].iloc[0]}")
+        plt.savefig(f"Image_Processing_Scripts/ellipse_plots/{transformed_data['patient_id'].iloc[0]}_{transformed_data['timepoint'].iloc[0]}_ellipse.png")
+        plt.close()
+        
+            
+        # Store fitted ellipse data in DataFrame
+        #print(transformed_data.columns)
+        new_row = ellipse_data.iloc[0]
+        
+        transformed_df = pd.concat([transformed_df, new_row], axis=1, ignore_index=True)
+        print("transformed_df shape: ", transformed_df.shape)
+        
+        
+        
+
+    print('*****')
+    transformed_df = transformed_df.T
+    print(transformed_df.columns)
+    # remove 'h_def_tr', 'v_def_tr', 'h_ref_tr', 'v_ref_tr' columns
+    transformed_df = transformed_df.drop(columns=['h_def', 'v_def', 'h_ref', 'v_ref', 'h_def_tr', 'v_def_tr', 'h_ref_tr', 'v_ref_tr'])
+    print(transformed_df.columns)
+    print(transformed_df.T.head)
+    #print(transformed_df.head)
+    # Save to .csv
+    transformed_df.to_csv('Image_Processing_Scripts/ellipse_data.csv', index=False)
 
 
 
