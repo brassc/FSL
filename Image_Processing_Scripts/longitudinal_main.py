@@ -35,18 +35,26 @@ def plot_longitudinal_data(long_df, name):
     n=len(unique_patient_ids) # number of unique patient id's for color map
     #colors = plt.get_cmap('tab10').colors  # Use 'tab10' colormap for a set of distinct colors
     # colours to use:
-    #base_colors = ['gray', 'yellow', 'cyan']
+    base_colors = ['red', 'cyan', 'yellow', 'magenta', 'brown', 'lightblue', 'orange']
 
-    def create_hex_color_map(cmap_name,n):
-        # Create a custom colormap with the base colors
-        #cmap = LinearSegmentedColormap.from_list('tab20', base_colors, N=n)
+    def create_hex_color_map_from_cmap(cmap_name,n):
         cmap=plt.get_cmap(cmap_name)
         # Convert the colormap to a list of hex colors
         colors=cmap(np.linspace(0,1,n))
         hex_colors = [rgb2hex(color) for color in colors]
         return hex_colors
     
-    hex_color_map=create_hex_color_map('tab20',n)
+    def create_hex_color_map_custom(base_colors,n):
+        # Create a custom colormap with the base colors
+        cmap = LinearSegmentedColormap.from_list('tab20', base_colors, N=n)
+        # Convert the colormap to a list of hex colors
+        colors=cmap(np.linspace(0,1,n))
+        hex_colors = [rgb2hex(color) for color in colors]
+        return hex_colors
+
+    
+    hex_color_map=create_hex_color_map_from_cmap('tab20',n)
+    hex_color_map=create_hex_color_map_custom(base_colors,n)
     print(hex_color_map)
     
 
