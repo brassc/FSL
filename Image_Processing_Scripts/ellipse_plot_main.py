@@ -123,12 +123,26 @@ def center_points(data):
 
     average_h = (h_def_rot_min + h_def_rot_max) / 2 # only one averager required - translate both h_def and h_ref by same amount
     
+    # Create new columns to store the centered points
+    if 'h_def_cent' not in data.columns:
+        data['h_def_cent'] = pd.Series([np.array([])] * len(data['h_def_rot']), index=data.index)
+    if 'v_def_cent' not in data.columns:
+        data['v_def_cent'] = pd.Series([np.array([])] * len(data['v_def_rot']), index=data.index)
+    if 'h_ref_cent' not in data.columns:
+        data['h_ref_cent'] = pd.Series([np.array([])] * len(data['h_ref_rot']), index=data.index)
+    if 'v_ref_cent' not in data.columns:
+        data['v_ref_cent'] = pd.Series([np.array([])] * len(data['v_ref_rot']), index=data.index)
+    
+    # Fill new v center columns even though these are the same as the v_rot columns
+    data['v_def_cent'] = data['v_def_rot']
+    data['v_ref_cent'] = data['v_ref_rot']
+
     if (data['side'] == 'R').any():
-        data['h_def_rot'] = data['h_def_rot'] - average_h
-        data['h_ref_rot'] = data['h_ref_rot'] - average_h
+        data['h_def_cent'] = data['h_def_rot'] - average_h
+        data['h_ref_cent'] = data['h_ref_rot'] - average_h
     elif (data['side'] == 'L').any():
-        data['h_def_rot'] = data['h_def_rot'] - average_h
-        data['h_ref_rot'] = data['h_ref_rot'] - average_h
+        data['h_def_cent'] = data['h_def_rot'] - average_h
+        data['h_ref_cent'] = data['h_ref_rot'] - average_h
     else:
         raise ValueError('Side must be either "R" or "L"')
 
@@ -169,7 +183,7 @@ def func(x, h, a, c=0, d=0):
         y = h * np.sqrt(np.maximum(0, a**2 - (x - c)**2)) + d
     return y
 
-def get_fit_params(data, name='<>ef_rot'): # name e.g. 'def_rot'
+def get_fit_params(data, name='<>ef_cent'): # name e.g. 'def_rot'
     h_name = 'h_' + name
     v_name = 'v_' + name
     # Define the weights           
@@ -251,13 +265,13 @@ def initialize_columns(data, name):
 
 def fit_data(data, name):
     # Get initial guesses, weights and bounds for the fit
-    initial_guesses, weights, bounds = get_fit_params(data, name=f'{name}_rot')
+    initial_guesses, weights, bounds = get_fit_params(data, name=f'{name}_cent')
 
     # Perform the curve fitting
     params, covariance = curve_fit(
         func,
-        data[f'h_{name}_rot'].iloc[0],
-        data[f'v_{name}_rot'].iloc[0],
+        data[f'h_{name}_cent'].iloc[0],
+        data[f'v_{name}_cent'].iloc[0],
         p0=initial_guesses,
         bounds=bounds
     )
@@ -287,7 +301,7 @@ def check_params(params):
         return None
 
 def calculate_fitted_values(data, params, name):
-    h_values = np.linspace(min(data[f'h_{name}_rot'].iloc[0]), max(data[f'h_{name}_rot'].iloc[0]), 1000)
+    h_values = np.linspace(min(data[f'h_{name}_cent'].iloc[0]), max(data[f'h_{name}_cent'].iloc[0]), 1000)
     
     if len(params) == 2:
         v_fitted = func(h_values, *params)
@@ -462,15 +476,17 @@ if __name__=='__main__':
         plt.close()
 
         
-        transformed_data=center_points(transformed_data) # Center function (parks data back into rotated column)
+        transformed_data=center_points(transformed_data) # Center function (parks data into <>_<>ef_cent columns)
         print(f"transformed data shape: {transformed_data.shape}")
+        #print(f"transformed data columns: {transformed_data.columns}")
+        #print(f"transformed data at 0: \n {transformed_data.iloc[0]}")  
         
 
         # plot data
-        plt.scatter(transformed_data['h_def_rot'].iloc[0], transformed_data['v_def_rot'].iloc[0], color='red', s=1)
-        plt.scatter(transformed_data['h_ref_rot'].iloc[0], transformed_data['v_ref_rot'].iloc[0], color='cyan', s=1)
-        plt.scatter(transformed_data['h_def_rot'].iloc[0][-2], transformed_data['v_def_rot'].iloc[0][-2], color='magenta', s=20)
-        plt.scatter(transformed_data['h_def_rot'].iloc[0][-1], transformed_data['v_def_rot'].iloc[0][-1], color='green', s=20)
+        plt.scatter(transformed_data['h_def_cent'].iloc[0], transformed_data['v_def_cent'].iloc[0], color='red', s=1)
+        plt.scatter(transformed_data['h_ref_cent'].iloc[0], transformed_data['v_ref_cent'].iloc[0], color='cyan', s=1)
+        plt.scatter(transformed_data['h_def_cent'].iloc[0][-2], transformed_data['v_def_cent'].iloc[0][-2], color='magenta', s=20)
+        plt.scatter(transformed_data['h_def_cent'].iloc[0][-1], transformed_data['v_def_cent'].iloc[0][-1], color='green', s=20)
         plt.title(f"{transformed_data['patient_id'].iloc[0]} {transformed_data['timepoint'].iloc[0]}")
         plt.gca().set_aspect('equal', adjustable='box')
         plt.close()
@@ -496,9 +512,9 @@ if __name__=='__main__':
         
 
         # PLOT FITTED ELLIPSE
-        plt.scatter(ellipse_data['h_def_rot'].iloc[0], ellipse_data['v_def_rot'].iloc[0], label='translated and rotated data points', color='red', s=2)
+        plt.scatter(ellipse_data['h_def_cent'].iloc[0], ellipse_data['v_def_cent'].iloc[0], label='translated and rotated data points', color='red', s=2)
         plt.plot(ellipse_data['ellipse_h_def'].iloc[0], ellipse_data['ellipse_v_def'].iloc[0], label='Fitted curve', color='red')
-        plt.scatter(transformed_data['h_ref_rot'].iloc[0], transformed_data['v_ref_rot'].iloc[0], label='translated and rotated data points', color='cyan', s=2)
+        plt.scatter(transformed_data['h_ref_cent'].iloc[0], transformed_data['v_ref_cent'].iloc[0], label='translated and rotated data points', color='cyan', s=2)
         plt.plot(ellipse_data['ellipse_h_ref'].iloc[0], ellipse_data['ellipse_v_ref'].iloc[0], label='Fitted curve', color='cyan')
 
         plt.gca().set_aspect('equal', adjustable='box')

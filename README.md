@@ -113,7 +113,8 @@ The loop in step 4 performs the following processes:
 4. Center these points about $x=0$ using `center_points` function
     - `center_points` takes data slice from `rotate_points` function and computes average of horizontal deformed contour. 
     - This average is applied to both reference and deformed horizontal contour points to center about $x=0$.
-    - The centered horizontal contours are stored in `h_def_rot` and `h_ref_rot` and the data slice is returned.
+    - The centered horizontal contours are stored in `h_def_cent` and `h_ref_cent`, new columns `v_def_cent` and `v_ref_cent` to store corresponding `v_def_rot` and `v_ref_rot` data in a cohesive naming convention are created.
+    - The data slice is returned.
 5. Fit ellipse using least squares method in `fit_ellipse` function
     - For each set of contours marked by `def` and `ref`, the `fit_ellipse` function takes a given data slice and returns a new data slice with added `ellipse_h_def`, `ellipse_v_def`, `ellipse_h_ref`, `ellipse_v_ref` columns as `ellipse_data`.
         - The columns are initialised using `initialize_columns` function. 
@@ -132,8 +133,13 @@ The loop in step 4 performs the following processes:
     - The data is then returned to main program as `ellipse_data`.
 6. `ellipse_data` is appended to `transformed_df` DataFrame.
 
-## Ellipse analysis ##
+### Ellipse analysis ###
 Analysis of ellipse parameters is completed in script `longitudinal_data.py`. This imports the `ellipse_data.csv` data, converts from wide to long format, creates global plots of `h_optimal` for both deformed and reference configurations grouped by patient ID and also grouped by timepoint. A plot of `a_optimal` is also created grouped by patient ID. 
+
+# Polynomial fitting
+
+# Area analysis
+Area analysis is completed independently of any ellipse or polynomial fits. The script `area_main.py` imports `ellipse_data.csv` and uses the h_contour and v_contour plots to find area between points. 
 
 
 
