@@ -115,6 +115,8 @@ def plot_longitudinal_data(long_df, name):
 # Load the ellipse data
 data=pd.read_csv('Image_Processing_Scripts/ellipse_data.csv')
 print(data.columns)
+area_data=pd.read_csv('Image_Processing_Scripts/area_data.csv')
+print(area_data.columns)
 
 # get possible patient IDs
 patient_ids = data['patient_id'].unique()
@@ -142,4 +144,9 @@ defa_df = convert_dict_to_long_df(a_param_def_dict, timepoints, value_name='a_pa
 
 plot_longitudinal_data(defa_df, name='a_param_def')
 #plot_longitudinal_data(refa_df, name='a_param_ref')
+
+# Area plots [area calculated prior to rotation from orienting ellipse_data.csv '<>_<>ef_tr' columns in area_main.py]
+area_diff_dict = get_dictionary(area_data, patient_ids, timepoints, subset_name='area_diff')
+area_diff_df = convert_dict_to_long_df(area_diff_dict, timepoints, value_name='area_diff')
+plot_longitudinal_data(area_diff_df, name='area_diff')
 
