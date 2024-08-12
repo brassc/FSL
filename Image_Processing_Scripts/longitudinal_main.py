@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import sys
+from matplotlib.colors import LinearSegmentedColormap, rgb2hex
 
 def get_dictionary(data, patient_ids, timepoints, subset_name='h_param_def'):
     patient_dict = {}
@@ -31,8 +32,27 @@ def plot_longitudinal_data(long_df, name):
     # color map
     # Create a unique color map for patient_id
     unique_patient_ids = long_df['patient_id'].unique()
-    colors = plt.get_cmap('tab10').colors  # Use 'tab10' colormap for a set of distinct colors
-    color_map = {pid: colors[i % len(colors)] for i, pid in enumerate(unique_patient_ids)}
+    n=len(unique_patient_ids) # number of unique patient id's for color map
+    #colors = plt.get_cmap('tab10').colors  # Use 'tab10' colormap for a set of distinct colors
+    # colours to use:
+    #base_colors = ['gray', 'yellow', 'cyan']
+
+    def create_hex_color_map(cmap_name,n):
+        # Create a custom colormap with the base colors
+        #cmap = LinearSegmentedColormap.from_list('tab20', base_colors, N=n)
+        cmap=plt.get_cmap(cmap_name)
+        # Convert the colormap to a list of hex colors
+        colors=cmap(np.linspace(0,1,n))
+        hex_colors = [rgb2hex(color) for color in colors]
+        return hex_colors
+    
+    hex_color_map=create_hex_color_map('tab20',n)
+    print(hex_color_map)
+    
+
+    #cmap=plt.get_cmap('tab10')
+    #colors = cmap(np.linspace(0,1,n)) # n is the number of colours
+    color_map = {pid: hex_color_map[i] for i, pid in enumerate(unique_patient_ids)}
 
     # Function to determine color based on the beginning of 'unique_label'
     def get_color(unique_label):
@@ -90,6 +110,7 @@ print(data.columns)
 
 # get possible patient IDs
 patient_ids = data['patient_id'].unique()
+n = len(patient_ids) # number of colours for plotting
 
 # array of timepoints
 timepoints = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
