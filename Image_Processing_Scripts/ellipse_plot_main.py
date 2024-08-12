@@ -537,7 +537,7 @@ if __name__=='__main__':
     transformed_df = transformed_df.T
     print(transformed_df.columns)
     # remove 'h_def_tr', 'v_def_tr', 'h_ref_tr', 'v_ref_tr' columns
-    transformed_df = transformed_df.drop(columns=['h_def', 'v_def', 'h_ref', 'v_ref', 'h_def_tr', 'v_def_tr', 'h_ref_tr', 'v_ref_tr'])
+    transformed_df = transformed_df.drop(columns=['h_def', 'v_def', 'h_ref', 'v_ref']) #'h_def_tr', 'v_def_tr', 'h_ref_tr', 'v_ref_tr'
     print(transformed_df.columns)
     print(transformed_df.T.head)
     #print(transformed_df.head)
