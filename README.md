@@ -139,7 +139,11 @@ Analysis of ellipse parameters is completed in script `longitudinal_data.py`. Th
 # Polynomial fitting
 
 # Area analysis
-Area analysis is completed independently of any ellipse or polynomial fits. The script `area_main.py` imports `ellipse_data.csv` and uses the h_contour and v_contour plots to find area between points. 
+Area analysis is completed independently of any ellipse or polynomial fits. The script `area_main.py` imports `ellipse_data.csv` and uses reoriented, translated (but not rotated or centered) horizontal and vertical contours to find area underneath each set of points. Area is found using trapezium method of integration. Both points are plotted on a graph with the difference between deformed and baseline written as text. 
+
+In `longitudinal_main.py`, the difference between reference and deformed area is plotted, grouped by patient and timepoint. 
+
+
 
 
 
