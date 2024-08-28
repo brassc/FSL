@@ -156,6 +156,9 @@ print(area_diff_df)
 # convert timepoints to a numerical array 0 to len(timepoints)
 timepoints_num = np.arange(len(timepoints))
 
+# Set figure size before plotting
+plt.figure(figsize=(12, 8))
+
 # recall patient_ids = data['patient_id'].unique() have already been collected
 for patient_id in patient_ids:
     patient_subset = area_diff_df[area_diff_df['patient_id'] == patient_id]
@@ -163,10 +166,24 @@ for patient_id in patient_ids:
     # convert patient_subset['area_diff'] to a numpy array for plotting
     area_diff_subset = np.array(patient_subset['area_diff'])
     valid_indices = ~np.isnan(area_diff_subset)
+    if not np.isnan(area_diff_subset[0]):
+        first_area = area_diff_subset[0]
+        area_diff_subset = area_diff_subset - first_area
+    elif np.isnan(area_diff_subset[0]):
+        if not np.isnan(area_diff_subset[1]):
+            first_area = area_diff_subset[1]
+            area_diff_subset = area_diff_subset - first_area
+    else:
+        print('First two area_diff values are NaN')
     area_diff_subset_valid = area_diff_subset[valid_indices]
     timepoints_num_valid = timepoints_num[valid_indices]
     plt.plot(timepoints_num_valid, area_diff_subset_valid, label=patient_id)
 
+#plt.figure(figsize=(12, 8))
 plt.xlim([0, len(timepoints)-1])
 plt.legend(title='Patient ID')
+plt.xlabel('Time')
+# remove numbers from x axis
+plt.xticks([])
+plt.ylabel('Area Change [mm^2]')
 plt.show()
