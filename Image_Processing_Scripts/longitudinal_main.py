@@ -132,8 +132,8 @@ h_param_ref_dict = get_dictionary(data, patient_ids, timepoints, subset_name='h_
 def_df = convert_dict_to_long_df(h_param_def_dict, timepoints, value_name='h_param_def')
 ref_df = convert_dict_to_long_df(h_param_ref_dict, timepoints, value_name='h_param_ref')
 
-plot_longitudinal_data(def_df, name='h_param_def')
-plot_longitudinal_data(ref_df, name='h_param_ref')
+#plot_longitudinal_data(def_df, name='h_param_def')
+#plot_longitudinal_data(ref_df, name='h_param_ref')
 
 # a param plots (note a_param_ref should be the same as a_param_def)
 a_param_def_dict = get_dictionary(data, patient_ids, timepoints, subset_name='a_param_def')
@@ -142,11 +142,31 @@ a_param_def_dict = get_dictionary(data, patient_ids, timepoints, subset_name='a_
 defa_df = convert_dict_to_long_df(a_param_def_dict, timepoints, value_name='a_param_def')
 #refa_df = convert_dict_to_long_df(a_param_ref_dict, timepoints, value_name='a_param_ref')
 
-plot_longitudinal_data(defa_df, name='a_param_def')
+#plot_longitudinal_data(defa_df, name='a_param_def')
 #plot_longitudinal_data(refa_df, name='a_param_ref')
 
 # Area plots [area calculated prior to rotation from orienting ellipse_data.csv '<>_<>ef_tr' columns in area_main.py]
 area_diff_dict = get_dictionary(area_data, patient_ids, timepoints, subset_name='area_diff')
 area_diff_df = convert_dict_to_long_df(area_diff_dict, timepoints, value_name='area_diff')
-plot_longitudinal_data(area_diff_df, name='area_diff')
+#plot_longitudinal_data(area_diff_df, name='area_diff')
 
+# Line plots superimposed
+
+print(area_diff_df)
+# convert timepoints to a numerical array 0 to len(timepoints)
+timepoints_num = np.arange(len(timepoints))
+
+# recall patient_ids = data['patient_id'].unique() have already been collected
+for patient_id in patient_ids:
+    patient_subset = area_diff_df[area_diff_df['patient_id'] == patient_id]
+    print(patient_subset['area_diff'])
+    # convert patient_subset['area_diff'] to a numpy array for plotting
+    area_diff_subset = np.array(patient_subset['area_diff'])
+    valid_indices = ~np.isnan(area_diff_subset)
+    area_diff_subset_valid = area_diff_subset[valid_indices]
+    timepoints_num_valid = timepoints_num[valid_indices]
+    plt.plot(timepoints_num_valid, area_diff_subset_valid, label=patient_id)
+
+plt.xlim([0, len(timepoints)-1])
+plt.legend(title='Patient ID')
+plt.show()
