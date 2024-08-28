@@ -28,15 +28,35 @@ def convert_dict_to_long_df(data_dict, timepoints, value_name='h_param_def'):
     long_df = long_df.sort_values(by=['patient_id', 'timepoint']).reset_index(drop=True)
     return long_df
 
+def create_hex_color_map_from_cmap(cmap_name, n):
+    cmap = plt.get_cmap(cmap_name)
+    # Convert the colormap to a list of hex colors
+    colors = cmap(np.linspace(0, 1, n))
+    hex_colors = [rgb2hex(color) for color in colors]
+    return hex_colors
+
+def create_hex_color_map_custom(base_colors, n):
+    # Create a custom colormap with the base colors
+    cmap = LinearSegmentedColormap.from_list('custom', base_colors, N=n)
+    # Convert the colormap to a list of hex colors
+    colors = cmap(np.linspace(0, 1, n))
+    hex_colors = [rgb2hex(color) for color in colors]
+    return hex_colors
+
+def get_color(unique_label, color_map):
+    pid = unique_label.split(' ')[0]
+    return color_map.get(int(pid), 'gray')  # Default to 'gray' if pid is not found
+
 def plot_longitudinal_data(long_df, name):
     # color map
+    global color_map
     # Create a unique color map for patient_id
     unique_patient_ids = long_df['patient_id'].unique()
     n=len(unique_patient_ids) # number of unique patient id's for color map
     #colors = plt.get_cmap('tab10').colors  # Use 'tab10' colormap for a set of distinct colors
     # colours to use:
     base_colors = ['red', 'cyan', 'yellow', 'magenta', 'brown', 'lightblue', 'orange']
-
+    """
     def create_hex_color_map_from_cmap(cmap_name,n):
         cmap=plt.get_cmap(cmap_name)
         # Convert the colormap to a list of hex colors
@@ -51,7 +71,7 @@ def plot_longitudinal_data(long_df, name):
         colors=cmap(np.linspace(0,1,n))
         hex_colors = [rgb2hex(color) for color in colors]
         return hex_colors
-
+    """
     
     hex_color_map=create_hex_color_map_from_cmap('tab20',n)
     hex_color_map=create_hex_color_map_custom(base_colors,n)
@@ -61,17 +81,17 @@ def plot_longitudinal_data(long_df, name):
     #cmap=plt.get_cmap('tab10')
     #colors = cmap(np.linspace(0,1,n)) # n is the number of colours
     color_map = {pid: hex_color_map[i] for i, pid in enumerate(unique_patient_ids)}
-
+    """
     # Function to determine color based on the beginning of 'unique_label'
     def get_color(unique_label):
         pid = unique_label.split(' ')[0]
         return color_map.get(int(pid), 'gray')  # Default to 'gray' if pid is not found
-
+    """
     # PLOT GROUPED BY PATIENT
     plt.figure(figsize=(12, 8))
     #plt.bar(long_df['timepoint'], long_df['h_param_def'] )
     long_df['unique_label']=long_df['patient_id'].astype(str) + ' ' + long_df['timepoint'].astype(str)
-    bars=plt.bar(long_df.index, long_df[name], color=[get_color(label) for label in long_df['unique_label']])
+    bars=plt.bar(long_df.index, long_df[name], color=[get_color(label, color_map) for label in long_df['unique_label']])
     plt.xticks(long_df.index, long_df['unique_label'], rotation=90, fontsize=8)
     plt.xlabel('Timepoint')
     plt.ylabel(name)
@@ -125,6 +145,9 @@ n = len(patient_ids) # number of colours for plotting
 # array of timepoints
 timepoints = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
 
+# Create global color map for plots
+color_map={}
+
 # h param plots
 h_param_def_dict = get_dictionary(data, patient_ids, timepoints, subset_name='h_param_def')
 h_param_ref_dict = get_dictionary(data, patient_ids, timepoints, subset_name='h_param_ref')
@@ -132,7 +155,7 @@ h_param_ref_dict = get_dictionary(data, patient_ids, timepoints, subset_name='h_
 def_df = convert_dict_to_long_df(h_param_def_dict, timepoints, value_name='h_param_def')
 ref_df = convert_dict_to_long_df(h_param_ref_dict, timepoints, value_name='h_param_ref')
 
-#plot_longitudinal_data(def_df, name='h_param_def')
+plot_longitudinal_data(def_df, name='h_param_def')
 #plot_longitudinal_data(ref_df, name='h_param_ref')
 
 # a param plots (note a_param_ref should be the same as a_param_def)
