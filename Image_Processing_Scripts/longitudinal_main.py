@@ -214,9 +214,10 @@ for patient_id in patient_ids:
     x_fine = np.linspace(timepoints_num_valid.min(), timepoints_num_valid.max(), 100)
     y_fine = interpolator(x_fine)
     print(f"interpolator: {interpolator}")
-    plt.scatter(x_fine, y_fine, label=patient_id, color='gray')
+    #plt.scatter(x_fine, y_fine, label=patient_id, color='gray')
     # 2. Create cubic spline
     cs=CubicSpline(timepoints_num_valid, area_diff_subset_valid, bc_type='natural')
+    #cs=CubicSpline(x_fine, y_fine, bc_type='natural')
     x_smooth = x_fine
     y_smooth = cs(x_smooth)
     print(f"cs: {cs}")
@@ -242,4 +243,5 @@ plt.xlabel('Time')
 # remove numbers from x axis
 plt.xticks([])
 plt.ylabel('Area Change [mm^2]')
+plt.savefig('Image_Processing_Scripts/area_change_longitudinal.png')
 plt.show()
