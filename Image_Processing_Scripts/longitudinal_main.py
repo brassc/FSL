@@ -3,6 +3,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import sys
 from matplotlib.colors import LinearSegmentedColormap, rgb2hex
+from statsmodels.nonparametric.smoothers_lowess import lowess
+from scipy.interpolate import interp1d
+from scipy.interpolate import UnivariateSpline
+from scipy.interpolate import CubicSpline
 
 def get_dictionary(data, patient_ids, timepoints, subset_name='h_param_def'):
     patient_dict = {}
@@ -203,9 +207,31 @@ for patient_id in patient_ids:
         continue
     area_diff_subset_valid = area_diff_subset[valid_indices]
     timepoints_num_valid = timepoints_num[valid_indices]
+
+    # Create a smooth line using spline interpolation
+    # 1. interpolate
+    interpolator = interp1d(timepoints_num_valid, area_diff_subset_valid, kind='linear')
+    x_fine = np.linspace(timepoints_num_valid.min(), timepoints_num_valid.max(), 100)
+    y_fine = interpolator(x_fine)
+    print(f"interpolator: {interpolator}")
+    plt.scatter(x_fine, y_fine, label=patient_id, color='gray')
+    # 2. Create cubic spline
+    cs=CubicSpline(timepoints_num_valid, area_diff_subset_valid, bc_type='natural')
+    x_smooth = x_fine
+    y_smooth = cs(x_smooth)
+    print(f"cs: {cs}")
+    """
+    # 2. create univariate spline
+    spline = UnivariateSpline(x_fine, y_fine)
+    x_smooth = np.linspace(timepoints_num_valid.min(), timepoints_num_valid.max(), 100)
+    y_smooth = spline(x_smooth)
+    """
+
     color = color_map.get(patient_id, default_color)
     print(f"Color for patient {patient_id}: {color}")
-    plt.plot(timepoints_num_valid, area_diff_subset_valid, label=patient_id, color=color)
+    #if patient_id == 20174:
+    plt.plot(x_smooth, y_smooth, label=patient_id, color=color)
+    plt.scatter(timepoints_num_valid, area_diff_subset_valid, label=patient_id, color=color)
 
 #plt.figure(figsize=(12, 8))
 print(f"color_map: {color_map}")
