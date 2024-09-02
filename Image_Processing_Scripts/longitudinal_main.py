@@ -189,6 +189,7 @@ plt.figure(figsize=(12, 8))
 default_color = 'gray'
 
 # recall patient_ids = data['patient_id'].unique() have already been collected
+# Add patient id x all timepoints to plot as scatter, create cubic spline between for each patient with more than 2 timepoints
 for patient_id in patient_ids:
     patient_subset = area_diff_df[area_diff_df['patient_id'] == patient_id]
     print(patient_subset['area_diff'])
@@ -245,4 +246,11 @@ plt.xticks(timepoints_num, timepoints)
 plt.ylabel('Area Change [mm$^2$]')
 plt.savefig('Image_Processing_Scripts/plots/area_change_longitudinal.png')
 plt.close()
+
+
+print(area_diff_df)
+area_diff_long_df = area_diff_df.drop(columns='unique_label')
+# drop uniquelabel column
+print(area_diff_long_df)
+area_diff_long_df.to_csv('Image_Processing_Scripts/area_diff_long_df.csv', index=False)
 
