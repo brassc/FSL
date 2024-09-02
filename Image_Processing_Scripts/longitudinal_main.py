@@ -235,13 +235,14 @@ for patient_id in patient_ids:
     plt.scatter(timepoints_num_valid, area_diff_subset_valid, label=patient_id, color=color)
 
 #plt.figure(figsize=(12, 8))
-print(f"color_map: {color_map}")
+#print(f"color_map: {color_map}")
 plt.xlim([0, len(timepoints)-1])
-plt.legend(title='Patient ID')
+#plt.legend(title='Patient ID')
 plt.xlabel('Time')
 
-# remove numbers from x axis
-plt.xticks([])
-plt.ylabel('Area Change [mm^2]')
-plt.savefig('Image_Processing_Scripts/area_change_longitudinal.png')
-plt.show()
+# instead of 0-6, use timepoints
+plt.xticks(timepoints_num, timepoints)
+plt.ylabel('Area Change [mm$^2$]')
+plt.savefig('Image_Processing_Scripts/plots/area_change_longitudinal.png')
+plt.close()
+
