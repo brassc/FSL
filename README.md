@@ -143,7 +143,7 @@ Area analysis is completed independently of any ellipse or polynomial fits. The 
 
 In `longitudinal_main.py`, the difference between reference and deformed area is plotted, grouped by patient and timepoint. 
 
-Area change relative to first scan is also plotted (saved as `area_change_longitudinal.png`) as smooth splines.  Original data first area is taken as datum 0, magnitude of other points is adjusted to reflect the new datum. A cubic spline is created from thi offset data and plotted. 
+Area change relative to first scan is also plotted (saved as `area_change_longitudinal.png`) as smooth splines for patients with more than 2 datapoints, and as a straight line for patients with 2 data points.  Original data first area is taken as datum 0, magnitude of other points is adjusted to reflect the new datum. A cubic spline is created from thi offset data and plotted. 
 
 
 
