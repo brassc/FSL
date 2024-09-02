@@ -247,10 +247,3 @@ plt.ylabel('Area Change [mm$^2$]')
 plt.savefig('Image_Processing_Scripts/plots/area_change_longitudinal.png')
 plt.close()
 
-
-print(area_diff_df)
-area_diff_long_df = area_diff_df.drop(columns='unique_label')
-# drop uniquelabel column
-print(area_diff_long_df)
-area_diff_long_df.to_csv('Image_Processing_Scripts/area_diff_long_df.csv', index=False)
-
