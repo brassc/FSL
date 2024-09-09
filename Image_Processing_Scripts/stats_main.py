@@ -66,22 +66,28 @@ result = model.fit()
 # Print the summary
 print(result.summary())
 
+
+
 # plotting
 
+# box plot of area_diff
 plt.figure(figsize=(12, 8))
-
+og_order = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
 # boxplot of the original data w scan_type on x-axis and area_diff on y-axis
-sns.boxplot(x='scan_type', y='area_diff', data=new_df, order=desired_order, showfliers=False, color="lightblue", width=0.6)
-sns.stripplot(x='scan_type', y='area_diff', data=new_df, order=desired_order, color="black", alpha=0.5, jitter=True)
+ax=sns.boxplot(x='timepoint', y='area_diff', data=new_df, order=og_order, showfliers=False, whis=5, color="lightblue", width=0.6)
+
+sns.stripplot(x='timepoint', y='area_diff', data=new_df, order=og_order, color="black", alpha=0.5, jitter=True)
 
 # generate predictions from the model
 new_df['predicted_area_diff'] = result.fittedvalues
+# remove first scan type from the 
 
 # calculate mean predicted values for each scan type group
-predicted_means=new_df.groupby('scan_type')['predicted_area_diff'].mean()
+predicted_means=new_df.groupby('timepoint')['predicted_area_diff'].mean()
+print(predicted_means)
 
 # overlay the predicted means on the boxplot
-plt.plot(desired_order, predicted_means, color='red', marker='o', linestyle='dashed', linewidth=2, markersize=12)
+plt.plot(og_order, predicted_means, color='red', marker='o', linestyle='dashed', linewidth=2, markersize=12, label='Predicted Means')
 
 # set labels and title
 plt.xlabel('Timepoints', fontsize=12)
@@ -89,6 +95,8 @@ plt.ylabel('Area Difference', fontsize=12)
 plt.title('Area Difference by Timepoint with Model Predictions', fontsize=14)
 
 plt.xticks(rotation=45)
+
+    
 
 plt.legend()
 
