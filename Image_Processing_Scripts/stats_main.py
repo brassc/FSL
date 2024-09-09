@@ -30,6 +30,16 @@ new_df['first_scan']=None
 print(new_df.head())
 # Add a column to the dataframe that indicates the first scan for each patient. first scan is either fast or ultrafast
 new_df['first_scan']=new_df.groupby('patient_id')['timepoint'].transform('first')
+
+# Create covariate column specifying the first scan type for each patient
+new_df['first_scan_type'] = new_df.apply(lambda row: 'ultra-fast' if row['timepoint'] == 'ultra-fast' 
+                                         else 'fast' if row['timepoint'] == 'fast' 
+                                         else None, axis=1)
+
+# Forward fill the 'first_scan_type' to propagate the first scan type for each patient across all rows
+new_df['first_scan_type'] = new_df.groupby('patient_id')['first_scan_type'].transform('first')
+
+# Create a new column 'scan_type' that specifies the type of scan for each row
 new_df['scan_type']=new_df.apply(lambda row: 'first' if row['timepoint']==row['first_scan'] 
                              else 'fast' if row['timepoint'] == 'fast'
                              else 'acute' if row['timepoint'] == 'acute' 
@@ -38,11 +48,49 @@ new_df['scan_type']=new_df.apply(lambda row: 'first' if row['timepoint']==row['f
                              else '12mo' if row['timepoint'] == '12mo' 
                              else '24mo' if row['timepoint'] == '24mo'
                              else 'other', axis=1)
-print(new_df.head())    
+print(new_df.head())
+# set the order of scans
+desired_order = ['first', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']   
+# Convert 'first_scan_type' to a categorical variable 
+new_df['scan_type'] = pd.Categorical(new_df['scan_type'], categories=desired_order, ordered=True)
+print(new_df['scan_type'].unique())
 
-
-model = smf.mixedlm("area_diff ~ C(scan_type)", new_df, groups=new_df["patient_id"], re_formula="~1")
+# Fit mixed effects model w 'scan_type' and 'first_scan_type' as covariates (fixed effects)
+model = smf.mixedlm("area_diff ~ C(scan_type, Treatment(reference='first')) + C(first_scan_type)", 
+                    new_df, 
+                    groups=new_df["patient_id"], 
+                    re_formula="~1")
 result = model.fit()
 
 # Print the summary
 print(result.summary())
+
+sys.exit()
+# Plot data: Predicted values with confidence intervals
+# 1. Get predicted values (fitted values)
+new_df['predicted'] = result.fittedvalues
+
+# 2. Calculate the confidence intervals
+pred_var = result.cov_params().loc['Intercept', 'Intercept']  # assuming intercept is used
+se_fit = np.sqrt(pred_var)
+ci_lower = new_df['predicted'] - 1.96 * se_fit  # 95% confidence interval lower bound
+ci_upper = new_df['predicted'] + 1.96 * se_fit  # 95% confidence interval upper bound
+
+# 3. Plotting
+plt.figure(figsize=(10, 6))
+
+# Plot actual data points
+plt.plot(new_df['timepoint'], new_df['area_diff'], 'o', label='Observed data', alpha=0.5)
+
+# Plot predicted values
+plt.plot(new_df['timepoint'], new_df['predicted'], 'r-', label='Fitted values')
+
+# Plot error bands
+#plt.fill_between(new_df['timepoint'], ci_lower, ci_upper, color='r', alpha=0.2, label='95% CI')
+
+plt.title('Mixed Effects Model: Predicted Values with Confidence Intervals')
+plt.xlabel('Timepoint')
+plt.ylabel('Area Difference')
+plt.legend()
+
+plt.show()
