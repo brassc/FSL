@@ -101,4 +101,5 @@ plt.xticks(rotation=45)
 plt.legend()
 
 plt.tight_layout()
+plt.savefig('Image_Processing_Scripts/area_diff_boxplot.png')
 plt.show()
