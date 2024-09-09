@@ -156,4 +156,6 @@ points_plotting/points_dir/19978_acute/auto_deformed_array.npz
 points_plotting/points_dir/19978_acute/auto_reflected_array.npz
 points_plotting/sys
 ellipse_plots/*
+Image_Processing_Scripts/plots/*
+Image_Processing_Scripts/area_diff_boxplot.png
 Image_Processing_Scripts/area_change_longitudinal.png
