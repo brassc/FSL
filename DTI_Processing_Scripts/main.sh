@@ -32,6 +32,20 @@ for sub in "${subdirectories[@]}"; do
            DTI_bvec="$DTIspace_dir/dwi_proc/DTI_corrected.bvec"
            DTI_mask="$DTIspace_dir/masks/ANTS_T1_brain_mask.nii.gz"
 
+           #use this mask to do brain extraction on DTI_corr_scan. Save to new place. 
+           save_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/$sub/dti_reg"
+           if [ ! -d $save_dir ]; then
+               mkdir "${save_dir}"
+           fi
+           dtibet="betdti.nii.gz"
+
+           fslmaths $DTI_corr_scan -mul $DTI_mask $dtibet
+           t1_scan_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/$sub/T1w_time1_bias_corr_registered_scans/BET_Output/"
+           #search scan directory for scan name containing timepoint
+           t1_scan=$(find $t1_scan_dir -type f -name "*$timepoint*.nii.gz")
+
+           flirt -in $dtibet -ref $t1_scan -out"dtibet_reg.nii.gz" -omat "dtibet_reg.mat"
+
         fi
     done
 done
