@@ -25,8 +25,12 @@ for sub in "${subdirectories[@]}"; do
         if [[ -d "$nipype_dir" ]]; then
            #echo "nipype dir for subject $sub: $nipype_dir"
            DTIspace_dir="$nipype_dir/DATASINK/DTIspace/"
-           echo "DTIspace_dir: $DTIspace_dir"
-           # perform operations here
+           #echo "DTIspace_dir: $DTIspace_dir"
+           
+           DTI_corr_scan="$DTIspace_dir/dwi_proc/DTI_corrected.nii.gz"
+           DTI_bval="$DTIspace_dir/dwi_proc/DTI_corrected.bval"
+           DTI_bvec="$DTIspace_dir/dwi_proc/DTI_corrected.bvec"
+           DTI_mask="$DTIspace_dir/masks/ANTS_T1_brain_mask.nii.gz"
 
         fi
     done
