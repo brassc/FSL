@@ -24,7 +24,7 @@ for sub in "${subdirectories[@]}"; do
         # Check if the nipype directory was found
         if [ -z "$nipype_dir" ]; then
             echo "Error: 'nipype' directory not found for subject $sub at timepoint $timepoint"
-            continue  # To skip this timepoint and continue with the next
+            continue  # skip this timepoint and continue with the next
         fi
 
         # Check it exists
@@ -59,7 +59,7 @@ for sub in "${subdirectories[@]}"; do
            if [ ! -d $save_dir ]; then
                mkdir "${save_dir}"
            fi
-           dtibet="${save_dir}betdti_$timepoint.nii.gz"
+           dtibet="${save_dir}betdti_${timepoint}_notreg.nii.gz"
            dtibet3d="${save_dir}dtibet3d_$timepoint.nii.gz"
            
 
