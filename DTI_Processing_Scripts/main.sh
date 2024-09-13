@@ -3,11 +3,10 @@
 module load fsl
 
 # Define the priority of keywords in an array
-keywords=("ultra-fast") #"fast" "acute" "3mo" "6mo" "12mo" "24mo")
+keywords=("ultra-fast" "fast" "acute" "3mo" "6mo" "12mo" "24mo")
 
 # Define patient list
-subdirectories=("19978")
-# "12519" "13198" "13782" "13990" "14324" "16754" "19344" "19575" "19978" "19981" "20174" "20651" "20942" "21221" "22725" "22785" "23348")
+subdirectories=("19978" "12519" "13198" "13782" "13990" "14324" "16754" "19344" "19575" "19978" "19981" "20174" "20651" "20942" "21221" "22725" "22785" "23348")
 
 # get location of processed DWI images
 # define the base directory
@@ -85,14 +84,14 @@ for sub in "${subdirectories[@]}"; do
            #echo "$t1_scan"
            #echo "$save_dir"
            #echo "${save_dir}dtibet_reg.nii.gz"
-           dtibet_reg="${save_dir}dtibet_reg.nii.gz"
+           dtibet_reg="${save_dir}dtibet_reg_$timepoint.nii.gz"
            # Extract the first volume from the 4D DTI image
            flirt -in "$dtibet" -ref "$t1_scan" -out $dtibet_reg # -omat "${save_dir}dtibet_reg.mat"
            
            echo "registering 2"
-           flirt -in "$dtifitWLS_FA" -ref "$t1_scan" -out "${save_dir}dtifitWLS_FA_reg.nii.gz"
+           flirt -in "$dtifitWLS_FA" -ref "$t1_scan" -out "${save_dir}dtifitWLS_FA_reg_$timepoint.nii.gz"
            echo "registering 3"
-           flirt -in "$dtifitWLS_MD" -ref "$t1_scan" -out "${save_dir}dtifitWLS_MD_reg.nii.gz"
+           flirt -in "$dtifitWLS_MD" -ref "$t1_scan" -out "${save_dir}dtifitWLS_MD_reg_$timepoint.nii.gz"
            # further reg not required for now
            #flirt -in $dtifitWLS_L1 -ref $t1_scan -out "$save_dir/dtifitWLS_L1_reg.nii.gz"
         fi
