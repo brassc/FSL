@@ -3,10 +3,10 @@
 module load fsl
 
 # Define the priority of keywords in an array
-keywords=("acute") #"ultra-fast" "fast"  "3mo" "6mo" "12mo" "24mo")
+keywords=("ultra-fast" "fast" "acute" "3mo" "6mo" "12mo" "24mo")
 
 # Define patient list
-subdirectories=("19978") #"12519" "13198" "13782" "13990" "14324" "16754" "19344" "19575" "19978" "19981" "20174" "20651" "20942" "21221" "22725" "22785" "23348")
+subdirectories=("12519" "13198" "13782" "13990" "14324" "16754" "19344" "19575" "19978" "19981" "20174" "20651" "20942" "21221" "22725" "22785" "23348")
 
 # get location of processed DWI images
 # define the base directory
@@ -136,34 +136,32 @@ for sub in "${subdirectories[@]}"; do
            convert_xfm -omat $dtiregmatinv -inverse $dtiregmat
            flirt -in "$t1_mask" -ref "$DTI_corr_scan" -applyxfm -init "$dtiregmatinv" -out "$t1maskdtispace"
            fslmaths "$t1maskdtispace" -bin "$t1maskdtispace"
-
-
            echo "Complete."
-           exit
+           
            echo "Performing dtifit..."
            dtifitdir="${save_dir}/dtifitdir"
            if [[ ! -d $dtifitdir ]]; then
                mkdir -p $dtifitdir
            fi
-           dtifit -k 
+           dtifit -k "$DTI_corr_scan" -o "$dtifitdir/dtifit_$timepoint" -m "$t1maskdtispace" -r "$DTI_bvec" -b "$DTI_bval" --save_tensor --wls
+           echo "dtifit for $sub $timepoint completed. "
            
-           exit
            
-           echo "registering FA to T1 bet for $sub $timepoint..."
-           flirt -in "$dtifitWLS_FA" -ref "$t1_scan" -out "${save_dir}dtifitWLS_FA_reg_$timepoint.nii.gz"
-           echo "Complete."
+           ##echo "registering FA to T1 bet for $sub $timepoint..."
+           #flirt -in "$dtifitWLS_FA" -ref "$t1_scan" -out "${save_dir}dtifitWLS_FA_reg_$timepoint.nii.gz"
+           #echo "Complete."
            
-           echo "registering MD to T1 bet for $sub $timepoint..."
-           flirt -in "$dtifitWLS_MD" -ref "$t1_scan" -out "${save_dir}dtifitWLS_MD_reg_$timepoint.nii.gz"
-           echo "Complete."
+           #echo "registering MD to T1 bet for $sub $timepoint..."
+           #flirt -in "$dtifitWLS_MD" -ref "$t1_scan" -out "${save_dir}dtifitWLS_MD_reg_$timepoint.nii.gz"
+           #echo "Complete."
            
-           echo "Registration for bet, FA and MD to T1 bet for $sub $timepoint complete."
+           #echo "Registration for bet, FA and MD to T1 bet for $sub $timepoint complete."
            
            # further reg not required for now
            #flirt -in $dtifitWLS_L1 -ref $t1_scan -out "$save_dir/dtifitWLS_L1_reg.nii.gz"
         fi
 
     done
-echo "Subject $sub dti to T1 registrations complete."
+echo "Subject $sub dti extraction complete."
 done
 echo "End of program."
