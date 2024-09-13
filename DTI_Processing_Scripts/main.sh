@@ -22,13 +22,13 @@ for sub in "${subdirectories[@]}"; do
 
         # Check if the nipype directory was found
         if [ -z "$nipype_dir" ]; then
-            echo "Error: 'nipype' directory not found for subject $sub at timepoint $timepoint"
+            echo "Warning: 'nipype' directory not found for subject $sub at timepoint $timepoint"
             continue  # skip this timepoint and continue with the next
         fi
 
         # Check it exists
         if [[ -d "$nipype_dir" ]]; then
-           #echo "nipype dir for subject $sub: $nipype_dir"
+           
            DTIspace_dir="$nipype_dir/DATASINK/DTIspace/"
            #echo "DTIspace_dir: $DTIspace_dir"
            
@@ -37,7 +37,7 @@ for sub in "${subdirectories[@]}"; do
            DTI_bval="${DTIspace_dir}dwi_proc/DTI_corrected.bval"
            DTI_bvec="${DTIspace_dir}dwi_proc/DTI_corrected.bvec"
            DTI_mask="${DTIspace_dir}masks/ANTS_T1_brain_mask.nii.gz"
-           echo "DTI_corr_scan location: $DTI_corr_scan"
+           #echo "DTI_corr_scan location: $DTI_corr_scan"
 	   
            dtifitWLS_FA="${DTIspace_dir}dti/dtifitWLS_FA.nii.gz"
            dtifitWLS_MD="${DTIspace_dir}dti/dtifitWLS_MD.nii.gz"
@@ -52,7 +52,7 @@ for sub in "${subdirectories[@]}"; do
            powermap="${DTIspace_dir}dti/powermap.nii.gz"
            traceMap_b1000="${DTIspace_dir}dti/traceMap_b1000.nii.gz"
 
-           echo "dtifitWLS_FA location: $dtifitWLS_FA"
+           #echo "dtifitWLS_FA location: $dtifitWLS_FA"
            
            save_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/$sub/dti_reg/"
            if [ ! -d $save_dir ]; then
@@ -62,7 +62,7 @@ for sub in "${subdirectories[@]}"; do
            dtibet3d="${save_dir}dtibet3d_$timepoint.nii.gz"
            
 
-           echo "doing bet extraction for $sub $timepoint on raw dti scan..."
+           echo "doing bet extraction for $sub $timepoint on corrected dti scan..."
            #use this mask to do brain extraction on DTI_corr_scan. Save to new place. 
            fslmaths $DTI_corr_scan -mul $DTI_mask $dtibet
            echo "bet complete."
@@ -91,22 +91,20 @@ for sub in "${subdirectories[@]}"; do
            fi
            
            echo "registering bet for $sub $timepoint..."
-
-           #echo "$dtifitWLS_FA"
-           #echo "$t1_scan"
-           #echo "$save_dir"
-           #echo "${save_dir}dtibet_reg.nii.gz"
            dtibet_reg="${save_dir}dtibet_reg_$timepoint.nii.gz"
-           # Extract the first volume from the 4D DTI image
            flirt -in "$dtibet" -ref "$t1_scan" -out $dtibet_reg # -omat "${save_dir}dtibet_reg.mat"
            echo "Complete."
+           
            echo "registering FA to T1 bet for $sub $timepoint..."
            flirt -in "$dtifitWLS_FA" -ref "$t1_scan" -out "${save_dir}dtifitWLS_FA_reg_$timepoint.nii.gz"
            echo "Complete."
+           
            echo "registering MD to T1 bet for $sub $timepoint..."
            flirt -in "$dtifitWLS_MD" -ref "$t1_scan" -out "${save_dir}dtifitWLS_MD_reg_$timepoint.nii.gz"
            echo "Complete."
-           echo "Registration for bet, FA and MD to T1 bet for $sub $timepoint complete. "
+           
+           echo "Registration for bet, FA and MD to T1 bet for $sub $timepoint complete."
+           
            # further reg not required for now
            #flirt -in $dtifitWLS_L1 -ref $t1_scan -out "$save_dir/dtifitWLS_L1_reg.nii.gz"
         fi
