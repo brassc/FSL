@@ -3,7 +3,7 @@
 module load fsl
 
 # Define the priority of keywords in an array
-keywords=("ultra-fast") # "fast" "acute" "3mo" "6mo" "12mo" "24mo")
+keywords=("ultra-fast" "fast" "acute" "3mo" "6mo" "12mo" "24mo")
 
 # Define patient list
 subdirectories=("12519")
@@ -63,7 +63,7 @@ for sub in "${subdirectories[@]}"; do
            dtibet3d="${save_dir}dtibet3d_$timepoint.nii.gz"
            
 
-           echo "doing bet extraction on raw scan..."
+           echo "doing bet extraction for $sub $timepoint on raw dti scan..."
            #use this mask to do brain extraction on DTI_corr_scan. Save to new place. 
            fslmaths $DTI_corr_scan -mul $DTI_mask $dtibet
            echo "bet complete."
@@ -91,7 +91,7 @@ for sub in "${subdirectories[@]}"; do
                echo "No T1 scan file found for timepoint $timepoint."
            fi
            
-           echo "registering 1"
+           echo "registering bet for $sub $timepoint..."
 
            #echo "$dtifitWLS_FA"
            #echo "$t1_scan"
@@ -100,16 +100,19 @@ for sub in "${subdirectories[@]}"; do
            dtibet_reg="${save_dir}dtibet_reg_$timepoint.nii.gz"
            # Extract the first volume from the 4D DTI image
            flirt -in "$dtibet" -ref "$t1_scan" -out $dtibet_reg # -omat "${save_dir}dtibet_reg.mat"
-           
-           echo "registering 2"
+           echo "Complete."
+           echo "registering FA to T1 bet for $sub $timepoint..."
            flirt -in "$dtifitWLS_FA" -ref "$t1_scan" -out "${save_dir}dtifitWLS_FA_reg_$timepoint.nii.gz"
-           
-           echo "registering 3"
+           echo "Complete."
+           echo "registering MD to T1 bet for $sub $timepoint..."
            flirt -in "$dtifitWLS_MD" -ref "$t1_scan" -out "${save_dir}dtifitWLS_MD_reg_$timepoint.nii.gz"
-           exit
+           echo "Complete."
+           echo "Registration for bet, FA and MD to T1 bet for $sub $timepoint complete. "
            # further reg not required for now
            #flirt -in $dtifitWLS_L1 -ref $t1_scan -out "$save_dir/dtifitWLS_L1_reg.nii.gz"
         fi
 
     done
+echo "Subject $sub dti to T1 registrations complete."
 done
+echo "End of program."
