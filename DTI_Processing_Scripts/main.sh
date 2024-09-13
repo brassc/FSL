@@ -135,6 +135,9 @@ for sub in "${subdirectories[@]}"; do
            dtiregmatinv="${save_dir}dtiregmatinv.mat"
            convert_xfm -omat $dtiregmatinv -inverse $dtiregmat
            flirt -in "$t1_mask" -ref "$DTI_corr_scan" -applyxfm -init "$dtiregmatinv" -out "$t1maskdtispace"
+           fslmaths "$t1maskdtispace" -bin "$t1maskdtispace"
+
+
            echo "Complete."
            exit
            echo "Performing dtifit..."
