@@ -123,14 +123,26 @@ for sub in "${subdirectories[@]}"; do
            dtiregmat="${save_dir}dtibet_reg_$timepoint.mat"
            flirt -in "$dtibet" -ref "$t1_scan" -out $dtibet_reg  -omat "$dtiregmat"
            echo "Complete."
-           echo "Applying this registration matrix to dti_corrected prebet image..."
-           flirt -in "$DTI_corr_scan" -ref "$t1_scan" -applyxfm -init "$dtiregmat" -out "${save_dir}DTI_corr_scan_reg_$timepoint.nii.gz" #-ref "$t1_scan"
+           #echo "Applying this registration matrix to dti_corrected prebet image..."
+           #flirt -in "$DTI_corr_scan" -ref "$t1_scan" -applyxfm -init "$dtiregmat" -out "${save_dir}DTI_corr_scan_reg_$timepoint.nii.gz" 
+           #echo "Complete."
+
+
+           # inverse transform t1_mask to dti space using the dtibet -> t1bet omat
+           echo "transforming t1 mask to corrected dti native space..."
+           t1maskdtispace="${save_dir}t1_mask_in_dti_space_$timepoint.nii.gz"
+           # get inverse of transform
+           dtiregmatinv="${save_dir}dtiregmatinv.mat"
+           convert_xfm -omat $dtiregmatinv -inverse $dtiregmat
+           flirt -in "$t1_mask" -ref "$DTI_corr_scan" -applyxfm -init "$dtiregmatinv" -out "$t1maskdtispace"
            echo "Complete."
-           echo "Perform dtifit..."
+           exit
+           echo "Performing dtifit..."
            dtifitdir="${save_dir}/dtifitdir"
            if [[ ! -d $dtifitdir ]]; then
                mkdir -p $dtifitdir
            fi
+           dtifit -k 
            
            exit
            
