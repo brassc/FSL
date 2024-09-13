@@ -143,7 +143,11 @@ Area analysis is completed independently of any ellipse or polynomial fits. The 
 
 In `longitudinal_main.py`, the difference between reference and deformed area is plotted, grouped by patient and timepoint. 
 
-Area change relative to first scan is also plotted (saved as `area_change_longitudinal.png`) as smooth splines for patients with more than 2 datapoints, and as a straight line for patients with 2 data points.  Original data first area is taken as datum 0, magnitude of other points is adjusted to reflect the new datum. A cubic spline is created from thi offset data and plotted. 
+Area change relative to first scan is also plotted (saved as `area_change_longitudinal.png`) as smooth splines for patients with more than 2 datapoints, and as a straight line for patients with 2 data points.  Original data first area is taken as datum 0, magnitude of other points is adjusted to reflect the new datum. A cubic spline is created from this offset data and plotted. 
+
+
+## Mixed effects model
+
 
 
 
@@ -152,7 +156,19 @@ Area change relative to first scan is also plotted (saved as `area_change_longit
 # DTI Processing #
 Path: `/home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi/19978/ultra-fast/Hour_00034.8016-Date_20111024/U-ID22691/nipype/DATASINK/DTIspace/dwi_proc/`
 
+The `main.sh` script located in `DTI_Processing_Scripts` folder extracts already processed dti images `DTI_corrected.nii.gz`, `dtifitWLS_FA.nii.gz`, `dtifitWLF_MD.nii.gz` from `patient/timepoint` folder location in the `DECOMPRESSION_Legacy` data.  This data was processed by Stefan Winzeck [1].
+
+BET extraction is performed on `DTI_corrected.nii.gz` using `fslmaths` to multiply it with an ANTS mask, from same dataset. 
+
+For each patient and timepoint, this BET extraction, FA and MD scans are registered to the corresponding T1 at the relevant timepoint. 
+
 Freesurfer location: `/home/cmb247/Desktop/Project_3/Freesurfer/`
+
+
+## References
+[1] Winzeck, S. (2020). Methods for Data Management in Multi-Centre MRI Studies and Applications to Traumatic Brain Injury [Apollo - University of Cambridge Repository]. https://doi.org/10.17863/CAM.71122
+
+
 
 
 
