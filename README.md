@@ -162,6 +162,10 @@ BET extraction is performed on `DTI_corrected.nii.gz` using `fslmaths` to multip
 
 For each patient and timepoint, this BET extraction, FA and MD scans are registered to the corresponding T1 at the relevant timepoint. 
 
+Region of interest analysis is completed using 10mm sphere around the end points of contour (manually picked coordinates).  These are recorded in `included_patient_info.csv`. 
+
+
+
 Freesurfer location: `/home/cmb247/Desktop/Project_3/Freesurfer/`
 
 
