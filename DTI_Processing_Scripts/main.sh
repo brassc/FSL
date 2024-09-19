@@ -79,7 +79,7 @@ for sub in "${subdirectories[@]}"; do
            # search preferentially for bet that has been manually modified
            # check fast first: i.e. protect against ultra-fast 
            if [ $timepoint == "fast" ]; then
-               t1_scan=$(find $t1_scan_dir -type f -name "*timepoint*modified*.nii.gz" ! -name "*mask*" ! -name "*segto*" ! -name "ultra")
+               t1_scan=$(find $t1_scan_dir -type f -name "*$timepoint*modified*.nii.gz" ! -name "*mask*" ! -name "*segto*" ! -name "ultra")
                if [ -z "$t1_scan" ]; then
                    t1_scan=$(find $t1_scan_dir -type f -name "*$timepoint*.nii.gz" ! -name "*mask*.nii.gz" ! -name "*segto*" ! -name "ultra")
                fi
@@ -92,8 +92,6 @@ for sub in "${subdirectories[@]}"; do
            fi
            
 
-           
-
            # Check if the scan was found
            if [[ -n "$t1_scan" ]]; then
                echo "Scan found: $t1_scan"
@@ -101,14 +99,27 @@ for sub in "${subdirectories[@]}"; do
                echo "No T1 scan file found for timepoint $timepoint."
            fi
 
-           ## MASK SEARCH
-           # search preferentially for mask that has been manually modified
-           t1_mask=$(find $t1_scan_dir -type f -name "*$timepoint*modified*mask*.nii.gz" ! -name "*segto*")
 
-           # If no file is found containing "modified", search again with just the timepoint
-           if [ -z "$t1_mask" ]; then
-               t1_mask=$(find $t1_scan_dir -type f -name "*$timepoint*mask*.nii.gz" ! -name "*segto*")
+
+
+           ## MASK SEARCH
+
+           # search preferentially for bet mask that has been manually modified
+           # check fast first: i.e. protect against ultra-fast 
+           if [ $timepoint == "fast" ]; then
+               t1_scan=$(find $t1_scan_dir -type f -name "*$timepoint*modified*mask*.nii.gz" ! -name "*segto*" ! -name "ultra")
+               if [ -z "$t1_scan" ]; then
+                   t1_scan=$(find $t1_scan_dir -type f -name "*$timepoint*mask*.nii.gz" ! -name "*segto*" ! -name "ultra")
+               fi
+           else
+               t1_scan=$(find $t1_scan_dir -type f -name "*$timepoint*modified*mask*.nii.gz" ! -name "*segto*")
+               # If no file is found containing "modified", search again with just the timepoint
+               if [ -z "$t1_scan" ]; then
+                   t1_scan=$(find $t1_scan_dir -type f -name "*$timepoint*mask*.nii.gz" ! -name "*segto*")
+               fi
            fi
+
+           
            # Check if the mask was found
            if [[ -n "$t1_mask" ]]; then
                echo "Mask found: $t1_mask"
@@ -146,19 +157,7 @@ for sub in "${subdirectories[@]}"; do
            dtifit -k "$DTI_corr_scan" -o "$dtifitdir/dtifit_$timepoint" -m "$t1maskdtispace" -r "$DTI_bvec" -b "$DTI_bval" --save_tensor --wls
            echo "dtifit for $sub $timepoint completed. "
            
-           
-           ##echo "registering FA to T1 bet for $sub $timepoint..."
-           #flirt -in "$dtifitWLS_FA" -ref "$t1_scan" -out "${save_dir}dtifitWLS_FA_reg_$timepoint.nii.gz"
-           #echo "Complete."
-           
-           #echo "registering MD to T1 bet for $sub $timepoint..."
-           #flirt -in "$dtifitWLS_MD" -ref "$t1_scan" -out "${save_dir}dtifitWLS_MD_reg_$timepoint.nii.gz"
-           #echo "Complete."
-           
-           #echo "Registration for bet, FA and MD to T1 bet for $sub $timepoint complete."
-           
-           # further reg not required for now
-           #flirt -in $dtifitWLS_L1 -ref $t1_scan -out "$save_dir/dtifitWLS_L1_reg.nii.gz"
+
         fi
 
     done
