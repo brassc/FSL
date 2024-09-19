@@ -107,15 +107,15 @@ for sub in "${subdirectories[@]}"; do
            # search preferentially for bet mask that has been manually modified
            # check fast first: i.e. protect against ultra-fast 
            if [ $timepoint == "fast" ]; then
-               t1_scan=$(find $t1_scan_dir -type f -name "*$timepoint*modified*mask*.nii.gz" ! -name "*segto*" ! -name "ultra")
-               if [ -z "$t1_scan" ]; then
-                   t1_scan=$(find $t1_scan_dir -type f -name "*$timepoint*mask*.nii.gz" ! -name "*segto*" ! -name "ultra")
+               t1_mask=$(find $t1_scan_dir -type f -name "*$timepoint*modified*mask*.nii.gz" ! -name "*segto*" ! -name "ultra")
+               if [ -z "$t1_mask" ]; then
+                   t1_mask=$(find $t1_scan_dir -type f -name "*$timepoint*mask*.nii.gz" ! -name "*segto*" ! -name "ultra")
                fi
            else
-               t1_scan=$(find $t1_scan_dir -type f -name "*$timepoint*modified*mask*.nii.gz" ! -name "*segto*")
+               t1_mask=$(find $t1_scan_dir -type f -name "*$timepoint*modified*mask*.nii.gz" ! -name "*segto*")
                # If no file is found containing "modified", search again with just the timepoint
-               if [ -z "$t1_scan" ]; then
-                   t1_scan=$(find $t1_scan_dir -type f -name "*$timepoint*mask*.nii.gz" ! -name "*segto*")
+               if [ -z "$t1_mask" ]; then
+                   t1_mask=$(find $t1_scan_dir -type f -name "*$timepoint*mask*.nii.gz" ! -name "*segto*")
                fi
            fi
 
