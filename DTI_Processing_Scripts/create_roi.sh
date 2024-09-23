@@ -2,9 +2,9 @@
 
 # Define input CSV file and output directory
 csv_file="/home/cmb247/repos/FSL/Image_Processing_Scripts/included_patient_info.csv"
-output_dir="/home/cmb247/repos/FSL/DTI_Processing_Scripts"
-dti_data="/home/cmb247/Desktop/Project_3/BET_Extractions/"  # Path to dtifit FA image
-t1_data="/path/to/T1_data"          # Path to T1 image
+#output_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/"
+#dti_data="/home/cmb247/Desktop/Project_3/BET_Extractions/"  # Path to dtifit FA image
+#t1_data="/path/to/T1_data"          # Path to T1 image
 radius=5                            # Radius for ROI sphere
 
 # Read the CSV file line by line, skipping the header
@@ -12,12 +12,18 @@ tail -n +2 "$csv_file" | while IFS=, read -r patient_id timepoint z anterior_x a
 do
     # Skip excluded patients
     if [ "$excluded" -eq 0 ]; then
+     
+        # defome output directory
+        output_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/"${patient_id}"/dti_reg/rois/"
+        if [ ! -d "$output_dir" ]; then
+            mkdir -p "$output_dir"
+        fi
         
         # Define filenames for ROIs
-        anterior_roi_file="${output_dir}/roi_${patient_id}_${timepoint}_anterior.nii.gz"
-        posterior_roi_file="${output_dir}/roi_${patient_id}_${timepoint}_posterior.nii.gz"
-        baseline_anterior_roi_file="${output_dir}/roi_${patient_id}_${timepoint}_baseline_anterior.nii.gz"
-        baseline_posterior_roi_file="${output_dir}/roi_${patient_id}_${timepoint}_baseline_posterior.nii.gz"
+        anterior_roi_file="${output_dir}roi_${timepoint}_anterior.nii.gz"
+        posterior_roi_file="${output_dir}roi_${timepoint}_posterior.nii.gz"
+        baseline_anterior_roi_file="${output_dir}roi_${timepoint}_baseline_anterior.nii.gz"
+        baseline_posterior_roi_file="${output_dir}roi_${timepoint}_baseline_posterior.nii.gz"
         
         # Find the DTI data for the patient and timepoint
         dti_data_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/${patient_id}/dti_reg/dtifitdir/"
@@ -44,7 +50,7 @@ do
         baseline_anterior_FA=$(fslstats "$dti_data" -k "$baseline_anterior_roi_file" -M)
         baseline_posterior_FA=$(fslstats "$dti_data" -k "$baseline_posterior_roi_file" -M)
 
-        echo "${patient_id}, ${timepoint}, ${anterior_FA}, ${posterior_FA}, ${baseline_anterior_FA}, ${baseline_posterior_FA}" >> mean_fa_values.txt
+        echo "${patient_id}, ${timepoint}, ${anterior_FA}, ${posterior_FA}, ${baseline_anterior_FA}, ${baseline_posterior_FA}" >> "${output_dir}mean_fa_values.txt"
 
     fi
 done
