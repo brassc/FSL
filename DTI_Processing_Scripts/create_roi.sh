@@ -1,7 +1,7 @@
 #!/bin/bash
 module load fsl
 # Define input CSV file and output directory
-csv_file="/home/cmb247/repos/FSL/Image_Processing_Scripts/included_patient_info.csv"
+#csv_file="/home/cmb247/repos/FSL/Image_Processing_Scripts/included_patient_info.csv"
 #output_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/"
 #dti_data="/home/cmb247/Desktop/Project_3/BET_Extractions/"  # Path to dtifit FA image
 #t1_data="/path/to/T1_data"          # Path to T1 image
