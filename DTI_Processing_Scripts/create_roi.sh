@@ -20,6 +20,19 @@ RADIUS=9 # Example radius for ROI, adjust as needed
 # Main function
 main() {
     tail -n +2 "$CSV_FILE" | while IFS=, read -r excluded patient_id timepoint z anterior_x anterior_y posterior_x posterior_y side baseline_anterior_x baseline_posterior_x comments; do
+        # Trim spaces from all variables
+        excluded=$(printf "%s" "$excluded" | xargs)
+        patient_id=$(printf "%s" "$patient_id" | xargs)
+        timepoint=$(printf "%s" "$timepoint" | xargs)
+        z=$(printf "%s" "$z" | xargs)
+        anterior_x=$(printf "%s" "$anterior_x" | xargs)
+        anterior_y=$(printf "%s" "$anterior_y" | xargs)
+        posterior_x=$(printf "%s" "$posterior_x" | xargs)
+        posterior_y=$(printf "%s" "$posterior_y" | xargs)
+        baseline_anterior_x=$(printf "%s" "$baseline_anterior_x" | xargs)
+        baseline_posterior_x=$(printf "%s" "$baseline_posterior_x" | xargs)
+        side=$(printf "%s" "$side" | xargs)
+        
         printf "Excluded: %s, Patient ID: %s, Timepoint: %s, Z: %s, Anterior X: %s, Anterior Y: %s, Posterior X: %s, Posterior Y: %s, Baseline Anterior X: %s, Baseline Posterior X: %s, Side: %s\n" \
             "$excluded" "$patient_id" "$timepoint" "$z" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x" "$side"
 
