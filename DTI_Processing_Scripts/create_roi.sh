@@ -39,13 +39,14 @@ main() {
     
         # Skip excluded patients
         if [[ "$excluded" -eq 0 ]]; then
-            printf "Excluded: %s, Patient ID: %s, Timepoint: %s, Z: %s, Anterior X: %s, Anterior Y: %s, Posterior X: %s, Posterior Y: %s, Baseline Anterior X: %s, Baseline Posterior X: %s, Side: %s\n" \
-                "$excluded" "$patient_id" "$timepoint" "$z" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x" "$side"
-        
-            #process_patient "$patient_id" "$timepoint" "$z" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x"
+            #printf "Excluded: %s, Patient ID: %s, Timepoint: %s, Z: %s, Anterior X: %s, Anterior Y: %s, Posterior X: %s, Posterior Y: %s, Baseline Anterior X: %s, Baseline Posterior X: %s, Side: %s\n" \
+            #    "$excluded" "$patient_id" "$timepoint" "$z" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x" "$side"
+
+            process_patient "$patient_id" "$timepoint" "$z" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x"
         fi
-        exit
+
     done
+exit
 }
 
 # Function to process each patient
@@ -63,7 +64,7 @@ process_patient() {
     # Define directories and files
     local output_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/${patient_id}/dti_reg/rois/"
     mkdir -p "$output_dir"
-
+    return
     local dti_data_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/${patient_id}/dti_reg/dtifitdir/"
     local dti_data="${dti_data_dir}dti_${timepoint}_FA.nii.gz"
 
