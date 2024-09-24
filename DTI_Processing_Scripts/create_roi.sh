@@ -111,10 +111,10 @@ process_patient() {
     local posterior_roi_file="${output_dir}roi_${timepoint}_posterior.nii.gz"
     local baseline_anterior_roi_file="${output_dir}roi_${timepoint}_baseline_anterior.nii.gz"
     local baseline_posterior_roi_file="${output_dir}roi_${timepoint}_baseline_posterior.nii.gz"
-    local inv_t1_mask="${output_dir}${timepoint}_inv_t1_mask.nii.gz"
+    #local inv_t1_mask="${output_dir}${timepoint}_inv_t1_mask.nii.gz"
 
     t1_mask=$(find_t1_mask "$patient_id" "$timepoint")
-    fslmaths $t1_mask -binv $inv_t1_mask
+    #fslmaths $t1_mask -binv $inv_t1_mask
        
 
     create_spherical_roi() {
@@ -151,26 +151,19 @@ process_patient() {
         fslmaths "$roi_file" -mul "$t1_mask" "$roi_file"
         
         return
-
-        
-
-
     }
     echo "Creating ROIs for $patient_id $timepoint..."
     echo "Creating anterior ROI..."
     create_spherical_roi "$dti_data" $anterior_x $anterior_y $z $anterior_roi_file "$t1_mask"
-
     echo "Completed."
-    $fsleyes "$dti_data" "$anterior_roi_file"
-    return
     echo "Creating posterior ROI..."
-    create_spherical_roi "$dti_data" $posterior_x $posterior_y $z $posterior_roi_file "$output_dir"
+    create_spherical_roi "$dti_data" $posterior_x $posterior_y $z $posterior_roi_file "$t1_mask"
     echo "Completed."
     echo "Creating baseline anterior ROI..."
-    create_spherical_roi "$dti_data" $baseline_anterior_x $anterior_y $z $baseline_anterior_roi_file "$output_dir"
+    create_spherical_roi "$dti_data" $baseline_anterior_x $anterior_y $z $baseline_anterior_roi_file "$t1_mask"
     echo "Completed."
     echo "Creating baseline posterior ROI..."
-    create_spherical_roi "$dti_data" $baseline_posterior_x $posterior_y $z $baseline_posterior_roi_file "$output_dir"
+    create_spherical_roi "$dti_data" $baseline_posterior_x $posterior_y $z $baseline_posterior_roi_file "$t1_mask"
     echo "Completed."
     echo "ROIs for $patient_id $timepoint created successfully."
 
