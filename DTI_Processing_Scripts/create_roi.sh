@@ -83,6 +83,7 @@ process_patient() {
         z_coord="$4"
         roi_file="$5"
         radius=$RADIUS
+        t1_mask="$6"
 
         # Create empty mask
         fslmaths "$dti_data" -mul 0 "$roi_file"
@@ -97,6 +98,12 @@ process_patient() {
         
         # Remove intermediate sphere file
         rm "${roi_file%.nii.gz}_sphere.nii.gz"
+
+        # make ROI sit within the brain
+        fslmaths "$roi_file" -add "$t1_mask"
+        # threshold to keep only portion of sphere that now equals 2
+        fslmaths "$roi_file" -thr 2 "$roi_file"
+        
     }
     echo "Creating ROIs for $patient_id $timepoint..."
     echo "Creating anterior ROI..."
