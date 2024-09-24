@@ -157,7 +157,9 @@ for sub in "${subdirectories[@]}"; do
            dtifit -k "$DTI_corr_scan" -o "$dtifitdir/dtifit_$timepoint" -m "$t1maskdtispace" -r "$DTI_bvec" -b "$DTI_bval" --save_tensor --wls
            echo "dtifit for $sub $timepoint completed. "
            
-
+           echo "registering dtifit FA and MD to T1..."
+           flirt -in "$dtifitdir/dtifit_${timepoint}_FA.nii.gz" -ref "$t1_scan" -out "$dtifitdir/dtifit_${timepoint}_reg_FA.nii.gz"
+           flirt -in "$dtifitdir/dtifit_${timepoint}_MD.nii.gz" -ref "$t1_scan" -out "$dtifitdir/dtifit_${timepoint}_reg_MD.nii.gz"
         fi
 
     done
