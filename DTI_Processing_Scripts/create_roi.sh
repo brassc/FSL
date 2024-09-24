@@ -64,7 +64,6 @@ process_patient() {
     # Define directories and files
     local output_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/${patient_id}/dti_reg/rois/"
     mkdir -p "$output_dir"
-    return
     local dti_data_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/${patient_id}/dti_reg/dtifitdir/"
     local dti_data="${dti_data_dir}dti_${timepoint}_FA.nii.gz"
 
@@ -76,7 +75,7 @@ process_patient() {
 
     # Create anterior ROI
     fslmaths "$dti_data" -mul 0 -add 1 -roi "$anterior_x" 1 "$anterior_y" 1 "$z" 1 0 1 -kernel sphere "$RADIUS" -fmean "$anterior_roi_file"
-
+    return
     # Create posterior ROI
     fslmaths "$dti_data" -mul 0 -add 1 -roi "$posterior_x" 1 "$posterior_y" 1 "$z" 1 0 1 -kernel sphere "$RADIUS" -fmean "$posterior_roi_file"
 
