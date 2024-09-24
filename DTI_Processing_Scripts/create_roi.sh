@@ -50,6 +50,43 @@ main() {
 exit
 }
 
+# finding t1 mask 
+find_t1_mask() {
+    local patient_id="$1"
+    local timepoint="$2"
+    # Echo to indicate the process is starting
+    echo "Registering to T1 scan..."
+
+    # Set the T1 scan directory
+    t1_scan_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/$patient_id/T1w_time1_bias_corr_registered_scans/BET_Output/"
+
+    ## MASK SEARCH
+
+    # Search preferentially for BET mask that has been manually modified
+    # Check for "fast" first to avoid ultra-fast files
+    if [ "$timepoint" == "fast" ]; then
+        t1_mask=$(find "$t1_scan_dir" -type f -name "*$timepoint*modified*mask*.nii.gz" ! -name "*segto*" ! -name "*ultra*")
+        # If no modified mask is found, search for the non-modified mask
+        if [ -z "$t1_mask" ]; then
+            t1_mask=$(find "$t1_scan_dir" -type f -name "*$timepoint*mask*.nii.gz" ! -name "*segto*" ! -name "*ultra*")
+        fi
+    else
+        # Search for modified mask first
+        t1_mask=$(find "$t1_scan_dir" -type f -name "*$timepoint*modified*mask*.nii.gz" ! -name "*segto*")
+        # If no modified mask is found, search for the non-modified mask
+        if [ -z "$t1_mask" ]; then
+            t1_mask=$(find "$t1_scan_dir" -type f -name "*$timepoint*mask*.nii.gz" ! -name "*segto*")
+        fi
+    fi
+
+    # Return the mask location if found, or empty string if not
+    if [[ -n "$t1_mask" ]]; then
+        echo "$t1_mask"
+    else
+        echo ""  # Return an empty string if no mask is found
+    fi
+}
+
 # Function to process each patient
 process_patient() {
     local patient_id="$1"
@@ -67,6 +104,7 @@ process_patient() {
     mkdir -p "$output_dir"
     local dti_data_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/${patient_id}/dti_reg/"
     local dti_data="${dti_data_dir}dtifitWLS_FA_reg_${timepoint}.nii.gz"
+    local t1_mask="/home/cmb247/Desktop/Project_3/BET_Extractions/${patient_id}/T1w_time1_bias_corr_registered_scans/BET_Output/"
 
     # Define filenames for ROIs
     local anterior_roi_file="${output_dir}roi_${timepoint}_anterior.nii.gz"
@@ -74,6 +112,7 @@ process_patient() {
     local baseline_anterior_roi_file="${output_dir}roi_${timepoint}_baseline_anterior.nii.gz"
     local baseline_posterior_roi_file="${output_dir}roi_${timepoint}_baseline_posterior.nii.gz"
 
+    t1_mask=$(find_t1_mask "$patient_id" "$timepoint")
 
     create_spherical_roi() {
         # Arguments
@@ -98,17 +137,21 @@ process_patient() {
         
         # Remove intermediate sphere file
         rm "${roi_file%.nii.gz}_sphere.nii.gz"
-
+        echo "Removing spherical ROI that lies outside brain..."
         # make ROI sit within the brain
         fslmaths "$roi_file" -add "$t1_mask"
         # threshold to keep only portion of sphere that now equals 2
         fslmaths "$roi_file" -thr 2 "$roi_file"
         
+
+
     }
     echo "Creating ROIs for $patient_id $timepoint..."
     echo "Creating anterior ROI..."
-    create_spherical_roi "$dti_data" $anterior_x $anterior_y $z $anterior_roi_file "$output_dir"
+    create_spherical_roi "$dti_data" $anterior_x $anterior_y $z $anterior_roi_file "$output_dir" "$t1_mask"
     echo "Completed."
+    fsleyes "$dti_data" "$anterior_roi_file"
+    return
     echo "Creating posterior ROI..."
     create_spherical_roi "$dti_data" $posterior_x $posterior_y $z $posterior_roi_file "$output_dir"
     echo "Completed."
