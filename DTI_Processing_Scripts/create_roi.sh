@@ -77,7 +77,7 @@ EOF
 
 # Main function
 main() {
-    tail -n +2 "$CSV_FILE" | head -n 1 | while IFS=, read -r excluded patient_id timepoint z anterior_x anterior_y posterior_x posterior_y side baseline_anterior_x baseline_posterior_x comments; do
+    tail -n +2 "$CSV_FILE" | head -n 2 | while IFS=, read -r excluded patient_id timepoint z anterior_x anterior_y posterior_x posterior_y side baseline_anterior_x baseline_posterior_x comments; do
 
         # Trim spaces from all variables
         excluded=$(printf "%s" "$excluded" | xargs)
@@ -124,7 +124,7 @@ main() {
         fi
 
     done
-exit
+
 }
 
 # finding t1 mask 
@@ -179,8 +179,8 @@ process_patient() {
     # Define directories and files
     local output_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/${patient_id}/dti_reg/rois/"
     mkdir -p "$output_dir"
-    local dti_data_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/${patient_id}/dti_reg/"
-    local dti_data="${dti_data_dir}dtifitWLS_FA_reg_${timepoint}.nii.gz"
+    local dti_data_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/${patient_id}/dti_reg/dtifitdir/"
+    local dti_data="${dti_data_dir}dtifit_${timepoint}_reg_FA.nii.gz"
     local t1_mask="/home/cmb247/Desktop/Project_3/BET_Extractions/${patient_id}/T1w_time1_bias_corr_registered_scans/BET_Output/"
 
     # Define filenames for ROIs
@@ -235,22 +235,21 @@ process_patient() {
     echo "Creating anterior ROI..."
     create_spherical_roi "$dti_mask" $anterior_x $anterior_y $z $anterior_roi_file #"$dti_mask"
     echo "Completed."
-    exit
     echo "Creating posterior ROI..."
-    create_spherical_roi "$dti_data" $posterior_x $posterior_y $z $posterior_roi_file "$t1_mask"
+    create_spherical_roi "$dti_mask" $posterior_x $posterior_y $z $posterior_roi_file #"$t1_mask"
     echo "Completed."
     echo "Creating baseline anterior ROI..."
-    create_spherical_roi "$dti_data" $baseline_anterior_x $anterior_y $z $baseline_anterior_roi_file "$t1_mask"
+    create_spherical_roi "$dti_mask" $baseline_anterior_x $anterior_y $z $baseline_anterior_roi_file #"$t1_mask"
     echo "Completed."
     echo "Creating baseline posterior ROI..."
-    create_spherical_roi "$dti_data" $baseline_posterior_x $posterior_y $z $baseline_posterior_roi_file "$t1_mask"
+    create_spherical_roi "$dti_mask" $baseline_posterior_x $posterior_y $z $baseline_posterior_roi_file #"$t1_mask"
     echo "Completed."
     echo "ROIs for $patient_id $timepoint created successfully."
 
     
 
     
-    fsleyes "$dti_data" "$anterior_roi_file" "$posterior_roi_file" "$baseline_anterior_roi_file" "$baseline_posterior_roi_file"
+    #fsleyes "$dti_data" "$anterior_roi_file" "$posterior_roi_file" "$baseline_anterior_roi_file" "$baseline_posterior_roi_file"
     
     return
     
