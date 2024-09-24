@@ -19,7 +19,7 @@ RADIUS=9 # Example radius for ROI, adjust as needed
 
 # Main function
 main() {
-    tail -n +2 "$CSV_FILE" | while IFS=, read -r excluded patient_id timepoint z anterior_x anterior_y posterior_x posterior_y side baseline_anterior_x baseline_posterior_x comments; do
+    tail -n +2 "$CSV_FILE" | -head -n 1 | while IFS=, read -r excluded patient_id timepoint z anterior_x anterior_y posterior_x posterior_y side baseline_anterior_x baseline_posterior_x comments; do
 
         # Trim spaces from all variables
         excluded=$(printf "%s" "$excluded" | xargs)
