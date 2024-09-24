@@ -18,6 +18,63 @@ CSV_FILE="/home/cmb247/repos/FSL/Image_Processing_Scripts/included_patient_info.
 RADIUS=12 # Example radius for ROI, adjust as needed
 num_dilations=$(( $RADIUS / 3 )) # Number of dilations for ROI sphere
 
+
+# Function to transform coordinates into DTI space using Python script
+transform_coordinates() {
+    local t1_2_dwi_mat="$1"
+    local anterior_x="$2"
+    local anterior_y="$3"
+    local posterior_x="$4"
+    local posterior_y="$5"
+    local baseline_anterior_x="$6"
+    local baseline_posterior_x="$7"
+    local z="$8"
+    
+    python3 - <<EOF
+import numpy as np
+
+
+# Load the transformation matrix
+mat_file = '$t1_2_dwi_mat'
+try: 
+    transformation_matrix = np.loadtxt(mat_file)
+
+    # Define the individual coordinates for transformation
+    anterior_coords = np.array([$anterior_x, $anterior_y, $z, 1])
+    posterior_coords = np.array([$posterior_x, $posterior_y, $z, 1])
+    anterior_baseline_coords = np.array([$baseline_anterior_x, $anterior_y, $z, 1])
+    posterior_baseline_coords = np.array([$baseline_posterior_x, $posterior_y, $z, 1])
+
+    # Apply the transformation matrix to the anterior coordinates
+    transformed_anterior = anterior_coords.dot(transformation_matrix.T)
+
+    # Apply the transformation matrix to the posterior coordinates
+    transformed_posterior = posterior_coords.dot(transformation_matrix.T)
+
+    # Apply the transformation matrix to the baseline anterior coordinates
+    transformed_baseline_anterior = anterior_baseline_coords.dot(transformation_matrix.T)
+
+    # Apply the transformation matrix to the baseline posterior coordinates
+    transformed_baseline_posterior = posterior_baseline_coords.dot(transformation_matrix.T)
+
+    # Output the transformed anterior coordinates
+    print(f"Anterior Transformed Coordinates: X={transformed_anterior[0]:.4f}, Y={transformed_anterior[1]:.4f}, Z={transformed_anterior[2]:.4f}")
+
+    # Output the transformed posterior coordinates
+    print(f"Posterior Transformed Coordinates: X={transformed_posterior[0]:.4f}, Y={transformed_posterior[1]:.4f}, Z={transformed_posterior[2]:.4f}")
+
+    # Output the transformed baseline anterior coordinates
+    print(f"Baseline Anterior Transformed Coordinates: X={transformed_baseline_anterior[0]:.4f}, Y={transformed_baseline_anterior[1]:.4f}, Z={transformed_baseline_anterior[2]:.4f}")
+
+    # Output the transformed baseline posterior coordinates
+    print(f"Baseline Posterior Transformed Coordinates: X={transformed_baseline_posterior[0]:.4f}, Y={transformed_baseline_posterior[1]:.4f}, Z={transformed_baseline_posterior[2]:.4f}")
+except Exception as e:
+    print(f"Error loading transformation matrix: {e}")
+    exit(1)
+EOF
+}
+
+
 # Main function
 main() {
     tail -n +2 "$CSV_FILE" | head -n 1 | while IFS=, read -r excluded patient_id timepoint z anterior_x anterior_y posterior_x posterior_y side baseline_anterior_x baseline_posterior_x comments; do
@@ -42,7 +99,27 @@ main() {
         if [[ "$excluded" -eq 0 ]]; then
             #printf "Excluded: %s, Patient ID: %s, Timepoint: %s, Z: %s, Anterior X: %s, Anterior Y: %s, Posterior X: %s, Posterior Y: %s, Baseline Anterior X: %s, Baseline Posterior X: %s, Side: %s\n" \
             #    "$excluded" "$patient_id" "$timepoint" "$z" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x" "$side"
-
+            echo "transform coordinates into DTI space..."
+            # get transformation matrix
+            T1_2_DWI_mat=/home/cmb247/Desktop/Project_3/BET_Extractions/19978/dti_reg/dtiregmatinv_${timepoint}.mat
+            echo "T1_2_DWI_mat: $T1_2_DWI_mat"
+            
+            # # transform coordinates
+            # #echo "transforming anterior coordinates..."
+            # anterior_x=$(echo "$anterior_x $anterior_y $z 1" | flirt -in - -applyxfm -init "$T1_2_DWI_mat" -out - | awk '{print $1}')
+            # anterior_y=$(echo "$anterior_x $anterior_y $z 1" | flirt -in - -applyxfm -init "$T1_2_DWI_mat" -out - | awk '{print $2}')
+            # z=$(echo "$anterior_x $anterior_y $z 1" | flirt -in - -applyxfm -init "$T1_2_DWI_mat" -out - | awk '{print $3}')
+            # #echo "transforming posterior coordinates..."
+            # posterior_x=$(echo "$posterior_x $posterior_y $z 1" | flirt -in - -applyxfm -init "$T1_2_DWI_mat" -out - | awk '{print $1}')
+            # posterior_y=$(echo "$posterior_x $posterior_y $z 1" | flirt -in - -applyxfm -init "$T1_2_DWI_mat" -out - | awk '{print $2}')
+            # #echo "transforming baseline anterior coordinates..."
+            # baseline_anterior_x=$(echo "$baseline_anterior_x $anterior_y $z 1" | flirt -in - -applyxfm -init "$T1_2_DWI_mat" -out - | awk '{print $1}')
+            # #echo "transforming baseline posterior coordinates..."
+            # baseline_posterior_x=$(echo "$baseline_posterior_x $posterior_y $z 1" | flirt -in - -applyxfm -init "$T1_2_DWI_mat" -out - | awk '{print $1}')
+            # echo "transformed coordinates: anterior_x: $anterior_x, anterior_y: $anterior_y, posterior_x: $posterior_x, posterior_y: $posterior_y, baseline_anterior_x: $baseline_anterior_x, baseline_posterior_x: $baseline_posterior_x"
+            # exit
+            transform_coordinates "$T1_2_DWI_mat" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x" "$z"
+            exit
             process_patient "$patient_id" "$timepoint" "$z" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x"
         fi
 
@@ -111,11 +188,9 @@ process_patient() {
     local posterior_roi_file="${output_dir}roi_${timepoint}_posterior.nii.gz"
     local baseline_anterior_roi_file="${output_dir}roi_${timepoint}_baseline_anterior.nii.gz"
     local baseline_posterior_roi_file="${output_dir}roi_${timepoint}_baseline_posterior.nii.gz"
-    #local inv_t1_mask="${output_dir}${timepoint}_inv_t1_mask.nii.gz"
-
+    
     t1_mask=$(find_t1_mask "$patient_id" "$timepoint")
-    #fslmaths $t1_mask -binv $inv_t1_mask
-       
+         
 
     create_spherical_roi() {
         # Arguments
