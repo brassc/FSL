@@ -99,10 +99,10 @@ main() {
         if [[ "$excluded" -eq 0 ]]; then
             #printf "Excluded: %s, Patient ID: %s, Timepoint: %s, Z: %s, Anterior X: %s, Anterior Y: %s, Posterior X: %s, Posterior Y: %s, Baseline Anterior X: %s, Baseline Posterior X: %s, Side: %s\n" \
             #    "$excluded" "$patient_id" "$timepoint" "$z" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x" "$side"
-            echo "transform coordinates into DTI space..."
+            # echo "transform coordinates into DTI space..."
             # get transformation matrix
-            T1_2_DWI_mat=/home/cmb247/Desktop/Project_3/BET_Extractions/19978/dti_reg/dtiregmatinv_${timepoint}.mat
-            echo "T1_2_DWI_mat: $T1_2_DWI_mat"
+            #T1_2_DWI_mat=/home/cmb247/Desktop/Project_3/BET_Extractions/19978/dti_reg/dtiregmatinv_${timepoint}.mat
+            #echo "T1_2_DWI_mat: $T1_2_DWI_mat"
             
             # # transform coordinates
             # #echo "transforming anterior coordinates..."
@@ -118,8 +118,8 @@ main() {
             # baseline_posterior_x=$(echo "$baseline_posterior_x $posterior_y $z 1" | flirt -in - -applyxfm -init "$T1_2_DWI_mat" -out - | awk '{print $1}')
             # echo "transformed coordinates: anterior_x: $anterior_x, anterior_y: $anterior_y, posterior_x: $posterior_x, posterior_y: $posterior_y, baseline_anterior_x: $baseline_anterior_x, baseline_posterior_x: $baseline_posterior_x"
             # exit
-            transform_coordinates "$T1_2_DWI_mat" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x" "$z"
-            exit
+            #transform_coordinates "$T1_2_DWI_mat" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x" "$z"
+            #exit
             process_patient "$patient_id" "$timepoint" "$z" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x"
         fi
 
@@ -190,22 +190,26 @@ process_patient() {
     local baseline_posterior_roi_file="${output_dir}roi_${timepoint}_baseline_posterior.nii.gz"
     
     t1_mask=$(find_t1_mask "$patient_id" "$timepoint")
-         
+    dti_mask="${dti_data_dir}dtifitWLS_FA_reg_${timepoint}_MASK.nii.gz"
+    # binarise dti_data to create dti_mask
+    fslmaths "$dti_data" -bin "$dti_mask"   
+    # erode dti_mask using erode command by 2 voxel
+    #fslmaths "$dti_mask" -ero "$dti_mask"
 
     create_spherical_roi() {
         # Arguments
-        dti_data="$1"
+        dti_mask="$1"
         x_coord="$2"
         y_coord="$3"
         z_coord="$4"
         roi_file="$5"
         radius=$RADIUS
-        t1_mask="$6"
+        #t1_mask="$6"
         #echo "T1 mask: $t1_mask"
         
 
         # Create empty mask
-        fslmaths "$dti_data" -mul 0 "$roi_file"
+        fslmaths "$dti_mask" -mul 0 "$roi_file"
         
         # Mark voxel location at (x, y, z)
         fslmaths "$roi_file" -add 1 -roi "$x_coord" 1 "$y_coord" 1 "$z_coord" 1 0 1 "$roi_file"
@@ -222,15 +226,16 @@ process_patient() {
         fslmaths "$roi_file" -bin "$roi_file"
         
         echo "Removing portion of spherical ROI that lies outside brain..."
-        # multiply roi by t1 mask
-        fslmaths "$roi_file" -mul "$t1_mask" "$roi_file"
+        # multiply roi by brain mask
+        fslmaths "$roi_file" -mul "$dti_mask" "$roi_file"
         
         return
     }
     echo "Creating ROIs for $patient_id $timepoint..."
     echo "Creating anterior ROI..."
-    create_spherical_roi "$dti_data" $anterior_x $anterior_y $z $anterior_roi_file "$t1_mask"
+    create_spherical_roi "$dti_mask" $anterior_x $anterior_y $z $anterior_roi_file #"$dti_mask"
     echo "Completed."
+    exit
     echo "Creating posterior ROI..."
     create_spherical_roi "$dti_data" $posterior_x $posterior_y $z $posterior_roi_file "$t1_mask"
     echo "Completed."
