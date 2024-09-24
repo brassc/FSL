@@ -20,6 +20,7 @@ RADIUS=9 # Example radius for ROI, adjust as needed
 # Main function
 main() {
     tail -n +2 "$CSV_FILE" | while IFS=, read -r excluded patient_id timepoint z anterior_x anterior_y posterior_x posterior_y side baseline_anterior_x baseline_posterior_x comments; do
+
         # Trim spaces from all variables
         excluded=$(printf "%s" "$excluded" | xargs)
         patient_id=$(printf "%s" "$patient_id" | xargs)
@@ -35,7 +36,7 @@ main() {
         
         printf "Excluded: %s, Patient ID: %s, Timepoint: %s, Z: %s, Anterior X: %s, Anterior Y: %s, Posterior X: %s, Posterior Y: %s, Baseline Anterior X: %s, Baseline Posterior X: %s, Side: %s\n" \
             "$excluded" "$patient_id" "$timepoint" "$z" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x" "$side"
-
+        exit 
         # Skip excluded patients
         if [[ "$excluded" -eq 0 ]]; then
             process_patient "$patient_id" "$timepoint" "$z" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x"
@@ -95,6 +96,11 @@ extract_and_log_fa() {
     local patient_id="$7"
     local timepoint="$8"
 
+    local log_file="${output_dir}mean_fa_values.txt"
+    if [[ ! -f "$log_file" ]]; then
+        printf "Patient ID, Timepoint, Anterior FA, Posterior FA, Baseline Anterior FA, Baseline Posterior FA\n" > "$log_file"
+    fi
+
     # Extract FA values
     local anterior_FA; anterior_FA=$(fslstats "$dti_data" -k "$anterior_roi_file" -M)
     local posterior_FA; posterior_FA=$(fslstats "$dti_data" -k "$posterior_roi_file" -M)
@@ -102,7 +108,7 @@ extract_and_log_fa() {
     local baseline_posterior_FA; baseline_posterior_FA=$(fslstats "$dti_data" -k "$baseline_posterior_roi_file" -M)
 
     # Log results
-    printf "%s, %s, %s, %s, %s, %s\n" "$patient_id" "$timepoint" "$anterior_FA" "$posterior_FA" "$baseline_anterior_FA" "$baseline_posterior_FA" >> "${output_dir}mean_fa_values.txt"
+    printf "%s, %s, %s, %s, %s, %s\n" "$patient_id" "$timepoint" "$anterior_FA" "$posterior_FA" "$baseline_anterior_FA" "$baseline_posterior_FA" >> "${log_file}"
 }
 
 # Start the script
