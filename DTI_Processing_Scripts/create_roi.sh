@@ -98,7 +98,7 @@ process_patient() {
         # Remove intermediate sphere file
         rm "${roi_file%.nii.gz}_sphere.nii.gz"
     }
-    echo "Creating ROIs for patient: $patient_id, timepoint: $timepoint..."
+    echo "Creating ROIs for $patient_id $timepoint..."
     echo "Creating anterior ROI..."
     create_spherical_roi "$dti_data" $anterior_x $anterior_y $z $anterior_roi_file "$output_dir"
     echo "Completed."
@@ -111,7 +111,7 @@ process_patient() {
     echo "Creating baseline posterior ROI..."
     create_spherical_roi "$dti_data" $baseline_posterior_x $posterior_y $z $baseline_posterior_roi_file "$output_dir"
     echo "Completed."
-    echo "ROIs created successfully."
+    echo "ROIs for $patient_id $timepoint created successfully."
 
     
 
