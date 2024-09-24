@@ -74,7 +74,11 @@ process_patient() {
     local baseline_posterior_roi_file="${output_dir}roi_${timepoint}_baseline_posterior.nii.gz"
 
     # Create anterior ROI
-    fslmaths "$dti_data" -mul 0 -add 1 -roi "$anterior_x" 1 "$anterior_y" 1 "$z" 1 0 1 -kernel sphere "$RADIUS" -fmean "$anterior_roi_file"
+    # create empty mask of same dimensions as original data
+    fslmaths "$dti_data" -mul 0 "$anterior_roi_file"
+    # define sphere at specifed (x, y, z) location w given radius
+    fslmaths "$anterior_roi_file" -add 1 -roi "anterior_x" 1 "anterior_y" 1 "$z" 1 0 1 -kernel sphere "$RADIUS" -fmean "$anterior_roi_file"
+    #fslmaths "$dti_data" -mul 0 -add 1 -roi "$anterior_x" 1 "$anterior_y" 1 "$z" 1 0 1 -kernel sphere "$RADIUS" -fmean "$anterior_roi_file"
     return
     # Create posterior ROI
     fslmaths "$dti_data" -mul 0 -add 1 -roi "$posterior_x" 1 "$posterior_y" 1 "$z" 1 0 1 -kernel sphere "$RADIUS" -fmean "$posterior_roi_file"
