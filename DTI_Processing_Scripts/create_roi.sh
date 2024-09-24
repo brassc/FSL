@@ -64,8 +64,8 @@ process_patient() {
     # Define directories and files
     local output_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/${patient_id}/dti_reg/rois/"
     mkdir -p "$output_dir"
-    local dti_data_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/${patient_id}/dti_reg/dtifitdir/"
-    local dti_data="${dti_data_dir}dtifit_${timepoint}_FA.nii.gz"
+    local dti_data_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/${patient_id}/dti_reg/"
+    local dti_data="${dti_data_dir}dtibet_reg_${timepoint}_FA.nii.gz"
 
     # Define filenames for ROIs
     local anterior_roi_file="${output_dir}roi_${timepoint}_anterior.nii.gz"
