@@ -124,37 +124,6 @@ process_patient() {
     extract_and_log_fa "$dti_data" "$anterior_roi_file" "$posterior_roi_file" "$baseline_anterior_roi_file" "$baseline_posterior_roi_file" "$output_dir" "$patient_id" "$timepoint"
 }
 
-# Function to create a sphere ROI
-created_spherical_roi() {
-    # Arguments
-    dti_file="$1"  # Input DTI file or reference file
-    x="$2"   # X-coordinate for the voxel
-    y="$3"   # Y-coordinate for the voxel
-    z="$4"   # Z-coordinate for the voxel
-    radius=$RADIUS      # Sphere radius in mm (you can adjust this if necessary)
-    roi_file="$5"  # filename supplied dynamically
-    output_dir="$6"  # Output dir "" ""
-
-    
-
-    # Step 1: Create an empty mask with the same dimensions as the input data
-    fslmaths "$dti_file" -mul 0 "$roi_file"
-
-    # Step 2: Mark the voxel at (x, y, z) with a value of 1
-    fslmaths "$roi_file" -add 1 -roi "$x_coord" 1 "$y_coord" 1 "$z_coord" 1 0 1 "$roi_file"
-    fsleyes "$dti_file" "$roi_file"
-    return
-
-    # Step 3: Dilate the voxel to create a sphere with the given radius
-    fslmaths "$roi_file" -kernel sphere "$radius" -fmean "${roi_file%.nii.gz}_sphere.nii.gz" -odt float
-
-    # Step 4: Threshold the image to keep only values above 0.0001 (keeping only the bright white areas)
-    fslmaths "${roi_file%.nii.gz}_sphere.nii.gz" -thr 0.0001 "$roi_file" -odt float
-
-    rm "${roi_file%.nii.gz}_sphere.nii.gz"
-
-    echo "Created ROI: $roi_file"
-}
 
 # Function to extract FA values and log them
 extract_and_log_fa() {
