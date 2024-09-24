@@ -66,13 +66,13 @@ process_patient() {
     local output_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/${patient_id}/dti_reg/rois/"
     mkdir -p "$output_dir"
     local dti_data_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/${patient_id}/dti_reg/"
-    dti_data="${dti_data_dir}dtifitWLS_FA_reg_${timepoint}.nii.gz"
+    local dti_data="${dti_data_dir}dtifitWLS_FA_reg_${timepoint}.nii.gz"
 
     # Define filenames for ROIs
-    anterior_roi_file="${output_dir}roi_${timepoint}_anterior.nii.gz"
-    posterior_roi_file="${output_dir}roi_${timepoint}_posterior.nii.gz"
-    baseline_anterior_roi_file="${output_dir}roi_${timepoint}_baseline_anterior.nii.gz"
-    baseline_posterior_roi_file="${output_dir}roi_${timepoint}_baseline_posterior.nii.gz"
+    local anterior_roi_file="${output_dir}roi_${timepoint}_anterior.nii.gz"
+    local posterior_roi_file="${output_dir}roi_${timepoint}_posterior.nii.gz"
+    local baseline_anterior_roi_file="${output_dir}roi_${timepoint}_baseline_anterior.nii.gz"
+    local baseline_posterior_roi_file="${output_dir}roi_${timepoint}_baseline_posterior.nii.gz"
 
 
     create_spherical_roi() {
@@ -82,7 +82,7 @@ process_patient() {
         y_coord="$3"
         z_coord="$4"
         roi_file="$5"
-        radius=12
+        radius=$RADIUS
 
         # Create empty mask
         fslmaths "$dti_data" -mul 0 "$roi_file"
@@ -117,8 +117,7 @@ process_patient() {
 
     
     fsleyes "$dti_data" "$anterior_roi_file" "$posterior_roi_file" "$baseline_anterior_roi_file" "$baseline_posterior_roi_file"
-    #"${output_dir}roi_${timepoint}_anterior_sphere_binary.nii.gz"
-    #create_spherical_roi "$dti_data" $anterior_x $anterior_y $z $anterior_roi_file "$output_dir"
+    
     return
     
     # Extract and log FA values
