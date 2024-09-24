@@ -143,7 +143,7 @@ for sub in "${subdirectories[@]}"; do
            echo "transforming t1 mask to corrected dti native space..."
            t1maskdtispace="${save_dir}t1_mask_in_dti_space_$timepoint.nii.gz"
            # get inverse of transform
-           dtiregmatinv="${save_dir}dtiregmatinv.mat"
+           dtiregmatinv="${save_dir}dtiregmatinv_${timepoint}.mat"
            convert_xfm -omat $dtiregmatinv -inverse $dtiregmat
            flirt -in "$t1_mask" -ref "$DTI_corr_scan" -applyxfm -init "$dtiregmatinv" -out "$t1maskdtispace"
            fslmaths "$t1maskdtispace" -bin "$t1maskdtispace"
