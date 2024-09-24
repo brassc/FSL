@@ -160,6 +160,10 @@ for sub in "${subdirectories[@]}"; do
            echo "registering dtifit FA and MD to T1..."
            flirt -in "$dtifitdir/dtifit_${timepoint}_FA.nii.gz" -ref "$t1_scan" -out "$dtifitdir/dtifit_${timepoint}_reg_FA.nii.gz"
            flirt -in "$dtifitdir/dtifit_${timepoint}_MD.nii.gz" -ref "$t1_scan" -out "$dtifitdir/dtifit_${timepoint}_reg_MD.nii.gz"
+
+           echo "applying T1 mask to registration..."
+           fslmaths "$dtifitdir/dtifit_${timepoint}_reg_FA.nii.gz" -mul "$t1_mask" "$dtifitdir/dtifit_${timepoint}_reg_FA.nii.gz"
+           fslmaths "$dtifitdir/dtifit_${timepoint}_MD.nii.gz" -mul "$t1_mask" "$dtifitdir/dtifit_${timepoint}_MD.nii.gz"
         fi
 
     done
