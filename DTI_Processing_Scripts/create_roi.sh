@@ -19,7 +19,7 @@ RADIUS=9 # Example radius for ROI, adjust as needed
 
 # Main function
 main() {
-    tail -n +2 "$CSV_FILE" | -head -n 1 | while IFS=, read -r excluded patient_id timepoint z anterior_x anterior_y posterior_x posterior_y side baseline_anterior_x baseline_posterior_x comments; do
+    tail -n +2 "$CSV_FILE" | head -n 1 | while IFS=, read -r excluded patient_id timepoint z anterior_x anterior_y posterior_x posterior_y side baseline_anterior_x baseline_posterior_x comments; do
 
         # Trim spaces from all variables
         excluded=$(printf "%s" "$excluded" | xargs)
@@ -65,7 +65,7 @@ process_patient() {
     local output_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/${patient_id}/dti_reg/rois/"
     mkdir -p "$output_dir"
     local dti_data_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/${patient_id}/dti_reg/dtifitdir/"
-    local dti_data="${dti_data_dir}dti_${timepoint}_FA.nii.gz"
+    local dti_data="${dti_data_dir}dtifit_${timepoint}_FA.nii.gz"
 
     # Define filenames for ROIs
     local anterior_roi_file="${output_dir}roi_${timepoint}_anterior.nii.gz"
