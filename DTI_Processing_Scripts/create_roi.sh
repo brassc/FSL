@@ -16,6 +16,7 @@ module load fsl
 
 CSV_FILE="/home/cmb247/repos/FSL/Image_Processing_Scripts/included_patient_info.csv"
 RADIUS=12 # Example radius for ROI, adjust as needed
+num_dilations=$(( $RADIUS / 3 )) # Number of dilations for ROI sphere
 
 # Main function
 main() {
@@ -73,18 +74,22 @@ process_patient() {
     local baseline_anterior_roi_file="${output_dir}roi_${timepoint}_baseline_anterior.nii.gz"
     local baseline_posterior_roi_file="${output_dir}roi_${timepoint}_baseline_posterior.nii.gz"
 
-    # Create anterior ROI
-    # create empty mask of same dimensions as original data
-    fslmaths "$dti_data" -mul 0 "$anterior_roi_file"
-    # mark voxel location at (x, y, z) with value 1
-    fslmaths "$anterior_roi_file" -add 1 -roi "$anterior_x" $RADIUS "$anterior_y" $RADIUS "$z" $RADIUS 0 1 "$anterior_roi_file"
-    # create sphere of radius RADIUS at (x, y, z) location
-    #fslmaths "$anterior_roi_file" -kernel sphere "$RADIUS" -bin "$anterior_roi_file"
-    #fslmaths "$anterior_roi_file" -bin "$anterior_roi_file"
+    # # Create anterior ROI
+    # # create empty mask of same dimensions as original data
+    # fslmaths "$dti_data" -mul 0 "$anterior_roi_file"
+    # # mark voxel location at (x, y, z) with value 1
+    # fslmaths "$anterior_roi_file" -add 1 -roi "$anterior_x" 1 "$anterior_y" 1 "$z" 1 0 1 "$anterior_roi_file"
+    # # dilate voxel to create sphere
+    # fslmaths ${anterior_roi_file} -kernel sphere 12 -fmean "${output_dir}roi_${timepoint}_anterior_sphere.nii.gz" -odt float
+    # # keep only values above 0.0001 (i.e. set non bright white areas to 0)
+    # fslmaths "${output_dir}roi_${timepoint}_anterior_sphere.nii.gz" -thr 0.0001 ${anterior_roi_file} -odt float
+    # rm "${output_dir}roi_${timepoint}_anterior_sphere.nii.gz"
+
+   
 
     
-    fsleyes "$dti_data" "$anterior_roi_file"
-
+    # fsleyes "$dti_data" "$anterior_roi_file" #"${output_dir}roi_${timepoint}_anterior_sphere_binary.nii.gz"
+    create_spherical_roi "$dti_data" $anterior_x $anterior_y $z "anterior" "$output_dir"
     return
     # define sphere at specifed (x, y, z) location w given radius
     fslmaths "$anterior_roi_file" -add 1 -roi "anterior_x" 1 "anterior_y" 1 "$z" 1 0 1 -kernel sphere "$RADIUS" -fillh "$anterior_roi_file"
@@ -101,6 +106,35 @@ process_patient() {
 
     # Extract and log FA values
     extract_and_log_fa "$dti_data" "$anterior_roi_file" "$posterior_roi_file" "$baseline_anterior_roi_file" "$baseline_posterior_roi_file" "$output_dir" "$patient_id" "$timepoint"
+}
+
+# Function to create a sphere ROI
+create_spherical_roi() {
+    # Arguments
+    dti_file="$1"  # Input DTI file or reference file
+    x="$2"   # X-coordinate for the voxel
+    y="$3"   # Y-coordinate for the voxel
+    z="$4"   # Z-coordinate for the voxel
+    radius=$RADIUS      # Sphere radius in mm (you can adjust this if necessary)
+    roi_name="$5"  # Name to use for saving the output (anterior, posterior, etc.)
+    output_dir="$6"  # Output directory where the files will be saved
+
+    # Define the output file name for the spherical ROI
+    sphere_roi="${output_dir}/${roi_name}_roi.nii.gz"
+
+    # Step 1: Create an empty mask with the same dimensions as the input data
+    fslmaths "$dti_file" -mul 0 "$sphere_roi"
+
+    # Step 2: Mark the voxel at (x, y, z) with a value of 1
+    fslmaths "$sphere_roi" -add 1 -roi "$x_coord" 1 "$y_coord" 1 "$z_coord" 1 0 1 "$sphere_roi"
+
+    # Step 3: Dilate the voxel to create a sphere with the given radius
+    fslmaths "$sphere_roi" -kernel sphere "$radius" -fmean "$sphere_roi" -odt float
+
+    # Step 4: Threshold the image to keep only values above 0.0001 (keeping only the bright white areas)
+    fslmaths "$sphere_roi" -thr 0.0001 "$sphere_roi" -odt float
+
+    echo "ROI created for $roi_name at coordinates ($x_coord, $y_coord, $z_coord) and saved to $sphere_roi"
 }
 
 # Function to extract FA values and log them
