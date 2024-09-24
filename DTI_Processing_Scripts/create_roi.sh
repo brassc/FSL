@@ -9,12 +9,12 @@ module load fsl
 
 
 # Ensure CSV file is passed as argument
-if [[ -z "$1" ]]; then
-    printf "Usage: %s <csv_file>\n" "$0" >&2
-    exit 1
-fi
+#if [[ -z "$1" ]]; then
+#    printf "Usage: %s <csv_file>\n" "$0" >&2
+#    exit 1
+#fi
 
-CSV_FILE="$1"
+CSV_FILE="/home/cmb247/repos/FSL/Image_Processing_Scripts/included_patient_info.csv"
 RADIUS=9 # Example radius for ROI, adjust as needed
 
 # Main function
@@ -36,11 +36,15 @@ main() {
         
         printf "Excluded: %s, Patient ID: %s, Timepoint: %s, Z: %s, Anterior X: %s, Anterior Y: %s, Posterior X: %s, Posterior Y: %s, Baseline Anterior X: %s, Baseline Posterior X: %s, Side: %s\n" \
             "$excluded" "$patient_id" "$timepoint" "$z" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x" "$side"
-        exit 
+    
         # Skip excluded patients
         if [[ "$excluded" -eq 0 ]]; then
-            process_patient "$patient_id" "$timepoint" "$z" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x"
+            printf "Excluded: %s, Patient ID: %s, Timepoint: %s, Z: %s, Anterior X: %s, Anterior Y: %s, Posterior X: %s, Posterior Y: %s, Baseline Anterior X: %s, Baseline Posterior X: %s, Side: %s\n" \
+                "$excluded" "$patient_id" "$timepoint" "$z" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x" "$side"
+        
+            #process_patient "$patient_id" "$timepoint" "$z" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x"
         fi
+        exit
     done
 }
 
