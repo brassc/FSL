@@ -15,7 +15,7 @@ module load fsl
 #fi
 
 CSV_FILE="/home/cmb247/repos/FSL/Image_Processing_Scripts/included_patient_info.csv"
-RADIUS=9 # Example radius for ROI, adjust as needed
+RADIUS=12 # Example radius for ROI, adjust as needed
 
 # Main function
 main() {
@@ -76,8 +76,18 @@ process_patient() {
     # Create anterior ROI
     # create empty mask of same dimensions as original data
     fslmaths "$dti_data" -mul 0 "$anterior_roi_file"
+    # mark voxel location at (x, y, z) with value 1
+    fslmaths "$anterior_roi_file" -add 1 -roi "$anterior_x" $RADIUS "$anterior_y" $RADIUS "$z" $RADIUS 0 1 "$anterior_roi_file"
+    # create sphere of radius RADIUS at (x, y, z) location
+    #fslmaths "$anterior_roi_file" -kernel sphere "$RADIUS" -bin "$anterior_roi_file"
+    #fslmaths "$anterior_roi_file" -bin "$anterior_roi_file"
+
+    
+    fsleyes "$dti_data" "$anterior_roi_file"
+
+    return
     # define sphere at specifed (x, y, z) location w given radius
-    fslmaths "$anterior_roi_file" -add 1 -roi "anterior_x" 1 "anterior_y" 1 "$z" 1 0 1 -kernel sphere "$RADIUS" -fmean "$anterior_roi_file"
+    fslmaths "$anterior_roi_file" -add 1 -roi "anterior_x" 1 "anterior_y" 1 "$z" 1 0 1 -kernel sphere "$RADIUS" -fillh "$anterior_roi_file"
     #fslmaths "$dti_data" -mul 0 -add 1 -roi "$anterior_x" 1 "$anterior_y" 1 "$z" 1 0 1 -kernel sphere "$RADIUS" -fmean "$anterior_roi_file"
     return
     # Create posterior ROI
