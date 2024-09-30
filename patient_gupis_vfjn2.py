@@ -19,4 +19,10 @@ print(multiple_timepoint_patients_df)
 print("\nhemicraniectomy GUPI list:")
 print(multiple_timepoint_patients_df['GUPI'].to_string(index=False))
 
+multiple_timepoint_patients_df = multiple_timepoint_patients_df[['GUPI', 'First.scan.to.use.', 'Second.scan.to.use', 'Third.scan.to.use', 'Fourth.scan.to.use', 'Fifth.scan.to.use']]
+print(multiple_timepoint_patients_df)
+# save to csv
+multiple_timepoint_patients_df.to_csv('/home/cmb247/Desktop/Project_3/cmb247_longitudinal_hemicraniectomy_patients.csv', index=False)
+
+
 
