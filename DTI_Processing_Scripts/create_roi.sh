@@ -78,6 +78,8 @@ EOF
 # Main function
 main() {
     tail -n +2 "$CSV_FILE" | head -n 2 | while IFS=, read -r excluded patient_id timepoint z anterior_x anterior_y posterior_x posterior_y side baseline_anterior_x baseline_posterior_x comments; do
+        echo "CSV line: $excluded, $patient_id, $timepoint, $z, $anterior_x, $anterior_y, $posterior_x, $posterior_y, $baseline_anterior_x, $baseline_posterior_x, $side"
+        
 
         # Trim spaces from all variables
         excluded=$(printf "%s" "$excluded" | xargs)
@@ -245,11 +247,9 @@ process_patient() {
     create_spherical_roi "$dti_mask" $baseline_posterior_x $posterior_y $z $baseline_posterior_roi_file #"$t1_mask"
     echo "Completed."
     echo "ROIs for $patient_id $timepoint created successfully."
-
+    # Display ROIs in FSLeyes
     
-
-    
-    #fsleyes "$dti_data" "$anterior_roi_file" "$posterior_roi_file" "$baseline_anterior_roi_file" "$baseline_posterior_roi_file"
+    fsleyes "$dti_data" "$anterior_roi_file" "$posterior_roi_file" "$baseline_anterior_roi_file" "$baseline_posterior_roi_file"
     
     return
     
@@ -291,9 +291,9 @@ main
 exit
 # Read the CSV file line by line, skipping the header
 #excluded?, patient ID, timepoint, z coord (slice), anterior x coord, anterior y coord, posterior x coord, posterior y coord, side (L/R), baseline anterior x coord, baseline posterior x coord, COMMENTS
-
-tail -n +2 "$csv_file" | while IFS=, read -r excluded patient_id timepoint z anterior_x anterior_y posterior_x posterior_y side baseline_anterior_x baseline_posterior_x comments
+head -n 2 "$csv_file" | tail -n +2 "$csv_file" | while IFS=, read -r excluded patient_id timepoint z anterior_x anterior_y posterior_x posterior_y side baseline_anterior_x baseline_posterior_x comments
 echo "Excluded: $excluded, Patient ID: $patient_id, Timepoint: $timepoint, Z: $z, Anterior X: $anterior_x, Anterior Y: $anterior_y, Posterior X: $posterior_x, Posterior Y: $posterior_y, Baseline Anterior X: $baseline_anterior_x, Baseline Posterior X: $baseline_posterior_x, Side: $side"
+
 
 do
     # Skip excluded patients
