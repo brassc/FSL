@@ -5,7 +5,10 @@ import pandas as pd
 import statsmodels.formula.api as smf
 import seaborn as sns
 import sys
-from scipy.stats import wilcoxon
+from scipy.stats import mannwhitneyu
+import statsmodels.stats.multitest as smm
+from scipy.stats import ttest_rel, wilcoxon
+from statsmodels.stats.multitest import multipletests
 from itertools import combinations
 
 print('running stats_main.py')
@@ -31,13 +34,192 @@ patients_with_acute = acute_data['patient_id'].unique()
 print('patients with acute timepoint:', patients_with_acute)
 data_filtered = new_df[new_df['patient_id'].isin(patients_with_acute)]
 
+# Pivot data to align each patient’s timepoints as columns
+pivoted_data = data_filtered.pivot(index='patient_id', columns='timepoint', values='area_diff')
+pivoted_data = pivoted_data.rename_axis(None, axis=1)
+#pivoted_data.reset_index(inplace=True)  # Optional, to keep patient_id as a column
+print('data pivoted')
+print(pivoted_data.head())
+
+# List of timepoints
+timepoints = pivoted_data.columns.tolist()
+
+# Initialize dictionary to store results
+results = {}
+print('running pairwise comparisons')
+print(pivoted_data.dtypes)
+print(pivoted_data.isnull().sum())
+
+# Define baseline
+baseline = 'acute'
+# Remove baseline from timepoints
+timepoints_without_baseline = [tp for tp in timepoints if tp != baseline]
+
+# Perform pairwise comparisons between 'acute' and each other timepoint
+for timepoint in timepoints_without_baseline:
+    # Select non-missing pairs for 'acute' and the current timepoint
+    paired_data = pivoted_data[[baseline, timepoint]].dropna()
+
+    # If we have enough non-missing pairs, conduct the tests
+    if len(paired_data) > 1:  # At least two pairs needed for meaningful test
+        # Paired t-test
+        try:
+            stat_t, p_value_t = ttest_rel(paired_data[baseline], paired_data[timepoint])
+        except ValueError as e:
+            print(f"T-test error for timepoint {timepoint}: {e}")
+            stat_t, p_value_t = np.nan, np.nan
+
+        # Wilcoxon signed-rank test
+        try:
+            stat_w, p_value_w = wilcoxon(paired_data[baseline], paired_data[timepoint])
+        except ValueError as e:
+            print(f"Wilcoxon test error for timepoint {timepoint}: {e}")
+            stat_w, p_value_w = np.nan, np.nan
+    else:
+        # If there aren't enough pairs, set values to NaN
+        print(f"Not enough pairs for timepoint {timepoint}")
+        stat_t, p_value_t, stat_w, p_value_w = np.nan, np.nan, np.nan, np.nan
+
+    # Store results
+    results[timepoint] = {
+        'statistic_t': stat_t,
+        'p_value_t': p_value_t,
+        'statistic_w': stat_w,
+        'p_value_w': p_value_w
+    }
+
+# Convert results to DataFrame
+results_df = pd.DataFrame(results).T
+
+# Apply FDR correction on both sets of p-values
+results_df['corrected_p_value_t'] = multipletests(results_df['p_value_t'], method='fdr_bh')[1] # fdr_bh
+results_df['corrected_p_value_w'] = multipletests(results_df['p_value_w'], method='fdr_bh')[1]
+
+# Reset index to make 'timepoint' a column for easy reference
+results_df = results_df.reset_index().rename(columns={'index': 'timepoint'})
+
+
+# COMPARISON BETWEEN ALL OTHER TIMEPOINTS:
+# Initialize dictionary to store all pairwise comparisons
+results_all_pairs = {}
+
+# Perform pairwise comparisons among all timepoints excluding the baseline
+for timepoint1, timepoint2 in combinations(timepoints_without_baseline, 2):
+    paired_data = pivoted_data[[timepoint1, timepoint2]].dropna()
+
+    if len(paired_data) > 1:
+        # Paired t-test
+        try:
+            stat_t, p_value_t = ttest_rel(paired_data[timepoint1], paired_data[timepoint2])
+        except ValueError as e:
+            print(f"T-test error for pair ({timepoint1}, {timepoint2}): {e}")
+            stat_t, p_value_t = np.nan, np.nan
+
+        # Wilcoxon signed-rank test
+        try:
+            stat_w, p_value_w = wilcoxon(paired_data[timepoint1], paired_data[timepoint2])
+        except ValueError as e:
+            print(f"Wilcoxon test error for pair ({timepoint1}, {timepoint2}): {e}")
+            stat_w, p_value_w = np.nan, np.nan
+    else:
+        stat_t, p_value_t, stat_w, p_value_w = np.nan, np.nan, np.nan, np.nan
+
+    results_all_pairs[(timepoint1, timepoint2)] = {
+        'statistic_t': stat_t,
+        'p_value_t': p_value_t,
+        'statistic_w': stat_w,
+        'p_value_w': p_value_w
+    }
+
+# Convert all pairwise comparison results to DataFrame and apply FDR correction
+results_all_pairs_df = pd.DataFrame(results_all_pairs).T
+results_all_pairs_df.index = pd.MultiIndex.from_tuples(results_all_pairs_df.index, names=["timepoint1", "timepoint2"])
+results_all_pairs_df = results_all_pairs_df.reset_index()
+
+results_all_pairs_df['corrected_p_value_t'] = multipletests(results_all_pairs_df['p_value_t'], method='fdr_bh')[1]
+results_all_pairs_df['corrected_p_value_w'] = multipletests(results_all_pairs_df['p_value_w'], method='fdr_bh')[1]
+
+#results_all_pairs_df[['timepoint1', 'timepoint2']] = pd.DataFrame(results_all_pairs_df['index'].tolist(), index=results_all_pairs_df.index)
+#results_all_pairs_df = results_all_pairs_df.drop(columns=['index'])
 
 
 
 
 
+# Display results
+print(f"Results of pairwise comparisons between {baseline} and other timepoints:")
+print(results_df)
+
+print("\nResults of pairwise comparisons among other timepoints:")
+print(results_all_pairs_df)
 
 
+
+
+
+sys.exit()
+# Mann-Whitney U Test not valid in this case 
+# Perform pairwise Mann-Whitney U Test between 'acute' and each other timepoint
+baseline='acute'
+for col in pivoted_data.columns:
+    if col != baseline:
+        # Drop rows where either 'acute' or the comparison timepoint is missing
+        paired_data = pivoted_data[[baseline, col]].dropna()
+        
+        if not paired_data.empty:
+            # Perform Mann-Whitney U Test
+            stat, p_value = mannwhitneyu(paired_data[baseline], paired_data[col], alternative='greater')
+            results[col] = p_value
+
+# Apply FDR correction
+timepoints = list(results.keys())
+p_values = list(results.values())
+adjusted_p_values_fdr = smm.multipletests(p_values, method='fdr_bh')[1]
+
+# Apply Holm-Bonferroni correction
+adjusted_p_values_holm = smm.multipletests(p_values, method='holm')[1]
+
+# Display results for both adjustments
+print("FDR Adjusted p-values:")
+for timepoint, adj_p in zip(timepoints, adjusted_p_values_fdr):
+    print(f"Comparison: acute vs {timepoint} -> Adjusted p-value (FDR): {adj_p}")
+
+print("\nHolm-Bonferroni Adjusted p-values:")
+for timepoint, adj_p in zip(timepoints, adjusted_p_values_holm):
+    print(f"Comparison: acute vs {timepoint} -> Adjusted p-value (Holm-Bonferroni): {adj_p}")
+
+sys.exit()
+# Initialize dictionary to store results
+results = {}
+print('running pairwise comparisons')
+# Pairwise comparison for each timepoint with 'acute'
+for timepoint in timepoints:
+    if timepoint != 'acute':
+        # Drop patients with missing values at either timepoint
+        valid_pairs = pivoted_data[['acute', timepoint]].dropna()
+        
+        # Check for sufficient pairs before running the test
+        if len(valid_pairs) > 0:
+            # Conduct Wilcoxon signed-rank test
+            stat, p_value = wilcoxon(valid_pairs['acute'], valid_pairs[timepoint])
+            results[f'acute vs {timepoint}'] = {'statistic': stat, 'p_value': p_value}
+"""
+# Additional pairwise comparisons among non-'acute' timepoints
+for tp1, tp2 in combinations([tp for tp in timepoints if tp != 'acute'], 2):
+    # Drop patients with missing values at either timepoint
+    valid_pairs = pivoted_data[[tp1, tp2]].dropna()
+    
+    # Check for sufficient pairs before running the test
+    if len(valid_pairs) > 0:
+        # Conduct Wilcoxon signed-rank test
+        stat, p_value = wilcoxon(valid_pairs[tp1], valid_pairs[tp2])
+        results[f'{tp1} vs {tp2}'] = {'statistic': stat, 'p_value': p_value}
+"""
+# Convert results to DataFrame for better readability
+results_df = pd.DataFrame(results).T.sort_values(by='p_value')
+results_df
+
+print(results_df)
 
 
 sys.exit()
