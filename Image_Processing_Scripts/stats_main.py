@@ -5,6 +5,8 @@ import pandas as pd
 import statsmodels.formula.api as smf
 import seaborn as sns
 import sys
+from scipy.stats import wilcoxon
+from itertools import combinations
 
 # Load the data (note this data does not contain all timepoints w NaN value if not exist - only contains timepoints w data per original data)
 data = pd.read_csv('Image_Processing_Scripts/area_data.csv')
