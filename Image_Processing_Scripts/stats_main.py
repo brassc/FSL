@@ -8,6 +8,7 @@ import sys
 from scipy.stats import wilcoxon
 from itertools import combinations
 
+print('running stats_main.py')
 # Load the data (note this data does not contain all timepoints w NaN value if not exist - only contains timepoints w data per original data)
 data = pd.read_csv('Image_Processing_Scripts/area_data.csv')
 # drop cols from dataframe: remove area_def, area_ref and side
@@ -17,9 +18,21 @@ new_df=new_df.drop(columns='side', axis=1)
 
 # Drop rows where area_diff is NaN
 new_df = new_df.dropna(subset=['area_diff']) # there should be no NaN values in area_diff, but just in case
-
+print('rows dropped')
 # Ensure categorical values are categorical
+print('ensuring categorical values are categorical')
 new_df['timepoint']=pd.Categorical(new_df['timepoint'], categories=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+print(new_df.head())
+
+# Filter data to include only patients with an 'acute' time point
+print('filtering data to include only patients with an acute timepoint')
+acute_data = new_df[new_df['timepoint'] == 'acute']
+patients_with_acute = acute_data['patient_id'].unique()
+print('patients with acute timepoint:', patients_with_acute)
+data_filtered = new_df[new_df['patient_id'].isin(patients_with_acute)]
+
+
+
 
 
 
