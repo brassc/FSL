@@ -143,7 +143,7 @@ for sub in "${subdirectories[@]}"; do
            echo "transforming t1 mask to corrected dti native space..."
            t1maskdtispace="${save_dir}t1_mask_in_dti_space_$timepoint.nii.gz"
            # get inverse of transform
-           dtiregmatinv="${save_dir}dtiregmatinv.mat"
+           dtiregmatinv="${save_dir}dtiregmatinv_${timepoint}.mat"
            convert_xfm -omat $dtiregmatinv -inverse $dtiregmat
            flirt -in "$t1_mask" -ref "$DTI_corr_scan" -applyxfm -init "$dtiregmatinv" -out "$t1maskdtispace"
            fslmaths "$t1maskdtispace" -bin "$t1maskdtispace"
@@ -157,7 +157,25 @@ for sub in "${subdirectories[@]}"; do
            dtifit -k "$DTI_corr_scan" -o "$dtifitdir/dtifit_$timepoint" -m "$t1maskdtispace" -r "$DTI_bvec" -b "$DTI_bval" --save_tensor --wls
            echo "dtifit for $sub $timepoint completed. "
            
+           # new edits
+           echo "registering dtifit FA and MD to T1..."
+           flirt -in "$dtifitdir/dtifit_${timepoint}_FA.nii.gz" -ref "$t1_scan" -out "$dtifitdir/dtifit_${timepoint}_reg_FA.nii.gz"
+           flirt -in "$dtifitdir/dtifit_${timepoint}_MD.nii.gz" -ref "$t1_scan" -out "$dtifitdir/dtifit_${timepoint}_reg_MD.nii.gz"
 
+           echo "applying T1 mask to registration..."
+           # first downsample T1 mask to DTI resolution
+           t1_mask_downsampled="$dtifitdir/t1_mask_downsampled.nii.gz"
+           flirt -in "$t1_image" \
+              -ref "$dtifitdir/dtifit_${timepoint}_MD.nii.gz" \
+              -applyisoxfm 3 \
+              -out "$t1_mask_downsampled"
+
+
+
+
+
+           fslmaths "$dtifitdir/dtifit_${timepoint}_reg_FA.nii.gz" -mul "$t1_mask_downsampled" "$dtifitdir/dtifit_${timepoint}_reg_FA.nii.gz"
+           fslmaths "$dtifitdir/dtifit_${timepoint}_MD.nii.gz" -mul "$t1_mask_downsampled" "$dtifitdir/dtifit_${timepoint}_MD.nii.gz"
         fi
 
     done
