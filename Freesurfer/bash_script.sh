@@ -56,16 +56,18 @@ input_T1="${nifti_dir}T1w_time1_bias_corr_T1w_verio_P00030_19978_acute_20111102_
 #echo "recon-all pipeline complete."
 
 # Sphere flattening
-cd ../../Desktop/Project_3/Freesurfer/${patient_id}_${timepoint}/surf
+cd ../../../Desktop/Project_3/Freesurfer/${patient_id}_${timepoint}/surf
+echo "$(pwd)"
 # Flatten sphere using freesurfer's mri_flatten command
 #mri_flatten -s 19978_acute -t1 -n 20 -w 20 -l 20 -hemi lh -openmp 8
 mris_flatten -w 0 -distances 12 7 lh.patch.3d lh.patch.flat
-read -p "Flattening complete for lh. Press Enter to continue to right hemisphere..."
+#read -p "Flattening complete for lh. Press Enter to continue to right hemisphere..."
 #mri_flatten -s 19978_acute -t1 -n 20 -w 20 -l 20 -hemi rh -openmp 8
 mris_flatten -w 0 -distances 12 7 lh.patch.3d lh.patch.flat
 
 
 
+# From docs:
 # Flattening is not actually done in this script. This part just documents how one would go about performing the flattening. First, load the subject surface into tksurfer:
 
 # tksurfer subjid lh inflated
