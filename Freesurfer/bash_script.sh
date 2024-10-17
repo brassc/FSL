@@ -60,10 +60,10 @@ cd ../../../Desktop/Project_3/Freesurfer/${patient_id}_${timepoint}/surf
 echo "$(pwd)"
 # Flatten sphere using freesurfer's mri_flatten command
 #mri_flatten -s 19978_acute -t1 -n 20 -w 20 -l 20 -hemi lh -openmp 8
-mris_flatten -w 0 -distances 12 7 lh.patch.3d lh.patch.flat
+mris_flatten -w 0 -distances 12 7 lh.cort.patch.3d lh.cort.patch.flat
 #read -p "Flattening complete for lh. Press Enter to continue to right hemisphere..."
 #mri_flatten -s 19978_acute -t1 -n 20 -w 20 -l 20 -hemi rh -openmp 8
-mris_flatten -w 0 -distances 12 7 lh.patch.3d lh.patch.flat
+mris_flatten -w 0 -distances 12 7 rh.cort.patch.3d rh.cort.patch.flat
 
 
 
