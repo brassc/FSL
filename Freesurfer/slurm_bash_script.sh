@@ -3,8 +3,9 @@
 # sbatch allows #SbaTCH to be recognised
 #SBATCH --job-name=sphere_flatten
 #SBATCH --output=sphere_flatten_output.txt
-#SBATCH --ntasks=2           # Number of tasks (one for each hemisphere)
-#SBATCH --cpus-per-task=32   # Number of CPU cores per task (adjust based on your cluster setup)
+#SBATCH --partition=sapphire
+#SBATCH --ntasks=1           # Number of tasks (one for each hemisphere)
+#SBATCH --cpus-per-task=64   # Number of CPU cores per task (adjust based on your cluster setup)
 #SBATCH --time=12:00:00      # Maximum allowed
 
 module load freesurfer
@@ -69,13 +70,17 @@ echo "$(pwd)"
 # Sphere flattening in SLURM
 export OMP_NUM_THREADS=32 # Allocate 32 threads for each srun task
 
-srun --pty --nodes=1 --cpus-per-task=32 --time=12:00:00 -n1 mris_flatten -w 0 -distances 12 7 lh.cort.patch.3d lh.cort.patch.flat &
+#srun --pty --nodes=1 --cpus-per-task=32 --time=12:00:00 -n1 mris_flatten -w 0 -distances 12 7 lh.cort.patch.3d lh.cort.patch.flat &
 
 # Right Hemisphere
-srun --pty --nodes=1 --cpus-per-task=32 --time=12:00:00 -n1 mris_flatten -w 0 -distances 12 7 rh.cort.patch.3d rh.cort.patch.flat &
+#srun --pty --nodes=1 --cpus-per-task=64 --time=12:00:00 -n1 mris_flatten -w 0 -distances 12 7 rh.cort.patch.3d rh.cort.patch.flat &
 
 # Wait for both tasks to complete
-wait
+#wait
+
+# one hemisphere only
+mris_flatten -w 0 -distances 12 7 lh.cort.patch.3d lh.cort.patch.flat 
+
 
 echo "Flattening complete for both hemispheres."
 
@@ -86,7 +91,7 @@ exit
 mris_flatten -w 0 -distances 12 7 lh.patch.3d lh.patch.flat
 #read -p "Flattening complete for lh. Press Enter to continue to right hemisphere..."
 #mri_flatten -s 19978_acute -t1 -n 20 -w 20 -l 20 -hemi rh -openmp 8
-mris_flatten -w 0 -distances 12 7 lh.patch.3d lh.patch.flat
+mris_flatten -w 0 -distances 12 7 rh.patch.3d rh.patch.flat
 
 
 
