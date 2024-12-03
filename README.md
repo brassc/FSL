@@ -146,7 +146,10 @@ In `longitudinal_main.py`, the difference between reference and deformed area is
 Area change relative to first scan is also plotted (saved as `area_change_longitudinal.png`) as smooth splines for patients with more than 2 datapoints, and as a straight line for patients with 2 data points.  Original data first area is taken as datum 0, magnitude of other points is adjusted to reflect the new datum. A cubic spline is created from this offset data and plotted. 
 
 
-## Mixed effects model
+## Statistical Analysis
+Initial pilot data was analysed, subjects N = 12, total scans = 46. Initially, to account for between patient variability, a mixed effects model was trialled. However, due to significant sparsity in the pilot data, appropriate paired tests were conducted to discover relationships between categorical timepoints. Analysis is conducted in `stats_main.py`. 
+
+
 
 
 
