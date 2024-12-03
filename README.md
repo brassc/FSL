@@ -163,10 +163,18 @@ In `stats_main.py`, data is loaded from `area_data.csv` and `patient_id`,`timepo
 ### Pairwise Testing
 For all of a patient's timepoints, paired t-tests (`ttest_rel`) were conducted using the `acute` timeline as a baseline for comparison. If there were not enough pairs for the paired t-test to work, an exception was introduced setting `stat_t` and `p_value_t` to be `np.nan`. 
 
-Results were stored in a DataFrame as `results_df`. The False Discovery Rate (FDR) correction was then applied using `multipletests` from `statsmodels.stats.multitest` library with the `method` variable set to `fdr_bh`. 
+Results were stored in a DataFrame as `results_df`. The False Discovery Rate (FDR) correction was then applied using `multipletests` function from `statsmodels.stats.multitest` library with the `method` variable set to `fdr_bh`. 
 
 This process was similarly applied for all other pairs not containing the `acute` timepoint, stored as `results_all_pairs_df`. 
 
+#### Note about False Discovery Rate (FDR)
+It is important to apply the False Discovery Rate (FDR) correction due to performing multiple statistical tests, which increases the likelihood of false positive errors. 
+The FDR correction:
+1. Sorts p-values in ascending order
+2. Calculates adjusted p-values, $\^{p}_i$ using the formula $\^{p}_i$ = \frac{p_i \times \m}{i} where $p_i$ is a sorted $p-value, $m$ is the total number of tests and $i$ is the rank of the p-value from smallest to largest. 
+3. Adjusted p-values $\^{p}_i$ are compared to a chosen significance level. In the `fdr_bh` method (Benjamin-Hochberg procedure) used by `statsmodels.stats.multitest.multipletests` python function, the default significance level, $\alpha$ is set to 0.05. 
+- If $\^{p}_i \leq \alpha$, null hypothesis $H_0$ is rejected for that test. 
+- $\alpha$ is the maximum proportion of false positives accepted in the analysis.  
 
 
 # DTI Processing #
