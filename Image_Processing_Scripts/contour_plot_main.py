@@ -806,8 +806,8 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     filename = save_dir +"/" + timepoint+".png"
     plt.savefig(filename)
     #print("file path: ",filename)
-    #plt.show()
-    plt.close()
+    plt.show()
+    #plt.close()
 
     print(f"Image {timepoint}.png saved to {save_dir}")
     print(f"Contour point extraction for {patient_id} {timepoint} complete. \n")
