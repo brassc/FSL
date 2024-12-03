@@ -165,19 +165,7 @@ For all of a patient's timepoints, paired t-tests (`ttest_rel`) were conducted u
 
 Results were stored in a DataFrame as `results_df`. The False Discovery Rate (FDR) correction was then applied using `multipletests` from `statsmodels.stats.multitest` library with the `method` variable set to `fdr_bh`. 
 
-This process was similarly applied for 
-
-
-
-
-
-
-
-
-
-
-
-
+This process was similarly applied for all other pairs not containing the `acute` timepoint, stored as `results_all_pairs_df`. 
 
 
 
