@@ -176,7 +176,7 @@ The FDR correction:
     - If $q_i \leq \alpha$, null hypothesis $H_0$ is rejected for that test. 
     - $\alpha$ is the maximum proportion of false positives accepted in the analysis. 
 
-FDR-BH procedure was selected over more conservative measures e.g. Family-Wise Error Rate (FWER) methods including Holm-Bonferroni. This is because it is a simple measure with lower risk of failing to detect true positives, whilst still controlling for false positives in a manner useful for this exploratory research. At pilot study stage, the more stringent FWER methods were found toi be overly restrictive. 
+FDR-BH procedure was selected over more conservative measures e.g. Family-Wise Error Rate (FWER) methods including Holm-Bonferroni. This is because it is a simple measure with lower risk of failing to detect true positives, whilst still controlling for false positives in a manner useful for this exploratory research. At pilot study stage, the more stringent FWER methods were found to be overly restrictive. 
 
 
 # DTI Processing #
