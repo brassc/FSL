@@ -173,8 +173,8 @@ The FDR correction:
 1. Sorts p-values in ascending order
 2. Calculates adjusted p-values, $q_i$ using the formula $q_i$ = \frac{p_i \times \m}{i} where $p_i$ is a sorted $p-value, $m$ is the total number of tests and $i$ is the rank of the p-value from smallest to largest. 
 3. Adjusted p-values $q_i$ are compared to a chosen significance level. In the `fdr_bh` method (Benjamin-Hochberg procedure) used by `statsmodels.stats.multitest.multipletests` python function, the default significance level, $\alpha$ is set to 0.05. 
-- If $q_i \leq \alpha$, null hypothesis $H_0$ is rejected for that test. 
-- $\alpha$ is the maximum proportion of false positives accepted in the analysis.  
+    - If $q_i \leq \alpha$, null hypothesis $H_0$ is rejected for that test. 
+    - $\alpha$ is the maximum proportion of false positives accepted in the analysis.  
 
 
 # DTI Processing #
