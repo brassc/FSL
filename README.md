@@ -155,7 +155,9 @@ Missing data was not imputed due to the very high level of sparsity and the unce
 
 MCAR timepoints were not imputed due to the proportion of data that the imputed values would represent. This proportion would be so great that the analysis results would be overly dependent on the type of imputation, devaluing the analysis results. 
 
-For MAR and MNAR timepoints, these were not imputed due to the impossibility of distinguishing between the data types, the high likelihood of the data being MNAR and the difficulty in addressing MNAR in this particular dataset with high levels of sparsity. 
+For MAR and MNAR timepoints, these were not imputed due to the impossibility of distinguishing between the data types, the high likelihood of the data being MNAR and the difficulty in addressing MNAR in this particular dataset with high levels of sparsity. Imputation difficulties with MNAR data containing random effects include model overfitting and introducing bias or accidental data manipulation. The latter would stem from a lack of understanding of the dataset and any contextual variables that may or may not have been recorded or provided as covariates in the analysis. 
+
+### Pairwise Testing
 
 
 
