@@ -157,7 +157,19 @@ MCAR timepoints were not imputed due to the proportion of data that the imputed 
 
 For MAR and MNAR timepoints, these were not imputed due to the impossibility of distinguishing between the data types, the high likelihood of the data being MNAR and the difficulty in addressing MNAR in this particular dataset with high levels of sparsity. Imputation difficulties with MNAR data containing random effects include model overfitting and introducing bias or accidental data manipulation. The latter would stem from a lack of understanding of the dataset and any contextual variables that may or may not have been recorded or provided as covariates in the analysis. 
 
+### Loading and Cleaning Data
+In `stats_main.py`, data is loaded from `area_data.csv` and `patient_id`,`timepoint` and `area_diff` columns are retained for analysis. Since the `acute` timepoint was found to be of most interest as per the `area_change_longitudinal.png` visualisation, data was filtered such that all patients to be analysed had the `acute` timepoint. 
+
 ### Pairwise Testing
+For all of a patient's timepoints, paired t-tests (`ttest_rel`) were conducted using the `acute` timeline as a baseline for comparison. If there were not enough pairs for the paired t-test to work, an exception was introduced setting `stat_t` and `p_value_t` to be `np.nan`. 
+
+Results were stored in a DataFrame as `results_df`. The False Discovery Rate (FDR) correction was then applied using `multipletests` from `statsmodels.stats.multitest` library with the `method` variable set to `fdr_bh`. 
+
+This process was similarly applied for 
+
+
+
+
 
 
 
