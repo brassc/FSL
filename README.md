@@ -147,7 +147,18 @@ Area change relative to first scan is also plotted (saved as `area_change_longit
 
 
 ## Statistical Analysis
-Initial pilot data was analysed, subjects N = 12, total scans = 46. Initially, to account for between patient variability, a mixed effects model was trialled. However, due to significant sparsity in the pilot data, appropriate paired tests were conducted to discover relationships between categorical timepoints. Analysis is conducted in `stats_main.py`. 
+Initial pilot data was analysed, subjects N = 12, total scans = 46. Initially, to account for between patient variability, a mixed effects model was trialled. However, due to significant sparsity in the pilot data, appropriate paired tests were conducted to discover relationships between categorical timepoints. 
+Analysis is conducted in `stats_main.py`. 
+
+### Note on Imputation
+Missing data was not imputed due to the very high level of sparsity and the uncertainty surrounding missing data types. For example, a missing scan in between an early and a late san is likely missing completely at random (MCAR) data. However, missing scans at timepoints after any early - mid timepoint scans could be MCAR but could also be missing at random (MAR) or missing not at random (MNAR), e.g. if the patient dies. If their death was due to herniation (area of deformation measurement), then that would be MAR, if their death was due to any other or a combination of any other factors excluding area of deformation, that would be MNAR. 
+
+MCAR timepoints were not imputed due to the proportion of data that the imputed values would represent. This proportion would be so great that the analysis results would be overly dependent on the type of imputation, devaluing the analysis results. 
+
+For MAR and MNAR timepoints, these were not imputed due to the impossibility of distinguishing between the data types, the high likelihood of the data being MNAR and the difficulty in addressing MNAR in this particular dataset with high levels of sparsity. 
+
+
+
 
 
 
