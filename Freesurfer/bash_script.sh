@@ -21,8 +21,6 @@ input_T1="${nifti_dir}T1w_time1_bias_corr_T1w_verio_P00030_19978_acute_20111102_
 ## supply existing bet mask
 #mri_convert "${nifti_dir}BET_Output/T1w_time1_bias_corr_T1w_verio_P00030_19978_acute_20111102_U-ID22791_bias_corr_restore_registered_bet_rbc_-f_0.54_cropped_56.nii.gz" "${SUBJECTS_DIR}${patient_id}_$timepoint/mri/brainmask.mgz" # T1w_time1_bias_corr_T1w_verio_P00030_19978_acute_20111102_U-ID22791_bias_corr_restore_registered_bet_rbc_-f_0.54_cropped_56modified.nii.gz
 
-
-
 #resample to be 256 256 256
 
 
@@ -64,6 +62,7 @@ mris_flatten -w 0 -distances 12 7 lh.cort.patch.3d lh.cort.patch.flat
 #read -p "Flattening complete for lh. Press Enter to continue to right hemisphere..."
 #mri_flatten -s 19978_acute -t1 -n 20 -w 20 -l 20 -hemi rh -openmp 8
 mris_flatten -w 0 -distances 12 7 rh.cort.patch.3d rh.cort.patch.flat
+
 
 
 

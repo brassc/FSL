@@ -1,11 +1,11 @@
 #!/bin/bash
 # submit using: sbatch slurm_bash_script.sh
 # sbatch allows #SbaTCH to be recognised
-#SBATCH --job-name=sphere_flatten
+#SBATCH --job-name=lh_sphere_flatten
 #SBATCH --output=sphere_flatten_output.txt
-#SBATCH --partition=sapphire
+#SBATCH --partition=icelake
 #SBATCH --ntasks=1           # Number of tasks (one for each hemisphere)
-#SBATCH --cpus-per-task=64   # Number of CPU cores per task (adjust based on your cluster setup)
+#SBATCH --cpus-per-task=1   # Number of CPU cores per task (adjust based on your cluster setup)
 #SBATCH --time=12:00:00      # Maximum allowed
 
 module load freesurfer
@@ -68,7 +68,7 @@ cd ../../../Desktop/Project_3/Freesurfer/${patient_id}_${timepoint}/surf
 echo "$(pwd)"
 
 # Sphere flattening in SLURM
-export OMP_NUM_THREADS=32 # Allocate 32 threads for each srun task
+#export OMP_NUM_THREADS=32 # Allocate 32 threads for each srun task
 
 #srun --pty --nodes=1 --cpus-per-task=32 --time=12:00:00 -n1 mris_flatten -w 0 -distances 12 7 lh.cort.patch.3d lh.cort.patch.flat &
 
