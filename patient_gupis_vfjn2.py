@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import sys
 
 ## Load the data
 DC_data = pd.read_csv('Decompression_MRI_27092024.csv') # turns out this is CT data
@@ -35,13 +36,10 @@ mri_data_gupis = mri_data['GUPI'].unique()
 # Get the GUPIs of the patients with decompression surgery
 #decompression_data_gupis = multiple_timepoint_patients_df['GUPI'].unique()
 decompression_data_gupis = DC_data['GUPI'].unique()
-# Get the GUPIs of the patients with decompression surgery and MRI scans
-try:   
-    common_gupis = np.intersect1d(mri_data_gupis, decompression_data_gupis)
-except ValueError:
-    common_gupis = []
+# Get the GUPIs of the patients with decompression surgery and MRI scans  
+common_gupis = np.intersect1d(mri_data_gupis, decompression_data_gupis)
+if len(common_gupis) == 0:
     print("No patients with MRI scans and decompression surgery")
-    import sys
     sys.exit(1)
 
 print("\nPatients with MRI scan(s) and decompression surgery:")
@@ -59,6 +57,15 @@ duplicate_gupis = duplicate_gupis[duplicate_gupis > 1].index
 # Filter for those GUPIS
 common_gupis_df = common_gupis_df[common_gupis_df['GUPI'].isin(duplicate_gupis)].reset_index(drop=True)
 print(common_gupis_df)
+
+
+"""
+# Check row containing GUPI in DC_data contains 'hemi' in SurgeriesCranial.SurgeryDescCranial column
+hemi_DC_data = DC_data[DC_data['SurgeriesCranial.SurgeryDescCranial'].str.contains('hemi')].reset_index(drop=True)
+# Print GUPI and Scan_ID columns of hemi_DC_data
+#common_gupis_df = common_gupis_df[common_gupis_df['GUPI'].isin(hemi_DC_data['GUPI'])].reset_index(drop=True)
+"""
+
 
 
 
