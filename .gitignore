@@ -160,3 +160,4 @@ Image_Processing_Scripts/plots/*
 Image_Processing_Scripts/area_diff_boxplot.png
 Image_Processing_Scripts/area_change_longitudinal.png
 Decompression_MRI_27092024.csv
+Imaging_center_CT_CDE_longitudinal*.csv
