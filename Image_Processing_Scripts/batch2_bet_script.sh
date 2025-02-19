@@ -95,7 +95,7 @@ write_log() {
 ## MAIN SCRIPT EXECUTION
 
 # Select input_basename based on timepoint
-input_basename=$(basename $(ls ${input_directory}T1_bias-Hour-${timepoint}*.nii.gz | sed 's/\.nii\.gz$//'))
+input_basename=$(basename $(ls ${input_directory}T1_bias-Hour-${timepoint}*.nii.gz))
 
 
 echo "Final input basename is $input_basename"
@@ -103,9 +103,72 @@ input_basename_without_extension="${input_basename%.nii.gz}"
 input_image="${input_directory}${input_basename}"
 echo "Input image: $input_image"
 
-fsleyes $input_image
+#fsleyes $input_image
+
+# Define output parameters
+GUPI_dir=$(dirname "${input_directory}")
+output_directory="$GUPI_dir/BET_Output/"
+echo "output dir: $output_directory"
 
 
+
+
+if [ $neck_cut -eq 0 ]; then
+    output_basename="${input_basename_without_extension}_bet_rbc_${bet_params_filename}.nii.gz"
+    mask_output_basename="${input_basename_without_extension}_bet_mask_rbc_${bet_params_filename}.nii.gz"
+else
+    output_basename="${input_basename_without_extension}_bet_rbc_${bet_params_filename}_cropped_$neck_cut.nii.gz"
+    mask_output_basename="${input_basename_without_extension}_bet_mask_rbc_${bet_params_filename}_cropped_$neck_cut.nii.gz"
+fi
+    
+output_image="${output_directory}${output_basename}"
+output_mask="${output_directory}${mask_output_basename}"
+
+
+
+# cropping variables
+lower_part_mask="${output_directory}lower_part_mask.nii.gz"
+upper_part_mask="${output_directory}upper_part_mask.nii.gz"
+upper_brain="${output_directory}upper_brain.nii.gz"
+
+
+# Verify input image
+if [ ! -f "$input_image" ]; then
+    echo "Error: input_image ${input_image} does not exist."
+    exit 1
+fi
+
+
+
+echo "Checking if output file exists..."
+
+
+
+# Check output directory exists, if not make it
+mkdir -p "$output_directory" 
+
+## Check if output file already exists
+if [ -f "$output_image" ]; then
+    echo "Output file ${output_image} already exists. Skipping BET."
+    echo "Writing to log..."
+    write_log #user defined function
+    echo "Opening in fsleyes..."
+    fsleyes $input_image $output_image $output_mask
+    exit 0
+else
+    "Output file $output_image does not exist. Proceeding with BET"
+fi
+
+
+# BET
+perform_bet_and_crop_neck
+
+echo "Writing to log..."
+write_log
+
+# View with fsleyes
+echo "Opening in fsleyes..."
+fsleyes $input_image $output_image $output_mask
 
 
 
