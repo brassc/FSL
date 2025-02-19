@@ -1,0 +1,40 @@
+excluded?, patient ID, timepoint, z coord (slice), anterior x coord, anterior y coord, posterior x coord, posterior y coord, side (L/R), baseline anterior x coord, baseline posterior x coord, COMMENTS
+0, 12519, ultra-fast, 148, 132, 160, 143, 50, L, 47, 31
+0, 12519, acute, 150, 132, 158, 142, 48, L, 46, 28, COMMENT=HAEMATOMA SQUASH
+0, 12519, 6mo, 149, 133, 160, 146, 50, L, 46, 27
+0, 12519, 24mo, 150, 132, 158, 144, 48, L, 46, 28
+1, 13198, too much alternative pathology
+0, 13782, ultra-fast, 173, 56, 169, 57, 42, R, 122, 117
+0, 13782, 3mo, 173, 50, 171, 54, 39, R, 127, 117, COMMENT=VENTRICULOMEGALY
+0, 13990, fast, 172, 108, 178, 135, 62, L, 60, 39, COMMENT=SKEWED SCAN ORIENTATION
+0, 13990, acute, 172, 107, 178, 134, 62, L, 61, 40, COMMENT=SKEWED SCAN ORIENTATION
+0, 14324, ultra-fast, 172, 121, 179, 148, 69, L, 43, 26
+0, 14324, acute, 179, 122, 180, 149, 69, L, 44, 22
+0, 14324, 12mo, 181, 124, 187, 158, 76, L, 51, 22
+0, 16754, fast, 155, 49, 191, 35, 78, R, 125, 143, COMMENT=4 DEGREE POLYNOMIAL SHAPE
+0, 16754, acute, 155, 51, 194, 35, 78, R, 122, 144
+0, 19344, fast, 153, 33, 147, 62, 42, R, 136, 115
+0, 19344, acute, 153, 33, 147, 62, 42, R, 136, 115
+1, 19575, no deformation
+0, 19978, ultra-fast, 142, 136, 165, 147, 75, L, 38, 35
+0, 19978, fast, 145, 136, 165, 143, 73, L, 41, 37
+0, 19978, acute, 145, 132, 167, 143, 73, L, 42, 37
+1, 19981, no deformation
+0, 20174, ultra-fast, 175, 103, 195, 140, 59, L, 68, 36
+0, 20174, fast, 175, 100, 196, 138, 58, L, 69, 35
+0, 20174, acute, 177, 100, 200, 140, 60, L, 77, 34, COMMENT = VENTRICULOMEGALY // CONTRALATERAL LESION
+0, 20174, 3mo, 174, 109, 196, 141, 62, L, 72, 30, COMMENT = VENTRICULOMEGALY // IPSILATERAL HAEMATOMA
+0, 20651, fast, 136, 40, 158, 64, 54, R, 133, 117
+0, 20651, acute, 134, 41, 158, 63, 54, R, 135, 127
+0, 20942, fast, 147, 122, 176, 141, 60, L, 47, 36 
+0, 20942, acute, 147, 122, 177, 145, 62, L, 52, 33
+0, 20942, 6mo, 153, 117, 178, 156, 64, L, 60, 31
+0, 20942, 24mo, 156, 118, 182, 148, 62, L, 62, 38
+1, 21221, no deformation
+0, 22725, ultra-fast, 165, 124, 158, 134, 50, L, 43, 42, COMMENT=POSTERIOR XY NOT SO VISIBLE
+0, 22725, acute, 169, 125, 156, 124, 46, L, 42, 45
+0, 22725, 12mo, 169, 129, 156, 128, 47, L, 42, 46
+1, 22785, poor quality 3mo scan
+0, 23348, fast, 176, 50, 177, 38, 71, R, 139, 158
+0, 23348, acute, 176, 53, 179, 39, 71, R, 139, 160
+0, 23348, 3mo, 188, 60, 178, 44, 66, R, 132, 152, COMMENT=VENTRICULOMEGALY
