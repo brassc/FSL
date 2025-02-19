@@ -1,6 +1,7 @@
 #!/bin/bash
 #Load modules
 module load fsl
+moule load freesurfer
 
 # Function to display usage
 usage() {
