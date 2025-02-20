@@ -45,9 +45,16 @@ patient id, timepoint, bet params, crop, manual modification, inclusion (1/0)
 23348, acute, -f 0.57, 85
 23348, 3mo, -f 0.55, 93
 2ZFz639, 00376, -f 0.3 -R, 29, MODIFIED=YES
-6DBs724
-6shy992
-7NPB553
+2ZFz639, 04310, -f 0.4, 29
+2ZFz639, 08659, -f 0.4, 29
+2ZFz639, 18046, -f 0.4, 29
+6DBs724, 00490, -f 0.1, 32, MODIFIED=YES
+6DBs724, 04311, -f 0.4, 32
+6DBs724, 08888, -f 0.4, 32
+6shy992, 03564, -f 0.4 -R, 32, MODIFIED=YES
+6shy992, 11055, -f 0.4, 30, MODIFIED=YES
+7NPB553, 00086, -f 0.4, 17
+7NPB553, 00086, -f 0.5, 17
 8EpS656
 8sRv548
 9GfT823
