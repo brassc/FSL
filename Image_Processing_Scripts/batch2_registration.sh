@@ -55,7 +55,7 @@ process_gupi() {
     if [ ! -d "$bet_dir" ]; then
         echo "Error: BET_Output directory not found in ${gupi_dir}"
         return 1
-    
+    fi
     
     # Find all Hour-XXXXX files and extract the earliest one
     # First try to find modified files with Hour- pattern
@@ -70,7 +70,7 @@ process_gupi() {
     if [ -z "$earliest_image" ]; then
         echo "Error: No Hour-XXXXX files found in ${bet_dir}"
         return 1
-    }
+    fi
     
     echo "Reference image: ${earliest_image}"
 
