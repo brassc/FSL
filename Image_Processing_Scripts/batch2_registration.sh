@@ -41,7 +41,7 @@ get_hour_number() {
 
 # Function to process a single GUPI
 process_gupi() {
-    local gupi_dir=$1
+    local gupi_name=$1
     local gupi_dir="${GUPI_BASE_PATH}/${gupi_name}"
     local bet_dir="${gupi_dir}/BET_Output"
 
@@ -50,6 +50,9 @@ process_gupi() {
         echo "Error: GUPI directory not found: ${gupi_dir}"
         return 1
     fi
+    echo "GUPI dir: $gupi_dir"
+    echo "BET dir: $bet_dir"
+    
     
     # Check if BET_Output directory exists
     if [ ! -d "$bet_dir" ]; then
@@ -59,12 +62,12 @@ process_gupi() {
     
     # Find all Hour-XXXXX files and extract the earliest one
     # First try to find modified files with Hour- pattern
-    earliest_image=$(find "$bet_dir" -name "*modified*Hour-[0-9]*" | sort | head -n 1)
+    earliest_image=$(find "$bet_dir" -name "*Hour-[0-9]*modified*" | grep -v "mask" | sort | head -n 1)
     #earliest_image=$(find "$bet_dir" -name "*Hour-[0-9]*" | sort | head -n 1)
     # If no modified files found, fall back to non-modified files
     if [ -z "$earliest_image" ]; then
         echo "No modified Hour- files found, falling back to non-modified files..."
-        earliest_image=$(find "$bet_dir" -name "*Hour-[0-9]*" | grep -v "modified" | sort | head -n 1)
+        earliest_image=$(find "$bet_dir" -name "*Hour-[0-9]*" | grep -v -e "modified" -e "mask" | sort | head -n 1)
     fi
     
     if [ -z "$earliest_image" ]; then
@@ -73,7 +76,7 @@ process_gupi() {
     fi
     
     echo "Reference image: ${earliest_image}"
-
+    
     # Get all unique hour numbers in order
     declare -a hour_numbers
     while IFS= read -r file; do
@@ -83,11 +86,12 @@ process_gupi() {
                 hour_numbers+=("$hour_num")
             fi
         fi
-    done < <(find "$bet_dir" -name "*Hour-[0-9]*")
+    done < <(find "$bet_dir" -name "*Hour-[0-9]*" | grep -v "mask")
     
     # Sort hour numbers
     IFS=$'\n' hour_numbers=($(sort <<<"${hour_numbers[*]}"))
     unset IFS
+    echo "Hour numbers found (in order): ${hour_numbers[*]}"
     
     # Create BET_Reg directory if it doesn't exist
     reg_dir="${gupi_dir}/BET_Reg"
@@ -102,29 +106,38 @@ process_gupi() {
         fi
         
         # Check for modified version first
-        modified_image=$(find "$bet_dir" -name "*modified*Hour-${hour}*")
+        modified_image=$(find "$bet_dir" -name "*modified*Hour-${hour}*" | grep -v "mask")
+        
         
         if [ ! -z "$modified_image" ]; then
             image="$modified_image"
         else
             # Use non-modified version if no modified exists
-            image=$(find "$bet_dir" -name "*Hour-${hour}*" | grep -v "modified")
+            image=$(find "$bet_dir" -name "*Hour-${hour}*" | grep -v -e "modified" -e "mask")
         fi
         
         if [ ! -z "$image" ]; then
             base_name=$(basename "${image%.nii.gz}")
+            echo $base_name
+            
             output_name="${reg_dir}/${base_name}_registered.nii.gz"
             #output_name="${image%.nii.gz}_registered.nii.gz"
+            echo "ref image: $earliest_image"
+            echo "image to reg: $image"
+            
             
             echo "Registering Hour-${hour} image (${image}) to reference..."
             flirt -in "$image" \
                   -ref "$earliest_image" \
                   -out "$output_name" \
-                  -omat "${image%.nii.gz}_to_ref.mat" \
-                  -dof 12 \
-                  -interp trilinear
+                  -omat "${reg_dir}/${base_name}_to_ref.mat" \
+                  #-dof 12 \
+                  #-interp trilinear
+           echo "Copying original bet image to reg dir..."
+           cp $earliest_image $reg_dir
         fi
     done
+    exit 1
   
     
     echo "Registration complete for ${gupi_dir}"
