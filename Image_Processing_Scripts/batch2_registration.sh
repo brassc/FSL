@@ -3,6 +3,9 @@
 # Load FSL module
 module load fsl
 
+# Base path for GUPI directories
+GUPI_BASE_PATH="/rds-d5/user/cmb247/hpc-work/Feb2025_working"
+
 # Function to print usage
 usage() {
     echo "Usage: $0 [-g GUPI] [-list list_file]"
@@ -39,7 +42,14 @@ get_hour_number() {
 # Function to process a single GUPI
 process_gupi() {
     local gupi_dir=$1
+    local gupi_dir="${GUPI_BASE_PATH}/${gupi_name}"
     local bet_dir="${gupi_dir}/BET_Output"
+
+
+    if [ ! -d "$gupi_dir" ]; then
+        echo "Error: GUPI directory not found: ${gupi_dir}"
+        return 1
+    fi
     
     # Check if BET_Output directory exists
     if [ ! -d "$bet_dir" ]; then
@@ -79,6 +89,11 @@ process_gupi() {
     IFS=$'\n' hour_numbers=($(sort <<<"${hour_numbers[*]}"))
     unset IFS
     
+    # Create BET_Reg directory if it doesn't exist
+    reg_dir="${gupi_dir}/BET_Reg"
+    mkdir -p "$reg_dir"
+
+
     # Process images by hour, preferring modified versions
     for hour in "${hour_numbers[@]}"; do
         # Skip if this is the reference image's hour
@@ -97,7 +112,9 @@ process_gupi() {
         fi
         
         if [ ! -z "$image" ]; then
-            output_name="${image%.nii.gz}_registered.nii.gz"
+            base_name=$(basename "${image%.nii.gz}")
+            output_name="${reg_dir}/${base_name}_registered.nii.gz"
+            #output_name="${image%.nii.gz}_registered.nii.gz"
             
             echo "Registering Hour-${hour} image (${image}) to reference..."
             flirt -in "$image" \
