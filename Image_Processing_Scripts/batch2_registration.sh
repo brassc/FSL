@@ -55,7 +55,7 @@ process_gupi() {
     if [ ! -d "$bet_dir" ]; then
         echo "Error: BET_Output directory not found in ${gupi_dir}"
         return 1
-    }
+    
     
     # Find all Hour-XXXXX files and extract the earliest one
     # First try to find modified files with Hour- pattern
