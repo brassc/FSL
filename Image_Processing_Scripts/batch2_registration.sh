@@ -62,20 +62,31 @@ process_gupi() {
     
     # Find all Hour-XXXXX files and extract the earliest one
     # First try to find modified files with Hour- pattern
-    earliest_image=$(find "$bet_dir" -name "*Hour-[0-9]*modified*" | grep -v "mask" | sort | head -n 1)
-    #earliest_image=$(find "$bet_dir" -name "*Hour-[0-9]*" | sort | head -n 1)
-    # If no modified files found, fall back to non-modified files
-    if [ -z "$earliest_image" ]; then
-        echo "No modified Hour- files found, falling back to non-modified files..."
-        earliest_image=$(find "$bet_dir" -name "*Hour-[0-9]*" | grep -v -e "modified" -e "mask" | sort | head -n 1)
-    fi
-    
-    if [ -z "$earliest_image" ]; then
+
+    # First find the earliest hour number from all images (modified or not)
+    earliest_hour=$(find "$bet_dir" -name "*Hour-[0-9]*" | grep -v "mask" | sort | head -n 1 | xargs basename | grep -o "Hour-[0-9]*" | grep -o "[0-9]*")
+
+    if [ -z "$earliest_hour" ]; then
         echo "Error: No Hour-XXXXX files found in ${bet_dir}"
         return 1
     fi
     
+    # Now try to find modified version of earliest hour
+    earliest_image=$(find "$bet_dir" -name "*Hour-${earliest_hour}*modified*" | grep -v "mask")
+    earliest_mask=$(find "$bet_dir" -name "*Hour-${earliest_hour}*modifiedmask*" )
+
+    # If no modified version exists, use non-modified version
+    if [ -z "$earliest_image" ]; then
+        echo "No modified version found for earliest hour, using non-modified version..."
+        earliest_image=$(find "$bet_dir" -name "*Hour-${earliest_hour}*" | grep -v -e "modified" -e "mask")
+        earliest_mask=$(find "$bet_dir" -name "*Hour-${earliest_hour}*mask*" | grep -v "modified")
+    fi
+
+
+
     echo "Reference image: ${earliest_image}"
+    echo "Reference mask: ${earliest_mask}"
+    exit 1
     
     # Get all unique hour numbers in order
     declare -a hour_numbers
