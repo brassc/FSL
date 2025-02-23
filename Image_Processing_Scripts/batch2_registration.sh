@@ -145,7 +145,7 @@ process_gupi() {
             
             # Check if registration has already been done, if so skip flirt but do fnirt
             if [ -f "$output_name" ]; then
-                echo "Registration already done for Hour-${hour}, skipping..."
+                echo "Linear registration already done for Hour-${hour}, skipping..."
                 
             else
 
@@ -178,7 +178,7 @@ process_gupi() {
                     echo "binarising mask"
                     fslmaths "${reg_dir}/${base_name}_registered_fnirt.nii.gz" -bin "${reg_dir}/${base_name}_registeredmask_fnirt.nii.gz"
                 fi
-        
+                
             fi
             
         fi
