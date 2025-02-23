@@ -160,21 +160,21 @@ process_gupi() {
                 fslmaths $output_name -bin "${reg_dir}/${base_name}_registeredmask.nii.gz"
             fi
 
-            # # Check if fnirt has already been done, if so skip
-            # if [ -f "${reg_dir}/${base_name}_registered_fnirt.nii.gz" ]; then
-            #     echo "fnirt already done for Hour-${hour}, skipping..."
-            # else
-            #     echo "Performing fnirt on Hour-${hour} image..."
-            #     fnirt --in "$output_name" \
-            #         --ref "$earliest_image" \
-            #         --aff "$omat" \
-            #         --cout "${reg_dir}/${base_name}_to_ref_warp" \ 
-            #         --iout="${reg_dir}/${base_name}_registered_fnirt.nii.gz"
+            # Check if fnirt has already been done, if so skip
+            if [ -f "${reg_dir}/${base_name}_registered_fnirt.nii.gz" ]; then
+                echo "fnirt already done for Hour-${hour}, skipping..."
+            else
+                echo "Performing fnirt on Hour-${hour} image..."
+                fnirt --in "$output_name" \
+                    --ref "$earliest_image" \
+                    --aff "$omat" \
+                    --cout "${reg_dir}/${base_name}_to_ref_warp" \ 
+                    --iout="${reg_dir}/${base_name}_registered_fnirt.nii.gz"
 
-            #     echo "binarising mask"
-            #     fslmaths "${reg_dir}/${base_name}_registered_fnirt.nii.gz" -bin "${reg_dir}/${base_name}_registeredmask_fnirt.nii.gz"
+                echo "binarising mask"
+                fslmaths "${reg_dir}/${base_name}_registered_fnirt.nii.gz" -bin "${reg_dir}/${base_name}_registeredmask_fnirt.nii.gz"
         
-            # fi
+            fi
             
         fi
     done
