@@ -178,10 +178,14 @@ process_gupi() {
             
         fi
     done
-    echo "Copying original bet image and mask to reg dir..."
-    cp $earliest_image $reg_dir
-    cp $earliest_mask $reg_dir
-    
+    # check if original image and mask have been copied to reg dir
+    if [ -f "${reg_dir}/${earliest_image}" ]; then
+        echo "Original image already copied to reg dir, skipping..."
+    else
+        echo "Copying original bet image and mask to reg dir..."
+        cp $earliest_image $reg_dir
+        cp $earliest_mask $reg_dir
+    fi    
   
     
     echo "Registration complete for ${gupi_dir}"
