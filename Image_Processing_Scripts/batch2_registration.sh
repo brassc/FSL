@@ -10,17 +10,17 @@ GUPI_BASE_PATH="/rds-d5/user/cmb247/hpc-work/Feb2025_working"
 usage() {
     echo "Usage: $0 [-g GUPI] [-list list_file]"
     echo "  -g    : Single GUPI directory to process"
-    echo "  -list : File containing list of GUPI directories"
+    echo "  -l : File containing list of GUPI directories"
     exit 1
 }
 
 # Parse command line arguments
-while getopts "g:list:" opt; do
+while getopts "g:l:" opt; do
     case $opt in
         g)
             single_gupi=$OPTARG
             ;;
-        list)
+        l)
             list_file=$OPTARG
             ;;
         *)
@@ -86,7 +86,7 @@ process_gupi() {
 
     echo "Reference image: ${earliest_image}"
     echo "Reference mask: ${earliest_mask}"
-    exit 1
+    
     
     # Get all unique hour numbers in order
     declare -a hour_numbers
@@ -117,38 +117,72 @@ process_gupi() {
         fi
         
         # Check for modified version first
-        modified_image=$(find "$bet_dir" -name "*modified*Hour-${hour}*" | grep -v "mask")
+        modified_image=$(find "$bet_dir" -name "*Hour-${hour}*modified*" | grep -v "mask")
+        modified_mask=$(find "$bet_dir" -name "*Hour-${hour}*modifiedmask*")
         
         
         if [ ! -z "$modified_image" ]; then
             image="$modified_image"
+            mask="$modified_mask"
         else
             # Use non-modified version if no modified exists
             image=$(find "$bet_dir" -name "*Hour-${hour}*" | grep -v -e "modified" -e "mask")
+            mask=$(find "$bet_dir" -name "*Hour-${hour}*mask" | grep -v "modified" )
         fi
         
         if [ ! -z "$image" ]; then
             base_name=$(basename "${image%.nii.gz}")
+            base_name_mask=$(basename "${mask%.nii.gz}")
             echo $base_name
             
             output_name="${reg_dir}/${base_name}_registered.nii.gz"
+            output_mask_name="${reg_dir}/${base_name_mask}_registered.nii.gz"
             #output_name="${image%.nii.gz}_registered.nii.gz"
             echo "ref image: $earliest_image"
             echo "image to reg: $image"
+
+            omat="${reg_dir}/${base_name}_to_ref.mat"
             
+            # Check if registration has already been done, if so skip flirt but do fnirt
+            if [ -f "$output_name" ]; then
+                echo "Registration already done for Hour-${hour}, skipping..."
+                fslmaths $output_name -bin "${reg_dir}/${base_name}_registeredmask.nii.gz"
+
+            else
+
+                echo "Registering Hour-${hour} image (${image}) to reference..."
+                flirt -in "$image" \
+                    -ref "$earliest_image" \
+                    -out "$output_name" \
+                    -omat "$omat" \
+                    #-dof 12 \
+                    #-interp trilinear
+                echo "binarising mask"
+                fslmaths $output_name -bin "${reg_dir}/${base_name}_registeredmask.nii.gz"
+            fi
+
+            # # Check if fnirt has already been done, if so skip
+            # if [ -f "${reg_dir}/${base_name}_registered_fnirt.nii.gz" ]; then
+            #     echo "fnirt already done for Hour-${hour}, skipping..."
+            # else
+            #     echo "Performing fnirt on Hour-${hour} image..."
+            #     fnirt --in "$output_name" \
+            #         --ref "$earliest_image" \
+            #         --aff "$omat" \
+            #         --cout "${reg_dir}/${base_name}_to_ref_warp" \ 
+            #         --iout="${reg_dir}/${base_name}_registered_fnirt.nii.gz"
+
+            #     echo "binarising mask"
+            #     fslmaths "${reg_dir}/${base_name}_registered_fnirt.nii.gz" -bin "${reg_dir}/${base_name}_registeredmask_fnirt.nii.gz"
+        
+            # fi
             
-            echo "Registering Hour-${hour} image (${image}) to reference..."
-            flirt -in "$image" \
-                  -ref "$earliest_image" \
-                  -out "$output_name" \
-                  -omat "${reg_dir}/${base_name}_to_ref.mat" \
-                  #-dof 12 \
-                  #-interp trilinear
-           echo "Copying original bet image to reg dir..."
-           cp $earliest_image $reg_dir
         fi
     done
-    exit 1
+    echo "Copying original bet image and mask to reg dir..."
+    cp $earliest_image $reg_dir
+    cp $earliest_mask $reg_dir
+    
   
     
     echo "Registration complete for ${gupi_dir}"
