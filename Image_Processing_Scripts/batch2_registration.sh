@@ -146,8 +146,7 @@ process_gupi() {
             # Check if registration has already been done, if so skip flirt but do fnirt
             if [ -f "$output_name" ]; then
                 echo "Registration already done for Hour-${hour}, skipping..."
-                fslmaths $output_name -bin "${reg_dir}/${base_name}_registeredmask.nii.gz"
-
+                
             else
 
                 echo "Registering Hour-${hour} image (${image}) to reference..."
