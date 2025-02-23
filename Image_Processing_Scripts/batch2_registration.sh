@@ -165,11 +165,12 @@ process_gupi() {
                 echo "fnirt already done for Hour-${hour}, skipping..."
             else
                 echo "Performing fnirt on Hour-${hour} image..."
+                
                 fnirt \
                     --ref="$earliest_image" \
                     --in="$output_name" \
                     --aff="$omat" \
-                    --cout="${reg_dir}/${base_name}_to_ref_warp" \ 
+                    --cout="${reg_dir}/${base_name}_to_ref_warp" \
                     --iout="${reg_dir}/${base_name}_registered_fnirt.nii.gz"
 
                 # if iout file exists, binarise it
