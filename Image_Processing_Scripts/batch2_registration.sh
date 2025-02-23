@@ -171,8 +171,11 @@ process_gupi() {
                     --cout "${reg_dir}/${base_name}_to_ref_warp" \ 
                     --iout="${reg_dir}/${base_name}_registered_fnirt.nii.gz"
 
-                echo "binarising mask"
-                fslmaths "${reg_dir}/${base_name}_registered_fnirt.nii.gz" -bin "${reg_dir}/${base_name}_registeredmask_fnirt.nii.gz"
+                # if iout file exists, binarise it
+                if [ -f "${reg_dir}/${base_name}_registered_fnirt.nii.gz" ]; then
+                    echo "binarising mask"
+                    fslmaths "${reg_dir}/${base_name}_registered_fnirt.nii.gz" -bin "${reg_dir}/${base_name}_registeredmask_fnirt.nii.gz"
+                fi
         
             fi
             
