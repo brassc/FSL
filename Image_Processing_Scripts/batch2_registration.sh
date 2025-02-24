@@ -148,11 +148,7 @@ process_gupi() {
                 echo "Linear registration already done for Hour-${hour}, skipping..."
                 
             else
-                echo "earliest image: $earliest_image"
-                #earliest_image=$(echo "$earliest_image" | head -n 1)
-                #echo "earliest image: $earliest_image"
-                exit 1
-
+                
                 echo "Registering Hour-${hour} image (${image}) to reference..."
                 flirt -in "$image" \
                     -ref "$earliest_image" \
