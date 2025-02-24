@@ -172,7 +172,7 @@ process_gupi() {
             if [ -f "${reg_dir}/${base_name}_registered_fnirt.nii.gz" ]; then
                 echo "fnirt already done for Hour-${hour}, skipping..."
             else
-                echo "Performing fnirt on Hour-${hour} image... for GUPI ${gupi_dir}"
+                echo "Performing fnirt on Hour-${hour} image... for GUPI ${gupi_name}"
                 
                 fnirt \
                     --ref="$earliest_image" \
