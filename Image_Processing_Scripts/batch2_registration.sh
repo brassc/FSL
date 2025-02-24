@@ -163,7 +163,7 @@ process_gupi() {
                     echo "binarising mask"
                     fslmaths $output_name -bin "${reg_dir}/${base_name}_registeredmask.nii.gz"
                 fi
-                exit 1
+                
             fi
 
             
