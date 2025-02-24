@@ -166,32 +166,28 @@ process_gupi() {
                 exit 1
             fi
 
-            # # if hour = 18728, exit program
-            # if [ $hour -eq 18728 ]; then
-            #     echo "Hour 18728 reached, exiting program"
-            #     exit 1
-            # fi
+            
 
-            # # Check if fnirt has already been done, if so skip
-            # if [ -f "${reg_dir}/${base_name}_registered_fnirt.nii.gz" ]; then
-            #     echo "fnirt already done for Hour-${hour}, skipping..."
-            # else
-            #     echo "Performing fnirt on Hour-${hour} image... for GUPI ${gupi_dir}"
+            # Check if fnirt has already been done, if so skip
+            if [ -f "${reg_dir}/${base_name}_registered_fnirt.nii.gz" ]; then
+                echo "fnirt already done for Hour-${hour}, skipping..."
+            else
+                echo "Performing fnirt on Hour-${hour} image... for GUPI ${gupi_dir}"
                 
-            #     fnirt \
-            #         --ref="$earliest_image" \
-            #         --in="$output_name" \
-            #         --aff="$omat" \
-            #         --cout="${reg_dir}/${base_name}_to_ref_warp" \
-            #         --iout="${reg_dir}/${base_name}_registered_fnirt.nii.gz"
+                fnirt \
+                    --ref="$earliest_image" \
+                    --in="$output_name" \
+                    --aff="$omat" \
+                    --cout="${reg_dir}/${base_name}_to_ref_warp" \
+                    --iout="${reg_dir}/${base_name}_registered_fnirt.nii.gz"
 
-            #     # if iout file exists, binarise it
-            #     if [ -f "${reg_dir}/${base_name}_registered_fnirt.nii.gz" ]; then
-            #         echo "binarising mask"
-            #         fslmaths "${reg_dir}/${base_name}_registered_fnirt.nii.gz" -bin "${reg_dir}/${base_name}_registeredmask_fnirt.nii.gz"
-            #     fi
+                # if iout file exists, binarise it
+                if [ -f "${reg_dir}/${base_name}_registered_fnirt.nii.gz" ]; then
+                    echo "binarising mask"
+                    fslmaths "${reg_dir}/${base_name}_registered_fnirt.nii.gz" -bin "${reg_dir}/${base_name}_registeredmask_fnirt.nii.gz"
+                fi
                 
-            # fi
+            fi
             
         fi
     done
