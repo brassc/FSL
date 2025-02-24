@@ -2,6 +2,8 @@
 
 # Load FSL module
 module load fsl
+# load ants for nonlinear reg
+module load ants
 
 # Base path for GUPI directories
 GUPI_BASE_PATH="/rds-d5/user/cmb247/hpc-work/Feb2025_working"
@@ -185,46 +187,92 @@ process_gupi() {
             
 
             # Check if fnirt has already been done, if so skip
-            if [ -f "${reg_dir}/${base_name}_registered_fnirt.nii.gz" ]; then
+            if [ -f "${reg_dir}/${base_name}_registered_ants.nii.gz" ]; then
                 if [ "$overwrite_fnirt" = true ]; then
-                    echo "Overwriting existing FNIRT output for Hour-${hour}"
-                    echo "Performing fnirt on GUPI ${gupi_name} Hour-${hour} image..."
+                    echo "Overwriting existing ANTs output for Hour-${hour}"
+                    echo "Performing nonlinear registration on GUPI ${gupi_name} Hour-${hour} image..."
 
                     # UPDATE FNIRT IN BOTH PLACES FOR OVERWRITE AND FOR NOT OVERWRITE
-                    fnirt \
-                        --ref="$earliest_image" \
-                        --in="$output_name" \
-                        --aff="$omat" \
-                        --cout="${reg_dir}/${base_name}_to_ref_warp" \
-                        --iout="${reg_dir}/${base_name}_registered_fnirt.nii.gz" \
-                        --lambda=1500,750,400,200 \
-                        --warpres=30,30,30
+                    antsRegistration \
+                        --dimensionality 3 \
+                        --float 0 \
+                        --output [${reg_dir}/${base_name}_to_ref_,${reg_dir}/${base_name}_registered_ants.nii.gz] \
+                        --interpolation Linear \
+                        --use-histogram-matching 1 \
+                        --winsorize-image-intensities [0.005,0.995] \
+                        --initial-moving-transform [${earliest_image},${output_name},1] \
+                        --transform Rigid[0.1] \
+                        --metric MI[${earliest_image},${output_name},1,32,Regular,0.25] \
+                        --convergence [1000x500x250x100,1e-6,10] \
+                        --shrink-factors 8x4x2x1 \
+                        --smoothing-sigmas 3x2x1x0vox \
+                        --transform Affine[0.1] \
+                        --metric MI[${earliest_image},${output_name},1,32,Regular,0.25] \
+                        --convergence [1000x500x250x100,1e-6,10] \
+                        --shrink-factors 8x4x2x1 \
+                        --smoothing-sigmas 3x2x1x0vox \
+                        --transform SyN[0.1,3,0] \
+                        --metric CC[${earliest_image},${output_name},1,4] \
+                        --convergence [100x70x50x20,1e-6,10] \
+                        --shrink-factors 8x4x2x1 \
+                        --smoothing-sigmas 3x2x1x0vox
+                    # fnirt \
+                    #     --ref="$earliest_image" \
+                    #     --in="$output_name" \
+                    #     --aff="$omat" \
+                    #     --cout="${reg_dir}/${base_name}_to_ref_warp" \
+                    #     --iout="${reg_dir}/${base_name}_registered_fnirt.nii.gz" \
+                    #     --lambda=1500,750,400,200 \
+                    #     --warpres=30,30,30
 
                     # if iout file exists, binarise it
-                    if [ -f "${reg_dir}/${base_name}_registered_fnirt.nii.gz" ]; then
+                    if [ -f "${reg_dir}/${base_name}_registered_ants.nii.gz" ]; then
                         echo "binarising mask"
-                        fslmaths "${reg_dir}/${base_name}_registered_fnirt.nii.gz" -bin "${reg_dir}/${base_name}_registeredmask_fnirt.nii.gz"
+                        fslmaths "${reg_dir}/${base_name}_registered_ants.nii.gz" -bin "${reg_dir}/${base_name}_registeredmask_ants.nii.gz"
                     fi   
                 else
                     echo "fnirt already done for Hour-${hour}, skipping..."
                 fi
             else
-                echo "Performing fnirt on GUPI ${gupi_name} Hour-${hour} image..."
+                echo "Performing nonlinear registration on GUPI ${gupi_name} Hour-${hour} image..."
                 
                 # UPDATE FNIRT IN BOTH PLACES FOR OVERWRITE AND FOR NOT OVERWRITE
-                fnirt \
-                    --ref="$earliest_image" \
-                    --in="$output_name" \
-                    --aff="$omat" \
-                    --cout="${reg_dir}/${base_name}_to_ref_warp" \
-                    --iout="${reg_dir}/${base_name}_registered_fnirt.nii.gz" \
-                    --lambda=1500,750,400,200 \
-                    --warpres=30,30,30
+                antsRegistration \
+                        --dimensionality 3 \
+                        --float 0 \
+                        --output [${reg_dir}/${base_name}_to_ref_,${reg_dir}/${base_name}_registered_ants.nii.gz] \
+                        --interpolation Linear \
+                        --use-histogram-matching 1 \
+                        --winsorize-image-intensities [0.005,0.995] \
+                        --initial-moving-transform [${earliest_image},${output_name},1] \
+                        --transform Rigid[0.1] \
+                        --metric MI[${earliest_image},${output_name},1,32,Regular,0.25] \
+                        --convergence [1000x500x250x100,1e-6,10] \
+                        --shrink-factors 8x4x2x1 \
+                        --smoothing-sigmas 3x2x1x0vox \
+                        --transform Affine[0.1] \
+                        --metric MI[${earliest_image},${output_name},1,32,Regular,0.25] \
+                        --convergence [1000x500x250x100,1e-6,10] \
+                        --shrink-factors 8x4x2x1 \
+                        --smoothing-sigmas 3x2x1x0vox \
+                        --transform SyN[0.1,3,0] \
+                        --metric CC[${earliest_image},${output_name},1,4] \
+                        --convergence [100x70x50x20,1e-6,10] \
+                        --shrink-factors 8x4x2x1 \
+                        --smoothing-sigmas 3x2x1x0vox
+                # fnirt \
+                #     --ref="$earliest_image" \
+                #     --in="$output_name" \
+                #     --aff="$omat" \
+                #     --cout="${reg_dir}/${base_name}_to_ref_warp" \
+                #     --iout="${reg_dir}/${base_name}_registered_fnirt.nii.gz" \
+                #     --lambda=1500,750,400,200 \
+                #     --warpres=30,30,30
 
                 # if iout file exists, binarise it
-                if [ -f "${reg_dir}/${base_name}_registered_fnirt.nii.gz" ]; then
+                if [ -f "${reg_dir}/${base_name}_registered_ants.nii.gz" ]; then
                     echo "binarising mask"
-                    fslmaths "${reg_dir}/${base_name}_registered_fnirt.nii.gz" -bin "${reg_dir}/${base_name}_registeredmask_fnirt.nii.gz"
+                    fslmaths "${reg_dir}/${base_name}_registered_ants.nii.gz" -bin "${reg_dir}/${base_name}_registeredmask_ants.nii.gz"
                 fi
                 
             fi
