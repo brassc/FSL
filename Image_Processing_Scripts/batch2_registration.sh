@@ -203,12 +203,12 @@ process_gupi() {
                     if [ -f "${reg_dir}/${base_name}_registered_fnirt.nii.gz" ]; then
                         echo "binarising mask"
                         fslmaths "${reg_dir}/${base_name}_registered_fnirt.nii.gz" -bin "${reg_dir}/${base_name}_registeredmask_fnirt.nii.gz"
-                    fi
+                    
                 else
                     echo "fnirt already done for Hour-${hour}, skipping..."
                 fi
             else
-                echo "Performing fnirt on Hour-${hour} image... for GUPI ${gupi_name}"
+                echo "Performing fnirt on GUPI ${gupi_name} Hour-${hour} image..."
                 
                 fnirt \
                     --ref="$earliest_image" \
