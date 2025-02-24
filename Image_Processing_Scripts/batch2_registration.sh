@@ -188,6 +188,22 @@ process_gupi() {
             if [ -f "${reg_dir}/${base_name}_registered_fnirt.nii.gz" ]; then
                 if [ "$overwrite_fnirt" = true ]; then
                     echo "Overwriting existing FNIRT output for Hour-${hour}"
+                    echo "Performing fnirt on Hour-${hour} image... for GUPI ${gupi_name}"
+                
+                    fnirt \
+                        --ref="$earliest_image" \
+                        --in="$output_name" \
+                        --aff="$omat" \
+                        --cout="${reg_dir}/${base_name}_to_ref_warp" \
+                        --iout="${reg_dir}/${base_name}_registered_fnirt.nii.gz" \
+                        --lambda=1500,750,400,200 \
+                        --warpres=30,30,30
+
+                    # if iout file exists, binarise it
+                    if [ -f "${reg_dir}/${base_name}_registered_fnirt.nii.gz" ]; then
+                        echo "binarising mask"
+                        fslmaths "${reg_dir}/${base_name}_registered_fnirt.nii.gz" -bin "${reg_dir}/${base_name}_registeredmask_fnirt.nii.gz"
+                    fi
                 else
                     echo "fnirt already done for Hour-${hour}, skipping..."
                 fi
