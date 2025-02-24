@@ -8,14 +8,16 @@ GUPI_BASE_PATH="/rds-d5/user/cmb247/hpc-work/Feb2025_working"
 
 # Function to print usage
 usage() {
-    echo "Usage: $0 [-g GUPI] [-list list_file]"
+    echo "Usage: $0 [-g GUPI] [-l list_file] [-o]"
     echo "  -g    : Single GUPI directory to process"
     echo "  -l : File containing list of GUPI directories"
+    echo " -o : Overwrite existing FNIRT outputs (will prompt for confirmation)"
     exit 1
 }
 
 # Parse command line arguments
-while getopts "g:l:" opt; do
+overwite_fnirt=false
+while getopts "g:l:o" opt; do
     case $opt in
         g)
             single_gupi=$OPTARG
@@ -23,11 +25,25 @@ while getopts "g:l:" opt; do
         l)
             list_file=$OPTARG
             ;;
+        o)
+            overwrite_fnirt=true
+            ;;
         *)
             usage
             ;;
     esac
 done
+
+# If overwrite_fnirt is true, prompt for confirmation
+if [ "$overwrite_fnirt" = true ]; then
+    read -p "Are you sure you want to overwrite existing FNIRT outputs? (y/n): " confirm
+    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+        echo "Operation cancelled."
+        exit 1
+    fi
+    echo "Proceeding with FNIRT overwrite."
+fi
+
 
 # Function to extract hour number from filename
 get_hour_number() {
@@ -170,7 +186,11 @@ process_gupi() {
 
             # Check if fnirt has already been done, if so skip
             if [ -f "${reg_dir}/${base_name}_registered_fnirt.nii.gz" ]; then
-                echo "fnirt already done for Hour-${hour}, skipping..."
+                if [ "$overwrite_fnirt" = true ]; then
+                    echo "Overwriting existing FNIRT output for Hour-${hour}"
+                else
+                    echo "fnirt already done for Hour-${hour}, skipping..."
+                fi
             else
                 echo "Performing fnirt on Hour-${hour} image... for GUPI ${gupi_name}"
                 
@@ -179,7 +199,9 @@ process_gupi() {
                     --in="$output_name" \
                     --aff="$omat" \
                     --cout="${reg_dir}/${base_name}_to_ref_warp" \
-                    --iout="${reg_dir}/${base_name}_registered_fnirt.nii.gz"
+                    --iout="${reg_dir}/${base_name}_registered_fnirt.nii.gz" \
+                    --lambda=1500,750,400,200 \
+                    --warpres=30,30,30
 
                 # if iout file exists, binarise it
                 if [ -f "${reg_dir}/${base_name}_registered_fnirt.nii.gz" ]; then
