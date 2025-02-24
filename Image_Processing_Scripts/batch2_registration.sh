@@ -189,7 +189,8 @@ process_gupi() {
                 if [ "$overwrite_fnirt" = true ]; then
                     echo "Overwriting existing FNIRT output for Hour-${hour}"
                     echo "Performing fnirt on GUPI ${gupi_name} Hour-${hour} image..."
-                
+
+                    # UPDATE FNIRT IN BOTH PLACES FOR OVERWRITE AND FOR NOT OVERWRITE
                     fnirt \
                         --ref="$earliest_image" \
                         --in="$output_name" \
@@ -210,6 +211,7 @@ process_gupi() {
             else
                 echo "Performing fnirt on GUPI ${gupi_name} Hour-${hour} image..."
                 
+                # UPDATE FNIRT IN BOTH PLACES FOR OVERWRITE AND FOR NOT OVERWRITE
                 fnirt \
                     --ref="$earliest_image" \
                     --in="$output_name" \
