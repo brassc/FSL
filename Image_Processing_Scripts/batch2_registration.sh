@@ -188,7 +188,7 @@ process_gupi() {
             if [ -f "${reg_dir}/${base_name}_registered_fnirt.nii.gz" ]; then
                 if [ "$overwrite_fnirt" = true ]; then
                     echo "Overwriting existing FNIRT output for Hour-${hour}"
-                    echo "Performing fnirt on Hour-${hour} image... for GUPI ${gupi_name}"
+                    echo "Performing fnirt on GUPI ${gupi_name} Hour-${hour} image..."
                 
                     fnirt \
                         --ref="$earliest_image" \
