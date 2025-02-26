@@ -1,3 +1,6 @@
 excluded?, patient ID, timepoint, z coord (slice), anterior x coord, anterior y coord, posterior x coord, posterior y coord, side (L/R), baseline anterior x coord, baseline posterior x coord, COMMENTS
-0, 2ZFz639, 00376
+0, 2ZFz639, 00376, 119, 132, 189, 154, 81, L, 60, 40
+0, 2ZFz639, 04310, 121, 135, 191, 159, 85, L, 62, 37
+0, 2ZFz639, 08659, 121, 135, 191, 157, 85, L, 62, 37
+0, 2ZFz639, 18046, 122, 135, 191, 159, 85, L, 62, 37
 0, 23348, 3mo, 188, 60, 178, 44, 66, R, 132, 152, COMMENT=VENTRICULOMEGALY
