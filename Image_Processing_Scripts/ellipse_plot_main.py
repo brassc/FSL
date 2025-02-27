@@ -556,7 +556,7 @@ if __name__=='__main__':
         ax.plot(ellipse_data['ellipse_h_ref'].iloc[0], ellipse_data['ellipse_v_ref'].iloc[0], color='blue')
 
         # Set y-axis limit to match the original plot
-        ax.set_ylim(top=50)
+        ax.set_ylim(top=60)
 
         # Make sure the aspect ratio is the same as the original
         ax.set_aspect('equal', adjustable='box')
