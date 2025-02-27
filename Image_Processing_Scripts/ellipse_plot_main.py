@@ -311,6 +311,7 @@ def calculate_fitted_values(data, params, name):
         return None, None
     return h_values, v_fitted
 
+"""
 def filter_fitted_values_old(h_values, v_fitted):
     if v_fitted[0] == 0:
         last_non_zero_index = np.max(np.nonzero(v_fitted))
@@ -336,9 +337,65 @@ def filter_fitted_values_old(h_values, v_fitted):
     v_fitted_filtered = v_fitted[first_index:last_index]
 
     return h_values_filtered, v_fitted_filtered
+"""
 
 
 def filter_fitted_values(h_values, v_fitted):
+    # First apply the original filter_fitted_values_old function exactly as it is
+    if v_fitted[0] == 0:
+        last_non_zero_index = np.max(np.nonzero(v_fitted))
+        first_non_zero_index = np.min(np.nonzero(v_fitted))
+        first_index = first_non_zero_index - 1
+        last_index = last_non_zero_index + 2
+    else:
+        first_index = 0
+        # Insert zero at the start
+        v_fitted = np.insert(v_fitted, 0, 0)
+        # Append zero at the end
+        v_fitted = np.append(v_fitted, 0)
+        # Approximate corresponding h_values using linear interpolation
+        start_diff, end_diff = difference_between_difference(h_values)
+        h_values = np.insert(h_values, 0, h_values[0] - start_diff)
+        h_values = np.append(h_values, h_values[-1] + end_diff)
+        last_index = len(v_fitted)
+    
+    # Slice the h_values and v_fitted between the first and last index
+    h_values_filtered = h_values[first_index:last_index]
+    v_fitted_filtered = v_fitted[first_index:last_index]
+    
+    # Now add gradient-based filtering as a separate step
+    # Calculate gradients on the already filtered data
+    gradients = np.gradient(v_fitted_filtered, h_values_filtered)
+    
+    # Define threshold for steep segments
+    max_gradient_threshold = 100.0  # For steep segments
+    
+    # Find valid indices where gradient is not too steep
+    valid_indices = np.where(np.abs(gradients) < max_gradient_threshold)[0]
+    
+    # Only apply gradient filtering if we have enough valid indices
+    if len(valid_indices) > 10:
+        # Create new filtered arrays
+        h_gradient_filtered = []
+        v_gradient_filtered = []
+        
+        # Only include points where gradient is acceptable
+        for i in valid_indices:
+            h_gradient_filtered.append(h_values_filtered[i])
+            v_gradient_filtered.append(v_fitted_filtered[i])
+        
+        # Convert to numpy arrays
+        h_gradient_filtered = np.array(h_gradient_filtered)
+        v_gradient_filtered = np.array(v_gradient_filtered)
+        
+        return h_gradient_filtered, v_gradient_filtered
+    
+    # If gradient filtering didn't work, return the original filtered arrays
+    return h_values_filtered, v_fitted_filtered
+
+
+"""
+def filter_fitted_values_working(h_values, v_fitted):
     # Find indices where v_fitted is greater than a small epsilon value
     epsilon = 1e-10  # Small value to account for floating-point precision
     valid_indices = np.where(v_fitted > epsilon)[0]
@@ -358,6 +415,7 @@ def filter_fitted_values(h_values, v_fitted):
     
     return h_values_filtered, v_fitted_filtered
 
+"""
 # Function to update DataFrame with fitted values
 def update_dataframe(data, h_values_filtered, v_fitted_filtered, h_col, v_col, h_param_col, a_param_col, h_optimal, a_optimal):
     if 0 in data.index and h_col in data.columns and v_col in data.columns:
@@ -408,9 +466,9 @@ def fit_ellipse(data):
     
 if __name__=='__main__':
     ## MAIN SCRIPT TO PLOT ELLIPSE FORM
-    data = pd.read_csv('Image_Processing_Scripts/batch2_data_entries.csv')
-    side_data=pd.read_csv('Image_Processing_Scripts/batch2_included_patient_info.csv')
-    ellipse_data_filename='batch2_ellipse_data.csv'
+    data = pd.read_csv('Image_Processing_Scripts/data_entries.csv')
+    side_data=pd.read_csv('Image_Processing_Scripts/included_patient_info.csv')
+    ellipse_data_filename='ellipse_data.csv'
     # filtered according to exclusion flag (first column)
     side_data=side_data[side_data['excluded?'] == 0]
     side_data = side_data.rename(columns={' side (L/R)': 'side'})
