@@ -410,6 +410,7 @@ if __name__=='__main__':
     ## MAIN SCRIPT TO PLOT ELLIPSE FORM
     data = pd.read_csv('Image_Processing_Scripts/data_entries.csv')
     side_data=pd.read_csv('Image_Processing_Scripts/included_patient_info.csv')
+    ellipse_data_filename='ellipse_data.csv'
     # filtered according to exclusion flag (first column)
     side_data=side_data[side_data['excluded?'] == 0]
     side_data = side_data.rename(columns={' side (L/R)': 'side'})
@@ -591,7 +592,7 @@ if __name__=='__main__':
     print(transformed_df.T.head)
     #print(transformed_df.head)
     # Save to .csv
-    transformed_df.to_csv('Image_Processing_Scripts/ellipse_data.csv', index=False)
+    transformed_df.to_csv(f'Image_Processing_Scripts/{ellipse_data_filename}', index=False)
 
 
 
