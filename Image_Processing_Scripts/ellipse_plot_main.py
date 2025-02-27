@@ -542,8 +542,8 @@ if __name__=='__main__':
 
         plt.gca().set_aspect('equal', adjustable='box')
         plt.title(f"{transformed_data['patient_id'].iloc[0]} {transformed_data['timepoint'].iloc[0]}")
-        # Set y-axis maximum limit to 50
-        plt.ylim(top=50)
+        # Set y-axis maximum limit to 60
+        plt.ylim(top=60)
         plt.savefig(f"Image_Processing_Scripts/ellipse_plots/{transformed_data['patient_id'].iloc[0]}_{transformed_data['timepoint'].iloc[0]}_ellipse.png")
         plt.close()
 
