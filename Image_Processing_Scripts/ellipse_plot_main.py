@@ -10,6 +10,7 @@ from scipy.optimize import curve_fit
 def convert_to_numpy_array(s):
     # Remove extra whitespace and split by spaces
     # Convert the resulting list of strings to a list of integers
+    print("s:", s)
     s=s.strip('[]')
 
     def convert_value(value):
@@ -519,7 +520,34 @@ if __name__=='__main__':
 
         plt.gca().set_aspect('equal', adjustable='box')
         plt.title(f"{transformed_data['patient_id'].iloc[0]} {transformed_data['timepoint'].iloc[0]}")
+        # Set y-axis maximum limit to 50
+        plt.ylim(top=50)
         plt.savefig(f"Image_Processing_Scripts/ellipse_plots/{transformed_data['patient_id'].iloc[0]}_{transformed_data['timepoint'].iloc[0]}_ellipse.png")
+        plt.close()
+
+
+        # Create a clean version with only points and curves
+        fig, ax = plt.subplots(figsize=(6, 6), facecolor='white')
+        ax.scatter(ellipse_data['h_def_cent'].iloc[0], ellipse_data['v_def_cent'].iloc[0], color='red', s=2)
+        ax.plot(ellipse_data['ellipse_h_def'].iloc[0], ellipse_data['ellipse_v_def'].iloc[0], color='red')
+        ax.scatter(transformed_data['h_ref_cent'].iloc[0], transformed_data['v_ref_cent'].iloc[0], color='blue', s=2)
+        ax.plot(ellipse_data['ellipse_h_ref'].iloc[0], ellipse_data['ellipse_v_ref'].iloc[0], color='blue')
+
+        # Set y-axis limit to match the original plot
+        ax.set_ylim(top=50)
+
+        # Make sure the aspect ratio is the same as the original
+        ax.set_aspect('equal', adjustable='box')
+
+        # Remove axes, ticks, labels, etc.
+        ax.axis('off')
+
+        # Set tight layout to crop the image around the content
+        plt.tight_layout(pad=0)
+
+        # Save the clean version
+        plt.savefig(f"Image_Processing_Scripts/ellipse_plots/{transformed_data['patient_id'].iloc[0]}_{transformed_data['timepoint'].iloc[0]}_ellipse_clean.png", 
+                    bbox_inches='tight', pad_inches=0, transparent=False)
         plt.close()
         
             
