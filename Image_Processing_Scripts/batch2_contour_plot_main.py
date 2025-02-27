@@ -602,6 +602,7 @@ else:
 for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timepoint']):
     # Define the bet_mask_file_path for each patient and timepoint
     directory = f"/rds-d5/user/cmb247/hpc-work/Feb2025_working/{patient_id}/BET_Output"
+    print(f"Searching for files in directory: {directory}")
     
     # SEARCH FOR FILEPATH
     # Construct the search pattern - broad pattern first
@@ -667,6 +668,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
 
 
     print(f"Starting contour extraction for {patient_id} {timepoint}...")
+    
     # Extract voxel indices from patient_info csv
     #print(patient_info.columns)
     z_coord = patient_info.loc[(patient_info['patient_id'] == patient_id) & (patient_info['timepoint'] == timepoint), 'z_coord_slice'].values[0]
@@ -705,7 +707,8 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     plt.scatter(bpostx, bposty, color='b')
     plt.show()
     """
-
+    print("step 1 complete")
+    
     # STEP 2: EXTRACT CONTOURS
     # Use mask: extract deformed side
     print("*****timepoint is:",timepoint)
@@ -720,7 +723,8 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     baseline_contour_x, baseline_contour_y = auto_boundary_detect(patient_id, timepoint, norm_mask_slice, antx, anty, postx, posty, flipside)
     #print("baseline_contour_x type: ", type(baseline_contour_x))
 
-
+    print("step 2 complete")
+    
     # STEP 3: TRIM CONTOURS
 
     skull_end_x = np.array([antx, postx], dtype=int)
@@ -731,7 +735,8 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
 
     baseline_trimmed_x, baseline_trimmed_y =trim_contours(baseline_skull_end_x, baseline_contour_x, baseline_contour_y, flipside, threshold=50)
 
-
+    print("step 3 complete")
+    
     # STEP 4: REFLECT TRIMMED CONTOURS
 
     # get mirror line from baseline vs deformed contours in x 
@@ -764,6 +769,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     reflected_combi_x = np.append(reflected_trimmed_x, skull_end_x)
     reflected_combi_y = np.append(reflected_trimmed_y, skull_end_y)
 
+    print("step 4 complete")
     
     
 
@@ -799,10 +805,10 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     #plt.scatter(deformed_trimmed_x, deformed_trimmed_y, s=2, color='red')
     #plt.scatter(reflected_contour_x, reflected_contour_y, s=2, color='green')
     #plt.scatter(reflected_trimmed_x, reflected_trimmed_y, s=2, color='yellow')
-    plt.scatter(reflected_combi_x, reflected_combi_y, s=1, color='cyan')
+    plt.scatter(reflected_combi_x, reflected_combi_y, s=1, color='blue')
     plt.scatter(deformed_combi_x, deformed_combi_y, s=1, color ='red')
     plt.title(f"{patient_id} {timepoint}")
-    filename = save_dir +"/" + timepoint+".png"
+    filename = save_dir +"/" + patient_id +"_"+ str(timepoint)+".png"
     plt.savefig(filename)
     #print("file path: ",filename)
     plt.show()
@@ -830,6 +836,8 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     refcon_x.append(data_entry['reflected_contour_x'])
     refcon_y.append(data_entry['reflected_contour_y'])
     
+    print("step 5 complete")
+    sys.exit()
 
 
 # Create a DataFrame from the lists
