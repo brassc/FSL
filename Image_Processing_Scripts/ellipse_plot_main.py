@@ -311,7 +311,7 @@ def calculate_fitted_values(data, params, name):
         return None, None
     return h_values, v_fitted
 
-def filter_fitted_values(h_values, v_fitted):
+def filter_fitted_values_old(h_values, v_fitted):
     if v_fitted[0] == 0:
         last_non_zero_index = np.max(np.nonzero(v_fitted))
         first_non_zero_index = np.min(np.nonzero(v_fitted))
@@ -335,6 +335,27 @@ def filter_fitted_values(h_values, v_fitted):
     h_values_filtered = h_values[first_index:last_index]
     v_fitted_filtered = v_fitted[first_index:last_index]
 
+    return h_values_filtered, v_fitted_filtered
+
+
+def filter_fitted_values(h_values, v_fitted):
+    # Find indices where v_fitted is greater than a small epsilon value
+    epsilon = 1e-10  # Small value to account for floating-point precision
+    valid_indices = np.where(v_fitted > epsilon)[0]
+    
+    if len(valid_indices) > 0:
+        # Get the first and last valid indices
+        first_index = valid_indices[0]
+        last_index = valid_indices[-1]
+        
+        # Slice the arrays to keep only the valid portion
+        h_values_filtered = h_values[first_index:last_index+1]
+        v_fitted_filtered = v_fitted[first_index:last_index+1]
+    else:
+        # If no valid values, return empty arrays
+        h_values_filtered = np.array([])
+        v_fitted_filtered = np.array([])
+    
     return h_values_filtered, v_fitted_filtered
 
 # Function to update DataFrame with fitted values
