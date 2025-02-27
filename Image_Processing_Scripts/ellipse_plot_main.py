@@ -387,8 +387,8 @@ def fit_ellipse(data):
     
 if __name__=='__main__':
     ## MAIN SCRIPT TO PLOT ELLIPSE FORM
-    data = pd.read_csv('Image_Processing_Scripts/data_entries.csv')
-    side_data=pd.read_csv('Image_Processing_Scripts/included_patient_info.csv')
+    data = pd.read_csv('Image_Processing_Scripts/batch2_data_entries.csv')
+    side_data=pd.read_csv('Image_Processing_Scripts/batch2_included_patient_info.csv')
     # filtered according to exclusion flag (first column)
     side_data=side_data[side_data['excluded?'] == 0]
     side_data = side_data.rename(columns={' side (L/R)': 'side'})
