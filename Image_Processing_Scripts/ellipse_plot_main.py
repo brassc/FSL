@@ -441,7 +441,7 @@ if __name__=='__main__':
         
         #Plot original data
         plt.scatter(data['h_def'].iloc[0], data['v_def'].iloc[0], color='red', s=1)
-        plt.scatter(data['h_ref'].iloc[0], data['v_ref'].iloc[0], color='cyan', s=1)
+        plt.scatter(data['h_ref'].iloc[0], data['v_ref'].iloc[0], color='blue', s=1)
         plt.scatter(data['h_def'].iloc[0][-2], data['v_def'].iloc[0][-2], color='magenta', s=20) # anterior point
         plt.title(f"{data['patient_id'].iloc[0]} {data['timepoint'].iloc[0]}")
         # Set the aspect ratio of the plot to be equal
@@ -455,7 +455,7 @@ if __name__=='__main__':
         # Plot transformed data
         plt.scatter(transformed_data['h_def_tr'].iloc[0], transformed_data['v_def_tr'].iloc[0], color='red', s=1)
         plt.scatter(transformed_data['h_def_tr'].iloc[0][-2], transformed_data['v_def_tr'].iloc[0][-2], color='magenta', s=20) # anterior point
-        plt.scatter(transformed_data['h_ref_tr'].iloc[0], transformed_data['v_ref_tr'].iloc[0], color='cyan', s=1)
+        plt.scatter(transformed_data['h_ref_tr'].iloc[0], transformed_data['v_ref_tr'].iloc[0], color='blue', s=1)
         plt.title(f"{transformed_data['patient_id'].iloc[0]} {transformed_data['timepoint'].iloc[0]}")
         # Set the aspect ratio of the plot to be equal
         plt.gca().set_aspect('equal', adjustable='box')
@@ -470,7 +470,7 @@ if __name__=='__main__':
         # plot rotated data
         plt.scatter(transformed_data['h_def_rot'].iloc[0], transformed_data['v_def_rot'].iloc[0], color='red', s=1)
         plt.scatter(transformed_data['h_def_rot'].iloc[0][-2], transformed_data['v_def_rot'].iloc[0][-2], color='magenta', s=20) # anterior point
-        plt.scatter(transformed_data['h_ref_rot'].iloc[0], transformed_data['v_ref_rot'].iloc[0], color='cyan', s=1)
+        plt.scatter(transformed_data['h_ref_rot'].iloc[0], transformed_data['v_ref_rot'].iloc[0], color='blue', s=1)
         plt.title(f"{transformed_data['patient_id']} {transformed_data['timepoint']}")
         plt.gca().set_aspect('equal', adjustable='box')
         plt.close()
@@ -484,7 +484,7 @@ if __name__=='__main__':
 
         # plot data
         plt.scatter(transformed_data['h_def_cent'].iloc[0], transformed_data['v_def_cent'].iloc[0], color='red', s=1)
-        plt.scatter(transformed_data['h_ref_cent'].iloc[0], transformed_data['v_ref_cent'].iloc[0], color='cyan', s=1)
+        plt.scatter(transformed_data['h_ref_cent'].iloc[0], transformed_data['v_ref_cent'].iloc[0], color='blue', s=1)
         plt.scatter(transformed_data['h_def_cent'].iloc[0][-2], transformed_data['v_def_cent'].iloc[0][-2], color='magenta', s=20)
         plt.scatter(transformed_data['h_def_cent'].iloc[0][-1], transformed_data['v_def_cent'].iloc[0][-1], color='green', s=20)
         plt.title(f"{transformed_data['patient_id'].iloc[0]} {transformed_data['timepoint'].iloc[0]}")
@@ -514,8 +514,8 @@ if __name__=='__main__':
         # PLOT FITTED ELLIPSE
         plt.scatter(ellipse_data['h_def_cent'].iloc[0], ellipse_data['v_def_cent'].iloc[0], label='translated and rotated data points', color='red', s=2)
         plt.plot(ellipse_data['ellipse_h_def'].iloc[0], ellipse_data['ellipse_v_def'].iloc[0], label='Fitted curve', color='red')
-        plt.scatter(transformed_data['h_ref_cent'].iloc[0], transformed_data['v_ref_cent'].iloc[0], label='translated and rotated data points', color='cyan', s=2)
-        plt.plot(ellipse_data['ellipse_h_ref'].iloc[0], ellipse_data['ellipse_v_ref'].iloc[0], label='Fitted curve', color='cyan')
+        plt.scatter(transformed_data['h_ref_cent'].iloc[0], transformed_data['v_ref_cent'].iloc[0], label='translated and rotated data points', color='blue', s=2)
+        plt.plot(ellipse_data['ellipse_h_ref'].iloc[0], ellipse_data['ellipse_v_ref'].iloc[0], label='Fitted curve', color='blue')
 
         plt.gca().set_aspect('equal', adjustable='box')
         plt.title(f"{transformed_data['patient_id'].iloc[0]} {transformed_data['timepoint'].iloc[0]}")
