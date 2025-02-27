@@ -601,7 +601,7 @@ else:
 # Iterate over each patient and timepoint
 for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timepoint']):
     # Define the bet_mask_file_path for each patient and timepoint
-    directory = f"/rds-d5/user/cmb247/hpc-work/Feb2025_working/{patient_id}/BET_Output"
+    directory = f"/rds-d5/user/cmb247/hpc-work/Feb2025_working/{patient_id}/BET_Reg"
     print(f"Searching for files in directory: {directory}")
     
     # SEARCH FOR FILEPATH
@@ -610,12 +610,12 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     broad_pattern = f"*{timepoint}*_bet*.nii.gz"
     broad_pattern_priority = f"*{timepoint}*_bet*modified*.nii.gz"
 
-    pattern = f"*{timepoint}*_bet_mask*.nii.gz"
-    pattern_priority = f"*{timepoint}*_bet_mask*modifiedmask*.nii.gz"
+    pattern = f"*{timepoint}*_bet*mask*.nii.gz"
+    pattern_priority = f"*{timepoint}*_bet*modifiedmask*.nii.gz"
     # Search for bet files matching the pattern, excluding 'mask' files in the specified directory
-    img_filepath = [file for file in glob.glob(os.path.join(directory, broad_pattern_priority)) if 'mask' not in file]
+    img_filepath = [file for file in glob.glob(os.path.join(directory, broad_pattern_priority)) if 'mask' not in file and 'warp' not in file and 'Warp' not in file and 'fnirt' not in file and f'E{timepoint}' not in file]
     if not img_filepath:
-        img_filepath = [file for file in glob.glob(os.path.join(directory, broad_pattern)) if 'mask' not in file]
+        img_filepath = [file for file in glob.glob(os.path.join(directory, broad_pattern)) if 'mask' not in file and 'warp' not in file and 'Warp' not in file and 'fnirt' not in file and f'E{timepoint}' not in file]
 
     if img_filepath:
         if timepoint=='fast':
@@ -627,6 +627,9 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
         print (f"timepoint: {timepoint} \nfilepath: {img_filepath}")
     else:
         print("No bet file found for patient_id", patient_id, "timepoint", timepoint, ". Using mask instead...")
+
+    print(f"image filepath: {img_filepath}")
+    
     
 
     # Repeat for finding mask using pattern and pattern priority
@@ -811,8 +814,8 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     filename = save_dir +"/" + patient_id +"_"+ str(timepoint)+".png"
     plt.savefig(filename)
     #print("file path: ",filename)
-    plt.show()
-    #plt.close()
+    #plt.show()
+    plt.close()
 
     print(f"Image {timepoint}.png saved to {save_dir}")
     print(f"Contour point extraction for {patient_id} {timepoint} complete. \n")
@@ -837,7 +840,6 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     refcon_y.append(data_entry['reflected_contour_y'])
     
     print("step 5 complete")
-    sys.exit()
 
 
 # Create a DataFrame from the lists
