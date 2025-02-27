@@ -65,3 +65,10 @@ patient id, timepoint, bet params, crop, manual modification, inclusion (1/0)
 9GfT823, 04378, -f 0.25 -R, 22, MODIFIED=YES
 9GfT823, 09305, -f 0.3 -R, 24, MODIFIED=YES
 9GfT823, 18728, -f 0.4 -R, 24, MODIFIED=YES
+19575, 00336 (fast), -f 0.4, 98
+19575, 08640 (12mo), -f 0.4, 70
+19981, 00050 (ultra-fast), -f 0.5, 70
+19981, 04320 (6mo), -f 0.45, 70
+19981, 17280 (24mo), -f 0.45, 70
+21221, 00336 (fast), -f 0.55, 64
+21221, 00504 (acute), -f 0.55, 64
