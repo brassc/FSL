@@ -800,7 +800,7 @@ for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timep
     #plt.scatter(deformed_trimmed_x, deformed_trimmed_y, s=2, color='red')
     #plt.scatter(reflected_contour_x, reflected_contour_y, s=2, color='green')
     #plt.scatter(reflected_trimmed_x, reflected_trimmed_y, s=2, color='yellow')
-    plt.scatter(reflected_combi_x, reflected_combi_y, s=1, color='cyan')
+    plt.scatter(reflected_combi_x, reflected_combi_y, s=1, color='blue')
     plt.scatter(deformed_combi_x, deformed_combi_y, s=1, color ='red')
     plt.title(f"{patient_id} {timepoint}")
     filename = save_dir +"/" + timepoint+".png"
