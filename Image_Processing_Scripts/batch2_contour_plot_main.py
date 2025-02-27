@@ -548,7 +548,7 @@ patient_info = pd.read_csv('Image_Processing_Scripts/batch2_included_patient_inf
 # Convert only numeric columns to integers
 numeric_cols = patient_info.select_dtypes(include=['number']).columns
 patient_info[numeric_cols] = patient_info[numeric_cols].apply(pd.to_numeric, errors='coerce').fillna(0).astype(int)
-
+print("Columns in the DataFrame:", patient_info.columns.tolist())
 
 # Strip leading and trailing spaces from the column names
 patient_info.columns = patient_info.columns.str.strip()
@@ -585,19 +585,18 @@ df = pd.DataFrame(columns=["patient_id", "timepoint", "deformed_contour_x_vals",
 # Check if the user provided an argument (patient_id)
 if len(sys.argv) > 1:
     try:
-        patient_id = int(sys.argv[1])  # Convert argument to an integer
+        patient_id = sys.argv[1]  # Convert argument to an integer
         # Filter the data for the specified patient_id
         patient_info = patient_info[patient_info['patient_id'] == patient_id]
         print(f"Plotting contours for patient_id {patient_id}")
     except ValueError:
-        print("Invalid patient_id provided. It must be an integer.")
+        print("Invalid patient_id provided.")
         print_usage()
         sys.exit(1)
 else:
     print("No patient_id provided. Default will plot contours for all patient timepoints.")
     print_usage()
     input("Press any key to continue... (CTRL+C to cancel)")
-
 
 # Iterate over each patient and timepoint
 for patient_id, timepoint in zip(patient_info['patient_id'], patient_info['timepoint']):
