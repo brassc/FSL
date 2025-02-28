@@ -651,6 +651,8 @@ if __name__=='__main__':
     #print(transformed_df.head)
     # Save to .csv
     transformed_df.to_csv(f'Image_Processing_Scripts/{ellipse_data_filename}', index=False)
+    # Also pickle the data - preserve long arrays
+    transformed_df.to_pickle(f'Image_Processing_Scripts/{ellipse_data_filename.replace(".csv", ".pkl")}')
 
 
 
