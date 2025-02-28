@@ -13,6 +13,37 @@ import seaborn as sns
 from scipy import stats
 import sys
 
+
+
+def calculate_dice_from_masks(contour_x, contour_y, ellipse_x, ellipse_y): 
+    # Create binary masks 
+    min_x = min(np.min(contour_x), np.min(ellipse_x)) 
+    max_x = max(np.max(contour_x), np.max(ellipse_x)) 
+    min_y = min(np.min(contour_y), np.min(ellipse_y)) 
+    max_y = max(np.max(contour_y), np.max(ellipse_y))
+
+    # Create grid 
+    grid_size = 100 
+    x_grid = np.linspace(min_x, max_x, grid_size) 
+    y_grid = np.linspace(min_y, max_y, grid_size) 
+    XX, YY = np.meshgrid(x_grid, y_grid)
+
+    # Create masks \
+    contour_points = list(zip(contour_x, contour_y)) 
+    ellipse_points = list(zip(ellipse_x, ellipse_y)) 
+    contour_path = Path(contour_points) 
+    ellipse_path = Path(ellipse_points)
+
+    contour_mask = contour_path.contains_points(np.vstack([XX.flatten(), YY.flatten()]).T).reshape(XX.shape) 
+    ellipse_mask = ellipse_path.contains_points(np.vstack([XX.flatten(), YY.flatten()]).T).reshape(XX.shape)
+
+    # Calculate Dice 
+    intersection = np.logical_and(contour_mask, ellipse_mask).sum() 
+    dice = (2.0 * intersection) / (contour_mask.sum() + ellipse_mask.sum())
+
+    return dice
+
+
 def convert_to_numpy_array(s):
     """Convert string representation of array to numpy array."""
     if isinstance(s, str):
@@ -185,7 +216,10 @@ def calculate_area_ratio(contour_x, contour_y, ellipse_x, ellipse_y):
     
     return ratio
 
-def calculate_overlap_metrics(contour_x, contour_y, ellipse_x, ellipse_y):
+
+
+
+def calculate_overlap_metrics_old(contour_x, contour_y, ellipse_x, ellipse_y):
     """
     Calculate area-based overlap metrics for the fit.
     
@@ -200,6 +234,7 @@ def calculate_overlap_metrics(contour_x, contour_y, ellipse_x, ellipse_y):
         # Create valid polygons by ensuring they're properly formed
         # 1. Buffer by a tiny amount to fix topology issues
         # 2. Convert to LinearRing and check if valid
+        dice_from_masks = calculate_dice_from_masks(contour_x, contour_y, ellipse_x, ellipse_y)
         
         # For contour polygon
         contour_points = list(zip(contour_x, contour_y))
