@@ -619,8 +619,8 @@ def create_summary_visualisations(metrics_df, output_dir):
                 edgecolors='black', 
                 linewidth=0.5)
     
-    plt.xlabel('Root Mean Square Error (RMSE)')
-    plt.ylabel('R² (Coefficient of Determination)')
+    plt.ylabel('Root Mean Square Error (RMSE)')
+    plt.xlabel('R² (Coefficient of Determination)')
     plt.title('RMSE vs R² by Configuration')
     plt.legend()
     
