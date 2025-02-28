@@ -9,6 +9,9 @@ import shapely.ops
 import os
 from scipy.optimize import minimize
 from scipy.spatial import distance
+import seaborn as sns
+from scipy import stats
+import sys
 
 def convert_to_numpy_array(s):
     """Convert string representation of array to numpy array."""
@@ -419,6 +422,252 @@ def visualize_fit_analysis(contour_x, contour_y, ellipse_x, ellipse_y, metrics, 
     return output_path
 
 
+
+def set_publication_style():
+    """Set matplotlib parameters for publication-quality figures."""
+    plt.rcParams.update({
+        'font.family': 'serif',
+        'font.serif': ['Times New Roman'],
+        'mathtext.fontset': 'stix',
+        'font.size': 12,
+        'axes.labelsize': 14,
+        'axes.titlesize': 16,
+        'axes.titleweight': 'bold',  # This makes titles bold
+        'xtick.labelsize': 12,
+        'ytick.labelsize': 12,
+        'legend.fontsize': 10,
+        'figure.dpi': 150,
+        'savefig.dpi': 300,
+        'savefig.format': 'png',
+        'savefig.bbox': 'tight',
+        'axes.grid': True,
+        'grid.alpha': 0.3,
+        'grid.linestyle': '-',
+        'axes.spines.top': False,
+        'axes.spines.right': False,
+    })
+
+def create_summary_visualisations(metrics_df, output_dir):
+    """
+    Generate comprehensive visualizations and summary statistics for contour metrics.
+    
+    Parameters:
+    -----------
+    metrics_df : pandas.DataFrame
+        DataFrame containing contour metrics with columns for def and ref metrics
+    output_dir : str
+        Directory to save output visualizations and summary files
+    
+    Returns:
+    --------
+    dict
+        Dictionary containing summary statistics and test results
+    """
+    # Create output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Set publication style
+    set_publication_style()
+    
+    # Color palette
+    # Colors
+    def_color = '#FF5555'  # Bright red
+    ref_color = '#5555FF'  # Bright blue
+    def_dark = '#8B0000'   # Dark red
+    ref_dark = '#00008B'   # Dark blue
+
+    
+    # Prepare long-format data for plotting
+    metrics_to_plot = ['rmse', 'r2']
+    long_data = []
+    
+    for metric in metrics_to_plot:
+        def_data = metrics_df[f'def_{metric}']
+        ref_data = metrics_df[f'ref_{metric}']
+        
+        def_rows = pd.DataFrame({
+            'metric_value': def_data,
+            'configuration': 'Deformed',
+            'metric_name': metric.upper()
+        })
+        
+        ref_rows = pd.DataFrame({
+            'metric_value': ref_data,
+            'configuration': 'Reference',
+            'metric_name': metric.upper()
+        })
+        
+        long_data.append(def_rows)
+        long_data.append(ref_rows)
+    
+    long_df = pd.concat(long_data, ignore_index=True)
+    
+    # 1. Box plot of RMSE and R²# 1. Create plots with ONLY the data points - no boxplots
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 7))
+
+    # RMSE Plot (left)
+    rmse_data = long_df[long_df['metric_name'] == 'RMSE']
+
+    # Set up x-axis
+    ax1.set_xlim(-0.5, 1.5)
+    ax1.set_xticks([0, 1])
+    ax1.set_xticklabels(['Deformed', 'Reference'])
+
+    # Get data for each configuration
+    deformed_rmse = rmse_data[rmse_data['configuration'] == 'Deformed']['metric_value'].values
+    reference_rmse = rmse_data[rmse_data['configuration'] == 'Reference']['metric_value'].values
+
+    # Add only scatter points for Deformed
+    ax1.scatter(
+        [0] * len(deformed_rmse),
+        deformed_rmse,
+        color=def_color, s=10, alpha=0.7,
+        edgecolor=def_color,  # Match fill color to remove grey rings
+        linewidth=0.5
+    )
+
+    # Add only scatter points for Reference
+    ax1.scatter(
+        [1] * len(reference_rmse),
+        reference_rmse,
+        color=ref_color, s=10, alpha=0.7,
+        edgecolor=ref_color,  # Match fill color to remove grey rings
+        linewidth=0.5
+    )
+
+    # Optional: Add subtle statistical indicators manually
+    # Calculate statistics
+    deformed_median = np.median(deformed_rmse)
+    reference_median = np.median(reference_rmse)
+    deformed_q1 = np.percentile(deformed_rmse, 25)
+    deformed_q3 = np.percentile(deformed_rmse, 75)
+    reference_q1 = np.percentile(reference_rmse, 25)
+    reference_q3 = np.percentile(reference_rmse, 75)
+
+    # Add thin horizontal lines for median
+    ax1.axhline(y=deformed_median, xmin=0.2, xmax=0.3, color=def_color, linestyle='-', linewidth=1)
+    ax1.axhline(y=reference_median, xmin=0.7, xmax=0.8, color=ref_color, linestyle='-', linewidth=1)
+
+    # Set titles and labels
+    ax1.set_title('RMSE by Configuration')
+    ax1.set_xlabel('Configuration')
+    ax1.set_ylabel('Root Mean Square Error')
+
+    # R² Plot (right)
+    r2_data = long_df[long_df['metric_name'] == 'R2']
+
+    # Set up x-axis
+    ax2.set_xlim(-0.5, 1.5)
+    ax2.set_xticks([0, 1])
+    ax2.set_xticklabels(['Deformed', 'Reference'])
+
+    # Get data for each configuration
+    deformed_r2 = r2_data[r2_data['configuration'] == 'Deformed']['metric_value'].values
+    reference_r2 = r2_data[r2_data['configuration'] == 'Reference']['metric_value'].values
+
+    # Add only scatter points for Deformed
+    ax2.scatter(
+        [0] * len(deformed_r2),
+        deformed_r2,
+        color=def_color, s=10, alpha=0.7,
+        edgecolor=def_color,  # Match fill color to remove grey rings
+        linewidth=0.5
+        )
+
+    # Add only scatter points for Reference
+    ax2.scatter(
+        [1] * len(reference_r2),
+        reference_r2,
+        color=ref_color, s=10, alpha=0.7,
+        edgecolor=ref_color,  # Match fill color to remove grey rings
+        linewidth=0.5
+    )
+
+    # Optional: Add subtle statistical indicators manually
+    # Calculate statistics
+    deformed_median_r2 = np.median(deformed_r2)
+    reference_median_r2 = np.median(reference_r2)
+
+    # Add thin horizontal lines for median
+    ax2.axhline(y=deformed_median_r2, xmin=0.2, xmax=0.3, color=def_color, linestyle='-', linewidth=1)
+    ax2.axhline(y=reference_median_r2, xmin=0.7, xmax=0.8, color=ref_color, linestyle='-', linewidth=1)
+
+    # Set titles and labels
+    ax2.set_title('R² by Configuration')
+    ax2.set_xlabel('Configuration')
+    ax2.set_ylabel('R² (Coefficient of Determination)')
+
+    
+    # Final adjustments
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, 'scatter_distribution.png'), dpi=300)
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/scatter_distribution.pdf', dpi=300)
+    plt.close()
+    
+    # 2. Scatter plot of RMSE vs R²
+    plt.figure(figsize=(10, 7))
+    scatter = plt.scatter(metrics_df['def_r2'], metrics_df['def_rmse'], 
+                          color=def_color, 
+                          alpha=0.7, 
+                          label='Deformed',
+                          edgecolors='black', 
+                          linewidth=0.5)
+    plt.scatter(metrics_df['ref_r2'], metrics_df['ref_rmse'], 
+                color=ref_color, 
+                alpha=0.7, 
+                label='Reference',
+                edgecolors='black', 
+                linewidth=0.5)
+    
+    plt.xlabel('Root Mean Square Error (RMSE)')
+    plt.ylabel('R² (Coefficient of Determination)')
+    plt.title('RMSE vs R² by Configuration')
+    plt.legend()
+    
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, 'scatter_rmse_r2.png'))
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/scatter_rmse_r2.pdf', dpi=300)
+    plt.close()
+    
+    # 3. Statistical tests
+    results = {}
+    
+    # RMSE t-test
+    rmse_ttest = stats.ttest_ind(metrics_df['def_rmse'], metrics_df['ref_rmse'])
+    
+    # R² t-test
+    r2_ttest = stats.ttest_ind(metrics_df['def_r2'], metrics_df['ref_r2'])
+    
+    # Store results
+    results['rmse_ttest'] = {
+        't_statistic': rmse_ttest.statistic,
+        'p_value': rmse_ttest.pvalue
+    }
+    results['r2_ttest'] = {
+        't_statistic': r2_ttest.statistic,
+        'p_value': r2_ttest.pvalue
+    }
+    
+    # Save statistical test results
+    test_results_file = os.path.join(output_dir, 'statistical_tests.txt')
+    with open(test_results_file, 'w') as f:
+        f.write("Statistical Test Results\n")
+        f.write("======================\n\n")
+        f.write("RMSE T-Test:\n")
+        f.write(f"t-statistic: {rmse_ttest.statistic:.4f}\n")
+        f.write(f"p-value: {rmse_ttest.pvalue:.4f}\n\n")
+        f.write("R² T-Test:\n")
+        f.write(f"t-statistic: {r2_ttest.statistic:.4f}\n")
+        f.write(f"p-value: {r2_ttest.pvalue:.4f}\n")
+    
+    # Print summary to console
+    print("Summary statistics and visualizations saved in:", output_dir)
+    print("\nRMSE T-Test:")
+    print(f"t-statistic: {rmse_ttest.statistic:.4f}, p-value: {rmse_ttest.pvalue:.4f}")
+    print("\nR² T-Test:")
+    print(f"t-statistic: {r2_ttest.statistic:.4f}, p-value: {r2_ttest.pvalue:.4f}")
+    
+    return results
     
 def main():
     """Main function to run the ellipse fit analysis."""
@@ -427,6 +676,9 @@ def main():
     input_filename2 = 'ellipse_data.pkl'
     output_filename = 'combined_ellipse_fit_metrics.csv'
     output_dir = 'Image_Processing_Scripts/ellipse_fit_analysis'
+
+    # flags
+    plot_ellipse_flag = False
     
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
@@ -592,12 +844,12 @@ def main():
                     'h_param': h_param,
                     'a_param': a_param
                 }
-                
-                vis_path = visualize_fit_analysis(
-                    h_cent, v_cent, ellipse_h, ellipse_v, 
-                    visualization_metrics, patient_id, timepoint, side, name, 
-                    output_dir=output_dir
-                )
+                if plot_ellipse_flag == True:
+                    vis_path = visualize_fit_analysis(
+                        h_cent, v_cent, ellipse_h, ellipse_v, 
+                        visualization_metrics, patient_id, timepoint, side, name, 
+                        output_dir=output_dir
+                    )
                 
                 print(f"    Saved visualization to {vis_path}")
                 print(f"    Metrics: RMSE={rmse:.3f}, MAE={mae:.3f}, Max Error={max_error:.3f}, R²={r2:.3f}")
@@ -616,9 +868,10 @@ def main():
                 metrics_row[f'{name}_area_diff_pct'] = np.nan
         
         # Create combined visualization with both contours
-        combined_path = create_combined_plot(data, i, metrics_row, output_dir)
-        if combined_path:
-            print(f"    Saved combined visualization to {combined_path}")
+        if plot_ellipse_flag == True:
+            combined_path = create_combined_plot(data, i, metrics_row, output_dir)
+            if combined_path:
+                print(f"    Saved combined visualization to {combined_path}")
         
         # Add metrics row to DataFrame
         metrics_df = pd.concat([metrics_df, pd.DataFrame([metrics_row])], ignore_index=True)
@@ -639,7 +892,7 @@ def main():
         print(f"  Average Dice: {metrics_df[f'{name}_dice'].mean():.3f}")
     
     # Create summary visualizations
-    create_summary_visualizations(metrics_df, output_dir)
+    create_summary_visualisations(metrics_df, output_dir)
 
 def make_valid_polygon(points):
     """
