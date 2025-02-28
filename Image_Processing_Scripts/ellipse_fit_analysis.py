@@ -212,8 +212,13 @@ def calculate_overlap_metrics(contour_x, contour_y, ellipse_x, ellipse_y):
             contour_area = simple_polygon_area(contour_points)
             ellipse_area = simple_polygon_area(ellipse_points)
             
-            # Calculate area difference percentage using estimated areas
-            area_diff_pct = 100 * abs(contour_area - ellipse_area) / contour_area if contour_area > 0 else 0
+            # Calculate relative difference in areas
+            if contour_area > 0:
+                # Use a more appropriate area difference formula
+                rel_diff = abs(ellipse_area - contour_area) / max(ellipse_area, contour_area)
+                area_diff_pct = 100 * rel_diff
+            else:
+                area_diff_pct = 100.0
             
             return {
                 'contour_area': contour_area,
@@ -221,7 +226,7 @@ def calculate_overlap_metrics(contour_x, contour_y, ellipse_x, ellipse_y):
                 'intersection_area': 0,
                 'iou': 0,
                 'dice': 0,
-                'area_diff_pct': area_diff_pct
+                'area_diff_pct': min(area_diff_pct, 100.0)  # Cap at 100%
             }
         
         # Calculate areas
@@ -239,7 +244,7 @@ def calculate_overlap_metrics(contour_x, contour_y, ellipse_x, ellipse_y):
             union = contour_polygon.union(ellipse_polygon)
             union_area = union.area
         except Exception:
-            union_area = contour_area + ellipse_area
+            union_area = contour_area + ellipse_area - intersection_area
         
         # Calculate IoU (Intersection over Union) - Jaccard Index
         iou = intersection_area / union_area if union_area > 0 else 0
@@ -247,8 +252,13 @@ def calculate_overlap_metrics(contour_x, contour_y, ellipse_x, ellipse_y):
         # Calculate Dice coefficient
         dice = (2 * intersection_area) / (contour_area + ellipse_area) if (contour_area + ellipse_area) > 0 else 0
         
-        # Calculate area difference percentage
-        area_diff_pct = 100 * abs(contour_area - ellipse_area) / contour_area if contour_area > 0 else 0
+        # Calculate area difference percentage - improved formula
+        # Using the larger area as denominator ensures result is between 0-100%
+        if max(contour_area, ellipse_area) > 0:
+            rel_diff = abs(ellipse_area - contour_area) / max(ellipse_area, contour_area)
+            area_diff_pct = 100 * rel_diff
+        else:
+            area_diff_pct = 100.0
         
         return {
             'contour_area': contour_area,
@@ -256,7 +266,7 @@ def calculate_overlap_metrics(contour_x, contour_y, ellipse_x, ellipse_y):
             'intersection_area': intersection_area,
             'iou': iou,
             'dice': dice,
-            'area_diff_pct': area_diff_pct
+            'area_diff_pct': min(area_diff_pct, 100.0)  # Cap at 100%
         }
     except Exception as e:
         print(f"Error calculating overlap metrics: {e}")
@@ -266,8 +276,12 @@ def calculate_overlap_metrics(contour_x, contour_y, ellipse_x, ellipse_y):
             contour_area = simple_polygon_area(list(zip(contour_x, contour_y)))
             ellipse_area = simple_polygon_area(list(zip(ellipse_x, ellipse_y)))
             
-            # Calculate area difference percentage
-            area_diff_pct = 100 * abs(contour_area - ellipse_area) / contour_area if contour_area > 0 else 0
+            # Calculate area difference percentage - improved formula
+            if max(contour_area, ellipse_area) > 0:
+                rel_diff = abs(ellipse_area - contour_area) / max(ellipse_area, contour_area)
+                area_diff_pct = 100 * rel_diff
+            else:
+                area_diff_pct = 100.0
             
             return {
                 'contour_area': contour_area,
@@ -275,7 +289,7 @@ def calculate_overlap_metrics(contour_x, contour_y, ellipse_x, ellipse_y):
                 'intersection_area': 0,
                 'iou': 0,
                 'dice': 0,
-                'area_diff_pct': area_diff_pct
+                'area_diff_pct': min(area_diff_pct, 100.0)  # Cap at 100%
             }
         except:
             return {
@@ -284,8 +298,31 @@ def calculate_overlap_metrics(contour_x, contour_y, ellipse_x, ellipse_y):
                 'intersection_area': 0,
                 'iou': 0,
                 'dice': 0,
-                'area_diff_pct': 0
+                'area_diff_pct': 100.0
             }
+
+def set_publication_style():
+    """Set matplotlib parameters for publication-quality figures."""
+    plt.rcParams.update({
+        'font.family': 'serif',
+        'font.serif': ['Times New Roman'],
+        'mathtext.fontset': 'stix',
+        'font.size': 12,
+        'axes.labelsize': 14,
+        'axes.titlesize': 16,
+        'xtick.labelsize': 12,
+        'ytick.labelsize': 12,
+        'legend.fontsize': 10,
+        'figure.dpi': 150,
+        'savefig.dpi': 300,
+        'savefig.format': 'png',
+        'savefig.bbox': 'tight',
+        'axes.grid': True,
+        'grid.alpha': 0.3,
+        'grid.linestyle': '--',
+        'axes.spines.top': False,
+        'axes.spines.right': False,
+    })
 
 def visualize_fit_analysis(contour_x, contour_y, ellipse_x, ellipse_y, metrics, patient_id, timepoint, side, name, output_dir='ellipse_fit_analysis'):
     """
@@ -304,36 +341,60 @@ def visualize_fit_analysis(contour_x, contour_y, ellipse_x, ellipse_y, metrics, 
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
     
+    # Set publication style
+    set_publication_style()
+    
     # Create figure and axes
-    fig, ax = plt.subplots(figsize=(10, 8))
+    fig, ax = plt.subplots(figsize=(10, 7))
+    
+    # Colors
+    def_color = '#FF5555'  # Bright red
+    ref_color = '#5555FF'  # Bright blue
+    def_dark = '#8B0000'   # Dark red
+    ref_dark = '#00008B'   # Dark blue
+    
+    # Determine color scheme based on analysis type
+    contour_color = def_color if name == 'def' else ref_color
+    ellipse_color = def_dark if name == 'def' else ref_dark
     
     # Plot contour points
-    ax.scatter(contour_x, contour_y, color='red' if name == 'def' else 'blue', 
-              s=2, label=f'{"Deformed" if name == "def" else "Reference"} Contour')
+    ax.scatter(contour_x, contour_y, color=contour_color, s=10, alpha=0.7, 
+               edgecolor=ellipse_color, linewidth=0.5, 
+               label=f'{"Deformed" if name == "def" else "Reference"} Contour')
     
     # Plot ellipse curve
-    ax.plot(ellipse_x, ellipse_y, color='darkred' if name == 'def' else 'darkblue', 
-           linewidth=2, label=f'Fitted Ellipse (h={metrics["h_param"]:.2f}, a={metrics["a_param"]:.2f})')
+    ax.plot(ellipse_x, ellipse_y, color=ellipse_color, linewidth=2, 
+            label=f'{"Deformed" if name == "def" else "Reference"} Ellipse Fit')
     
-    # Add metrics as text
+    # Format metrics text
     metrics_text = (
+        f"Metrics:\n"
         f"RMSE: {metrics['rmse']:.3f}\n"
-        f"MAE: {metrics['mae']:.3f}\n"
-        f"Max Error: {metrics['max_error']:.3f}\n"
         f"R²: {metrics['r2']:.3f}\n"
-        f"IoU: {metrics['iou']:.3f}\n"
-        f"Dice: {metrics['dice']:.3f}\n"
-        f"Area Diff: {metrics['area_diff_pct']:.1f}%"
+        f"Area Similarity: {metrics['area_diff_pct']:.1f}%\n"
+        f"h: {metrics['h_param']:.2f}"
     )
     
-    # Position text in top right corner
-    bbox_props = dict(boxstyle="round,pad=0.5", fc="white", ec="gray", alpha=0.8)
-    ax.text(0.95, 0.95, metrics_text, transform=ax.transAxes, fontsize=10,
-            verticalalignment='top', horizontalalignment='right', bbox=bbox_props)
+    # Position metrics text in top right corner
+    bbox_props = dict(boxstyle="round,pad=0.5", 
+                      facecolor='white', 
+                      edgecolor=ellipse_color, 
+                      alpha=0.8)
     
-    # Add title and legend
-    ax.set_title(f"Ellipse Fit Analysis - Patient {patient_id}, {timepoint}, Side {side}, {'Deformed' if name == 'def' else 'Reference'}")
-    ax.legend(loc='upper left')
+    ax.text(0.97, 0.97, metrics_text, 
+            transform=ax.transAxes, 
+            fontsize=10,
+            verticalalignment='top', 
+            horizontalalignment='right', 
+            bbox=bbox_props,
+            color=ellipse_color)
+    
+    # Add title
+    ax.set_title(f"Ellipse Fit Analysis - Patient {patient_id}, Timepoint {timepoint}, "
+                 f"{'Deformed' if name == 'def' else 'Reference'} Configuration")
+    
+    # Add legend with nice formatting - positioned outside plot area
+    ax.legend(loc='upper right', bbox_to_anchor=(1.25, 1), frameon=True, framealpha=0.9, edgecolor='gray')
     
     # Equal aspect ratio
     ax.set_aspect('equal', adjustable='box')
@@ -341,14 +402,24 @@ def visualize_fit_analysis(contour_x, contour_y, ellipse_x, ellipse_y, metrics, 
     # Set y-axis limit to match original plots
     ax.set_ylim(top=60)
     
+    # Add labels
+    ax.set_xlabel('X Coordinate')
+    ax.set_ylabel('Y Coordinate')
+    
+    # Adjust figure layout
+    fig.tight_layout()
+    fig.subplots_adjust(right=0.85)
+    
     # Save figure
-    filename = f"{patient_id}_{timepoint}_{side}_{name}_fit_analysis.png"
+    filename = f"{patient_id}_{timepoint}_{name}_fit_analysis.png"
     output_path = os.path.join(output_dir, filename)
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
     
     return output_path
 
+
+    
 def main():
     """Main function to run the ellipse fit analysis."""
     # File paths
@@ -479,57 +550,75 @@ def main():
             print(f"  Analyzing {name} fit...")
             
             # Get contour and ellipse data
-            h_cent = data[f'h_{name}_cent'].iloc[i]
-            v_cent = data[f'v_{name}_cent'].iloc[i]
-            ellipse_h = data[f'ellipse_h_{name}'].iloc[i]
-            ellipse_v = data[f'ellipse_v_{name}'].iloc[i]
-            h_param = data[f'h_param_{name}'].iloc[i]
-            a_param = data[f'a_param_{name}'].iloc[i]
+            try:
+                h_cent = data[f'h_{name}_cent'].iloc[i]
+                v_cent = data[f'v_{name}_cent'].iloc[i]
+                ellipse_h = data[f'ellipse_h_{name}'].iloc[i]
+                ellipse_v = data[f'ellipse_v_{name}'].iloc[i]
+                h_param = data[f'h_param_{name}'].iloc[i]
+                a_param = data[f'a_param_{name}'].iloc[i]
+                
+                # Calculate distance-based metrics
+                rmse = calculate_rmse_ellipse_fit(h_cent, v_cent, ellipse_h, ellipse_v, h_param, a_param)
+                mae = calculate_mae_ellipse_fit(h_cent, v_cent, ellipse_h, ellipse_v, h_param, a_param)
+                max_error = calculate_max_error_ellipse_fit(h_cent, v_cent, ellipse_h, ellipse_v, h_param, a_param)
+                r2 = calculate_r2_ellipse_fit(h_cent, v_cent, ellipse_h, ellipse_v, h_param, a_param)
+                
+                # Calculate area-based metrics
+                area_ratio = calculate_area_ratio(h_cent, v_cent, ellipse_h, ellipse_v)
+                
+                # Calculate overlap metrics
+                overlap_metrics = calculate_overlap_metrics(h_cent, v_cent, ellipse_h, ellipse_v)
+                
+                # Store metrics in row
+                metrics_row[f'{name}_rmse'] = rmse
+                metrics_row[f'{name}_mae'] = mae
+                metrics_row[f'{name}_max_error'] = max_error
+                metrics_row[f'{name}_r2'] = r2
+                metrics_row[f'{name}_area_ratio'] = area_ratio
+                metrics_row[f'{name}_iou'] = overlap_metrics['iou']
+                metrics_row[f'{name}_dice'] = overlap_metrics['dice']
+                metrics_row[f'{name}_area_diff_pct'] = overlap_metrics['area_diff_pct']
+                
+                # Visualize the fit
+                visualization_metrics = {
+                    'rmse': rmse,
+                    'mae': mae,
+                    'max_error': max_error,
+                    'r2': r2,
+                    'iou': overlap_metrics['iou'],
+                    'dice': overlap_metrics['dice'],
+                    'area_diff_pct': overlap_metrics['area_diff_pct'],
+                    'h_param': h_param,
+                    'a_param': a_param
+                }
+                
+                vis_path = visualize_fit_analysis(
+                    h_cent, v_cent, ellipse_h, ellipse_v, 
+                    visualization_metrics, patient_id, timepoint, side, name, 
+                    output_dir=output_dir
+                )
+                
+                print(f"    Saved visualization to {vis_path}")
+                print(f"    Metrics: RMSE={rmse:.3f}, MAE={mae:.3f}, Max Error={max_error:.3f}, R²={r2:.3f}")
+                print(f"    Area Metrics: IoU={overlap_metrics['iou']:.3f}, Dice={overlap_metrics['dice']:.3f}")
             
-            # Calculate distance-based metrics
-            rmse = calculate_rmse_ellipse_fit(h_cent, v_cent, ellipse_h, ellipse_v, h_param, a_param)
-            mae = calculate_mae_ellipse_fit(h_cent, v_cent, ellipse_h, ellipse_v, h_param, a_param)
-            max_error = calculate_max_error_ellipse_fit(h_cent, v_cent, ellipse_h, ellipse_v, h_param, a_param)
-            r2 = calculate_r2_ellipse_fit(h_cent, v_cent, ellipse_h, ellipse_v, h_param, a_param)
-            
-            # Calculate area-based metrics
-            area_ratio = calculate_area_ratio(h_cent, v_cent, ellipse_h, ellipse_v)
-            
-            # Calculate overlap metrics
-            overlap_metrics = calculate_overlap_metrics(h_cent, v_cent, ellipse_h, ellipse_v)
-            
-            # Store metrics in row
-            metrics_row[f'{name}_rmse'] = rmse
-            metrics_row[f'{name}_mae'] = mae
-            metrics_row[f'{name}_max_error'] = max_error
-            metrics_row[f'{name}_r2'] = r2
-            metrics_row[f'{name}_area_ratio'] = area_ratio
-            metrics_row[f'{name}_iou'] = overlap_metrics['iou']
-            metrics_row[f'{name}_dice'] = overlap_metrics['dice']
-            metrics_row[f'{name}_area_diff_pct'] = overlap_metrics['area_diff_pct']
-            
-            # Visualize the fit
-            visualization_metrics = {
-                'rmse': rmse,
-                'mae': mae,
-                'max_error': max_error,
-                'r2': r2,
-                'iou': overlap_metrics['iou'],
-                'dice': overlap_metrics['dice'],
-                'area_diff_pct': overlap_metrics['area_diff_pct'],
-                'h_param': h_param,
-                'a_param': a_param
-            }
-            
-            vis_path = visualize_fit_analysis(
-                h_cent, v_cent, ellipse_h, ellipse_v, 
-                visualization_metrics, patient_id, timepoint, side, name, 
-                output_dir=output_dir
-            )
-            
-            print(f"    Saved visualization to {vis_path}")
-            print(f"    Metrics: RMSE={rmse:.3f}, MAE={mae:.3f}, Max Error={max_error:.3f}, R²={r2:.3f}")
-            print(f"    Area Metrics: IoU={overlap_metrics['iou']:.3f}, Dice={overlap_metrics['dice']:.3f}")
+            except Exception as e:
+                print(f"    Error analyzing {name} fit: {e}")
+                # Set default values for metrics
+                metrics_row[f'{name}_rmse'] = np.nan
+                metrics_row[f'{name}_mae'] = np.nan
+                metrics_row[f'{name}_max_error'] = np.nan
+                metrics_row[f'{name}_r2'] = np.nan
+                metrics_row[f'{name}_area_ratio'] = np.nan
+                metrics_row[f'{name}_iou'] = 0
+                metrics_row[f'{name}_dice'] = 0
+                metrics_row[f'{name}_area_diff_pct'] = np.nan
+        
+        # Create combined visualization with both contours
+        combined_path = create_combined_plot(data, i, metrics_row, output_dir)
+        if combined_path:
+            print(f"    Saved combined visualization to {combined_path}")
         
         # Add metrics row to DataFrame
         metrics_df = pd.concat([metrics_df, pd.DataFrame([metrics_row])], ignore_index=True)
@@ -617,7 +706,125 @@ def simple_polygon_area(points):
     area = abs(area) / 2.0
     return area
 
-def create_summary_visualizations(metrics_df, output_dir):
+def create_combined_plot(data, i, metrics_row, output_dir):
+    """
+    Create combined visualization showing both deformed and reference contours with their fits.
+    
+    Parameters:
+    data (DataFrame): The complete dataset
+    i (int): Current row index in the dataset
+    metrics_row (dict): Dictionary with calculated metrics
+    output_dir (str): Directory to save visualizations
+    
+    Returns:
+    str: Path to the saved file
+    """
+    try:
+        # Extract patient info
+        patient_id = data['patient_id'].iloc[i]
+        timepoint = data['timepoint'].iloc[i]
+        side = data['side'].iloc[i]
+        
+        # Set publication style
+        set_publication_style()
+        
+        # Create figure and axes
+        fig, ax = plt.subplots(figsize=(10, 7))
+        
+        # Colors
+        def_color = '#FF5555'  # Bright red
+        ref_color = '#5555FF'  # Bright blue
+        def_dark = '#8B0000'   # Dark red
+        ref_dark = '#00008B'   # Dark blue
+        
+        # Draw deformed contour and fit
+        h_def_cont = data['h_def_cent'].iloc[i]
+        v_def_cont = data['v_def_cent'].iloc[i]
+        ellipse_h_def = data['ellipse_h_def'].iloc[i]
+        ellipse_v_def = data['ellipse_v_def'].iloc[i]
+        
+        ax.scatter(h_def_cont, v_def_cont, color=def_color, s=10, alpha=0.7, 
+                  edgecolor=def_dark, linewidth=0.5, label='Deformed Contour')
+        ax.plot(ellipse_h_def, ellipse_v_def, color=def_dark, linewidth=2, 
+               label='Deformed Ellipse Fit')
+        
+        # Draw reference contour and fit
+        h_ref_cont = data['h_ref_cent'].iloc[i]
+        v_ref_cont = data['v_ref_cent'].iloc[i]
+        ellipse_h_ref = data['ellipse_h_ref'].iloc[i]
+        ellipse_v_ref = data['ellipse_v_ref'].iloc[i]
+        
+        ax.scatter(h_ref_cont, v_ref_cont, color=ref_color, s=10, alpha=0.7, 
+                  edgecolor=ref_dark, linewidth=0.5, label='Reference Contour')
+        ax.plot(ellipse_h_ref, ellipse_v_ref, color=ref_dark, linewidth=2, 
+               label='Reference Ellipse Fit')
+        
+        # Calculate area similarity from area difference
+        def_area_similarity = metrics_row.get('def_area_similarity_pct', 100 - metrics_row.get('def_area_diff_pct', 0))
+        ref_area_similarity = metrics_row.get('ref_area_similarity_pct', 100 - metrics_row.get('ref_area_diff_pct', 0))
+        
+        # Format metrics text for each type
+        def_metrics = (
+            f"Deformed Metrics:\n"
+            f"RMSE: {metrics_row['def_rmse']:.3f}\n"
+            f"R²: {metrics_row['def_r2']:.3f}\n"
+            #f"Area Similarity: {def_area_similarity:.1f}%\n"
+            f"Area Similarity: {metrics_row['def_area_diff_pct']:.1f}%\n"
+            f"h: {data['h_param_def'].iloc[i]:.2f}"
+        )
+        
+        ref_metrics = (
+            f"Reference Metrics:\n"
+            f"RMSE: {metrics_row['ref_rmse']:.3f}\n"
+            f"R²: {metrics_row['ref_r2']:.3f}\n"
+            #f"Area Similarity: {ref_area_similarity:.1f}%\n"
+            f"Area Similarity: {metrics_row['ref_area_diff_pct']:.1f}%\n"
+            f"h: {data['h_param_ref'].iloc[i]:.2f}"
+        )
+        
+        # Position metrics text in left/right corners
+        bbox_props_def = dict(boxstyle="round,pad=0.5", facecolor='white', edgecolor=def_dark, alpha=0.8)
+        bbox_props_ref = dict(boxstyle="round,pad=0.5", facecolor='white', edgecolor=ref_dark, alpha=0.8)
+        
+        ax.text(0.03, 0.97, def_metrics, transform=ax.transAxes, fontsize=10,
+                verticalalignment='top', horizontalalignment='left', bbox=bbox_props_def,
+                color=def_dark)
+        
+        ax.text(0.97, 0.97, ref_metrics, transform=ax.transAxes, fontsize=10,
+                verticalalignment='top', horizontalalignment='right', bbox=bbox_props_ref,
+                color=ref_dark)
+        
+        # Add title
+        ax.set_title(f"Ellipse Fit Analysis - Patient {patient_id}, Timepoint {timepoint}")
+        
+        # Add legend with nice formatting - positioned outside plot area
+        ax.legend(loc='upper right', bbox_to_anchor=(1.25, 1), frameon=True, framealpha=0.9, edgecolor='gray')
+        
+        # Equal aspect ratio
+        ax.set_aspect('equal', adjustable='box')
+        
+        # Set y-axis limit to match original plots
+        ax.set_ylim(top=60)
+        
+        # Add labels
+        ax.set_xlabel('X Coordinate')
+        ax.set_ylabel('Y Coordinate')
+        
+        # Adjust figure size to accommodate legend
+        fig.tight_layout()
+        fig.subplots_adjust(right=0.85)
+        
+        # Save figure
+        filename = f"{patient_id}_{timepoint}_combined_fit_analysis.png"
+        output_path = os.path.join(output_dir, filename)
+        plt.savefig(output_path, bbox_inches='tight')
+        plt.close()
+        
+        return output_path
+    
+    except Exception as e:
+        print(f"Error creating combined plot: {e}")
+        return None
     """
     Create summary visualizations of fit metrics.
     
