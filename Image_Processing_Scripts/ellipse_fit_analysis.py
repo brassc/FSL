@@ -216,10 +216,260 @@ def calculate_area_ratio(contour_x, contour_y, ellipse_x, ellipse_y):
     
     return ratio
 
+def calculate_overlap_metrics(contour_x, contour_y, ellipse_x, ellipse_y):
+    """
+    Calculate area-based overlap metrics for the fit.
+    
+    Parameters:
+    contour_x, contour_y (array): Coordinates of contour points
+    ellipse_x, ellipse_y (array): Coordinates of ellipse points
+    
+    Returns:
+    dict: Dictionary of overlap metrics
+    """
+    try:
+        # Calculate Dice coefficient using masks approach as primary method
+        dice = calculate_dice_from_masks(contour_x, contour_y, ellipse_x, ellipse_y)
+        
+        # Create valid polygons by ensuring they're properly formed
+        # 1. Buffer by a tiny amount to fix topology issues
+        # 2. Convert to LinearRing and check if valid
+        
+        # For contour polygon
+        contour_points = list(zip(contour_x, contour_y))
+        contour_polygon = make_valid_polygon(contour_points)
+        
+        # For ellipse polygon
+        ellipse_points = list(zip(ellipse_x, ellipse_y))
+        ellipse_polygon = make_valid_polygon(ellipse_points)
+        
+        # If either polygon is invalid, simplify calculation
+        if contour_polygon is None or ellipse_polygon is None:
+            # Estimate area using simpler methods
+            contour_area = simple_polygon_area(contour_points)
+            ellipse_area = simple_polygon_area(ellipse_points)
+            
+            # Calculate relative difference in areas
+            if contour_area > 0:
+                # Use a more appropriate area difference formula
+                rel_diff = abs(ellipse_area - contour_area) / max(ellipse_area, contour_area)
+                area_diff_pct = 100 * rel_diff
+            else:
+                area_diff_pct = 100.0
+            
+            return {
+                'contour_area': contour_area,
+                'ellipse_area': ellipse_area,
+                'intersection_area': 0,
+                'iou': 0,
+                'dice': dice,  # Use the mask-based Dice calculation
+                'area_diff_pct': min(area_diff_pct, 100.0)  # Cap at 100%
+            }
+        
+        # Calculate areas
+        contour_area = contour_polygon.area
+        ellipse_area = ellipse_polygon.area
+        
+        # Calculate intersection and union with error handling
+        try:
+            intersection = contour_polygon.intersection(ellipse_polygon)
+            intersection_area = intersection.area
+        except Exception:
+            intersection_area = 0
+            
+        try:
+            union = contour_polygon.union(ellipse_polygon)
+            union_area = union.area
+        except Exception:
+            union_area = contour_area + ellipse_area - intersection_area
+        
+        # Calculate IoU (Intersection over Union) - Jaccard Index
+        iou = intersection_area / union_area if union_area > 0 else 0
+        
+        # We're using the mask-based Dice calculation instead of the polygon-based one
+        # so we don't calculate dice here anymore
+        
+        # Calculate area difference percentage - improved formula
+        # Using the larger area as denominator ensures result is between 0-100%
+        if max(contour_area, ellipse_area) > 0:
+            rel_diff = abs(ellipse_area - contour_area) / max(ellipse_area, contour_area)
+            area_diff_pct = 100 * rel_diff
+        else:
+            area_diff_pct = 100.0
+        
+        return {
+            'contour_area': contour_area,
+            'ellipse_area': ellipse_area,
+            'intersection_area': intersection_area,
+            'iou': iou,
+            'dice': dice,  # Use the mask-based Dice calculation
+            'area_diff_pct': min(area_diff_pct, 100.0)  # Cap at 100%
+        }
+    except Exception as e:
+        print(f"Error calculating overlap metrics: {e}")
+        # Fallback to simple area difference calculation
+        try:
+            # Always try to calculate the mask-based Dice first
+            try:
+                dice = calculate_dice_from_masks(contour_x, contour_y, ellipse_x, ellipse_y)
+            except Exception as dice_error:
+                print(f"Error calculating mask-based Dice: {dice_error}")
+                dice = 0
+            
+            # Estimate area using simpler methods
+            contour_area = simple_polygon_area(list(zip(contour_x, contour_y)))
+            ellipse_area = simple_polygon_area(list(zip(ellipse_x, ellipse_y)))
+            
+            # Calculate area difference percentage - improved formula
+            if max(contour_area, ellipse_area) > 0:
+                rel_diff = abs(ellipse_area - contour_area) / max(ellipse_area, contour_area)
+                area_diff_pct = 100 * rel_diff
+            else:
+                area_diff_pct = 100.0
+            
+            return {
+                'contour_area': contour_area,
+                'ellipse_area': ellipse_area,
+                'intersection_area': 0,
+                'iou': 0,
+                'dice': dice,
+                'area_diff_pct': min(area_diff_pct, 100.0)  # Cap at 100%
+            }
+        except Exception as e:
+            print(f"Error in fallback calculation: {e}")
+            # Try one last time to at least get the dice from masks
+            try:
+                dice = calculate_dice_from_masks(contour_x, contour_y, ellipse_x, ellipse_y)
+            except:
+                dice = 0
+                
+            return {
+                'contour_area': 0,
+                'ellipse_area': 0,
+                'intersection_area': 0,
+                'iou': 0,
+                'dice': dice,
+                'area_diff_pct': 100.0
+            }
 
 
+def calculate_dice_from_masks(contour_x, contour_y, ellipse_x, ellipse_y):
+    """
+    Calculate Dice coefficient using binary masks.
+    
+    Parameters:
+    contour_x, contour_y (array): Coordinates of contour points
+    ellipse_x, ellipse_y (array): Coordinates of ellipse points
+    
+    Returns:
+    float: Dice coefficient
+    """
+    import numpy as np
+    from matplotlib.path import Path
+    from scipy.interpolate import interp1d
+    
+    # Create binary masks with extended boundaries
+    min_x = min(np.min(contour_x), np.min(ellipse_x))
+    max_x = max(np.max(contour_x), np.max(ellipse_x))
+    min_y = min(np.min(contour_y), np.min(ellipse_y))
+    max_y = max(np.max(contour_y), np.max(ellipse_y))
+    
+    # Add padding to ensure we capture the full shapes
+    padding = 0.05  # 5% padding
+    x_range = max_x - min_x
+    y_range = max_y - min_y
+    
+    min_x -= x_range * padding
+    max_x += x_range * padding
+    min_y -= y_range * padding
+    max_y += y_range * padding
+    
+    # Resample the contour points to create a continuous curve
+    # First, sort the contour points by x-coordinate
+    contour_indices = np.argsort(contour_x)
+    contour_x_sorted = np.array(contour_x)[contour_indices]
+    contour_y_sorted = np.array(contour_y)[contour_indices]
+    
+    # Create a high-resolution grid for x
+    grid_size = 500  # High resolution for both curves
+    x_grid = np.linspace(min_x, max_x, grid_size)
+    y_grid = np.linspace(min_y, max_y, grid_size)
+    XX, YY = np.meshgrid(x_grid, y_grid)
+    
+    # Generate filled masks for both shapes
+    # For the contour (point cloud), use linear interpolation
+    try:
+        # Use linear interpolation to draw straight lines between points
+        contour_interp = interp1d(contour_x_sorted, contour_y_sorted, 
+                                 kind='linear', 
+                                 bounds_error=False, 
+                                 fill_value=(contour_y_sorted[0], contour_y_sorted[-1]))
+        
+        # Generate y-values for the contour curve
+        contour_curve_y = contour_interp(x_grid)
+        
+        # Create a filled contour mask
+        contour_mask = np.zeros_like(XX, dtype=bool)
+        for i, x_val in enumerate(x_grid):
+            y_val = contour_curve_y[i]
+            if not np.isnan(y_val):
+                # Fill all points below the curve (assuming semi-ellipse)
+                contour_mask[:, i] = YY[:, i] <= y_val
+    except:
+        # If interpolation fails, fall back to the original path method
+        contour_points = list(zip(contour_x, contour_y))
+        # Close the path if it's not already closed
+        if contour_points[0] != contour_points[-1]:
+            contour_points.append(contour_points[0])
+        contour_path = Path(contour_points)
+        points = np.vstack([XX.flatten(), YY.flatten()]).T
+        contour_mask = contour_path.contains_points(points).reshape(XX.shape)
+    
+    # For the ellipse, use the same linear approach
+    try:
+        # Sort ellipse points by x-coordinate
+        ellipse_indices = np.argsort(ellipse_x)
+        ellipse_x_sorted = np.array(ellipse_x)[ellipse_indices]
+        ellipse_y_sorted = np.array(ellipse_y)[ellipse_indices]
+        
+        # Linear interpolation for ellipse curve
+        ellipse_interp = interp1d(ellipse_x_sorted, ellipse_y_sorted, 
+                                 kind='linear', 
+                                 bounds_error=False, 
+                                 fill_value=(ellipse_y_sorted[0], ellipse_y_sorted[-1]))
+        
+        # Generate y-values for the ellipse curve
+        ellipse_curve_y = ellipse_interp(x_grid)
+        
+        # Create a filled ellipse mask
+        ellipse_mask = np.zeros_like(XX, dtype=bool)
+        for i, x_val in enumerate(x_grid):
+            y_val = ellipse_curve_y[i]
+            if not np.isnan(y_val):
+                # Fill all points below the curve (assuming semi-ellipse)
+                ellipse_mask[:, i] = YY[:, i] <= y_val
+    except:
+        # If interpolation fails, fall back to the original path method
+        ellipse_points = list(zip(ellipse_x, ellipse_y))
+        # Close the path if it's not already closed
+        if ellipse_points[0] != ellipse_points[-1]:
+            ellipse_points.append(ellipse_points[0])
+        ellipse_path = Path(ellipse_points)
+        points = np.vstack([XX.flatten(), YY.flatten()]).T
+        ellipse_mask = ellipse_path.contains_points(points).reshape(XX.shape)
+    
+    # Calculate Dice coefficient
+    intersection = np.logical_and(contour_mask, ellipse_mask).sum()
+    total = contour_mask.sum() + ellipse_mask.sum()
+    
+    if total > 0:
+        dice = (2.0 * intersection) / total
+    else:
+        dice = 0.0
+    
+    return dice
 
-def calculate_overlap_metrics_old(contour_x, contour_y, ellipse_x, ellipse_y):
+
     """
     Calculate area-based overlap metrics for the fit.
     
