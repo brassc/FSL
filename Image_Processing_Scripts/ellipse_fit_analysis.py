@@ -478,7 +478,7 @@ def create_summary_visualisations(metrics_df, output_dir):
 
     
     # Prepare long-format data for plotting
-    metrics_to_plot = ['rmse', 'r2']
+    metrics_to_plot = ['rmse', 'mae']
     long_data = []
     
     for metric in metrics_to_plot:
@@ -549,6 +549,7 @@ def create_summary_visualisations(metrics_df, output_dir):
     ax1.axhline(y=reference_median, xmin=0.7, xmax=0.8, color=ref_color, linestyle='-', linewidth=1)
 
     # Set titles and labels
+    ax1.set_ylim(0, 10)
     ax1.set_title('RMSE by Configuration')
     ax1.set_xlabel('Configuration')
     ax1.set_ylabel('Root Mean Square Error')
@@ -557,6 +558,7 @@ def create_summary_visualisations(metrics_df, output_dir):
     mae_data = long_df[long_df['metric_name'] == 'MAE']
 
     # Set up x-axis
+    ax2.set_ylim(0, 10)
     ax2.set_xlim(-0.5, 1.5)
     ax2.set_xticks([0, 1])
     ax2.set_xticklabels(['Deformed', 'Reference'])
