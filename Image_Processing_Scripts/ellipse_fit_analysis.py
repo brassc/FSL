@@ -893,28 +893,29 @@ def create_summary_visualisations(metrics_df, output_dir):
     
     # 2. Scatter plot of RMSE vs R²
     plt.figure(figsize=(10, 7))
-    scatter = plt.scatter(metrics_df['def_r2'], metrics_df['def_rmse'], 
+    scatter = plt.scatter(metrics_df['def_dice'], metrics_df['def_mae'], 
                           color=def_color, 
                           alpha=0.7, 
                           label='Deformed',
                           edgecolors='black', 
                           linewidth=0.5)
-    plt.scatter(metrics_df['ref_r2'], metrics_df['ref_rmse'], 
+    plt.scatter(metrics_df['ref_dice'], metrics_df['ref_mae'], 
                 color=ref_color, 
                 alpha=0.7, 
                 label='Reference',
                 edgecolors='black', 
                 linewidth=0.5)
     
-    plt.ylabel('Root Mean Square Error (RMSE)')
-    plt.xlabel('R² (Coefficient of Determination)')
-    plt.title('RMSE vs R² by Configuration')
-    #plt.xlim(-1,1)
+    plt.ylabel('Mean Absolute Error (MAE)')
+    plt.xlabel('Dice Coefficient')
+    plt.title('MAE vs Dice by Configuration')
+    plt.ylim(0,8)
+    plt.xlim(0,1)
     plt.legend()
     
     plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, 'scatter_rmse_r2.png'))
-    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/scatter_rmse_r2.pdf', dpi=300)
+    plt.savefig(os.path.join(output_dir, 'scatter_mae_dice.png'))
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/scatter_mae_dice.pdf', dpi=300)
     plt.close()
     
     # 3. Statistical tests
