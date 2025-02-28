@@ -6,8 +6,8 @@ import scipy as sp
 
 
 # Filenames
-input_filename = 'ellipse_data.pkl' # input
-ellipse_area_filename = 'ellipse_area_data.csv' # output
+input_filename = 'batch2_ellipse_data.pkl' # input
+ellipse_area_filename = 'batch2_ellipse_area_data.csv' # output
 
 # Import data from pickle file instead of CSV
 print("Loading data from pickle file...")
