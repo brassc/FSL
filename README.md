@@ -137,6 +137,34 @@ The loop in step 4 performs the following processes:
 ### Ellipse analysis ###
 Analysis of ellipse parameters is completed in script `longitudinal_data.py`. This imports the `ellipse_data.csv` data, converts from wide to long format, creates global plots of `h_optimal` for both deformed and reference configurations grouped by patient ID and also grouped by timepoint. 
 
+#### Ellipse Overlap Metrics
+
+##### Methods Summary
+
+###### `calculate_overlap_metrics(contour_x, contour_y, ellipse_x, ellipse_y)`
+
+Calculates area-based overlap metrics between contour points and fitted ellipse.
+
+* **Input**: Coordinate arrays for contour points and ellipse points
+* **Output**: Dictionary with areas, Dice coefficient, IoU, and area difference percentage
+* **Method**: Uses mask-based approach for Dice calculation; computes polygon-based metrics when possible
+
+###### `calculate_dice_from_masks(contour_x, contour_y, ellipse_x, ellipse_y)`
+
+Specialized function for Dice coefficient calculation.
+
+* **Input**: Coordinate arrays for contour points and ellipse points
+* **Output**: Dice coefficient (float, 0-1 range)
+* **Method**:
+   1. Creates high-resolution grid (500 points)
+   2. Sorts points by x-coordinate
+   3. Uses linear interpolation between points (to match cubic voxel source)
+   4. Generates binary masks by filling areas under curves
+   5. Computes: 2 × intersection / (sum of areas)
+
+For semi-elliptical shapes, this approach effectively captures area overlap even when one input is a sparse point cloud rather than a continuous shape.
+
+
 # Polynomial fitting
 
 # Area analysis
