@@ -6,9 +6,12 @@ import scipy as sp
 
 from ellipse_plot_main import convert_to_numpy_array
 
+#filenames
+area_data_filename = 'batch2_area_data.csv'
+ellipse_data_filename='batch2_ellipse_data.csv'
 
 # import data
-data=pd.read_csv('Image_Processing_Scripts/ellipse_data.csv')
+data=pd.read_csv(f'Image_Processing_Scripts/{ellipse_data_filename}')
 print(data.columns)
 # drop rows 'angle', 'ellipse_h_def','ellipse_v_def', 'h_param_def', 'a_param_def', 'ellipse_h_ref','ellipse_v_ref', 'h_param_ref', 'a_param_ref'
 data=data.drop(columns=['angle', 'h_def_cent', 'v_def_cent',
@@ -128,7 +131,7 @@ for i in range (0, len(data)):
     new_df = new_df._append({'patient_id': data['patient_id'].iloc[i], 'timepoint': data['timepoint'].iloc[i], 'side': data['side'].iloc[i], 'area_def': data['area_def'].iloc[i], 'area_ref': data['area_ref'].iloc[i], 'area_diff': data['area_diff'].iloc[i]}, ignore_index=True)
 
 print(new_df)
-new_df.to_csv('Image_Processing_Scripts/area_data.csv', index=False)
+new_df.to_csv(f'Image_Processing_Scripts/{area_data_filename}', index=False)
 sys.exit()
 
 
