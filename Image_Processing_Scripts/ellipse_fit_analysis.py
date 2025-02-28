@@ -553,8 +553,8 @@ def create_summary_visualisations(metrics_df, output_dir):
     ax1.set_xlabel('Configuration')
     ax1.set_ylabel('Root Mean Square Error')
 
-    # R² Plot (right)
-    r2_data = long_df[long_df['metric_name'] == 'R2']
+    # MAE plot (right)
+    mae_data = long_df[long_df['metric_name'] == 'MAE']
 
     # Set up x-axis
     ax2.set_xlim(-0.5, 1.5)
@@ -562,13 +562,13 @@ def create_summary_visualisations(metrics_df, output_dir):
     ax2.set_xticklabels(['Deformed', 'Reference'])
 
     # Get data for each configuration
-    deformed_r2 = r2_data[r2_data['configuration'] == 'Deformed']['metric_value'].values
-    reference_r2 = r2_data[r2_data['configuration'] == 'Reference']['metric_value'].values
+    deformed_mae = mae_data[mae_data['configuration'] == 'Deformed']['metric_value'].values
+    reference_mae = mae_data[mae_data['configuration'] == 'Reference']['metric_value'].values
 
     # Add only scatter points for Deformed
     ax2.scatter(
-        [0] * len(deformed_r2),
-        deformed_r2,
+        [0] * len(deformed_mae),
+        deformed_mae,
         color=def_color, s=10, alpha=0.7,
         edgecolor=def_color,  # Match fill color to remove grey rings
         linewidth=0.5
@@ -576,8 +576,8 @@ def create_summary_visualisations(metrics_df, output_dir):
 
     # Add only scatter points for Reference
     ax2.scatter(
-        [1] * len(reference_r2),
-        reference_r2,
+        [1] * len(reference_mae),
+        reference_mae,
         color=ref_color, s=10, alpha=0.7,
         edgecolor=ref_color,  # Match fill color to remove grey rings
         linewidth=0.5
@@ -585,17 +585,17 @@ def create_summary_visualisations(metrics_df, output_dir):
 
     # Optional: Add subtle statistical indicators manually
     # Calculate statistics
-    deformed_median_r2 = np.median(deformed_r2)
-    reference_median_r2 = np.median(reference_r2)
+    deformed_median_mae = np.median(deformed_mae)
+    reference_median_mae = np.median(reference_mae)
 
     # Add thin horizontal lines for median
-    ax2.axhline(y=deformed_median_r2, xmin=0.2, xmax=0.3, color=def_color, linestyle='-', linewidth=1)
-    ax2.axhline(y=reference_median_r2, xmin=0.7, xmax=0.8, color=ref_color, linestyle='-', linewidth=1)
+    ax2.axhline(y=deformed_median_mae, xmin=0.2, xmax=0.3, color=def_color, linestyle='-', linewidth=1)
+    ax2.axhline(y=reference_median_mae, xmin=0.7, xmax=0.8, color=ref_color, linestyle='-', linewidth=1)
 
     # Set titles and labels
-    ax2.set_title('R² by Configuration')
+    ax2.set_title('MAE by Configuration')
     ax2.set_xlabel('Configuration')
-    ax2.set_ylabel('R² (Coefficient of Determination)')
+    ax2.set_ylabel('Mean Absolute Error')
 
     
     # Final adjustments
@@ -622,6 +622,7 @@ def create_summary_visualisations(metrics_df, output_dir):
     plt.ylabel('Root Mean Square Error (RMSE)')
     plt.xlabel('R² (Coefficient of Determination)')
     plt.title('RMSE vs R² by Configuration')
+    #plt.xlim(-1,1)
     plt.legend()
     
     plt.tight_layout()
@@ -833,25 +834,27 @@ def main():
                 metrics_row[f'{name}_area_diff_pct'] = overlap_metrics['area_diff_pct']
                 
                 # Visualize the fit
-                visualization_metrics = {
-                    'rmse': rmse,
-                    'mae': mae,
-                    'max_error': max_error,
-                    'r2': r2,
-                    'iou': overlap_metrics['iou'],
-                    'dice': overlap_metrics['dice'],
-                    'area_diff_pct': overlap_metrics['area_diff_pct'],
-                    'h_param': h_param,
-                    'a_param': a_param
-                }
                 if plot_ellipse_flag == True:
+                    visualization_metrics = {
+                        'rmse': rmse,
+                        'mae': mae,
+                        'max_error': max_error,
+                        'r2': r2,
+                        'iou': overlap_metrics['iou'],
+                        'dice': overlap_metrics['dice'],
+                        'area_diff_pct': overlap_metrics['area_diff_pct'],
+                        'h_param': h_param,
+                        'a_param': a_param
+                    }
+                
                     vis_path = visualize_fit_analysis(
                         h_cent, v_cent, ellipse_h, ellipse_v, 
                         visualization_metrics, patient_id, timepoint, side, name, 
                         output_dir=output_dir
                     )
                 
-                print(f"    Saved visualization to {vis_path}")
+                    print(f"    Saved visualization to {vis_path}")
+
                 print(f"    Metrics: RMSE={rmse:.3f}, MAE={mae:.3f}, Max Error={max_error:.3f}, R²={r2:.3f}")
                 print(f"    Area Metrics: IoU={overlap_metrics['iou']:.3f}, Dice={overlap_metrics['dice']:.3f}")
             
@@ -890,6 +893,9 @@ def main():
         print(f"  Average R²: {metrics_df[f'{name}_r2'].mean():.3f}")
         print(f"  Average IoU: {metrics_df[f'{name}_iou'].mean():.3f}")
         print(f"  Average Dice: {metrics_df[f'{name}_dice'].mean():.3f}")
+
+    print(metrics_df.columns)
+
     
     # Create summary visualizations
     create_summary_visualisations(metrics_df, output_dir)
