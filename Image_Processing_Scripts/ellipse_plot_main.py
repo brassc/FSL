@@ -7,6 +7,30 @@ from matplotlib.patches import Ellipse
 from scipy.linalg import eig
 from scipy.optimize import curve_fit
 
+
+def set_publication_style():
+    """Set matplotlib parameters for publication-quality figures."""
+    plt.rcParams.update({
+        'font.family': 'serif',
+        'font.serif': ['Times New Roman'],
+        'mathtext.fontset': 'stix',
+        'font.size': 12,
+        'axes.labelsize': 14,
+        'axes.titlesize': 16,
+        'xtick.labelsize': 12,
+        'ytick.labelsize': 12,
+        'legend.fontsize': 10,
+        'figure.dpi': 150,
+        'savefig.dpi': 300,
+        'savefig.format': 'png',
+        'savefig.bbox': 'tight',
+        'axes.grid': True,
+        'grid.alpha': 0.3,
+        'grid.linestyle': '-',
+        'axes.spines.top': False,
+        'axes.spines.right': False,
+    })
+
 def convert_to_numpy_array(s):
     # Remove extra whitespace and split by spaces
     # Convert the resulting list of strings to a list of integers
@@ -366,12 +390,18 @@ def filter_fitted_values(h_values, v_fitted):
     # Now add gradient-based filtering as a separate step
     # Calculate gradients on the already filtered data
     gradients = np.gradient(v_fitted_filtered, h_values_filtered)
+
+    second_derivatives = np.gradient(gradients, h_values_filtered)
+
+    # Define threshold for sudden changes in gradient
+    second_derivative_threshold = 50#200  # Adjust this value based on your data
     
     # Define threshold for steep segments
-    max_gradient_threshold = 100.0  # For steep segments
+    #max_gradient_threshold = 100.0  # For steep segments
     
     # Find valid indices where gradient is not too steep
-    valid_indices = np.where(np.abs(gradients) < max_gradient_threshold)[0]
+    #valid_indices = np.where(np.abs(gradients) < max_gradient_threshold)[0]
+    valid_indices = np.where(np.abs(second_derivatives) < second_derivative_threshold)[0]
     
     # Only apply gradient filtering if we have enough valid indices
     if len(valid_indices) > 10:
@@ -510,7 +540,7 @@ if __name__=='__main__':
         #'h_ref', 'v_ref', 'h_def_tr', 'v_def_tr', 'h_ref_tr', 'v_ref_tr',
         #'h_def_rot', 'v_def_rot', 'h_ref_rot', 'v_ref_rot', 'angle',
         #'ellipse_h_def', 'ellipse_v_def', 'ellipse_h_ref', 'ellipse_v_ref'])
-
+    
     # Loop through each row in the total_df
     for i in range (len(total_df)):
         #print(total_df.iloc[i])
@@ -593,9 +623,13 @@ if __name__=='__main__':
         
 
         # PLOT FITTED ELLIPSE
-        plt.scatter(ellipse_data['h_def_cent'].iloc[0], ellipse_data['v_def_cent'].iloc[0], label='translated and rotated data points', color='red', s=2)
+        set_publication_style()
+
+        plt.figure(figsize=(8, 6), dpi=150)
+
+        plt.scatter(ellipse_data['h_def_cent'].iloc[0], ellipse_data['v_def_cent'].iloc[0], label='translated and rotated data points', s=10, alpha=0.7, color='red')
         plt.plot(ellipse_data['ellipse_h_def'].iloc[0], ellipse_data['ellipse_v_def'].iloc[0], label='Fitted curve', color='red')
-        plt.scatter(transformed_data['h_ref_cent'].iloc[0], transformed_data['v_ref_cent'].iloc[0], label='translated and rotated data points', color='blue', s=2)
+        plt.scatter(transformed_data['h_ref_cent'].iloc[0], transformed_data['v_ref_cent'].iloc[0], label='translated and rotated data points', s=10, alpha=0.7, color='blue')
         plt.plot(ellipse_data['ellipse_h_ref'].iloc[0], ellipse_data['ellipse_v_ref'].iloc[0], label='Fitted curve', color='blue')
 
         plt.gca().set_aspect('equal', adjustable='box')
@@ -608,9 +642,9 @@ if __name__=='__main__':
 
         # Create a clean version with only points and curves
         fig, ax = plt.subplots(figsize=(6, 6), facecolor='white')
-        ax.scatter(ellipse_data['h_def_cent'].iloc[0], ellipse_data['v_def_cent'].iloc[0], color='red', s=2)
+        ax.scatter(ellipse_data['h_def_cent'].iloc[0], ellipse_data['v_def_cent'].iloc[0], s=10, alpha=0.7, color='red')
         ax.plot(ellipse_data['ellipse_h_def'].iloc[0], ellipse_data['ellipse_v_def'].iloc[0], color='red')
-        ax.scatter(transformed_data['h_ref_cent'].iloc[0], transformed_data['v_ref_cent'].iloc[0], color='blue', s=2)
+        ax.scatter(transformed_data['h_ref_cent'].iloc[0], transformed_data['v_ref_cent'].iloc[0], s=10, alpha=0.7, color='blue')
         ax.plot(ellipse_data['ellipse_h_ref'].iloc[0], ellipse_data['ellipse_v_ref'].iloc[0], color='blue')
 
         # Set y-axis limit to match the original plot
@@ -624,6 +658,8 @@ if __name__=='__main__':
 
         # Set tight layout to crop the image around the content
         plt.tight_layout(pad=0)
+
+               
 
         # Save the clean version
         plt.savefig(f"Image_Processing_Scripts/ellipse_plots/{transformed_data['patient_id'].iloc[0]}_{transformed_data['timepoint'].iloc[0]}_ellipse_clean.png", 
