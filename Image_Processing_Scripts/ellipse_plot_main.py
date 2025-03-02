@@ -394,7 +394,7 @@ def filter_fitted_values(h_values, v_fitted):
     second_derivatives = np.gradient(gradients, h_values_filtered)
 
     # Define threshold for sudden changes in gradient
-    second_derivative_threshold = 80#200  # Adjust this value based on your data
+    second_derivative_threshold = 50#200  # Adjust this value based on your data
     
     # Define threshold for steep segments
     #max_gradient_threshold = 100.0  # For steep segments
@@ -496,9 +496,9 @@ def fit_ellipse(data):
     
 if __name__=='__main__':
     ## MAIN SCRIPT TO PLOT ELLIPSE FORM
-    data = pd.read_csv('Image_Processing_Scripts/data_entries.csv')
-    side_data=pd.read_csv('Image_Processing_Scripts/included_patient_info.csv')
-    ellipse_data_filename='ellipse_data.csv'
+    data = pd.read_csv('Image_Processing_Scripts/batch2_data_entries.csv')
+    side_data=pd.read_csv('Image_Processing_Scripts/batch2_included_patient_info.csv')
+    ellipse_data_filename='batch2_ellipse_data.csv'
     # filtered according to exclusion flag (first column)
     side_data=side_data[side_data['excluded?'] == 0]
     side_data = side_data.rename(columns={' side (L/R)': 'side'})
