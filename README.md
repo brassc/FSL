@@ -129,7 +129,7 @@ The loop in step 4 performs the following processes:
             - `check_params` prints the $h$, $a$ and optionally $b$ parameters according to the length of the `params` array
         - Data and `params` are used by `calculate_fitted_values` function to return `h_values`, a linear spaced array between minimum and maximum values in the horizontal contour, and `v_fitted`, where the ellipse function defined in `func` is used to calculate a corresponding vertical array from `h_values`. 
         - Due to the square root inherent to the ellipse formula, sometimes `func` would return imaginary values, represented as flat, horizontal trailing lines either side of the ellipse. These values were trimmed using `filter_fitted_values` function, ensuring to retain the starting and ending $0$ in the `v_fitted` array and corresponding `h_values` at the relevant index. 
-            - To prevent discontinuities, a filter was also applied for the vertical direction - regions of the ellipse with very high gradient discontinuous with the rest of the ellipse were removed. 
+            - To prevent discontinuities, a filter was also applied for the vertical direction. Regions of the ellipse with very high gradient discontinuous with the rest of the ellipse were found by evaluating the second derivative of the ellipse for all `x` values of the fitted ellipse curve. These regions were removed so that only a smooth region of the ellipse remained. 
         - Data slice is updated using `update_dataframe` function, adding the filtered data to `ellipse_h_def`, `ellipse_v_def`, `ellipse_h_ref`, `ellipse_v_ref`.
     - The data is then returned to main program as `ellipse_data`.
 6. `ellipse_data` is appended to `transformed_df` DataFrame.
@@ -137,7 +137,11 @@ The loop in step 4 performs the following processes:
 ### Ellipse analysis ###
 Analysis of ellipse parameters is completed in script `longitudinal_data.py`. This imports the `ellipse_data.csv` data, converts from wide to long format, creates global plots of `h_optimal` for both deformed and reference configurations grouped by patient ID and also grouped by timepoint. 
 
-#### Ellipse Overlap Metrics
+The program `ellipse_fit_analysis.py` evaluates the goodness of fit between contours and their corresponding fitted ellipse: 
+- Comparitive plots of Root Mean Square Error (RMSE) and Mean Absolute Error (MAE) are created in both reference and deformed configurations. 
+- A scatter plot of Mean Absolute Error (MAE) against Dice area overlap coefficent is created. 
+- A scatter plot of the area bound between two contours $\Delta A_c$ and area bound between two ellipses $\Delta A_e$ with line of best fit is created. 
+
 
 ##### Methods Summary
 
