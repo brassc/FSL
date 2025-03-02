@@ -350,7 +350,7 @@ for patient_id in patient_ids:
     area_diff_subset_valid = area_diff_subset[valid_indices]
     timepoints_num_valid = timepoints_num[valid_indices]
     """
-    
+
     # Create a smooth line using spline interpolation
     # 1. interpolate
     interpolator = interp1d(timepoints_num_valid, area_diff_subset_valid, kind='linear')
@@ -391,6 +391,7 @@ plt.title('Area Change Over Time')
 plt.tight_layout()
 plt.legend(title='Patient ID', bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
 plt.savefig('Image_Processing_Scripts/plots/area_change_longitudinal.png', bbox_inches='tight')
+plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/area_change_longitudinal.pdf', bbox_inches='tight', dpi=300)
 plt.close()
 #plt.show()
 
