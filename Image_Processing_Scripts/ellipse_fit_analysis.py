@@ -890,6 +890,111 @@ def create_summary_visualisations(metrics_df, output_dir):
     plt.savefig(os.path.join(output_dir, 'scatter_distribution.png'), dpi=300)
     plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/scatter_distribution.pdf', dpi=300)
     plt.close()
+
+    # Create separate figures for RMSE and MAE plots
+
+    # RMSE Plot (first figure)
+    fig1 = plt.figure(figsize=(8, 7))
+    ax1 = fig1.add_subplot(111)
+
+    # RMSE Plot content
+    rmse_data = long_df[long_df['metric_name'] == 'RMSE']
+    # Set up x-axis
+    ax1.set_xlim(-0.5, 1.5)
+    ax1.set_xticks([0, 1])
+    ax1.set_xticklabels(['Deformed', 'Reference'])
+    # Get data for each configuration
+    deformed_rmse = rmse_data[rmse_data['configuration'] == 'Deformed']['metric_value'].values
+    reference_rmse = rmse_data[rmse_data['configuration'] == 'Reference']['metric_value'].values
+    # Add only scatter points for Deformed
+    ax1.scatter(
+        [0] * len(deformed_rmse),
+        deformed_rmse,
+        color=def_color, s=10, alpha=0.7,
+        edgecolor=def_color, # Match fill color to remove grey rings
+        linewidth=0.5
+    )
+    # Add only scatter points for Reference
+    ax1.scatter(
+        [1] * len(reference_rmse),
+        reference_rmse,
+        color=ref_color, s=10, alpha=0.7,
+        edgecolor=ref_color, # Match fill color to remove grey rings
+        linewidth=0.5
+    )
+    # Calculate statistics
+    deformed_median = np.median(deformed_rmse)
+    reference_median = np.median(reference_rmse)
+    deformed_q1 = np.percentile(deformed_rmse, 25)
+    deformed_q3 = np.percentile(deformed_rmse, 75)
+    reference_q1 = np.percentile(reference_rmse, 25)
+    reference_q3 = np.percentile(reference_rmse, 75)
+    # Add thin horizontal lines for median
+    ax1.axhline(y=deformed_median, xmin=0.2, xmax=0.3, color=def_color, linestyle='-', linewidth=1)
+    ax1.axhline(y=reference_median, xmin=0.7, xmax=0.8, color=ref_color, linestyle='-', linewidth=1)
+    # Set titles and labels
+    ax1.set_ylim(0, 10)
+    ax1.set_title('RMSE by Configuration')
+    ax1.set_xlabel('Configuration')
+    ax1.set_ylabel('Root Mean Square Error')
+
+    # Save RMSE figure
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, 'rmse_scatter.png'), dpi=300)
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/rmse_scatter.pdf', dpi=300)
+    plt.close(fig1)
+
+    # MAE Plot (second figure)
+    fig2 = plt.figure(figsize=(8, 7))
+    ax2 = fig2.add_subplot(111)
+
+    # MAE plot content
+    mae_data = long_df[long_df['metric_name'] == 'MAE']
+    # Set up x-axis
+    ax2.set_ylim(0, 10)
+    ax2.set_xlim(-0.5, 1.5)
+    ax2.set_xticks([0, 1])
+    ax2.set_xticklabels(['Deformed', 'Reference'])
+    # Get data for each configuration
+    deformed_mae = mae_data[mae_data['configuration'] == 'Deformed']['metric_value'].values
+    reference_mae = mae_data[mae_data['configuration'] == 'Reference']['metric_value'].values
+    # Add only scatter points for Deformed
+    ax2.scatter(
+        [0] * len(deformed_mae),
+        deformed_mae,
+        color=def_color, s=10, alpha=0.7,
+        edgecolor=def_color, # Match fill color to remove grey rings
+        linewidth=0.5
+    )
+    # Add only scatter points for Reference
+    ax2.scatter(
+        [1] * len(reference_mae),
+        reference_mae,
+        color=ref_color, s=10, alpha=0.7,
+        edgecolor=ref_color, # Match fill color to remove grey rings
+        linewidth=0.5
+    )
+    # Calculate statistics
+    deformed_median_mae = np.median(deformed_mae)
+    reference_median_mae = np.median(reference_mae)
+    # Add thin horizontal lines for median
+    ax2.axhline(y=deformed_median_mae, xmin=0.2, xmax=0.3, color=def_color, linestyle='-', linewidth=1)
+    ax2.axhline(y=reference_median_mae, xmin=0.7, xmax=0.8, color=ref_color, linestyle='-', linewidth=1)
+    # Set titles and labels
+    ax2.set_title('MAE by Configuration')
+    ax2.set_xlabel('Configuration')
+    ax2.set_ylabel('Mean Absolute Error')
+
+    # Save MAE figure
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, 'mae_scatter.png'), dpi=300)
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/mae_scatter.pdf', dpi=300)
+    plt.close(fig2)
+
+
+
+
+
     
     # 2. Scatter plot of RMSE vs R²
     plt.figure(figsize=(10, 7))
