@@ -8,6 +8,31 @@ from scipy.interpolate import interp1d
 from scipy.interpolate import UnivariateSpline
 from scipy.interpolate import CubicSpline
 
+
+def set_publication_style():
+    """Set matplotlib parameters for publication-quality figures."""
+    plt.rcParams.update({
+        'font.family': 'serif',
+        'font.serif': ['Times New Roman'],
+        'mathtext.fontset': 'stix',
+        'font.size': 12,
+        'axes.labelsize': 14,
+        'axes.titlesize': 16,
+        'axes.titleweight': 'bold', 
+        'xtick.labelsize': 12,
+        'ytick.labelsize': 12,
+        'legend.fontsize': 10,
+        'figure.dpi': 150,
+        'savefig.dpi': 300,
+        'savefig.format': 'png',
+        'savefig.bbox': 'tight',
+        'axes.grid': True,
+        'grid.alpha': 0.3,
+        'grid.linestyle': '-',
+        'axes.spines.top': False,
+        'axes.spines.right': False,
+    })
+
 def get_dictionary(data, patient_ids, timepoints, subset_name='h_param_def'):
     patient_dict = {}
     for patient_id in patient_ids:
@@ -47,9 +72,68 @@ def create_hex_color_map_custom(base_colors, n):
     hex_colors = [rgb2hex(color) for color in colors]
     return hex_colors
 
-def get_color(unique_label, color_map):
+def get_color_old(unique_label, color_map):
     pid = unique_label.split(' ')[0]
     return color_map.get(int(pid), 'gray')  # Default to 'gray' if pid is not found
+
+def get_color(unique_label, color_map):
+    """
+    Get color for a patient ID from color_map. If patient ID is not in 
+    color_map, dynamically assign a new color and add it to color_map.
+    
+    Args:
+        unique_label: Label containing patient ID (e.g., 'pid ...')
+        color_map: Dictionary mapping patient IDs to colors
+        
+    Returns:
+        Color for the patient ID
+    """
+    pid = unique_label.split(' ')[0]
+    
+    # First check if this pid is already in the color map (as string)
+    if pid in color_map:
+        return color_map[pid]
+    
+    # For backward compatibility, check if int(pid) is in color_map
+    try:
+        int_pid = int(pid)
+        if int_pid in color_map:
+            # Also store the string version for future lookups
+            color_map[pid] = color_map[int_pid]
+            return color_map[int_pid]
+    except ValueError:
+        # If pid can't be converted to int, that's fine
+        pass
+    
+    # If we get here, this patient ID needs a new color
+    # Generate a new distinct color - using standard matplotlib colors
+    import matplotlib.pyplot as plt
+    import numpy as np
+    
+    # Use the length of color_map to determine the new color's index
+    color_idx = len(color_map) % 10  # Cycle through 10 colors
+    
+    # Get a color from tab10 colormap
+    new_color = plt.cm.tab10(color_idx)
+    
+    # Or use these predefined colors for more variety
+    predefined_colors = [
+        'red', 'blue', 'green', 'orange', 'purple', 
+        'brown', 'pink', 'olive', 'cyan', 'magenta',
+        'gold', 'limegreen', 'darkviolet', 'deepskyblue', 'crimson',
+        'darkgreen', 'darkblue', 'darkorange', 'hotpink', 'teal'
+    ]
+    
+    if len(color_map) < len(predefined_colors):
+        new_color = predefined_colors[len(color_map)]
+    
+    # Add the new color to the color_map for future use
+    color_map[pid] = new_color
+    
+    # Print for debugging
+    print(f"Assigned new color to patient {pid}: {new_color}")
+    
+    return new_color
 
 def plot_longitudinal_data(long_df, name):
     # color map
@@ -95,7 +179,7 @@ def plot_longitudinal_data(long_df, name):
     plt.figure(figsize=(12, 8))
     #plt.bar(long_df['timepoint'], long_df['h_param_def'] )
     long_df['unique_label']=long_df['patient_id'].astype(str) + ' ' + long_df['timepoint'].astype(str)
-    bars=plt.bar(long_df.index, long_df[name], color=[get_color(label, color_map) for label in long_df['unique_label']])
+    #bars=plt.bar(long_df.index, long_df[name], color=[get_color(label, color_map) for label in long_df['unique_label']])
     plt.xticks(long_df.index, long_df['unique_label'], rotation=90, fontsize=8)
     plt.xlabel('Timepoint')
     plt.ylabel(name)
@@ -133,21 +217,59 @@ def plot_longitudinal_data(long_df, name):
     return 0
 
 
+def map_timepoint_to_string(numeric_timepoint):
+    """
+    Convert a numeric timepoint to the closest string timepoint.
+    
+    Args:
+        numeric_timepoint: Numeric value of the timepoint
+        
+    Returns:
+        String representation of the closest timepoint
+    """
+    if pd.isna(numeric_timepoint):
+        return None
+    
+    # Find the closest reference timepoint
+    closest_idx = np.argmin([abs(numeric_timepoint - tp) for tp in timepoint_values])
+    return timepoints[closest_idx]
+
+
 
 # Main
 
 # Load the ellipse data
 data=pd.read_csv('Image_Processing_Scripts/ellipse_data.csv')
+data['patient_id'] = data['patient_id'].astype(str)
 print(data.columns)
 area_data=pd.read_csv('Image_Processing_Scripts/area_data.csv')
+area_data['patient_id'] = area_data['patient_id'].astype(str)
+batch2_area_data=pd.read_csv('Image_Processing_Scripts/batch2_area_data.csv')
+batch2_area_data['patient_id'] = batch2_area_data['patient_id'].astype(str)
 print(area_data.columns)
 
-# get possible patient IDs
-patient_ids = data['patient_id'].unique()
-n = len(patient_ids) # number of colours for plotting
 
 # array of timepoints
 timepoints = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
+timepoint_values = [50, 336, 504, 2160, 4320, 8640, 17280]
+
+# Convert numeric timepoints to strings
+batch2_area_data['timepoint'] = batch2_area_data['timepoint'].apply(map_timepoint_to_string)
+
+# Combine both data frames
+combined_area_data=pd.concat([area_data,batch2_area_data],ignore_index=True)
+area_data=combined_area_data
+print(area_data['timepoint'])
+
+# get possible patient IDs
+patient_ids = area_data['patient_id'].unique()
+print(patient_ids)
+n = len(patient_ids) # number of colours for plotting
+
+
+
+
+
 
 # Create global color map for plots
 color_map={}
@@ -183,6 +305,9 @@ print(area_diff_df)
 # convert timepoints to a numerical array 0 to len(timepoints)
 timepoints_num = np.arange(len(timepoints))
 
+
+
+set_publication_style()
 # Set figure size before plotting
 plt.figure(figsize=(12, 8))
 # Set default color before plotting
@@ -196,6 +321,22 @@ for patient_id in patient_ids:
     # convert patient_subset['area_diff'] to a numpy array for plotting
     area_diff_subset = np.array(patient_subset['area_diff'])
     valid_indices = ~np.isnan(area_diff_subset)
+
+    # skip patients with no valid measurements
+    if not np.any(valid_indices):
+        print(f'Patient {patient_id} has no valid area_diff measurements')
+        continue
+
+    # Find the earliest valid measurements
+    earliest_valid_index=np.where(valid_indices)[0][0]
+    first_area=area_diff_subset[earliest_valid_index]
+
+    # normalise data to start at 0
+    area_diff_subset = area_diff_subset - first_area
+    area_diff_subset_valid = area_diff_subset[valid_indices]
+    timepoints_num_valid = timepoints_num[valid_indices]
+
+    """
     if not np.isnan(area_diff_subset[0]):
         first_area = area_diff_subset[0]
         area_diff_subset = area_diff_subset - first_area
@@ -208,7 +349,8 @@ for patient_id in patient_ids:
         continue
     area_diff_subset_valid = area_diff_subset[valid_indices]
     timepoints_num_valid = timepoints_num[valid_indices]
-
+    """
+    
     # Create a smooth line using spline interpolation
     # 1. interpolate
     interpolator = interp1d(timepoints_num_valid, area_diff_subset_valid, kind='linear')
@@ -233,7 +375,7 @@ for patient_id in patient_ids:
     print(f"Color for patient {patient_id}: {color}")
     #if patient_id == 20174:
     plt.plot(x_smooth, y_smooth, label=patient_id, color=color)
-    plt.scatter(timepoints_num_valid, area_diff_subset_valid, label=patient_id, color=color)
+    plt.scatter(timepoints_num_valid, area_diff_subset_valid, color=color, s=20, alpha=0.5)
 
 #plt.figure(figsize=(12, 8))
 #print(f"color_map: {color_map}")
@@ -244,6 +386,11 @@ plt.xlabel('Time')
 # instead of 0-6, use timepoints
 plt.xticks(timepoints_num, timepoints)
 plt.ylabel('Area Change [mm$^2$]')
-plt.savefig('Image_Processing_Scripts/plots/area_change_longitudinal.png')
+plt.title('Area Change Over Time')
+#position legend outside of plot
+plt.tight_layout()
+plt.legend(title='Patient ID', bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+plt.savefig('Image_Processing_Scripts/plots/area_change_longitudinal.png', bbox_inches='tight')
 plt.close()
+#plt.show()
 

@@ -598,6 +598,7 @@ def set_publication_style():
         'font.size': 12,
         'axes.labelsize': 14,
         'axes.titlesize': 16,
+        'axes.titleweight': 'bold', 
         'xtick.labelsize': 12,
         'ytick.labelsize': 12,
         'legend.fontsize': 10,
@@ -607,7 +608,7 @@ def set_publication_style():
         'savefig.bbox': 'tight',
         'axes.grid': True,
         'grid.alpha': 0.3,
-        'grid.linestyle': '--',
+        'grid.linestyle': '-',
         'axes.spines.top': False,
         'axes.spines.right': False,
     })
