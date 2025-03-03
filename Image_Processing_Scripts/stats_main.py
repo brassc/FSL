@@ -69,7 +69,7 @@ pivoted_data = pivoted_data.rename_axis(None, axis=1)
 
 print(pivoted_data.head())
 
-
+"""
 # Add deformation status
 pivoted_data_with_deformation = pivoted_data.copy()
 pivoted_data_with_deformation['has_deformation'] = True
@@ -87,7 +87,12 @@ print(pivoted_data_with_deformation[['has_deformation']].head(10))  # Display th
 for patient_id in non_def_patients:
     if patient_id in pivoted_data_with_deformation.index:
         print(f"Patient {patient_id} has_deformation: {pivoted_data_with_deformation.loc[patient_id, 'has_deformation']}")
+"""
 
+# # combine timepoints - combine 6mo, 12mo and 24mo
+# # Combine 6mo, 12mo, and 24mo into a single timepoint
+# pivoted_data['12-24mo'] = pivoted_data[['12mo', '24mo']].mean(axis=1, skipna=True)
+# pivoted_data = pivoted_data.drop(columns=['12mo', '24mo'])
 
 # DO FOR WHOLE DATASET FIRST
 # List of all timepoints
@@ -153,20 +158,30 @@ if len(valid_results) > 0:
     # Apply Holm-Bonferroni correction to p-values
     if len(valid_results) > 1:  # Only apply if there are multiple tests
         p_values = valid_results['p_value'].values
-        rejected, p_corrected, _, _ = multipletests(p_values, alpha=0.05, method='holm')
-        valid_results['p_corrected'] = p_corrected
-        valid_results['significant'] = rejected
+        rejected_holm, p_corrected_holm, _, _ = multipletests(p_values, alpha=0.05, method='holm')
+        valid_results['p_holm'] = p_corrected_holm
+        valid_results['significant_holm'] = rejected_holm
+
+        # Apply FDR (Benjamini-Hochberg) correction
+        rejected_fdr, p_corrected_fdr, _, _ = multipletests(p_values, alpha=0.05, method='fdr_bh')
+        valid_results['p_fdr'] = p_corrected_fdr
+        valid_results['significant_fdr'] = rejected_fdr
+
     else:
         # If only one test, no correction needed
-        valid_results['p_corrected'] = valid_results['p_value']
-        valid_results['significant'] = valid_results['p_value'] < 0.05
+        valid_results['p_holm'] = valid_results['p_value']
+        valid_results['significant_holm'] = valid_results['p_value'] < 0.05
+        valid_results['p_fdr'] = valid_results['p_value']
+        valid_results['significant_fdr'] = valid_results['p_value'] < 0.05
     
     # Sort by corrected p-value
-    valid_results = valid_results.sort_values('p_corrected')
+    valid_results = valid_results.sort_values('p_value')
     
-    # Print results
-    print("\nPaired t-test Results with Holm-Bonferroni correction:")
-    print(valid_results[['comparison', 'n_pairs', 'mean_diff', 't_statistic', 'p_value', 'p_corrected', 'significant']])
+    
+    # Print results for all testing methods
+    print("\nPaired t-test Results (All p-values):")
+    print(valid_results[['comparison', 'n_pairs', 'mean_diff', 't_statistic', 'p_value', 'p_holm', 'significant_holm', 'p_fdr', 'significant_fdr']])
+    
 
     
     # Store results in a dictionary for later use
@@ -178,8 +193,10 @@ if len(valid_results) > 0:
             'mean_diff': row['mean_diff'],
             't_statistic': row['t_statistic'],
             'p_value': row['p_value'],
-            'p_corrected': row['p_corrected'],
-            'significant': row['significant']
+            'p_holm': row['p_holm'],
+            'significant_holm': row['significant_holm'],
+            'p_fdr': row['p_fdr'],
+            'significant_fdr': row['significant_fdr']
         }
 else:
     print("No pairs have sufficient data for paired t-test.")
