@@ -13,7 +13,9 @@ from itertools import combinations
 
 print('running stats_main.py')
 # Load the data (note this data does not contain all timepoints w NaN value if not exist - only contains timepoints w data per original data)
-data = pd.read_csv('Image_Processing_Scripts/area_data.csv')
+batch1_data = pd.read_csv('Image_Processing_Scripts/area_data.csv')
+batch2_data = pd.read_csv('Image_Processing_Scripts/batch2_area_data.csv')
+data = pd.concat([batch1_data, batch2_data], ignore_index=True)
 # drop cols from dataframe: remove area_def, area_ref and side
 new_df=data.drop(columns='area_def', axis=1)
 new_df=new_df.drop(columns='area_ref', axis=1)
@@ -40,6 +42,7 @@ pivoted_data = pivoted_data.rename_axis(None, axis=1)
 #pivoted_data.reset_index(inplace=True)  # Optional, to keep patient_id as a column
 print('data pivoted')
 print(pivoted_data.head())
+
 
 # List of timepoints
 timepoints = pivoted_data.columns.tolist()
