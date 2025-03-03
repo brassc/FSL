@@ -136,7 +136,11 @@ plt.subplots_adjust(bottom=0.25)  # Increase the bottom margin
 
 # Update save location as needed
 plt.savefig('python_scripts/patient_timeline_matrix.png')
-plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/patient_timeline_matrix.pdf', dpi=300) 
+plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/patient_timeline_matrix.png',
+           dpi=1200, 
+           bbox_inches='tight', 
+           pad_inches=0.1,
+           format='png') 
 plt.close()
 #plt.show()
 
@@ -230,7 +234,11 @@ fig.canvas.draw()
 
 # Update save location as needed
 plt.savefig('python_scripts/patient_timeline_matrix_and_sums_v2.png')
-plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/patient_timeline_matrix_and_sums.pdf', dpi=300)
+plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/patient_timeline_matrix_and_sums_v2.png',
+           dpi=1200, 
+           bbox_inches='tight', 
+           pad_inches=0.1,
+           format='png')
 
 # Show the combined figure
 plt.close()
@@ -281,7 +289,11 @@ plt.subplots_adjust(bottom=0.25)  # Increase the bottom margin
 
 # Update save location as needed
 plt.savefig('python_scripts/filtered_patient_timeline_matrix_v2.png')
-plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/filtered_patient_timeline_matrix_v2.pdf', dpi=300) 
+plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/filtered_patient_timeline_matrix_v2.png', 
+           dpi=1200, 
+           bbox_inches='tight', 
+           pad_inches=0.1,
+           format='png')
 plt.close()
 
 
