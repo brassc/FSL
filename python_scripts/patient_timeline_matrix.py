@@ -64,9 +64,7 @@ data = data.fillna(0)
 
 # Apply filtering to keep only patients with 2+ scans
 filtered_data = filter_patients(data)
-print(data)
-print(filtered_data)
-sys.exit()
+
 
 def trim_and_separate(data):
     # Ignoring the first and last columns from the data
@@ -259,16 +257,16 @@ plt.tick_params(
     labelbottom=True,    # labels along the bottom edge are on
     labelleft=True       # labels along the left edge are on
 )
-y_labels = data.iloc[:, 0].astype(str)
+y_labels = filtered_data.iloc[:, 0].astype(str)
 # Replace '0' with a blank space
 y_labels = y_labels.replace('0', ' ')
 
 plt.yticks(ticks=range(len(y_labels)), labels=y_labels, fontsize=8)
-x_labels = data.columns[1:].drop(data.columns[-1])
+x_labels = filtered_data.columns[1:].drop(filtered_data.columns[-1])
 plt.xticks(ticks=range(len(x_labels)), labels=x_labels, rotation=90, fontsize=8) 
 plt.xlabel("Timescale", labelpad=15)  # Increase labelpad for xlabel
 plt.ylabel("Patient ID", labelpad=15)  # Increase labelpad for ylabel
-plt.title("Patient ID Timescale Matrix", pad=20)  # Increase pad for title
+plt.title("Patient ID Timescale Matrix \nFiltered for Multiple Timepoints", pad=20)  # Increase pad for title
 
 # Create patches for the legend
 blue_patch = mpatches.Patch(color='blue', label='bifrontal')
