@@ -2,6 +2,7 @@ import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
 import pandas as pd
+from scipy import stats
 import statsmodels.formula.api as smf
 import seaborn as sns
 import sys
@@ -11,6 +12,7 @@ from scipy.stats import ttest_rel, wilcoxon
 from statsmodels.stats.multitest import multipletests
 from itertools import combinations
 from longitudinal_main import map_timepoint_to_string
+
 
 print('running stats_main.py')
 # Load the data (note this data does not contain all timepoints w NaN value if not exist - only contains timepoints w data per original data)
@@ -42,7 +44,7 @@ print('ensuring categorical values are categorical')
 new_df['timepoint']=pd.Categorical(new_df['timepoint'], categories=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
 print(new_df.head())
 
-sys.exit()
+
 ###### NEW CODE 2025-03-03 #######
 # Check for duplicates
 print("Checking for duplicates:")
@@ -51,13 +53,11 @@ print(f"Number of duplicate entries: {dupes.sum()}")
 if dupes.sum() > 0:
     print("Sample of duplicates:")
     print(new_df[dupes])# Using all available data
-sys.exit()
-
 
 
 pivoted_data = new_df.pivot(index='patient_id', columns='timepoint', values='area_diff')
 pivoted_data = pivoted_data.rename_axis(None, axis=1)
-sys.exit()
+
 # List of all timepoints
 timepoints = pivoted_data.columns.tolist()
 
@@ -65,40 +65,131 @@ timepoints = pivoted_data.columns.tolist()
 results_all_pairs = {}
 
 # Perform pairwise comparisons among all timepoints
-for timepoint1, timepoint2 in combinations(timepoints, 2):
-    # select non-missing pairs for the current timepoint pair
-    paired_data = pivoted_data[[timepoint1, timepoint2]].dropna()
-    n_samples=len(paired_data)
 
-    # Initialise values
-    stat_t, p_value_t = np.nan, np.nan
-    mean_diff = np.nan
-
-    # Calculate mean difference between all time point pairs
-    if n_samples >= 1:
-        mean_diff=(paired_data[timepoint1]-paired_data[timepoint2]).mean()
-
-    # Conduct statistical test if we have at least 2 samples
-    if n_samples >= 2:
-        try: 
-            stat_t, p_value_t = ttest_rel(paired_data[timepoint1], paired_data[timepoint2])
-        except ValueError as e:
-            print(f"T-test error for pair ({timepoint1}, {timepoint2}): {e}")
-    else:
-        print(f"Only {n_samples} pairs for timepoints ({timepoint1}, {timepoint2}) - can't run t-test")
-
-
-    # Store results
-    results_all_pairs[(timepoint1, timepoint2)] ={
-        'statistic_t': stat_t,
-        'p_value_t': p_value_t,
-        'mean_diff': mean_diff, #positive means timepoint1 > timepoint2
-        'n_samples': n_samples
-    }
+# Function to perform paired t-test between two time points
+def paired_ttest(data, time1, time2):
+    # Get data for both time points, excluding rows with missing values in either
+    paired_data = data[[time1, time2]].dropna()
     
+    if len(paired_data) < 3:
+        return {
+            'comparison': f"{time1} vs {time2}",
+            'time1': time1,
+            'time2': time2,
+            'n_pairs': len(paired_data),
+            'mean_diff': np.nan,
+            'std_diff': np.nan,
+            't_statistic': np.nan,
+            'p_value': np.nan,
+            'sufficient_data': False
+        }
+    
+    # Perform paired t-test
+    t_stat, p_val = stats.ttest_rel(paired_data[time1], paired_data[time2])
+    
+    # Calculate mean and std of differences
+    diff = paired_data[time1] - paired_data[time2]
+    
+    return {
+        'comparison': f"{time1} vs {time2}",
+        'time1': time1,
+        'time2': time2,
+        'n_pairs': len(paired_data),
+        'mean_diff': diff.mean(),
+        'std_diff': diff.std(),
+        't_statistic': t_stat,
+        'p_value': p_val,
+        'sufficient_data': True
+    }
+
+# Generate all possible pairs of timepoints
+pairs = list(combinations(timepoints, 2))
+
+# Run paired t-tests
+ttest_results = []
+for time1, time2 in pairs:
+    ttest_result = paired_ttest(pivoted_data, time1, time2)
+    ttest_results.append(ttest_result)
+# Convert results to DataFrame
+results_df = pd.DataFrame(ttest_results)
+#print(results_df)
+
+# Filter to show only pairs with sufficient data
+valid_results = results_df[results_df['sufficient_data'] == True].copy()
+
+if len(valid_results) > 0:
+    # Apply Holm-Bonferroni correction to p-values
+    if len(valid_results) > 1:  # Only apply if there are multiple tests
+        p_values = valid_results['p_value'].values
+        rejected, p_corrected, _, _ = multipletests(p_values, alpha=0.05, method='holm')
+        valid_results['p_corrected'] = p_corrected
+        valid_results['significant'] = rejected
+    else:
+        # If only one test, no correction needed
+        valid_results['p_corrected'] = valid_results['p_value']
+        valid_results['significant'] = valid_results['p_value'] < 0.05
+    
+    # Sort by corrected p-value
+    valid_results = valid_results.sort_values('p_corrected')
+    
+    # Print results
+    print("\nPaired t-test Results with Holm-Bonferroni correction:")
+    print(valid_results[['comparison', 'n_pairs', 'mean_diff', 't_statistic', 'p_value', 'p_corrected', 'significant']])
+
+    
+    # Store results in a dictionary for later use
+    results_all_pairs = {}
+    for _, row in valid_results.iterrows():
+        key = (row['time1'], row['time2'])
+        results_all_pairs[key] = {
+            'n_pairs': row['n_pairs'],
+            'mean_diff': row['mean_diff'],
+            't_statistic': row['t_statistic'],
+            'p_value': row['p_value'],
+            'p_corrected': row['p_corrected'],
+            'significant': row['significant']
+        }
+else:
+    print("No pairs have sufficient data for paired t-test.")
+    results_all_pairs = {}
 
 
 
+
+
+### Visualisations
+# 1. Data availability matrix
+availability_matrix = pd.DataFrame(index=timepoints, columns=timepoints, dtype=float)
+
+# fill the matrix with counts
+for time1 in timepoints:
+    for time2 in timepoints:
+        if time1 == time2:
+            # Diagonal: number of non-missing values for this time point
+            availability_matrix.loc[time1, time2] = pivoted_data[time1].notna().sum()
+        else:
+            # Off-diagonal: number of patients with data for both time points
+            common_data = pivoted_data[[time1, time2]].dropna()
+            availability_matrix.loc[time1, time2] = len(common_data)
+
+# Verify the data types before plotting
+print("Data types in availability_matrix:")
+print(availability_matrix.dtypes)
+print("\nSample of availability_matrix:")
+print(availability_matrix.head())
+
+# Explicitly convert matrix to float if needed
+availability_matrix = availability_matrix.astype(float)
+
+# Visualize the data availability
+plt.figure(figsize=(10, 8))
+sns.heatmap(availability_matrix, annot=True, cmap="YlGnBu", fmt='g')
+plt.title('Data Availability Matrix (number of patients)')
+plt.grid(False)
+plt.tight_layout()
+plt.savefig('Image_Processing_Scripts/data_availability.png')
+plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/data_availability.png', dpi=600)
+plt.close()
 
 
 
