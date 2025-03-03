@@ -5,7 +5,31 @@ import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
 import seaborn as sns
 import matplotlib.gridspec as gridspec
+import sys
 
+def set_publication_style():
+	"""Set matplotlib parameters for publication-quality figures."""
+	plt.rcParams.update({
+		'font.family': 'serif',
+		'font.serif': ['Times New Roman'],
+		'mathtext.fontset': 'stix',
+		'font.size': 12,
+		'axes.labelsize': 14,
+		'axes.titlesize': 16,
+		'axes.titleweight': 'bold', # This makes titles bold
+		'xtick.labelsize': 12,
+		'ytick.labelsize': 12,
+		'legend.fontsize': 10,
+		'figure.dpi': 150,
+		'savefig.dpi': 300,
+		'savefig.format': 'png',
+		'savefig.bbox': 'tight',
+		'axes.grid': False,
+		'grid.alpha': 0.3,
+		'grid.linestyle': '-',
+		'axes.spines.top': False,
+		'axes.spines.right': False,
+	})
 
 data=pd.read_csv('/Users/charlottebrass/repos/FSL/patient_timeline_map.csv')
 
@@ -14,8 +38,7 @@ data = data.fillna(0)
 
 # Ignoring the first and last columns from the data
 trimmed_data = data.drop(data.columns[[0, -1]], axis=1)
-
-
+# convert data to int
 for col in trimmed_data.columns[:8]:  # Selecting the first 8 columns
     trimmed_data[col] = trimmed_data[col].astype(int)
 
@@ -24,7 +47,8 @@ modified_data = trimmed_data.copy()
 
 # Set a distinct value for the last 7 rows (assuming 2 is not present in original data)
 modified_data.iloc[-7:, :] = modified_data.iloc[-7:, :] * 2  # For example, setting to 2
-print(modified_data)
+
+
 
 # Define a custom color map (binary + blue for value 2)
 cmap = mcolors.ListedColormap(['white', 'black', 'blue'])
@@ -35,9 +59,11 @@ norm = mcolors.BoundaryNorm(bounds, cmap.N)
 
 
 # MATRIX ONLY 
-
+set_publication_style()
 # Create a figure and axis
 plt.figure(figsize=(trimmed_data.shape[1]*0.5, trimmed_data.shape[1]))
+
+
 
 # Use imshow to create the matrix plot
 plt.imshow(modified_data, cmap=cmap, norm=norm, interpolation='none')
@@ -52,13 +78,13 @@ plt.tick_params(
     labelbottom=True,    # labels along the bottom edge are on
     labelleft=True       # labels along the left edge are on
 )
-y_labels = data.iloc[:, 0].astype(int).astype(str)
+y_labels = data.iloc[:, 0].astype(str)
 # Replace '0' with a blank space
 y_labels = y_labels.replace('0', ' ')
 
-plt.yticks(ticks=range(len(y_labels)), labels=y_labels)
+plt.yticks(ticks=range(len(y_labels)), labels=y_labels, fontsize=8)
 x_labels = data.columns[1:].drop(data.columns[-1])
-plt.xticks(ticks=range(len(x_labels)), labels=x_labels, rotation=90) 
+plt.xticks(ticks=range(len(x_labels)), labels=x_labels, rotation=90, fontsize=8) 
 plt.xlabel("Timescale", labelpad=15)  # Increase labelpad for xlabel
 plt.ylabel("Patient ID", labelpad=15)  # Increase labelpad for ylabel
 plt.title("Patient ID Timescale Matrix", pad=20)  # Increase pad for title
@@ -75,7 +101,8 @@ plt.legend(handles=[blue_patch, black_patch], loc='upper center', bbox_to_anchor
 plt.subplots_adjust(bottom=0.25)  # Increase the bottom margin
 
 # Update save location as needed
-#plt.savefig('python_scripts/patient_timeline_matrix.png')
+plt.savefig('python_scripts/patient_timeline_matrix.png')
+plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/patient_timeline_matrix.pdf', dpi=300) 
 
 #plt.show()
 
@@ -91,6 +118,8 @@ barchart_df = pd.concat([bifrontal_sums, hemi_sums], axis=1, keys=['Bifrontal', 
 print(column_sums.sum())
 
 # Create a figure with a grid layout for subplots
+set_publication_style()
+
 fig = plt.figure(figsize=(4, 10))
 gs = gridspec.GridSpec(2, 1, height_ratios=[8, 1])  # 2 rows, 1 column, height ratios for subplots
 
@@ -112,7 +141,7 @@ ax1.tick_params(
     labelleft=True
 )
 
-y_labels = data.iloc[:, 0].astype(int).astype(str)
+y_labels = data.iloc[:, 0].astype(str)
 y_labels = y_labels.replace('0', ' ')
 ax1.set_yticks(ticks=range(len(y_labels)))
 ax1.set_yticklabels(y_labels, fontsize=8)
@@ -166,7 +195,8 @@ ax2.set_position(pos2)
 fig.canvas.draw()
 
 # Update save location as needed
-plt.savefig('python_scripts/patient_timeline_matrix_and_sums.png')
+plt.savefig('python_scripts/patient_timeline_matrix_and_sums_v2.png')
+plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/patient_timeline_matrix_and_sums.pdf', dpi=300)
 
 # Show the combined figure
 plt.show()
