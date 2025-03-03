@@ -23,11 +23,22 @@ batch2_data['timepoint'] = batch2_data['timepoint'].apply(map_timepoint_to_strin
 data = pd.concat([batch1_data, batch2_data], ignore_index=True)
 
 # sort data according to patient id then timepoint
+# Sort data by patient_id numerically when possible
+def get_sort_key(patient_id):
+    try:
+        return (0, int(patient_id))  # Numeric IDs first, sorted numerically
+    except ValueError:
+        return (1, patient_id)       # Alphanumeric IDs second, sorted alphabetically
+
+# Create a sort key column
+data['sort_key'] = data['patient_id'].apply(get_sort_key)
+
+
 timepoints = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
 data['timepoint_order'] = data['timepoint'].apply(lambda x: timepoints.index(x) if x in timepoints else 999)
 # Sort the dataframe by patient_id, then by the position of timepoint in our list
-data = data.sort_values(by=['patient_id', 'timepoint_order'])
-data = data.drop('timepoint_order', axis=1) # remove sorting column
+data = data.sort_values(by=['sort_key', 'timepoint_order'])
+data = data.drop(['sort_key', 'timepoint_order'], axis=1) # remove sorting column
 print(data)
 
 
@@ -154,10 +165,17 @@ else:
     results_all_pairs = {}
 
 
+# Add a column to pivoted_data to distinguish between patients with and without deformation (yes = 1)
+pivoted_data['deformed'] = pivoted_data.isna().sum(axis=1) < len(timepoints)
+print(pivoted_data['deformed'])
+sys.exit()
+
 
 
 
 ### Visualisations
+
+"""
 # 1. Data availability matrix
 availability_matrix = pd.DataFrame(index=timepoints, columns=timepoints, dtype=float)
 
@@ -190,6 +208,149 @@ plt.tight_layout()
 plt.savefig('Image_Processing_Scripts/data_availability.png')
 plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/data_availability.png', dpi=600)
 plt.close()
+
+# 2. Create Significance Matrix
+# 1. Significance Matrix
+# ---------------------
+# Create a matrix of corrected p-values
+significance_matrix = pd.DataFrame(index=timepoints, columns=timepoints, dtype=float)
+significance_matrix.fillna(1.0, inplace=True)  # Default p-value = 1 (not significant)
+
+# Fill in the values from our results
+for _, row in valid_results.iterrows():
+    significance_matrix.loc[row['time1'], row['time2']] = row['p_corrected']
+    significance_matrix.loc[row['time2'], row['time1']] = row['p_corrected']  # Mirror since it's symmetric
+
+# Set diagonal to NaN for better visualization
+for time in timepoints:
+    significance_matrix.loc[time, time] = np.nan
+
+# Visualize the significance matrix
+plt.figure(figsize=(10, 8))
+mask = np.isnan(significance_matrix)
+cmap = sns.diverging_palette(240, 10, as_cmap=True)
+
+# Create heatmap without grid lines
+heatmap = sns.heatmap(
+    significance_matrix, 
+    annot=True,           # Show numbers in cells
+    cmap=cmap,            # Color map
+    mask=mask,            # Mask diagonal values
+    vmin=0, vmax=1,     # Set color scale range
+    center=0.25,          # Center color scale
+    fmt='.3f',            # Format as floating point with 3 decimals
+    linewidths=0,         # Remove lines between cells
+    linecolor='none'      # Ensure no line color
+)
+
+plt.title('Corrected P-values from Paired T-tests (Holm-Bonferroni)')
+plt.grid(False)
+plt.tight_layout()
+plt.savefig('Image_Processing_Scripts/significance_matrix.png')
+plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/significance_matrix.png', dpi=600)
+plt.close()
+"""
+
+
+# # 3. Paired Difference Plots
+# # -------------------------
+# # For significant pairs, create visualizations of the differences
+# for (time1, time2), results in results_all_pairs.items():
+#     if results['significant']:
+#         # Get paired data
+#         paired_data = pivoted_data[[time1, time2]].dropna()
+        
+#         plt.figure(figsize=(12, 6))
+        
+#         # Left subplot: Paired line plot
+#         plt.subplot(1, 2, 1)
+#         for idx in paired_data.index:
+#             plt.plot([time1, time2], [paired_data.loc[idx, time1], paired_data.loc[idx, time2]], 'o-', alpha=0.5)
+        
+#         # Plot mean values
+#         mean_vals = [paired_data[time1].mean(), paired_data[time2].mean()]
+#         plt.plot([time1, time2], mean_vals, 'r-', linewidth=2, label='Mean')
+        
+#         plt.title(f'Individual Changes: {time1} vs {time2}')
+#         plt.ylabel('Area Difference')
+#         plt.grid(True, linestyle='--', alpha=0.7)
+#         plt.legend()
+        
+#         # Right subplot: Box plot of differences
+#         plt.subplot(1, 2, 2)
+#         diff = paired_data[time1] - paired_data[time2]
+#         sns.boxplot(y=diff)
+#         plt.axhline(y=0, color='r', linestyle='--')
+#         plt.title(f'Distribution of Differences\np={results["p_corrected"]:.4f}')
+#         plt.ylabel(f'{time1} - {time2}')
+        
+#         plt.tight_layout()
+#         plt.savefig(f'paired_diff_{time1}_vs_{time2}.png')
+#         plt.show()
+
+# # 4. Additional Summary Plot: Mean differences with confidence intervals
+# # ---------------------------------------------------------------------
+# # Extract data for all pairs with sufficient data
+# pair_data = []
+# for _, row in valid_results.iterrows():
+#     pair_data.append({
+#         'comparison': f"{row['time1']} vs {row['time2']}",
+#         'mean_diff': row['mean_diff'],
+#         'std_diff': row['std_diff'],
+#         'n_pairs': row['n_pairs'],
+#         'p_corrected': row['p_corrected'],
+#         'significant': row['significant']
+#     })
+
+# if pair_data:
+#     summary_df = pd.DataFrame(pair_data)
+    
+#     # Calculate confidence intervals (95%)
+#     summary_df['ci_lower'] = summary_df['mean_diff'] - 1.96 * summary_df['std_diff'] / np.sqrt(summary_df['n_pairs'])
+#     summary_df['ci_upper'] = summary_df['mean_diff'] + 1.96 * summary_df['std_diff'] / np.sqrt(summary_df['n_pairs'])
+    
+#     # Sort by mean difference
+#     summary_df = summary_df.sort_values('mean_diff')
+    
+#     # Create forest plot
+#     plt.figure(figsize=(10, 6))
+    
+#     # Plot points and error bars
+#     plt.errorbar(
+#         summary_df['mean_diff'], 
+#         range(len(summary_df)), 
+#         xerr=np.array([
+#             summary_df['mean_diff'] - summary_df['ci_lower'], 
+#             summary_df['ci_upper'] - summary_df['mean_diff']
+#         ]),
+#         fmt='o', 
+#         capsize=5,
+#         color=[
+#             'red' if sig else 'blue' 
+#             for sig in summary_df['significant']
+#         ]
+#     )
+    
+#     # Add labels
+#     plt.yticks(range(len(summary_df)), summary_df['comparison'])
+#     plt.axvline(x=0, color='gray', linestyle='--')
+#     plt.title('Mean Differences with 95% Confidence Intervals')
+#     plt.xlabel('Mean Difference')
+#     plt.grid(True, axis='x', linestyle='--', alpha=0.7)
+    
+#     # Add significance annotation
+#     for i, (_, row) in enumerate(summary_df.iterrows()):
+#         plt.text(
+#             row['ci_upper'] + abs(row['mean_diff'])*0.05, 
+#             i, 
+#             f"p={row['p_corrected']:.3f}{' *' if row['significant'] else ''}",
+#             va='center'
+#         )
+    
+#     plt.tight_layout()
+#     plt.savefig('mean_differences_summary.png')
+#     plt.show()
+
 
 
 
