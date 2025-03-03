@@ -267,7 +267,7 @@ area_data['timepoint_order'] = area_data['timepoint'].apply(lambda x: timepoints
 area_data = area_data.sort_values(by=['patient_id', 'timepoint_order'])
 area_data = area_data.drop('timepoint_order', axis=1) # remove sorting column
 # save to csv for plotting
-area_data[['patient_id', 'timepoint']].to_csv('../patient_timepoint_matrix.csv', index=False)
+area_data[['patient_id', 'timepoint']].to_csv('patient_timepoint_matrix.csv', index=False)
 
 
 
