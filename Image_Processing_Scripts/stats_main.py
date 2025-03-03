@@ -10,12 +10,25 @@ import statsmodels.stats.multitest as smm
 from scipy.stats import ttest_rel, wilcoxon
 from statsmodels.stats.multitest import multipletests
 from itertools import combinations
+from longitudinal_main import map_timepoint_to_string
 
 print('running stats_main.py')
 # Load the data (note this data does not contain all timepoints w NaN value if not exist - only contains timepoints w data per original data)
 batch1_data = pd.read_csv('Image_Processing_Scripts/area_data.csv')
 batch2_data = pd.read_csv('Image_Processing_Scripts/batch2_area_data.csv')
+batch2_data['timepoint'] = batch2_data['timepoint'].apply(map_timepoint_to_string) # convert to string category
+# Combine the two batches
 data = pd.concat([batch1_data, batch2_data], ignore_index=True)
+
+# sort data according to patient id then timepoint
+timepoints = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
+data['timepoint_order'] = data['timepoint'].apply(lambda x: timepoints.index(x) if x in timepoints else 999)
+# Sort the dataframe by patient_id, then by the position of timepoint in our list
+data = data.sort_values(by=['patient_id', 'timepoint_order'])
+data = data.drop('timepoint_order', axis=1) # remove sorting column
+print(data)
+
+
 # drop cols from dataframe: remove area_def, area_ref and side
 new_df=data.drop(columns='area_def', axis=1)
 new_df=new_df.drop(columns='area_ref', axis=1)
@@ -28,6 +41,89 @@ print('rows dropped')
 print('ensuring categorical values are categorical')
 new_df['timepoint']=pd.Categorical(new_df['timepoint'], categories=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
 print(new_df.head())
+
+sys.exit()
+###### NEW CODE 2025-03-03 #######
+# Check for duplicates
+print("Checking for duplicates:")
+dupes = new_df.duplicated(subset=['patient_id', 'timepoint'], keep=False)
+print(f"Number of duplicate entries: {dupes.sum()}")
+if dupes.sum() > 0:
+    print("Sample of duplicates:")
+    print(new_df[dupes])# Using all available data
+sys.exit()
+
+
+
+pivoted_data = new_df.pivot(index='patient_id', columns='timepoint', values='area_diff')
+pivoted_data = pivoted_data.rename_axis(None, axis=1)
+sys.exit()
+# List of all timepoints
+timepoints = pivoted_data.columns.tolist()
+
+# Initialise dictionary to store results
+results_all_pairs = {}
+
+# Perform pairwise comparisons among all timepoints
+for timepoint1, timepoint2 in combinations(timepoints, 2):
+    # select non-missing pairs for the current timepoint pair
+    paired_data = pivoted_data[[timepoint1, timepoint2]].dropna()
+    n_samples=len(paired_data)
+
+    # Initialise values
+    stat_t, p_value_t = np.nan, np.nan
+    mean_diff = np.nan
+
+    # Calculate mean difference between all time point pairs
+    if n_samples >= 1:
+        mean_diff=(paired_data[timepoint1]-paired_data[timepoint2]).mean()
+
+    # Conduct statistical test if we have at least 2 samples
+    if n_samples >= 2:
+        try: 
+            stat_t, p_value_t = ttest_rel(paired_data[timepoint1], paired_data[timepoint2])
+        except ValueError as e:
+            print(f"T-test error for pair ({timepoint1}, {timepoint2}): {e}")
+    else:
+        print(f"Only {n_samples} pairs for timepoints ({timepoint1}, {timepoint2}) - can't run t-test")
+
+
+    # Store results
+    results_all_pairs[(timepoint1, timepoint2)] ={
+        'statistic_t': stat_t,
+        'p_value_t': p_value_t,
+        'mean_diff': mean_diff, #positive means timepoint1 > timepoint2
+        'n_samples': n_samples
+    }
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+sys.exit()
+
+##############
+################
+###############################
+#################
+###########
+############
+###############
+#########old code below #############
 
 # Filter data to include only patients with an 'acute' time point
 print('filtering data to include only patients with an acute timepoint')
