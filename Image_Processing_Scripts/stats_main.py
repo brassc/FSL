@@ -55,8 +55,6 @@ print('ensuring categorical values are categorical')
 new_df['timepoint']=pd.Categorical(new_df['timepoint'], categories=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
 print(new_df.head())
 
-
-###### NEW CODE 2025-03-03 #######
 # Check for duplicates
 print("Checking for duplicates:")
 dupes = new_df.duplicated(subset=['patient_id', 'timepoint'], keep=False)
@@ -69,6 +67,29 @@ if dupes.sum() > 0:
 pivoted_data = new_df.pivot(index='patient_id', columns='timepoint', values='area_diff')
 pivoted_data = pivoted_data.rename_axis(None, axis=1)
 
+print(pivoted_data.head())
+
+
+# Add deformation status
+pivoted_data_with_deformation = pivoted_data.copy()
+pivoted_data_with_deformation['has_deformation'] = True
+non_def_patients = ['19575', '19981', '21221']
+# Update the deformation status for specified patients
+for patient_id in non_def_patients:
+    if patient_id in pivoted_data_with_deformation.index:
+        pivoted_data_with_deformation.loc[patient_id, 'has_deformation'] = False
+
+# Verify the result
+print("Deformation status added:")
+print(pivoted_data_with_deformation[['has_deformation']].head(10))  # Display the first 10 rows
+
+# Check that the specified patients have False status
+for patient_id in non_def_patients:
+    if patient_id in pivoted_data_with_deformation.index:
+        print(f"Patient {patient_id} has_deformation: {pivoted_data_with_deformation.loc[patient_id, 'has_deformation']}")
+
+
+# DO FOR WHOLE DATASET FIRST
 # List of all timepoints
 timepoints = pivoted_data.columns.tolist()
 
@@ -164,10 +185,133 @@ else:
     print("No pairs have sufficient data for paired t-test.")
     results_all_pairs = {}
 
+"""
+# TEST FOR DEFORMED PATIENTS ONLY
 
-# Add a column to pivoted_data to distinguish between patients with and without deformation (yes = 1)
-pivoted_data['deformed'] = pivoted_data.isna().sum(axis=1) < len(timepoints)
-print(pivoted_data['deformed'])
+# Filter the data to keep only patients with deformation
+deformed_patients_data = pivoted_data_with_deformation[pivoted_data_with_deformation['has_deformation'] == True]
+
+# Remove the deformation status column to keep only the timepoint columns
+deformed_patients_data = deformed_patients_data.drop('has_deformation', axis=1)
+
+# Print information about the filtered dataset
+print(f"Original dataset: {pivoted_data.shape[0]} patients")
+print(f"Filtered dataset (deformed only): {deformed_patients_data.shape[0]} patients")
+print(f"Patients excluded: {pivoted_data.shape[0] - deformed_patients_data.shape[0]}")
+
+# List of all timepoints (excluding the deformation column)
+timepoints = [col for col in pivoted_data.columns.tolist() if col != 'has_deformation']
+
+# Initialize dictionary to store results
+results_all_pairs_deformed = {}
+
+# Perform pairwise comparisons using the filtered data
+ttest_results_deformed = []
+for time1, time2 in combinations(timepoints, 2):
+    ttest_result = paired_ttest(deformed_patients_data, time1, time2)
+    ttest_results_deformed.append(ttest_result)
+
+# Convert results to DataFrame
+results_df_deformed = pd.DataFrame(ttest_results_deformed)
+
+# Filter to show only pairs with sufficient data
+valid_results_deformed = results_df_deformed[results_df_deformed['sufficient_data'] == True].copy()
+
+if len(valid_results_deformed) > 0:
+    # Apply Holm-Bonferroni correction to p-values
+    if len(valid_results_deformed) > 1:  # Only apply if there are multiple tests
+        p_values = valid_results_deformed['p_value'].values
+        rejected, p_corrected, _, _ = multipletests(p_values, alpha=0.05, method='holm')
+        valid_results_deformed['p_corrected'] = p_corrected
+        valid_results_deformed['significant'] = rejected
+    else:
+        # If only one test, no correction needed
+        valid_results_deformed['p_corrected'] = valid_results_deformed['p_value']
+        valid_results_deformed['significant'] = valid_results_deformed['p_value'] < 0.05
+    
+    # Sort by corrected p-value
+    valid_results_deformed = valid_results_deformed.sort_values('p_corrected')
+    
+    # Print results
+    print("\nPaired t-test Results for DEFORMED PATIENTS ONLY with Holm-Bonferroni correction:")
+    print(valid_results_deformed[['comparison', 'n_pairs', 'mean_diff', 't_statistic', 'p_value', 'p_corrected', 'significant']])
+    
+    # Store results in a dictionary for later use
+    results_all_pairs_deformed = {}
+    for _, row in valid_results_deformed.iterrows():
+        key = (row['time1'], row['time2'])
+        results_all_pairs_deformed[key] = {
+            'n_pairs': row['n_pairs'],
+            'mean_diff': row['mean_diff'],
+            't_statistic': row['t_statistic'],
+            'p_value': row['p_value'],
+            'p_corrected': row['p_corrected'],
+            'significant': row['significant']
+        }
+else:
+    print("No pairs have sufficient data for paired t-test in the deformed patients subset.")
+    results_all_pairs_deformed = {}
+
+# Compare the results between all patients and only deformed patients
+if len(results_all_pairs) > 0 and len(results_all_pairs_deformed) > 0:
+    print("\nComparison of results between all patients and only deformed patients:")
+    
+    # Create a summary table
+    comparison_rows = []
+    
+    # Get all unique pairs from both result sets
+    all_pairs = set(results_all_pairs.keys()).union(set(results_all_pairs_deformed.keys()))
+    
+    for pair in all_pairs:
+        time1, time2 = pair
+        comparison = f"{time1} vs {time2}"
+        
+        # Get results for all patients
+        if pair in results_all_pairs:
+            all_patients_result = results_all_pairs[pair]
+            all_p = all_patients_result['p_corrected']
+            all_sig = all_patients_result['significant']
+        else:
+            all_p = float('nan')
+            all_sig = False
+        
+        # Get results for deformed patients only
+        if pair in results_all_pairs_deformed:
+            deformed_result = results_all_pairs_deformed[pair]
+            deformed_p = deformed_result['p_corrected']
+            deformed_sig = deformed_result['significant']
+        else:
+            deformed_p = float('nan')
+            deformed_sig = False
+        
+        # Add to comparison rows
+        comparison_rows.append({
+            'Comparison': comparison,
+            'All Patients p-value': all_p,
+            'All Patients Significant': all_sig,
+            'Deformed Only p-value': deformed_p,
+            'Deformed Only Significant': deformed_sig,
+            'Change in Significance': all_sig != deformed_sig
+        })
+    
+    # Create DataFrame and sort by change in significance
+    comparison_df = pd.DataFrame(comparison_rows)
+    comparison_df = comparison_df.sort_values(['Change in Significance', 'All Patients p-value'], ascending=[False, True])
+    
+    # Display the comparison
+    pd.set_option('display.max_rows', None)  # Show all rows
+    print(comparison_df)
+    
+    # Highlight the differences
+    differences = comparison_df[comparison_df['Change in Significance']]
+    if not differences.empty:
+        print("\nTimepoint comparisons with CHANGES in significance after excluding non-deformed patients:")
+        print(differences[['Comparison', 'All Patients p-value', 'All Patients Significant', 
+                         'Deformed Only p-value', 'Deformed Only Significant']])
+    else:
+        print("\nNo changes in significance were found after excluding non-deformed patients.")
+
+"""
 sys.exit()
 
 
@@ -175,6 +319,8 @@ sys.exit()
 
 ### Visualisations
 
+
+# FOR ALL PATIENTS FIRST:
 """
 # 1. Data availability matrix
 availability_matrix = pd.DataFrame(index=timepoints, columns=timepoints, dtype=float)
