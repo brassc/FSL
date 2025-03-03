@@ -259,7 +259,17 @@ batch2_area_data['timepoint'] = batch2_area_data['timepoint'].apply(map_timepoin
 # Combine both data frames
 combined_area_data=pd.concat([area_data,batch2_area_data],ignore_index=True)
 area_data=combined_area_data
-print(area_data['timepoint'])
+
+#reorder data to be all numbers together with timepoints in order
+# Create an order for timepoint
+area_data['timepoint_order'] = area_data['timepoint'].apply(lambda x: timepoints.index(x) if x in timepoints else 999)
+# Sort the dataframe by patient_id, then by the position of timepoint in our list
+area_data = area_data.sort_values(by=['patient_id', 'timepoint_order'])
+area_data = area_data.drop('timepoint_order', axis=1) # remove sorting column
+# save to csv for plotting
+area_data[['patient_id', 'timepoint']].to_csv('../patient_timepoint_matrix.csv', index=False)
+
+
 
 # get possible patient IDs
 patient_ids = area_data['patient_id'].unique()
