@@ -419,7 +419,7 @@ if len(results_all_pairs) > 0 and len(results_all_pairs_deformed) > 0:
         print("\nNo changes in significance were found after excluding non-deformed patients.")
 """
 
-sys.exit()
+
 
 
 
@@ -512,8 +512,8 @@ significance_matrix_wilcoxon.fillna(1.0, inplace=True)  # Default p-value = 1 (n
 
 # Fill in the values from results
 for _, row in valid_wilcoxon_results.iterrows():
-    significance_matrix_wilcoxon.loc[row['time1'], row['time2']] = row['p_corrected']
-    significance_matrix_wilcoxon.loc[row['time2'], row['time1']] = row['p_corrected']  # Mirror since it's symmetric
+    significance_matrix_wilcoxon.loc[row['time1'], row['time2']] = row['p_value']
+    significance_matrix_wilcoxon.loc[row['time2'], row['time1']] = row['p_value']  # Mirror since it's symmetric
 
 # Set diagonal to NaN for better visualization
 for time in timepoints:
@@ -531,20 +531,20 @@ heatmap = sns.heatmap(
     cmap=cmap,            # Color map
     mask=mask,            # Mask diagonal values
     vmin=0, vmax=1,     # Set color scale range
-    center=0.25,          # Center color scale
+    center=0.3,          # Center color scale
     fmt='.3f',            # Format as floating point with 3 decimals
     linewidths=0,         # Remove lines between cells
     linecolor='none'      # Ensure no line color
 )
 
-plt.title('Corrected P-values from Wilcoxon Signed-Rank Test (FDR)')
+plt.title('Raw P-values from Wilcoxon Signed-Rank Test')
 plt.grid(False)
 plt.tight_layout()
-plt.savefig('Image_Processing_Scripts/significance_matrix_wilcoxon.png')
-plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/significance_matrix_wilcoxon.png', dpi=600)
+plt.savefig('Image_Processing_Scripts/significance_matrix_wilcoxon_uncorrected.png')
+plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/significance_matrix_wilcoxon_uncorrected.png', dpi=600)
 plt.close()
 
-
+sys.exit()
 
 # # 3. Paired Difference Plots
 # # -------------------------
