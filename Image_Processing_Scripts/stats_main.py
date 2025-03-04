@@ -13,6 +13,30 @@ from statsmodels.stats.multitest import multipletests
 from itertools import combinations
 from longitudinal_main import map_timepoint_to_string
 
+def set_publication_style():
+    """Set matplotlib parameters for publication-quality figures."""
+    plt.rcParams.update({
+        'font.family': 'serif',
+        'font.serif': ['Times New Roman'],
+        'mathtext.fontset': 'stix',
+        'font.size': 12,
+        'axes.labelsize': 14,
+        'axes.titlesize': 16,
+        'axes.titleweight': 'bold', 
+        'xtick.labelsize': 12,
+        'ytick.labelsize': 12,
+        'legend.fontsize': 10,
+        'figure.dpi': 150,
+        'savefig.dpi': 300,
+        'savefig.format': 'png',
+        'savefig.bbox': 'tight',
+        'axes.grid': True,
+        'grid.alpha': 0.3,
+        'grid.linestyle': '-',
+        'axes.spines.top': False,
+        'axes.spines.right': False,
+    })
+
 # Function to perform Wilcoxon signed-rank test between two time points
 def wilcoxon_signed_rank_test(data, time1, time2):
     # Get data for both time points, excluding rows with missing values in either
@@ -324,7 +348,7 @@ data['timepoint_order'] = data['timepoint'].apply(lambda x: timepoints.index(x) 
 # Sort the dataframe by patient_id, then by the position of timepoint in our list
 data = data.sort_values(by=['sort_key', 'timepoint_order'])
 data = data.drop(['sort_key', 'timepoint_order'], axis=1) # remove sorting column
-print(data)
+#print(data)
 
 
 # drop cols from dataframe: remove area_def, area_ref and side
@@ -338,15 +362,13 @@ print('rows dropped')
 # Ensure categorical values are categorical
 print('ensuring categorical values are categorical')
 new_df['timepoint']=pd.Categorical(new_df['timepoint'], categories=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
-print(new_df.head())
+#print(new_df.head())
 
 #create_timepoint_scatter(new_df)
 #create_timepoint_violin(new_df)
-create_timepoint_boxplot(new_df)
+#create_timepoint_boxplot(new_df)
 # plt.savefig('area_diff_scatter.png', dpi=300)
 
-
-sys.exit()
 
 # Check for duplicates
 print("Checking for duplicates:")
@@ -683,265 +705,258 @@ if len(results_all_pairs) > 0 and len(results_all_pairs_deformed) > 0:
 
 
 # FOR ALL PATIENTS FIRST:
-"""
-# 1. Data availability matrix
-availability_matrix = pd.DataFrame(index=timepoints, columns=timepoints, dtype=float)
 
-# fill the matrix with counts
-for time1 in timepoints:
-    for time2 in timepoints:
-        if time1 == time2:
-            # Diagonal: number of non-missing values for this time point
-            availability_matrix.loc[time1, time2] = pivoted_data[time1].notna().sum()
-        else:
-            # Off-diagonal: number of patients with data for both time points
-            common_data = pivoted_data[[time1, time2]].dropna()
-            availability_matrix.loc[time1, time2] = len(common_data)
-
-# Verify the data types before plotting
-print("Data types in availability_matrix:")
-print(availability_matrix.dtypes)
-print("\nSample of availability_matrix:")
-print(availability_matrix.head())
-
-# Explicitly convert matrix to float if needed
-availability_matrix = availability_matrix.astype(float)
-
-# Visualize the data availability
-plt.figure(figsize=(10, 8))
-sns.heatmap(availability_matrix, annot=True, cmap="YlGnBu", fmt='g')
-plt.title('Data Availability Matrix (number of patients)')
-plt.grid(False)
-plt.tight_layout()
-plt.savefig('Image_Processing_Scripts/data_availability.png')
-plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/data_availability.png', dpi=600)
-plt.close()
-
-# 2. Create Significance Matrix
-#  Significance Matrix
-# ---------------------
-# Create a matrix of corrected p-values
-significance_matrix = pd.DataFrame(index=timepoints, columns=timepoints, dtype=float)
-significance_matrix.fillna(1.0, inplace=True)  # Default p-value = 1 (not significant)
-
-# Fill in the values from our results
-for _, row in valid_results.iterrows():
-    significance_matrix.loc[row['time1'], row['time2']] = row['p_corrected']
-    significance_matrix.loc[row['time2'], row['time1']] = row['p_corrected']  # Mirror since it's symmetric
-
-# Set diagonal to NaN for better visualization
-for time in timepoints:
-    significance_matrix.loc[time, time] = np.nan
-
-# Visualize the significance matrix
-plt.figure(figsize=(10, 8))
-mask = np.isnan(significance_matrix)
-cmap = sns.diverging_palette(240, 10, as_cmap=True)
-
-# Create heatmap without grid lines
-heatmap = sns.heatmap(
-    significance_matrix, 
-    annot=True,           # Show numbers in cells
-    cmap=cmap,            # Color map
-    mask=mask,            # Mask diagonal values
-    vmin=0, vmax=1,     # Set color scale range
-    center=0.25,          # Center color scale
-    fmt='.3f',            # Format as floating point with 3 decimals
-    linewidths=0,         # Remove lines between cells
-    linecolor='none'      # Ensure no line color
-)
-
-plt.title('Corrected P-values from Paired T-tests (Holm-Bonferroni)')
-plt.grid(False)
-plt.tight_layout()
-plt.savefig('Image_Processing_Scripts/significance_matrix.png')
-plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/significance_matrix.png', dpi=600)
-plt.close()
-"""
-
-# 3. Wilcoxon Signed Rank Significance Matrix
-# -------------------------------------------
-# Create a matrix of corrected p-values
-significance_matrix_wilcoxon = pd.DataFrame(index=timepoints, columns=timepoints, dtype=float)
-significance_matrix_wilcoxon.fillna(1.0, inplace=True)  # Default p-value = 1 (not significant)
-
-# Fill in the values from results
-for _, row in valid_wilcoxon_results.iterrows():
-    significance_matrix_wilcoxon.loc[row['time1'], row['time2']] = row['p_value']
-    significance_matrix_wilcoxon.loc[row['time2'], row['time1']] = row['p_value']  # Mirror since it's symmetric
-
-# Set diagonal to NaN for better visualization
-for time in timepoints:
-    significance_matrix_wilcoxon.loc[time, time] = np.nan
-
-# Visualize the significance matrix
-plt.figure(figsize=(10, 8))
-mask = np.isnan(significance_matrix_wilcoxon)
-cmap = sns.diverging_palette(240, 10, as_cmap=True)
-
-# Create heatmap without grid lines
-heatmap = sns.heatmap(
-    significance_matrix_wilcoxon,
-    annot=True,           # Show numbers in cells
-    cmap=cmap,            # Color map
-    mask=mask,            # Mask diagonal values
-    vmin=0, vmax=1,     # Set color scale range
-    center=0.3,          # Center color scale
-    fmt='.3f',            # Format as floating point with 3 decimals
-    linewidths=0,         # Remove lines between cells
-    linecolor='none'      # Ensure no line color
-)
-
-plt.title('Raw P-values from Wilcoxon Signed-Rank Test')
-plt.grid(False)
-plt.tight_layout()
-plt.savefig('Image_Processing_Scripts/significance_matrix_wilcoxon_uncorrected.png')
-plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/significance_matrix_wilcoxon_uncorrected.png', dpi=600)
-plt.close()
-
-
-
-# # 3. Paired Difference Plots
-# # -------------------------
-# # For significant pairs, create visualizations of the differences
-# for (time1, time2), results in results_all_pairs.items():
-#     if results['significant']:
-#         # Get paired data
-#         paired_data = pivoted_data[[time1, time2]].dropna()
-        
-#         plt.figure(figsize=(12, 6))
-        
-#         # Left subplot: Paired line plot
-#         plt.subplot(1, 2, 1)
-#         for idx in paired_data.index:
-#             plt.plot([time1, time2], [paired_data.loc[idx, time1], paired_data.loc[idx, time2]], 'o-', alpha=0.5)
-        
-#         # Plot mean values
-#         mean_vals = [paired_data[time1].mean(), paired_data[time2].mean()]
-#         plt.plot([time1, time2], mean_vals, 'r-', linewidth=2, label='Mean')
-        
-#         plt.title(f'Individual Changes: {time1} vs {time2}')
-#         plt.ylabel('Area Difference')
-#         plt.grid(True, linestyle='--', alpha=0.7)
-#         plt.legend()
-        
-#         # Right subplot: Box plot of differences
-#         plt.subplot(1, 2, 2)
-#         diff = paired_data[time1] - paired_data[time2]
-#         sns.boxplot(y=diff)
-#         plt.axhline(y=0, color='r', linestyle='--')
-#         plt.title(f'Distribution of Differences\np={results["p_corrected"]:.4f}')
-#         plt.ylabel(f'{time1} - {time2}')
-        
-#         plt.tight_layout()
-#         plt.savefig(f'paired_diff_{time1}_vs_{time2}.png')
-#         plt.show()
-
-# 4. Additional Summary Plot: Mean differences with confidence intervals
-# ---------------------------------------------------------------------
-# Extract data for all pairs with sufficient data for wilcoxon results
-pair_data = []
-for _, row in valid_wilcoxon_results.iterrows():
-    pair_data.append({
-        'comparison': f"{row['time1']} vs {row['time2']}",
-        'mean_diff': row['median_diff'],
-        'n_pairs': row['n_pairs'],
-        'p_corrected': row['p_corrected'],
-        'significant': row['significant'],
-        'std_diff': row['std_diff']
-    })
-if pair_data:
-    summary_df = pd.DataFrame(pair_data)
-    print(summary_df)
-    # Calculate confidence intervals (95%)
-    summary_df['ci_lower'] = summary_df['mean_diff'] - 1.96 * summary_df['std_diff'] / np.sqrt(summary_df['n_pairs'])
-    summary_df['ci_upper'] = summary_df['mean_diff'] + 1.96 * summary_df['std_diff'] / np.sqrt(summary_df['n_pairs'])
-    # Sort by mean difference
-    #summary_df = summary_df.sort_values('mean_diff')
-    # Check that the number of colors matches the number of rows in summary_df
-    colors = ['red' if sig else 'blue' for sig in summary_df['significant']]
+def data_availability_matrix(data, timepoints):
+    """
+    Create a data availability matrix for the given timepoints.
     
-    # Create forest plot
-    plt.figure(figsize=(10, 6))
-    plt.grid(True, axis='x', linestyle='-', alpha=0.3)
-    plt.grid(False, axis='y')
-
-    n_comparisons = len(summary_df)
-    
-    # Plot points and error bars
-    for i in range(len(summary_df)):
-        plt.errorbar(
-            summary_df.iloc[i]['mean_diff'],
-            n_comparisons - 1 - i,  # Reverse the y position
-            xerr=[[summary_df.iloc[i]['mean_diff'] - summary_df.iloc[i]['ci_lower']],
-                 [summary_df.iloc[i]['ci_upper'] - summary_df.iloc[i]['mean_diff']]],
-            fmt='o',
-            capsize=5,
-            color=colors[i], 
-            #markersize=8,
-            #elinewidth=2,
-            #capthick=2
-        )
-    
-    # Labels
-    plt.yticks(range(n_comparisons), list(reversed(summary_df['comparison'])))
-    #plt.axvline(x=0, color='gray', linestyle='-', linewidth=1.5, alpha=0.7)
-    plt.title('Mean Differences in Herniation Area Between Timepoint Pairs \nwith 95% Confidence Intervals, Corrected p-values (FDR) and Number of each Pair')
-    plt.xlabel('Mean Area Difference [mm²]')
-    
-    
-    # Add significance annotation (with reversed positions)
-    max_x=max([x['ci_upper'] for _, x in summary_df.iterrows()]) * 1.1
-    for i in range(len(summary_df)):
-        plt.text(
-            max_x,  # Align all p-values to same x position
-            #i,
-            n_comparisons - 1 - i,  # Reverse the y position
-            f"p={summary_df.iloc[i]['p_corrected']:.3f}{' *' if summary_df.iloc[i]['significant'] else ''}",
-            va='center',
-            fontsize=11,
-            ha='left'
-        )
-    
-    # Add number of pair annotation (with reversed positions)
-    max_x2=max([x['ci_upper'] for _, x in summary_df.iterrows()]) * 1.3
-    for i in range(len(summary_df)):
-        plt.text(
-            max_x2,  # Align all p-values to same x position
-            #i,
-            n_comparisons - 1 - i,  # Reverse the y position
-            f"n={summary_df.iloc[i]['n_pairs']}{' *' if summary_df.iloc[i]['significant'] else ''}",
-            va='center',
-            fontsize=11,
-            ha='left'
-        )
-
-
+    Parameters:
+    -----------
+    data : pandas.DataFrame
+        Pivoted data with patient IDs as index and timepoints as columns
+    timepoints : list
+        List of timepoints to include in the matrix
         
-    
+    Returns:
+    --------
+    availability_matrix : pandas.DataFrame
+        Matrix showing the number of patients with data for each pair of timepoints
+    """
+    # Create an empty matrix with timepoints as index and columns
+    availability_matrix = pd.DataFrame(index=timepoints, columns=timepoints, dtype=float)
+
+    # Fill the matrix with counts
+    for time1 in timepoints:
+        for time2 in timepoints:
+            if time1 == time2:
+                # Diagonal: number of non-missing values for this time point
+                availability_matrix.loc[time1, time2] = data[time1].notna().sum()
+            else:
+                # Off-diagonal: number of patients with data for both time points
+                common_data = data[[time1, time2]].dropna()
+                availability_matrix.loc[time1, time2] = len(common_data)
+
+    # Verify the data types before plotting
+    print("Data types in availability_matrix:")
+    print(availability_matrix.dtypes)
+    print("\nSample of availability_matrix:")
+    print(availability_matrix.head())
+
+    # Explicitly convert matrix to float if needed
+    availability_matrix = availability_matrix.astype(float)
+
+    # Visualize the data availability
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(availability_matrix, annot=True, cmap="YlGnBu", fmt='g')
+    plt.title('Data Availability Matrix (number of patients)')
+    plt.grid(False)
     plt.tight_layout()
-    plt.savefig('Image_Processing_Scripts/mean_differences_summary.png')
-    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/mean_differences_summary.png', dpi=600)
+    plt.savefig('Image_Processing_Scripts/data_availability.png')
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/data_availability.png', dpi=600)
     plt.close()
+
+
+    return
+
+#data_availability_matrix(pivoted_data, timepoints)
+
+def significance_matrix_ttest(valid_results, timepoints, filename):
+    # Create a matrix of corrected p-values
+    significance_matrix = pd.DataFrame(index=timepoints, columns=timepoints, dtype=float)
+    significance_matrix.fillna(1.0, inplace=True)  # Default p-value = 1 (not significant)
+
+    # Fill in the values from our results
+    for _, row in valid_results.iterrows():
+        significance_matrix.loc[row['time1'], row['time2']] = row['p_holm']
+        significance_matrix.loc[row['time2'], row['time1']] = row['p_holm']  # Mirror since it's symmetric
+
+    # Set diagonal to NaN for better visualization
+    for time in timepoints:
+        significance_matrix.loc[time, time] = np.nan
+
+    # Visualize the significance matrix
+    plt.figure(figsize=(10, 8))
+    mask = np.isnan(significance_matrix)
+    cmap = sns.diverging_palette(240, 10, as_cmap=True)
+
+    # Create heatmap without grid lines
+    heatmap = sns.heatmap(
+        significance_matrix, 
+        annot=True,           # Show numbers in cells
+        cmap=cmap,            # Color map
+        mask=mask,            # Mask diagonal values
+        vmin=0, vmax=1,     # Set color scale range
+        center=0.25,          # Center color scale
+        fmt='.3f',            # Format as floating point with 3 decimals
+        linewidths=0,         # Remove lines between cells
+        linecolor='none'      # Ensure no line color
+    )
+
+    plt.title('Corrected P-values from Paired T-tests (Holm-Bonferroni)')
+    plt.grid(False)
+    plt.tight_layout()
+    plt.savefig(f'Image_Processing_Scripts/{filename}')
+    plt.savefig(f'../Thesis/phd-thesis-template-2.4/Chapter5/Figs/{filename}', dpi=600)
+    plt.close()
+
+    return 
+
+#significance_matrix_ttest(valid_results, timepoints, 'significance_matrix.png')
+
+def significance_matrix_wilcoxon(valid_wilcoxon_results, timepoints, filename):
+        # Create a matrix of corrected p-values
+    significance_matrix_wilcoxon = pd.DataFrame(index=timepoints, columns=timepoints, dtype=float)
+    significance_matrix_wilcoxon.fillna(1.0, inplace=True)  # Default p-value = 1 (not significant)
+
+    # Fill in the values from results
+    for _, row in valid_wilcoxon_results.iterrows():
+        significance_matrix_wilcoxon.loc[row['time1'], row['time2']] = row['p_value']
+        significance_matrix_wilcoxon.loc[row['time2'], row['time1']] = row['p_value']  # Mirror since it's symmetric
+
+    # Set diagonal to NaN for better visualization
+    for time in timepoints:
+        significance_matrix_wilcoxon.loc[time, time] = np.nan
+
+    # Visualize the significance matrix
+    plt.figure(figsize=(10, 8))
+    mask = np.isnan(significance_matrix_wilcoxon)
+    cmap = sns.diverging_palette(240, 10, as_cmap=True)
+
+    # Create heatmap without grid lines
+    heatmap = sns.heatmap(
+        significance_matrix_wilcoxon,
+        annot=True,           # Show numbers in cells
+        cmap=cmap,            # Color map
+        mask=mask,            # Mask diagonal values
+        vmin=0, vmax=1,     # Set color scale range
+        center=0.3,          # Center color scale
+        fmt='.3f',            # Format as floating point with 3 decimals
+        linewidths=0,         # Remove lines between cells
+        linecolor='none'      # Ensure no line color
+    )
+
+    plt.title('Raw P-values from Wilcoxon Signed-Rank Test')
+    plt.grid(False)
+    plt.tight_layout()
+    plt.savefig('Image_Processing_Scripts/significance_matrix_wilcoxon_uncorrected.png')
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/significance_matrix_wilcoxon_uncorrected.png', dpi=600)
+    plt.close()
+
+#significance_matrix_wilcoxon(valid_wilcoxon_results, timepoints, 'significance_matrix_wilcoxon.png')
+
+def create_forest_plot(valid_wilcoxon_results, filename):
+
+    # 4. Additional Summary Plot: Mean differences with confidence intervals
+    # ---------------------------------------------------------------------
+    # Extract data for all pairs with sufficient data for wilcoxon results
+    pair_data = []
+    for _, row in valid_wilcoxon_results.iterrows():
+        pair_data.append({
+            'comparison': f"{row['time1']} vs {row['time2']}",
+            'mean_diff': row['median_diff'],
+            'n_pairs': row['n_pairs'],
+            'p_corrected': row['p_corrected'],
+            'significant': row['significant'],
+            'std_diff': row['std_diff']
+        })
+    if pair_data:
+        summary_df = pd.DataFrame(pair_data)
+        print(summary_df)
+        # Calculate confidence intervals (95%)
+        summary_df['ci_lower'] = summary_df['mean_diff'] - 1.96 * summary_df['std_diff'] / np.sqrt(summary_df['n_pairs'])
+        summary_df['ci_upper'] = summary_df['mean_diff'] + 1.96 * summary_df['std_diff'] / np.sqrt(summary_df['n_pairs'])
+        # Sort by mean difference
+        #summary_df = summary_df.sort_values('mean_diff')
+        # Check that the number of colors matches the number of rows in summary_df
+        colors = ['red' if sig else 'blue' for sig in summary_df['significant']]
+        
+        # Create forest plot
+        plt.figure(figsize=(10, 6))
+        plt.grid(True, axis='x', linestyle='-', alpha=0.3)
+        plt.grid(False, axis='y')
+
+        n_comparisons = len(summary_df)
+        
+        # Plot points and error bars
+        for i in range(len(summary_df)):
+            plt.errorbar(
+                summary_df.iloc[i]['mean_diff'],
+                n_comparisons - 1 - i,  # Reverse the y position
+                xerr=[[summary_df.iloc[i]['mean_diff'] - summary_df.iloc[i]['ci_lower']],
+                    [summary_df.iloc[i]['ci_upper'] - summary_df.iloc[i]['mean_diff']]],
+                fmt='o',
+                capsize=5,
+                color=colors[i], 
+                #markersize=8,
+                #elinewidth=2,
+                #capthick=2
+            )
+        
+        # Labels
+        plt.yticks(range(n_comparisons), list(reversed(summary_df['comparison'])))
+        #plt.axvline(x=0, color='gray', linestyle='-', linewidth=1.5, alpha=0.7)
+        plt.title('Mean Differences in Herniation Area Between Timepoint Pairs \nwith 95% Confidence Intervals, Corrected p-values (FDR) and Number of each Pair')
+        plt.xlabel('Mean Area Difference [mm²]')
+        
+        
+        # Add significance annotation (with reversed positions)
+        max_x=max([x['ci_upper'] for _, x in summary_df.iterrows()]) * 1.1
+        for i in range(len(summary_df)):
+            plt.text(
+                max_x,  # Align all p-values to same x position
+                #i,
+                n_comparisons - 1 - i,  # Reverse the y position
+                f"p={summary_df.iloc[i]['p_corrected']:.3f}{' *' if summary_df.iloc[i]['significant'] else ''}",
+                va='center',
+                fontsize=11,
+                ha='left'
+            )
+        
+        # Add number of pair annotation (with reversed positions)
+        max_x2=max([x['ci_upper'] for _, x in summary_df.iterrows()]) * 1.3
+        for i in range(len(summary_df)):
+            plt.text(
+                max_x2,  # Align all p-values to same x position
+                #i,
+                n_comparisons - 1 - i,  # Reverse the y position
+                f"n={summary_df.iloc[i]['n_pairs']}{' *' if summary_df.iloc[i]['significant'] else ''}",
+                va='center',
+                fontsize=11,
+                ha='left'
+            )
+
+
+            
+        
+        plt.tight_layout()
+        plt.savefig(f'Image_Processing_Scripts/{filename}')
+        plt.savefig(f'../Thesis/phd-thesis-template-2.4/Chapter5/Figs/{filename}', dpi=600)
+        plt.close()
+
+    return
+
+#create_forest_plot(valid_wilcoxon_results, 'mean_differences_summary.png')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 sys.exit()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-sys.exit()
-
 ##############
 ################
 ###############################
@@ -955,7 +970,7 @@ sys.exit()
 print('filtering data to include only patients with an acute timepoint')
 acute_data = new_df[new_df['timepoint'] == 'acute']
 patients_with_acute = acute_data['patient_id'].unique()
-print('patients with acute timepoint:', patients_with_acute)
+#print('patients with acute timepoint:', patients_with_acute)
 data_filtered = new_df[new_df['patient_id'].isin(patients_with_acute)]
 
 # Pivot data to align each patient’s timepoints as columns
@@ -963,7 +978,7 @@ pivoted_data = data_filtered.pivot(index='patient_id', columns='timepoint', valu
 pivoted_data = pivoted_data.rename_axis(None, axis=1)
 #pivoted_data.reset_index(inplace=True)  # Optional, to keep patient_id as a column
 print('data pivoted')
-print(pivoted_data.head())
+
 
 
 # List of timepoints
@@ -972,8 +987,8 @@ timepoints = pivoted_data.columns.tolist()
 # Initialize dictionary to store results
 results = {}
 print('running pairwise comparisons')
-print(pivoted_data.dtypes)
-print(pivoted_data.isnull().sum())
+# print(pivoted_data.dtypes)
+# print(pivoted_data.isnull().sum())
 
 # Define baseline
 baseline = 'acute'
