@@ -55,6 +55,219 @@ def wilcoxon_signed_rank_test(data, time1, time2):
         'sufficient_data': True
     }
 
+def create_timepoint_scatter(df, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']):
+    """
+    Create a scatter plot of area_diff for each timepoint.
+    
+    Parameters:
+    -----------
+    df : pandas.DataFrame
+        Long format dataframe with columns: patient_id, timepoint, area_diff
+    timepoints : list
+        List of timepoints in the desired order
+        
+    Returns:
+    --------
+    fig, ax : matplotlib figure and axis objects
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import seaborn as sns
+    import matplotlib.cm as cm
+    
+    # Create figure and axis
+    fig, ax = plt.subplots(figsize=(12, 6))
+    
+    # Set color palette
+    palette = sns.color_palette("plasma", len(timepoints)) #cm.tab10(np.linspace(0.9, 0.1, len(timepoints)))
+    
+    # Create x positions for each timepoint (equally spaced)
+    positions = np.arange(len(timepoints))
+    
+    # Add a slight jitter to avoid overlapping points
+    jitter_width = 0.2
+    
+    # Plot each timepoint
+    for i, tp in enumerate(timepoints):
+        # Extract data for this timepoint
+        tp_data = df[df['timepoint'] == tp]
+        
+        if len(tp_data) > 0:
+            # Add jitter to x positions
+            x_jittered = np.random.normal(positions[i], jitter_width, size=len(tp_data))
+            
+            # Plot scatter points
+            ax.scatter(x_jittered, tp_data['area_diff'], 
+                      color=palette[i], alpha=0.7, s=20, 
+                      edgecolor=palette[i], linewidth=0.5)
+            
+            # Optional: Add mean line
+            mean_value = tp_data['area_diff'].mean()
+            ax.hlines(mean_value, positions[i]-0.3, positions[i]+0.3, 
+                     color=palette[i], linewidth=2, linestyle='-')
+    
+    # Add horizontal line at y=0
+    ax.axhline(y=0, color='gray', linestyle='-', alpha=0.7)
+    
+    # Set labels and title
+    ax.set_xlabel('Timepoint', fontsize=12)
+    ax.set_ylabel('Area Difference', fontsize=12)
+    ax.set_title('Area Difference by Timepoint', fontsize=14, fontweight='bold')
+    
+    # Set x-ticks at the positions, with timepoint labels
+    ax.set_xticks(positions)
+    ax.set_xticklabels(timepoints, rotation=45)
+    
+    # Add grid for y-axis only
+    ax.grid(True, axis='y', linestyle='-', alpha=0.3)
+    
+    # Show count of patients per timepoint
+    for i, tp in enumerate(timepoints):
+        count = len(df[df['timepoint'] == tp])
+        if count > 0:
+            ax.text(positions[i], ax.get_ylim()[0] * 2.0, f"n={count}", 
+                   ha='center', va='bottom', fontsize=10)
+    ax.xaxis.set_label_coords(0.5, -0.25)  # Move x-axis label down
+    plt.tight_layout()
+    plt.savefig('Image_Processing_Scripts/area_diff_scatter.png')
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/area_diff_scatter.png', dpi=600)
+    plt.close()
+    return
+
+def create_timepoint_violin(df, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']):
+    """
+    Create a violin plot of area_diff for each timepoint with overlaid scatter points.
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import seaborn as sns
+    import matplotlib.cm as cm
+    # Create figure and axis
+    fig, ax = plt.subplots(figsize=(12, 6))
+    # Set color palette
+    palette = sns.color_palette("plasma", len(timepoints))
+    
+    # Filter the dataframe to include only timepoints in the specified list
+    df_filtered = df[df['timepoint'].isin(timepoints)].copy()
+    
+    # Ensure timepoints are in the correct order
+    df_filtered['timepoint'] = pd.Categorical(df_filtered['timepoint'], 
+                                             categories=timepoints, 
+                                             ordered=True)
+    
+    # Create violin plot
+    sns.violinplot(x='timepoint', y='area_diff', data=df_filtered, 
+                  palette=palette, inner=None, ax=ax, saturation=0.7, alpha=0.5)
+    
+    # Add scatter points on top
+    sns.stripplot(x='timepoint', y='area_diff', data=df_filtered,
+                 palette=palette, jitter=True, size=5, alpha=0.7, ax=ax)
+    
+    # Add mean markers
+    for i, tp in enumerate(timepoints):
+        tp_data = df[df['timepoint'] == tp]
+        if len(tp_data) > 0:
+            mean_value = tp_data['area_diff'].mean()
+            ax.hlines(mean_value, i-0.3, i+0.3,
+                     color=palette[i], linewidth=2, linestyle='-')
+    
+    # Add horizontal line at y=0
+    ax.axhline(y=0, color='gray', linestyle='-', alpha=0.5)
+    
+    # Set labels and title
+    ax.set_xlabel('Timepoint', fontsize=12)
+    ax.set_ylabel('Area Difference', fontsize=12)
+    ax.set_title('Area Difference by Timepoint', fontsize=14, fontweight='bold')
+    
+    # Add grid for y-axis only
+    ax.grid(True, axis='y', linestyle='-', alpha=0.3)
+    
+    # Show count of patients per timepoint
+    for i, tp in enumerate(timepoints):
+        count = len(df[df['timepoint'] == tp])
+        if count > 0:
+            ax.text(i, ax.get_ylim()[0] * 1.3, f"n={count}",
+                   ha='center', va='bottom', fontsize=10)
+    
+    ax.xaxis.set_label_coords(0.5, -0.125) # Move x-axis label down
+    plt.tight_layout()
+    plt.savefig('Image_Processing_Scripts/area_diff_violin.png')
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/area_diff_violin.png', dpi=600)
+    plt.close()
+    return
+
+def create_timepoint_boxplot(df, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']):
+    """
+    Create a box plot of area_diff for each timepoint with overlaid scatter points.
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import seaborn as sns
+    import pandas as pd
+    import matplotlib.cm as cm
+    
+    # Create figure and axis
+    fig, ax = plt.subplots(figsize=(12, 6))
+    
+    # Set color palette
+    palette = sns.color_palette("plasma", len(timepoints))
+    
+    # Filter the dataframe to include only timepoints in the specified list
+    df_filtered = df[df['timepoint'].isin(timepoints)].copy()
+    
+    # Ensure timepoints are in the correct order
+    df_filtered['timepoint'] = pd.Categorical(df_filtered['timepoint'],
+                                             categories=timepoints,
+                                             ordered=True)
+    
+    # Add horizontal line at y=0
+    ax.axhline(y=0, color='gray', linestyle='-', alpha=0.3)
+    
+    # Create box plot instead of violin plot
+    sns.boxplot(x='timepoint', y='area_diff', data=df_filtered,
+               palette=palette, width=0.5, ax=ax, saturation=0.7, 
+            showfliers=False)  # Hide outliers as we'll show all points
+    # Reduce opacity of box elements after creation
+    for patch in ax.patches:
+        patch.set_alpha(0.5)
+
+    # Add scatter points on top
+    sns.stripplot(x='timepoint', y='area_diff', data=df_filtered,
+                 palette=palette, jitter=True, size=5, alpha=0.7, ax=ax)
+    
+    # # Add mean markers
+    # for i, tp in enumerate(timepoints):
+    #     tp_data = df[df['timepoint'] == tp]
+    #     if len(tp_data) > 0:
+    #         mean_value = tp_data['area_diff'].mean()
+    #         #ax.hlines(mean_value, i-0.3, i+0.3,
+    #          #        color=palette[i], linewidth=2, linestyle='-')
+    #         ax.scatter(i, mean_value, marker='D', s=80, color=palette[i], 
+    #               zorder=10, label='Mean' if i == 0 else "")
+    
+    
+    
+    # Set labels and title
+    ax.set_xlabel('Timepoint', fontsize=12)
+    ax.set_ylabel('Area Difference [mm²]', fontsize=12)
+    ax.set_title('Area Difference by Timepoint', fontsize=14, fontweight='bold')
+    
+    # Add grid for y-axis only
+    ax.grid(True, axis='y', linestyle='-', alpha=0.3)
+    
+    # Show count of patients per timepoint
+    for i, tp in enumerate(timepoints):
+        count = len(df[df['timepoint'] == tp])
+        if count > 0:
+            ax.text(i, ax.get_ylim()[0] * 1.5, f"n={count}",
+                   ha='center', va='bottom', fontsize=10)
+    
+    ax.xaxis.set_label_coords(0.5, -0.125) # Move x-axis label down
+    plt.tight_layout()
+    plt.savefig('Image_Processing_Scripts/area_diff_boxplot_v2.png')
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/area_diff_boxplot_v2.png', dpi=600)
+    plt.close()
+    return
 
 
 print('running stats_main.py')
@@ -97,6 +310,14 @@ print('rows dropped')
 print('ensuring categorical values are categorical')
 new_df['timepoint']=pd.Categorical(new_df['timepoint'], categories=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
 print(new_df.head())
+
+#create_timepoint_scatter(new_df)
+#create_timepoint_violin(new_df)
+create_timepoint_boxplot(new_df)
+# plt.savefig('area_diff_scatter.png', dpi=300)
+
+
+sys.exit()
 
 # Check for duplicates
 print("Checking for duplicates:")
