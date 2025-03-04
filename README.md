@@ -42,6 +42,14 @@ Takes .csv file of marked skull end points in voxel coordinates and extracts the
 
 Patients selected according to patient selection criteria, outlined below.
 
+To redo the analysis after changes in bet, the following should be ran:
+- `contour_plot_main.py` (on cluster only)
+- `ellipse_plot_main.py`
+- `ellipse_fit_analysis.py`
+- `longitudinal_main.py`
+- `stats_main.py`
+
+
 ### Patient selection criteria: ###
 - 'Free' bulging i.e. no fluid accumulation, brain allowed to expand
 - Not too much other pathology e.g. 13198 fast vs. 3 mo scan
@@ -193,8 +201,13 @@ For MAR and MNAR timepoints, these were not imputed due to the impossibility of 
 ### Loading and Cleaning Data
 In `stats_main.py`, data is loaded from `area_data.csv` and `patient_id`,`timepoint` and `area_diff` columns are retained for analysis. Since the `acute` timepoint was found to be of most interest as per the `area_change_longitudinal.png` visualisation, data was filtered such that all patients to be analysed had the `acute` timepoint. 
 
+### Basic visualisation
+A boxplot of herniation area over time was created to show distribution of data over time. for timepoints with less than 5 data points, only the median was plotted. 
+
 ### Pairwise Testing
 For all of a patient's timepoints, paired t-tests (`ttest_rel`) were conducted using the `acute` timeline as a baseline for comparison. If there were not enough pairs for the paired t-test to work, an exception was introduced setting `stat_t` and `p_value_t` to be `np.nan`. 
+
+Similarly, the Wilcoxon signed-rank test was performed. Due to sample size constraints, this is likely better suited to the dataset since it does not assume data is normally distributed. 
 
 Results were stored in a DataFrame as `results_df`. The False Discovery Rate (FDR) correction was then applied using `multipletests` function from `statsmodels.stats.multitest` library with the `method` variable set to `fdr_bh`. 
 
@@ -209,8 +222,10 @@ The FDR correction:
     - If $q_i \leq \alpha$, null hypothesis $H_0$ is rejected for that test. 
     - $\alpha$ is the maximum proportion of false positives accepted in the analysis. 
 
-FDR-BH procedure was selected over more conservative measures e.g. Family-Wise Error Rate (FWER) methods including Holm-Bonferroni. This is because it is a simple measure with lower risk of failing to detect true positives, whilst still controlling for false positives in a manner useful for this exploratory research. At pilot study stage, the more stringent FWER methods were found to be overly restrictive. z
+FDR-BH procedure was selected over more conservative measures e.g. Family-Wise Error Rate (FWER) methods including Holm-Bonferroni. This is because it is a simple measure with lower risk of failing to detect true positives, whilst still controlling for false positives in a manner useful for this exploratory research. At pilot study stage, the more stringent FWER methods were found to be overly restrictive. 
 
+#### Visualisations
+Data visualisation conducted in `stats_main.py`. Number of pairwise comparisons available was shown in the `data_availability.png` matrix. Significance matrices for FDR corrected t-test (dubious given small sample size) (`significance_matrix.png`) and Wilcoxon signed-rank test both uncorrected `significance_matrix_wilcoxon_uncorrected.png` and corrected `significance_matrix_wilcoxon.png`. 
 
 # DTI Processing #
 Path: `/home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi/19978/ultra-fast/Hour_00034.8016-Date_20111024/U-ID22691/nipype/DATASINK/DTIspace/dwi_proc/`
