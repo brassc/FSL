@@ -636,8 +636,8 @@ if pair_data:
     # Labels
     plt.yticks(range(n_comparisons), list(reversed(summary_df['comparison'])))
     #plt.axvline(x=0, color='gray', linestyle='-', linewidth=1.5, alpha=0.7)
-    plt.title('Mean Differences in Herniation Area Between Timepoint Pairs \nwith 95% Confidence Intervals and Corrected p-values (FDR)')
-    plt.xlabel('Mean Area Difference')
+    plt.title('Mean Differences in Herniation Area Between Timepoint Pairs \nwith 95% Confidence Intervals, Corrected p-values (FDR) and Number of each Pair')
+    plt.xlabel('Mean Area Difference [mm²]')
     
     
     # Add significance annotation (with reversed positions)
@@ -648,6 +648,19 @@ if pair_data:
             #i,
             n_comparisons - 1 - i,  # Reverse the y position
             f"p={summary_df.iloc[i]['p_corrected']:.3f}{' *' if summary_df.iloc[i]['significant'] else ''}",
+            va='center',
+            fontsize=11,
+            ha='left'
+        )
+    
+    # Add number of pair annotation (with reversed positions)
+    max_x2=max([x['ci_upper'] for _, x in summary_df.iterrows()]) * 1.3
+    for i in range(len(summary_df)):
+        plt.text(
+            max_x2,  # Align all p-values to same x position
+            #i,
+            n_comparisons - 1 - i,  # Reverse the y position
+            f"n={summary_df.iloc[i]['n_pairs']}{' *' if summary_df.iloc[i]['significant'] else ''}",
             va='center',
             fontsize=11,
             ha='left'
