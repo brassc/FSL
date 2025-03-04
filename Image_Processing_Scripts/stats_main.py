@@ -636,7 +636,7 @@ if pair_data:
     # Labels
     plt.yticks(range(n_comparisons), list(reversed(summary_df['comparison'])))
     #plt.axvline(x=0, color='gray', linestyle='-', linewidth=1.5, alpha=0.7)
-    plt.title('Mean Area Differences with 95% Confidence Intervals and Corrected p-values (FDR)')
+    plt.title('Mean Differences in Herniation Area Between Timepoint Pairs \nwith 95% Confidence Intervals and Corrected p-values (FDR)')
     plt.xlabel('Mean Area Difference')
     
     
