@@ -27,6 +27,7 @@ def wilcoxon_signed_rank_test(data, time1, time2):
             'median_diff': np.nan,
             'w_statistic': np.nan,
             'p_value': np.nan,
+            'std_diff': np.nan,
             'sufficient_data': False
         }
     
@@ -38,6 +39,9 @@ def wilcoxon_signed_rank_test(data, time1, time2):
     
     # Calculate the median difference
     median_diff = np.median(diff)
+
+    # Calculate the standard deviation of the differences
+    std_diff = np.std(diff, ddof=1)  # ddof=1 for sample standard deviation
     
     return {
         'comparison': f"{time1} vs {time2}",
@@ -47,6 +51,7 @@ def wilcoxon_signed_rank_test(data, time1, time2):
         'median_diff': median_diff,
         'w_statistic': w_stat,
         'p_value': p_val,
+        'std_diff': std_diff,
         'sufficient_data': True
     }
 
@@ -101,11 +106,13 @@ if dupes.sum() > 0:
     print("Sample of duplicates:")
     print(new_df[dupes])# Using all available data
 
-
+print(new_df.head())
+sys.exit()
 pivoted_data = new_df.pivot(index='patient_id', columns='timepoint', values='area_diff')
 pivoted_data = pivoted_data.rename_axis(None, axis=1)
 
 print(pivoted_data.head())
+
 
 """
 # Add deformation status
@@ -544,7 +551,7 @@ plt.savefig('Image_Processing_Scripts/significance_matrix_wilcoxon_uncorrected.p
 plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/significance_matrix_wilcoxon_uncorrected.png', dpi=600)
 plt.close()
 
-sys.exit()
+
 
 # # 3. Paired Difference Plots
 # # -------------------------
@@ -582,68 +589,72 @@ sys.exit()
 #         plt.savefig(f'paired_diff_{time1}_vs_{time2}.png')
 #         plt.show()
 
-# # 4. Additional Summary Plot: Mean differences with confidence intervals
-# # ---------------------------------------------------------------------
-# # Extract data for all pairs with sufficient data
-# pair_data = []
-# for _, row in valid_results.iterrows():
-#     pair_data.append({
-#         'comparison': f"{row['time1']} vs {row['time2']}",
-#         'mean_diff': row['mean_diff'],
-#         'std_diff': row['std_diff'],
-#         'n_pairs': row['n_pairs'],
-#         'p_corrected': row['p_corrected'],
-#         'significant': row['significant']
-#     })
+# 4. Additional Summary Plot: Mean differences with confidence intervals
+# ---------------------------------------------------------------------
+# Extract data for all pairs with sufficient data for wilcoxon results
+pair_data = []
+for _, row in valid_wilcoxon_results.iterrows():
+    pair_data.append({
+        'comparison': f"{row['time1']} vs {row['time2']}",
+        'mean_diff': row['median_diff'],
+        'n_pairs': row['n_pairs'],
+        'p_corrected': row['p_corrected'],
+        'significant': row['significant']
+    })
 
-# if pair_data:
-#     summary_df = pd.DataFrame(pair_data)
+if pair_data:
+    summary_df = pd.DataFrame(pair_data)
+    print(summary_df)
+    sys.exit()
     
-#     # Calculate confidence intervals (95%)
-#     summary_df['ci_lower'] = summary_df['mean_diff'] - 1.96 * summary_df['std_diff'] / np.sqrt(summary_df['n_pairs'])
-#     summary_df['ci_upper'] = summary_df['mean_diff'] + 1.96 * summary_df['std_diff'] / np.sqrt(summary_df['n_pairs'])
+    # Calculate confidence intervals (95%)
+    summary_df['ci_lower'] = summary_df['mean_diff'] - 1.96 * summary_df['std_diff'] / np.sqrt(summary_df['n_pairs'])
+    summary_df['ci_upper'] = summary_df['mean_diff'] + 1.96 * summary_df['std_diff'] / np.sqrt(summary_df['n_pairs'])
     
-#     # Sort by mean difference
-#     summary_df = summary_df.sort_values('mean_diff')
+    # Sort by mean difference
+    summary_df = summary_df.sort_values('mean_diff')
     
-#     # Create forest plot
-#     plt.figure(figsize=(10, 6))
+    # Create forest plot
+    plt.figure(figsize=(10, 6))
     
-#     # Plot points and error bars
-#     plt.errorbar(
-#         summary_df['mean_diff'], 
-#         range(len(summary_df)), 
-#         xerr=np.array([
-#             summary_df['mean_diff'] - summary_df['ci_lower'], 
-#             summary_df['ci_upper'] - summary_df['mean_diff']
-#         ]),
-#         fmt='o', 
-#         capsize=5,
-#         color=[
-#             'red' if sig else 'blue' 
-#             for sig in summary_df['significant']
-#         ]
-#     )
+    # Plot points and error bars
+    plt.errorbar(
+        summary_df['mean_diff'], 
+        range(len(summary_df)), 
+        xerr=np.array([
+            summary_df['mean_diff'] - summary_df['ci_lower'], 
+            summary_df['ci_upper'] - summary_df['mean_diff']
+        ]),
+        fmt='o', 
+        capsize=5,
+        color=[
+            'red' if sig else 'blue' 
+            for sig in summary_df['significant']
+        ]
+    )
     
-#     # Add labels
-#     plt.yticks(range(len(summary_df)), summary_df['comparison'])
-#     plt.axvline(x=0, color='gray', linestyle='--')
-#     plt.title('Mean Differences with 95% Confidence Intervals')
-#     plt.xlabel('Mean Difference')
-#     plt.grid(True, axis='x', linestyle='--', alpha=0.7)
+    # Add labels
+    plt.yticks(range(len(summary_df)), summary_df['comparison'])
+    plt.axvline(x=0, color='gray', linestyle='--')
+    plt.title('Mean Differences with 95% Confidence Intervals')
+    plt.xlabel('Mean Difference')
+    plt.grid(True, axis='x', linestyle='--', alpha=0.7)
     
-#     # Add significance annotation
-#     for i, (_, row) in enumerate(summary_df.iterrows()):
-#         plt.text(
-#             row['ci_upper'] + abs(row['mean_diff'])*0.05, 
-#             i, 
-#             f"p={row['p_corrected']:.3f}{' *' if row['significant'] else ''}",
-#             va='center'
-#         )
+    # Add significance annotation
+    for i, (_, row) in enumerate(summary_df.iterrows()):
+        plt.text(
+            row['ci_upper'] + abs(row['mean_diff'])*0.05, 
+            i, 
+            f"p={row['p_corrected']:.3f}{' *' if row['significant'] else ''}",
+            va='center'
+        )
     
-#     plt.tight_layout()
-#     plt.savefig('mean_differences_summary.png')
-#     plt.show()
+    plt.tight_layout()
+    plt.savefig('Image_Processing_Scripts/mean_differences_summary.png')
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/mean_differences_summary.png', dpi=600)
+    plt.show()
+
+    sys.exit()
 
 
 
