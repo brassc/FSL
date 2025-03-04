@@ -223,30 +223,59 @@ def create_timepoint_boxplot(df, timepoints=['ultra-fast', 'fast', 'acute', '3mo
     # Add horizontal line at y=0
     ax.axhline(y=0, color='gray', linestyle='-', alpha=0.3)
     
-    # Create box plot instead of violin plot
-    sns.boxplot(x='timepoint', y='area_diff', data=df_filtered,
-               palette=palette, width=0.5, ax=ax, saturation=0.7, 
-            showfliers=False)  # Hide outliers as we'll show all points
+    # Create a copy of the data for non-small sample sizes
+    df_regular = df_filtered.copy()
+    df_small = df_filtered.copy()
+    
+    # Create lists to track which timepoints have small sample sizes
+    small_sample_tps = []
+    regular_sample_tps = []
+    
+    for tp in timepoints:
+        tp_data = df[df['timepoint'] == tp]
+        if len(tp_data) < 5:
+            small_sample_tps.append(tp)
+        else:
+            regular_sample_tps.append(tp)
+    
+    # Create a mask for each dataset
+    if small_sample_tps:
+        df_small = df_small[df_small['timepoint'].isin(small_sample_tps)]
+    else:
+        df_small = df_small[df_small['timepoint'] == 'none_placeholder']
+        
+    if regular_sample_tps:
+        df_regular = df_regular[df_regular['timepoint'].isin(regular_sample_tps)]
+    else:
+        df_regular = df_regular[df_regular['timepoint'] == 'none_placeholder']
+    
+    # Plot regular boxplots for n >= 5
+    if not df_regular.empty:
+        sns.boxplot(x='timepoint', y='area_diff', data=df_regular,
+                  palette=palette, width=0.5, ax=ax, saturation=0.7,
+                  showfliers=False)
+    
     # Reduce opacity of box elements after creation
     for patch in ax.patches:
         patch.set_alpha(0.5)
-
-    # Add scatter points on top
+    
+    
+    
+    # For small sample sizes (n < 5), plot just the median as a line
+    for tp in small_sample_tps:
+        tp_data = df[df['timepoint'] == tp]
+        tp_index = timepoints.index(tp)
+        median_value = tp_data['area_diff'].median()
+        
+        # Plot median as a horizontal line
+        ax.hlines(median_value, tp_index - 0.25, tp_index + 0.25,
+                 color='black', linewidth=1.0, linestyle='-',
+                 alpha=0.9, zorder=5)
+    
+    # Add scatter points for all timepoints
     sns.stripplot(x='timepoint', y='area_diff', data=df_filtered,
-                 palette=palette, jitter=True, size=5, alpha=0.7, ax=ax)
-    
-    # # Add mean markers
-    # for i, tp in enumerate(timepoints):
-    #     tp_data = df[df['timepoint'] == tp]
-    #     if len(tp_data) > 0:
-    #         mean_value = tp_data['area_diff'].mean()
-    #         #ax.hlines(mean_value, i-0.3, i+0.3,
-    #          #        color=palette[i], linewidth=2, linestyle='-')
-    #         ax.scatter(i, mean_value, marker='D', s=80, color=palette[i], 
-    #               zorder=10, label='Mean' if i == 0 else "")
-    
-    
-    
+                 palette=palette, jitter=True, size=6, alpha=0.8, ax=ax)
+        
     # Set labels and title
     ax.set_xlabel('Timepoint', fontsize=12)
     ax.set_ylabel('Area Difference [mm²]', fontsize=12)
