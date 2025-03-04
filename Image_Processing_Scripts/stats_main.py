@@ -13,6 +13,44 @@ from statsmodels.stats.multitest import multipletests
 from itertools import combinations
 from longitudinal_main import map_timepoint_to_string
 
+# Function to perform Wilcoxon signed-rank test between two time points
+def wilcoxon_signed_rank_test(data, time1, time2):
+    # Get data for both time points, excluding rows with missing values in either
+    paired_data = data[[time1, time2]].dropna()
+    
+    if len(paired_data) < 2:
+        return {
+            'comparison': f"{time1} vs {time2}",
+            'time1': time1,
+            'time2': time2,
+            'n_pairs': len(paired_data),
+            'median_diff': np.nan,
+            'w_statistic': np.nan,
+            'p_value': np.nan,
+            'sufficient_data': False
+        }
+    
+    # Calculate the differences between the two time points
+    diff = paired_data[time1] - paired_data[time2]
+    
+    # Perform Wilcoxon signed-rank test
+    w_stat, p_val = stats.wilcoxon(paired_data[time1], paired_data[time2])
+    
+    # Calculate the median difference
+    median_diff = np.median(diff)
+    
+    return {
+        'comparison': f"{time1} vs {time2}",
+        'time1': time1,
+        'time2': time2,
+        'n_pairs': len(paired_data),
+        'median_diff': median_diff,
+        'w_statistic': w_stat,
+        'p_value': p_val,
+        'sufficient_data': True
+    }
+
+
 
 print('running stats_main.py')
 # Load the data (note this data does not contain all timepoints w NaN value if not exist - only contains timepoints w data per original data)
@@ -73,7 +111,7 @@ print(pivoted_data.head())
 # Add deformation status
 pivoted_data_with_deformation = pivoted_data.copy()
 pivoted_data_with_deformation['has_deformation'] = True
-non_def_patients = ['19575', '19981', '21221']
+non_def_patients = ['12519', '19575', '19981', '21221', '2ZFz639', '6shy992', '9GfT823']
 # Update the deformation status for specified patients
 for patient_id in non_def_patients:
     if patient_id in pivoted_data_with_deformation.index:
@@ -81,7 +119,7 @@ for patient_id in non_def_patients:
 
 # Verify the result
 print("Deformation status added:")
-print(pivoted_data_with_deformation[['has_deformation']].head(10))  # Display the first 10 rows
+print(pivoted_data_with_deformation[['has_deformation']])  # Display the first 10 rows
 
 # Check that the specified patients have False status
 for patient_id in non_def_patients:
@@ -151,8 +189,19 @@ for time1, time2 in pairs:
 results_df = pd.DataFrame(ttest_results)
 #print(results_df)
 
+# Run Wilcoxon signed-rank tests
+wilcoxon_results = []
+for time1, time2 in pairs:
+    wilcoxon_result = wilcoxon_signed_rank_test(pivoted_data, time1, time2)
+    wilcoxon_results.append(wilcoxon_result)
+# Convert results to DataFrame
+wilcoxon_results_df = pd.DataFrame(wilcoxon_results)
+
+
+
 # Filter to show only pairs with sufficient data
 valid_results = results_df[results_df['sufficient_data'] == True].copy()
+valid_wilcoxon_results = wilcoxon_results_df[wilcoxon_results_df['sufficient_data'] == True].copy()
 
 if len(valid_results) > 0:
     # Apply Holm-Bonferroni correction to p-values
@@ -202,6 +251,47 @@ else:
     print("No pairs have sufficient data for paired t-test.")
     results_all_pairs = {}
 
+results_all_pairs_wilcoxon = {}
+if len(valid_wilcoxon_results) > 0:
+    if len(valid_wilcoxon_results) > 1:
+        # Apply FDR correction 
+        p_values_wilcoxon = valid_wilcoxon_results['p_value'].values
+        rejected_wilcoxon, p_corrected_wilcoxon, _, _ = multipletests(p_values_wilcoxon, alpha=0.05, method='fdr_bh')
+        valid_wilcoxon_results['p_corrected'] = p_corrected_wilcoxon
+        valid_wilcoxon_results['significant'] = rejected_wilcoxon
+
+    else:
+        # If only one test, no correction needed
+        valid_wilcoxon_results['p_corrected'] = valid_wilcoxon_results['p_value']
+        valid_wilcoxon_results['significant'] = valid_wilcoxon_results['p_value'] < 0.05
+
+    # Sort by corrected p-value
+    #valid_wilcoxon_results = valid_wilcoxon_results.sort_values('p_value')
+
+    # Print results
+    print("\nWilcoxon Signed-Rank Test Results:")
+    print(valid_wilcoxon_results[['comparison', 'n_pairs', 'median_diff', 'w_statistic', 'p_value', 'p_corrected', 'significant']])
+    
+    # Store results in dictionary for later use
+    results_all_pairs_wilcoxon = {}
+
+    for _, row in valid_wilcoxon_results.iterrows():
+        key = (row['time1'], row['time2'])
+        results_all_pairs_wilcoxon[key] = {
+            'n_pairs': row['n_pairs'],
+            'median_diff': row['median_diff'],
+            'w_statistic': row['w_statistic'],
+            'p_value': row['p_value'],
+            'p_corrected': row['p_corrected'],
+            'significant': row['significant']
+        }
+else:
+    print("No pairs have sufficient data for Wilcoxon signed-rank test.")
+    results_all_pairs_wilcoxon = {}
+
+
+    
+
 """
 # TEST FOR DEFORMED PATIENTS ONLY
 
@@ -238,7 +328,7 @@ if len(valid_results_deformed) > 0:
     # Apply Holm-Bonferroni correction to p-values
     if len(valid_results_deformed) > 1:  # Only apply if there are multiple tests
         p_values = valid_results_deformed['p_value'].values
-        rejected, p_corrected, _, _ = multipletests(p_values, alpha=0.05, method='holm')
+        rejected, p_corrected, _, _ = multipletests(p_values, alpha=0.05, method='fdr_bh')
         valid_results_deformed['p_corrected'] = p_corrected
         valid_results_deformed['significant'] = rejected
     else:
@@ -286,8 +376,8 @@ if len(results_all_pairs) > 0 and len(results_all_pairs_deformed) > 0:
         # Get results for all patients
         if pair in results_all_pairs:
             all_patients_result = results_all_pairs[pair]
-            all_p = all_patients_result['p_corrected']
-            all_sig = all_patients_result['significant']
+            all_p = all_patients_result['p_fdr']
+            all_sig = all_patients_result['significant_fdr']
         else:
             all_p = float('nan')
             all_sig = False
@@ -327,8 +417,8 @@ if len(results_all_pairs) > 0 and len(results_all_pairs_deformed) > 0:
                          'Deformed Only p-value', 'Deformed Only Significant']])
     else:
         print("\nNo changes in significance were found after excluding non-deformed patients.")
-
 """
+
 sys.exit()
 
 
@@ -373,7 +463,7 @@ plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/data_availability.p
 plt.close()
 
 # 2. Create Significance Matrix
-# 1. Significance Matrix
+#  Significance Matrix
 # ---------------------
 # Create a matrix of corrected p-values
 significance_matrix = pd.DataFrame(index=timepoints, columns=timepoints, dtype=float)
@@ -413,6 +503,47 @@ plt.savefig('Image_Processing_Scripts/significance_matrix.png')
 plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/significance_matrix.png', dpi=600)
 plt.close()
 """
+
+# 3. Wilcoxon Signed Rank Significance Matrix
+# -------------------------------------------
+# Create a matrix of corrected p-values
+significance_matrix_wilcoxon = pd.DataFrame(index=timepoints, columns=timepoints, dtype=float)
+significance_matrix_wilcoxon.fillna(1.0, inplace=True)  # Default p-value = 1 (not significant)
+
+# Fill in the values from results
+for _, row in valid_wilcoxon_results.iterrows():
+    significance_matrix_wilcoxon.loc[row['time1'], row['time2']] = row['p_corrected']
+    significance_matrix_wilcoxon.loc[row['time2'], row['time1']] = row['p_corrected']  # Mirror since it's symmetric
+
+# Set diagonal to NaN for better visualization
+for time in timepoints:
+    significance_matrix_wilcoxon.loc[time, time] = np.nan
+
+# Visualize the significance matrix
+plt.figure(figsize=(10, 8))
+mask = np.isnan(significance_matrix_wilcoxon)
+cmap = sns.diverging_palette(240, 10, as_cmap=True)
+
+# Create heatmap without grid lines
+heatmap = sns.heatmap(
+    significance_matrix_wilcoxon,
+    annot=True,           # Show numbers in cells
+    cmap=cmap,            # Color map
+    mask=mask,            # Mask diagonal values
+    vmin=0, vmax=1,     # Set color scale range
+    center=0.25,          # Center color scale
+    fmt='.3f',            # Format as floating point with 3 decimals
+    linewidths=0,         # Remove lines between cells
+    linecolor='none'      # Ensure no line color
+)
+
+plt.title('Corrected P-values from Wilcoxon Signed-Rank Test (FDR)')
+plt.grid(False)
+plt.tight_layout()
+plt.savefig('Image_Processing_Scripts/significance_matrix_wilcoxon.png')
+plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/significance_matrix_wilcoxon.png', dpi=600)
+plt.close()
+
 
 
 # # 3. Paired Difference Plots
