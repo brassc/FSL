@@ -106,12 +106,10 @@ if dupes.sum() > 0:
     print("Sample of duplicates:")
     print(new_df[dupes])# Using all available data
 
-print(new_df.head())
-sys.exit()
 pivoted_data = new_df.pivot(index='patient_id', columns='timepoint', values='area_diff')
 pivoted_data = pivoted_data.rename_axis(None, axis=1)
 
-print(pivoted_data.head())
+#print(pivoted_data.head())
 
 
 """
@@ -599,53 +597,56 @@ for _, row in valid_wilcoxon_results.iterrows():
         'mean_diff': row['median_diff'],
         'n_pairs': row['n_pairs'],
         'p_corrected': row['p_corrected'],
-        'significant': row['significant']
+        'significant': row['significant'],
+        'std_diff': row['std_diff']
     })
 
 if pair_data:
     summary_df = pd.DataFrame(pair_data)
     print(summary_df)
-    sys.exit()
     
     # Calculate confidence intervals (95%)
     summary_df['ci_lower'] = summary_df['mean_diff'] - 1.96 * summary_df['std_diff'] / np.sqrt(summary_df['n_pairs'])
     summary_df['ci_upper'] = summary_df['mean_diff'] + 1.96 * summary_df['std_diff'] / np.sqrt(summary_df['n_pairs'])
     
     # Sort by mean difference
-    summary_df = summary_df.sort_values('mean_diff')
+    #summary_df = summary_df.sort_values('mean_diff')
+    
+    # Check that the number of colors matches the number of rows in summary_df
+    colors = ['red' if sig else 'blue' for sig in summary_df['significant']]
     
     # Create forest plot
     plt.figure(figsize=(10, 6))
     
-    # Plot points and error bars
-    plt.errorbar(
-        summary_df['mean_diff'], 
-        range(len(summary_df)), 
-        xerr=np.array([
-            summary_df['mean_diff'] - summary_df['ci_lower'], 
-            summary_df['ci_upper'] - summary_df['mean_diff']
-        ]),
-        fmt='o', 
-        capsize=5,
-        color=[
-            'red' if sig else 'blue' 
-            for sig in summary_df['significant']
-        ]
-    )
+    # Keep the summary_df in its original order
+    # Use a plain range for y-positions to maintain order
+    n_comparisons = len(summary_df)
+    y_positions = np.arange(n_comparisons-1, -1, -1)
+
+    for i in range(len(summary_df)):
+        plt.errorbar(
+            summary_df.iloc[i]['mean_diff'],
+            y_positions[i],
+            xerr=[[summary_df.iloc[i]['mean_diff'] - summary_df.iloc[i]['ci_lower']], 
+                  [summary_df.iloc[i]['ci_upper'] - summary_df.iloc[i]['mean_diff']]],
+            fmt='o',
+            capsize=5,
+            color=colors[i]
+        )
     
     # Add labels
-    plt.yticks(range(len(summary_df)), summary_df['comparison'])
+    plt.yticks(range(len(summary_df)), summary_df['comparison'].iloc[::-1])
     plt.axvline(x=0, color='gray', linestyle='--')
     plt.title('Mean Differences with 95% Confidence Intervals')
     plt.xlabel('Mean Difference')
     plt.grid(True, axis='x', linestyle='--', alpha=0.7)
     
     # Add significance annotation
-    for i, (_, row) in enumerate(summary_df.iterrows()):
+    for i in range(len(summary_df)):
         plt.text(
-            row['ci_upper'] + abs(row['mean_diff'])*0.05, 
-            i, 
-            f"p={row['p_corrected']:.3f}{' *' if row['significant'] else ''}",
+            summary_df.iloc[i]['ci_upper'] + abs(summary_df.iloc[i]['mean_diff'])*0.05,
+            i,
+            f"p={summary_df.iloc[i]['p_corrected']:.3f}{' *' if summary_df.iloc[i]['significant'] else ''}",
             va='center'
         )
     
@@ -653,7 +654,6 @@ if pair_data:
     plt.savefig('Image_Processing_Scripts/mean_differences_summary.png')
     plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/mean_differences_summary.png', dpi=600)
     plt.show()
-
     sys.exit()
 
 
