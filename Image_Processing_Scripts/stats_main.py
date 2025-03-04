@@ -250,7 +250,7 @@ def create_timepoint_boxplot(df, timepoints=['ultra-fast', 'fast', 'acute', '3mo
     # Set labels and title
     ax.set_xlabel('Timepoint', fontsize=12)
     ax.set_ylabel('Area Difference [mm²]', fontsize=12)
-    ax.set_title('Area Difference by Timepoint', fontsize=14, fontweight='bold')
+    ax.set_title('Herniation Area by Timepoint', fontsize=14, fontweight='bold')
     
     # Add grid for y-axis only
     ax.grid(True, axis='y', linestyle='-', alpha=0.3)
