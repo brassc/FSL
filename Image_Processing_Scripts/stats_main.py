@@ -1493,6 +1493,7 @@ if __name__ == '__main__':
                 ha='left', fontsize=12, style='italic')
         
         plt.savefig('Image_Processing_Scripts/significance_matrix_mixed_effects.png', dpi=300, bbox_inches='tight')
+        plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/significance_matrix_mixed_effects.png', dpi=600, bbox_inches='tight')
         plt.close()
 
 
