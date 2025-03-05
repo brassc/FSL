@@ -329,9 +329,51 @@ if __name__ == '__main__':
 
     # recall patient_ids = data['patient_id'].unique() have already been collected
     # Add patient id x all timepoints to plot as scatter, create cubic spline between for each patient with more than 2 timepoints
+
+
+    # Create a dataframe with baseline rows (area_diff=0) for all patients
+    baseline_rows = []
+    for patient_id in patient_ids:
+        baseline_rows.append({
+            'patient_id': patient_id,
+            'timepoint': 'baseline',
+            'area_diff': 0,
+            'unique_label': f"{patient_id} baseline"
+        })
+
+    # Convert the list of dictionaries to a DataFrame
+    baseline_df = pd.DataFrame(baseline_rows)
+
+    # Concatenate the original dataframe with the baseline rows
+    area_diff_df = pd.concat([area_diff_df, baseline_df], ignore_index=True)
+    print(area_diff_df)
+
+    # Define the order of timepoints
+    baseline_timepoint_order = ['baseline', 'ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
+    timepoints_num = np.arange(len(baseline_timepoint_order))
+
+    # Create a categorical column for sorting timepoints
+    area_diff_df['timepoint_cat'] = pd.Categorical(
+        area_diff_df['timepoint'],
+        categories=baseline_timepoint_order,
+        ordered=True
+    )
+
+    # Sort the dataframe by patient_id and timepoint
+    area_diff_df = area_diff_df.sort_values(['patient_id', 'timepoint_cat'])
+
+    # Drop the helper column if you don't need it
+    area_diff_df = area_diff_df.drop(columns=['timepoint_cat'])
+
+    # Reset the index
+    area_diff_df = area_diff_df.reset_index(drop=True)
+
+       
+
     for patient_id in patient_ids:
         patient_subset = area_diff_df[area_diff_df['patient_id'] == patient_id]
         print(patient_subset['area_diff'])
+        
         # convert patient_subset['area_diff'] to a numpy array for plotting
         area_diff_subset = np.array(patient_subset['area_diff'])
         valid_indices = ~np.isnan(area_diff_subset)
@@ -346,7 +388,7 @@ if __name__ == '__main__':
         first_area=area_diff_subset[earliest_valid_index]
 
         # normalise data to start at 0
-        area_diff_subset = area_diff_subset - first_area
+        #area_diff_subset = area_diff_subset - first_area
         area_diff_subset_valid = area_diff_subset[valid_indices]
         timepoints_num_valid = timepoints_num[valid_indices]
 
@@ -393,19 +435,19 @@ if __name__ == '__main__':
 
     #plt.figure(figsize=(12, 8))
     #print(f"color_map: {color_map}")
-    plt.xlim([0, len(timepoints)-1])
+    plt.xlim([0, len(baseline_timepoint_order)-1])
     #plt.legend(title='Patient ID')
     plt.xlabel('Time')
 
     # instead of 0-6, use timepoints
-    plt.xticks(timepoints_num, timepoints)
+    plt.xticks(timepoints_num, baseline_timepoint_order)
     plt.ylabel('Area Change [mm$^2$]')
     plt.title('Area Change Over Time')
     #position legend outside of plot
     plt.tight_layout()
     plt.legend(title='Patient ID', bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
-    plt.savefig('Image_Processing_Scripts/plots/area_change_longitudinal.png', bbox_inches='tight')
-    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/area_change_longitudinal.pdf', bbox_inches='tight', dpi=300)
+    plt.savefig('Image_Processing_Scripts/plots/area_change_longitudinal_v2.png', bbox_inches='tight')
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/area_change_longitudinal_v2.pdf', bbox_inches='tight', dpi=300)
     plt.close()
     #plt.show()
 
