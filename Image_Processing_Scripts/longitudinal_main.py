@@ -227,6 +227,10 @@ def map_timepoint_to_string(numeric_timepoint):
     Returns:
         String representation of the closest timepoint
     """
+
+    timepoints = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
+    timepoint_values = [50, 336, 504, 2160, 4320, 8640, 17280] # always the same
+
     if pd.isna(numeric_timepoint):
         return None
     
