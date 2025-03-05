@@ -10,6 +10,7 @@ from scipy.stats import mannwhitneyu
 import statsmodels.stats.multitest as smm
 from scipy.stats import ttest_rel, wilcoxon
 from statsmodels.stats.multitest import multipletests
+from statsmodels.stats.multicomp import pairwise_tukeyhsd
 from itertools import combinations
 from longitudinal_main import map_timepoint_to_string
 from set_publication_style import set_publication_style
@@ -1787,6 +1788,108 @@ if __name__ == '__main__':
         print(result.cov_re)
 
         # pairwise comparisons go here
+        # Define all timepoints
+        timepoints = ['acute', 'ultra-fast', 'fast', 'chronic']
+        n = len(timepoints)
+        sig_matrix = np.ones((n, n))  # Initialize with 1s (diagonal)
+
+        print("\nPairwise Comparisons:")
+
+        # First, fill in the known p-values from the model summary
+        # These are comparisons with the baseline (acute)
+        for i, param in enumerate(result.params.index):
+            if param.startswith('timepoint'):
+                # Extract timepoint name from parameter
+                tp = param.split('[T.')[1].rstrip(']')
+                if tp in timepoints:
+                    j = timepoints.index(tp)
+                    p_value = result.pvalues[param]
+                    sig_matrix[0, j] = p_value
+                    sig_matrix[j, 0] = p_value  # Mirror value
+                    print(f"acute vs {tp}: p={p_value:.4f}")
+
+        # Now for the non-baseline comparisons, we need to create new models
+        # Approach: Create datasets with only the two timepoints we want to compare
+        for i in range(1, n):
+            for j in range(i+1, n):
+                tp1 = timepoints[i]
+                tp2 = timepoints[j]
+                
+                # Create a subset with just these two timepoints
+                subset = binned_df[binned_df['timepoint'].isin([tp1, tp2])].copy()
+                
+                # Re-categorize with first timepoint as baseline
+                subset['timepoint'] = pd.Categorical(
+                    subset['timepoint'],
+                    categories=[tp1, tp2],
+                    ordered=True
+                )
+                
+                # Fit a new model with this subset
+                try:
+                    sub_model = smf.mixedlm("area_diff ~ timepoint", subset, groups=subset['patient_id'])
+                    sub_result = sub_model.fit()
+                    
+                    # Get p-value for the comparison (should only be one parameter)
+                    for param in sub_result.params.index:
+                        if param.startswith('timepoint'):
+                            p_value = sub_result.pvalues[param]
+                            sig_matrix[i, j] = p_value
+                            sig_matrix[j, i] = p_value  # Mirror value
+                            print(f"{tp1} vs {tp2}: p={p_value:.4f}")
+                except Exception as e:
+                    print(f"Error comparing {tp1} vs {tp2}: {e}")
+                    # Use an alternative approach in case of convergence issues
+                    try:
+                        # Try with OLS
+                        ols_formula = "area_diff ~ C(timepoint) + C(patient_id)"
+                        ols_result = smf.ols(ols_formula, subset).fit()
+                        
+                        # Find the timepoint parameter
+                        for param in ols_result.params.index:
+                            if 'C(timepoint)' in param and tp2 in param:
+                                p_value = ols_result.pvalues[param]
+                                sig_matrix[i, j] = p_value
+                                sig_matrix[j, i] = p_value  # Mirror value
+                                print(f"{tp1} vs {tp2} (OLS): p={p_value:.4f}")
+                    except:
+                        # Last resort: t-test
+                        group1 = subset[subset['timepoint'] == tp1]['area_diff']
+                        group2 = subset[subset['timepoint'] == tp2]['area_diff']
+                        t_stat, p_value = stats.ttest_ind(group1, group2)
+                        sig_matrix[i, j] = p_value
+                        sig_matrix[j, i] = p_value  # Mirror value
+                        print(f"{tp1} vs {tp2} (t-test): p={p_value:.4f}")
+
+        # Create matrix for visualization
+        sig_df = pd.DataFrame(sig_matrix, index=timepoints, columns=timepoints)
+
+        # Plot heatmap
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(sig_df, annot=True, fmt='.4f', cmap='coolwarm_r', 
+                    vmin=0, vmax=0.1, 
+                    cbar_kws={'label': 'p-value'})
+        plt.title('Pairwise Comparison p-values')
+        plt.tight_layout()
+        plt.savefig('significance_matrix.png', dpi=300)
+        plt.show()
+
+
+
+        # pairwise comparisons go here
+        # # Create a DataFrame for the Tukey test
+        # tukey_data = binned_df[['area_diff', 'timepoint']]
+
+        # # Perform Tukey's HSD test
+        # tukey = pairwise_tukeyhsd(endog=tukey_data['area_diff'], 
+        #                         groups=tukey_data['timepoint'], 
+        #                         alpha=0.05)
+        # print("\nTukey's HSD pairwise comparisons:")
+        # print(tukey)
+
+
+
+
     except Exception as e:
         print(f"Error fitting mixed effects model: {e}")
         print("try using OLS with patient_id as dummy variable...")
