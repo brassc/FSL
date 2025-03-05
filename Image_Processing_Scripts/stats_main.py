@@ -304,6 +304,7 @@ def create_timepoint_boxplot(df, timepoints=['ultra-fast', 'fast', 'acute', '3mo
 
 
 print('running stats_main.py')
+ 
 # Load the data (note this data does not contain all timepoints w NaN value if not exist - only contains timepoints w data per original data)
 batch1_data = pd.read_csv('Image_Processing_Scripts/area_data.csv')
 batch2_data = pd.read_csv('Image_Processing_Scripts/batch2_area_data.csv')
@@ -346,8 +347,8 @@ new_df['timepoint']=pd.Categorical(new_df['timepoint'], categories=['ultra-fast'
 
 #create_timepoint_scatter(new_df)
 #create_timepoint_violin(new_df)
-#create_timepoint_boxplot(new_df)
-# plt.savefig('area_diff_scatter.png', dpi=300)
+create_timepoint_boxplot(new_df)
+sys.exit()
 
 
 # Check for duplicates
