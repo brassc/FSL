@@ -566,7 +566,279 @@ def create_forest_plot(valid_wilcoxon_results, filename):
 
     return
 
+def visualize_mixed_effects(result, baseline='acute', timepoints=['ultra-fast', 'fast', 'acute', 'chronic']):
+    """
+    Create visualizations for mixed effects model results.
+    
+    Parameters:
+    -----------
+    result : statsmodels.regression.mixed_linear_model.MixedLMResults
+        The fitted mixed effects model results object
+    baseline : str
+        The baseline timepoint used in the model
+    timepoints : list
+        List of timepoints in the order they should appear on the plot
+        
+    Returns:
+    --------
+    None (saves plots to disk)
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import seaborn as sns
+    import pandas as pd
+    from matplotlib.patches import Patch
+    from statsmodels.stats.multitest import multipletests
+    
+    # Extract coefficients and standard errors
+    coefs = result.fe_params
+    intercept = coefs[0]
+    se = result.bse_fe
+    pvalues = result.pvalues
+    
+    # Create dataframe for plotting
+    coef_data = []
+    
+    # Add baseline first
+    coef_data.append({
+        'timepoint': baseline,
+        'value': intercept,
+        'error': se[0],
+        'pvalue': pvalues[0],
+        'significant': pvalues[0] < 0.05,
+        'isBaseline': True,
+        'ci_lower': intercept - 1.96 * se[0],
+        'ci_upper': intercept + 1.96 * se[0]
+    })
+    
+    # Add other timepoints - adjust from model output
+    for i, tp in enumerate(timepoints):
+        if tp == baseline:
+            continue
+        
+        # Find the timepoint in the coefficients
+        coef_name = f"timepoint[T.{tp}]" if tp in result.params.index else None
+        
+        if coef_name:
+            coef_value = coefs[coef_name]
+            value = intercept + coef_value  # For visualization, we want the actual estimate
+            error = se[coef_name]
+            pvalue = pvalues[coef_name]
+            
+            coef_data.append({
+                'timepoint': tp,
+                'value': value,
+                'error': error,
+                'pvalue': pvalue,
+                'significant': pvalue < 0.05,
+                'isBaseline': False,
+                'ci_lower': value - 1.96 * error,
+                'ci_upper': value + 1.96 * error
+            })
+    
+    # Create a DataFrame
+    coef_df = pd.DataFrame(coef_data)
+    
+    # Ensure timepoints are in the correct order
+    order = [tp for tp in timepoints if tp in coef_df['timepoint'].values]
+    coef_df['timepoint'] = pd.Categorical(coef_df['timepoint'], categories=order, ordered=True)
+    coef_df = coef_df.sort_values('timepoint')
+    
+    # Figure 1: Coefficient plot
+    plt.figure(figsize=(12, 6))
+    
+    # Plot baseline in a different color
+    base_idx = coef_df['timepoint'] == baseline
+    non_base_idx = ~base_idx
+    
+    # Plot points and error bars
+    palette = sns.color_palette("viridis", len(timepoints))
+    colors = [palette[i] if tp != baseline else 'purple' for i, tp in enumerate(order)]
+    
+    # Create bar plot with error bars
+    bar_positions = np.arange(len(coef_df))
+    bars = plt.bar(
+        bar_positions,
+        coef_df['value'],
+        yerr=1.96 * coef_df['error'],
+        capsize=5,
+        color=[colors[order.index(tp)] for tp in coef_df['timepoint']],
+        alpha=0.7,
+        width=0.6
+    )
+    
+    # Add a horizontal line at y=0
+    plt.axhline(y=0, color='gray', linestyle='-', alpha=0.4)
+    
+    # Add labels and title
+    plt.xlabel('Timepoint', fontsize=12)
+    plt.ylabel('Estimated area_diff', fontsize=12)
+    plt.title('Mixed Effects Model - Estimated area_diff by Timepoint', fontsize=14, fontweight='bold')
+    
+    # Set x-tick labels
+    plt.xticks(bar_positions, coef_df['timepoint'])
+    
+    # Add significance markers
+    for i, row in coef_df.iterrows():
+        pos = bar_positions[i]
+        val = row['value']
+        direction = 1 if val >= 0 else -1
+        sig_str = ''
+        if row['pvalue'] < 0.001:
+            sig_str = '***'
+        elif row['pvalue'] < 0.01:
+            sig_str = '**'
+        elif row['pvalue'] < 0.05:
+            sig_str = '*'
+            
+        if sig_str:
+            plt.text(pos, val + direction * 1.96 * row['error'] + direction * 50, 
+                     sig_str, ha='center', fontsize=12)
+    
+    # Add legend
+    legend_elements = [
+        Patch(facecolor='purple', edgecolor='black', alpha=0.7, label=f'Baseline ({baseline})'),
+        Patch(facecolor=palette[0], edgecolor='black', alpha=0.7, label='Other timepoints')
+    ]
+    plt.legend(handles=legend_elements, loc='best')
+    
+    # Add count of patients per timepoint (if provided)
+    # This would require passing the original data - left as a placeholder
+    
+    plt.grid(True, axis='y', linestyle='-', alpha=0.3)
+    plt.tight_layout()
+    plt.savefig('Image_Processing_Scripts/mixed_effects_estimates.png', dpi=300)
+    
+    # Figure 2: Significance matrix
+    plt.figure(figsize=(8, 6))
+    
+    # Create a matrix for pairwise p-values
+    # For now, we can only see comparisons to baseline
+    n_timepoints = len(order)
+    p_matrix = np.ones((n_timepoints, n_timepoints))
+    
+    # Fill in p-values we have (comparisons to baseline)
+    baseline_idx = order.index(baseline)
+    for i, tp in enumerate(order):
+        if tp != baseline:
+            row = coef_df[coef_df['timepoint'] == tp].iloc[0]
+            p_matrix[i, baseline_idx] = row['pvalue']
+            p_matrix[baseline_idx, i] = row['pvalue']  # Mirror the matrix
+    
+    # Apply significance thresholds
+    # Create a copy to represent significance levels
+    sig_matrix = np.zeros((n_timepoints, n_timepoints))
+    sig_matrix[p_matrix < 0.05] = 1
+    sig_matrix[p_matrix < 0.01] = 2
+    sig_matrix[p_matrix < 0.001] = 3
+    
+    # Set diagonal to -1 (not applicable)
+    np.fill_diagonal(sig_matrix, -1)
+    
+    # Create a mask for the upper triangle to avoid redundancy
+    mask = np.triu(np.ones_like(sig_matrix, dtype=bool))
+    
+    # Create custom colormap for significance levels
+    cmap = plt.cm.get_cmap('YlOrRd', 4)
+    
+    # Plot the heatmap
+    ax = sns.heatmap(
+        sig_matrix,
+        annot=True,
+        cmap=cmap,
+        mask=mask,
+        fmt='.0f',
+        linewidths=1,
+        xticklabels=order,
+        yticklabels=order,
+        vmin=-1,
+        vmax=3,
+        cbar=False
+    )
+    
+    # Replace numerical annotations with stars
+    for i in range(n_timepoints):
+        for j in range(n_timepoints):
+            if i != j and not mask[i, j]:  # Only lower triangle
+                text = ax.texts[i * n_timepoints + j - sum(range(i+1))]
+                value = sig_matrix[i, j]
+                if value == 0:
+                    text.set_text('ns')
+                elif value == 1:
+                    text.set_text('*')
+                elif value == 2:
+                    text.set_text('**')
+                elif value == 3:
+                    text.set_text('***')
+                else:
+                    text.set_text('')
+    
+    # Add a legend for significance levels
+    plt.annotate('ns: p≥0.05, *: p<0.05, **: p<0.01, ***: p<0.001', 
+                 xy=(0.5, -0.05), 
+                 xycoords='axes fraction', 
+                 ha='center', 
+                 fontsize=10)
+    
+    plt.title('Pairwise Significance Matrix', fontsize=14, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig('Image_Processing_Scripts/mixed_effects_significance.png', dpi=300)
+    
+    # Figure 3: Table of results
+    plt.figure(figsize=(12, len(coef_df)+2))
+    plt.axis('off')
+    
+    # Prepare table data
+    table_data = []
+    headers = ['Timepoint', 'Estimate', 'Std Error', 'p-value', 'Significant']
+    
+    for _, row in coef_df.iterrows():
+        sig_mark = ''
+        if row['pvalue'] < 0.001:
+            sig_mark = '***'
+        elif row['pvalue'] < 0.01:
+            sig_mark = '**'
+        elif row['pvalue'] < 0.05:
+            sig_mark = '*'
+        else:
+            sig_mark = 'ns'
+            
+        table_data.append([
+            row['timepoint'] + (' (baseline)' if row['isBaseline'] else ''),
+            f"{row['value']:.2f}",
+            f"{row['error']:.2f}",
+            f"{row['pvalue']:.4f}",
+            sig_mark
+        ])
+    
+    # Create the table
+    table = plt.table(
+        cellText=table_data,
+        colLabels=headers,
+        loc='center',
+        cellLoc='center',
+        colColours=['#f2f2f2'] * len(headers)
+    )
+    
+    # Style the table
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1, 1.5)
+    
+    # Add title
+    plt.title('Mixed Effects Model Results', fontsize=14, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig('Image_Processing_Scripts/mixed_effects_table.png', dpi=300)
+    
+    print(f"Visualizations saved as:\n- mixed_effects_estimates.png\n- mixed_effects_significance.png\n- mixed_effects_table.png")
+    
+    return
 
+
+##### MAIN STARTS HERE
+#####
+#####
+#####
 if __name__ == '__main__':
     print('running stats_main.py')
     
@@ -608,7 +880,8 @@ if __name__ == '__main__':
     # Ensure categorical values are categorical
     print('ensuring categorical values are categorical')
     new_df['timepoint']=pd.Categorical(new_df['timepoint'], categories=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
-    #print(new_df.head())
+    #print(new_df.head(10))
+    #sys.exit()
 
     #create_timepoint_scatter(new_df)
     #create_timepoint_violin(new_df)
@@ -627,7 +900,9 @@ if __name__ == '__main__':
     pivoted_data = new_df.pivot(index='patient_id', columns='timepoint', values='area_diff')
     pivoted_data = pivoted_data.rename_axis(None, axis=1)
 
-    #print(pivoted_data.head())
+    
+    #print(pivoted_data.head(10))
+    
 
 
     """
@@ -655,6 +930,8 @@ if __name__ == '__main__':
     # pivoted_data['12-24mo'] = pivoted_data[['12mo', '24mo']].mean(axis=1, skipna=True)
     # pivoted_data = pivoted_data.drop(columns=['12mo', '24mo'])
 
+    ## Paired testing
+    """
     # DO FOR WHOLE DATASET FIRST
     # List of all timepoints
     timepoints = pivoted_data.columns.tolist()
@@ -776,9 +1053,9 @@ if __name__ == '__main__':
         print("No pairs have sufficient data for Wilcoxon signed-rank test.")
         results_all_pairs_wilcoxon = {}
 
-
+    """
         
-
+    ### Deformed patients only
     """
     # TEST FOR DEFORMED PATIENTS ONLY
 
@@ -906,6 +1183,83 @@ if __name__ == '__main__':
             print("\nNo changes in significance were found after excluding non-deformed patients.")
     """
 
+    ## Mixed effects model
+    df = new_df.copy()
+    df['patient_id'] = df['patient_id'].astype(str)
+
+    # Create new timepoint category
+    def categorize_timepoint(timepoint):
+        if timepoint in ['3mo', '6mo', '12mo', '24mo']:
+            return 'chronic'
+        else:
+            return timepoint
+        
+    df['timepoint_category'] = df['timepoint'].apply(categorize_timepoint)
+    # if patient has multiple timepoints, take the mean
+    chronic_data=df[df['timepoint_category']=='chronic']
+    
+
+    # group by patient_id and take the mean of the area_diff
+    chronic_means=chronic_data.groupby('patient_id')['area_diff'].mean().reset_index()
+    chronic_means['timepoint'] = 'chronic'
+
+    # remove original chronic timepoints and add back the means
+    non_chronic_data=df[df['timepoint_category']!='chronic']
+    combined_data=pd.concat([non_chronic_data, chronic_means], ignore_index=True)
+
+    # sort by patient_id then timepoint
+    order=['ultra-fast', 'fast', 'acute', 'chronic']
+    combined_data['timepoint_order'] = combined_data['timepoint'].apply(lambda x: order.index(x))
+    
+    combined_data = combined_data.sort_values(by=['patient_id', 'timepoint_order'])
+    combined_data = combined_data.drop(['timepoint_category', 'timepoint_order'], axis=1) # remove sorting column
+    
+    
+    binned_df = combined_data.copy()
+
+    # Optional: Check how many patients have data for each category
+    patient_categories = binned_df.groupby('patient_id')['timepoint'].apply(list)
+    print("\nCategories per patient:")
+    print(patient_categories.head(10))
+
+    # Convert timepoint_category to a categorical variable with ultra-fast as the reference
+    binned_df['timepoint'] = pd.Categorical(
+    binned_df['timepoint'], 
+    categories=['acute', 'ultra-fast', 'fast', 'chronic'], # acute as first category - use this as baseline
+    ordered=True
+    )
+
+    # Fit the model: area_diff as outcome, timepoint_category as fixed effect, 
+    # patient_id as random effect
+
+    try:
+        # Mixed effects model
+        model = smf.mixedlm("area_diff ~ timepoint", binned_df, groups=binned_df['patient_id'])
+        result = model.fit()
+        print("mixed effect model summary:")
+        print(result.summary())
+
+        # Extract and display the key results
+        print("\nFixed Effects Parameters:")
+        print(result.fe_params)
+        
+        print("\nRandom Effects Parameters:")
+        print(result.cov_re)
+
+        # pairwise comparisons go here
+    except Exception as e:
+        print(f"Error fitting mixed effects model: {e}")
+        print("try using OLS with patient_id as dummy variable...")
+        formula = "area_diff ~ C(timepoint) + C(patient_id)"
+        ols_model = smf.ols(formula, binned_df).fit()
+        print(ols_model.summary())
+    
+    
+
+
+
+
+    
 
 
 
@@ -924,8 +1278,9 @@ if __name__ == '__main__':
     #significance_matrix_wilcoxon(valid_wilcoxon_results, timepoints, 'significance_matrix_wilcoxon.png')
     #create_forest_plot(valid_wilcoxon_results, 'mean_differences_summary.png')
 
+    # Mixed effect model visualisations:
 
-
+    visualize_mixed_effects(result, baseline='acute', timepoints=['ultra-fast', 'fast', 'acute', 'chronic'])
 
 
 
