@@ -1374,8 +1374,6 @@ if __name__ == '__main__':
         sig_df = pd.DataFrame(ordered_sig_matrix, index=ordered_timepoints, columns=ordered_timepoints)
         # Set diagonal to NaN for better visualization
         sig_df = sig_df.iloc[::-1, :]
-        print(sig_df)
-        
         
         # Mask the anti-diagonal (bottom-left to upper-right)
         n = len(sig_df)
@@ -1385,14 +1383,40 @@ if __name__ == '__main__':
         # Create explicit mask for NaN values
         mask = np.isnan(sig_df.values)
         print(sig_df)
-        
 
+        def add_significance_markers(p_df):
+            """Add significance markers to a DataFrame of p-values"""
+            # Make a copy to avoid modifying the original
+            formatted_df = p_df.copy()
+            
+            # Add markers based on significance levels
+            for i in range(len(p_df)):
+                for j in range(len(p_df.columns)):
+                    if pd.isna(p_df.iloc[i, j]):
+                        continue
+                        
+                    p_value = p_df.iloc[i, j]
+                    
+                    if p_value < 0.001:
+                        formatted_df.iloc[i, j] = f"{p_value:.4f} ***"
+                    elif p_value < 0.01:
+                        formatted_df.iloc[i, j] = f"{p_value:.4f} **"
+                    elif p_value < 0.05:
+                        formatted_df.iloc[i, j] = f"{p_value:.4f} *"
+                    elif p_value < 0.1:
+                        formatted_df.iloc[i, j] = f"{p_value:.4f} †"
+                    else:
+                        formatted_df.iloc[i, j] = f"{p_value:.4f}"
+            
+            return formatted_df
+        
+        annot_df = add_significance_markers(sig_df)
         # # Set diagonal to NaN for better visualization
         # for i in range(len(ordered_timepoints)):
         #     sig_df.iloc[i, i] = np.nan
 
         # Plot heatmap
-        plt.figure(figsize=(10, 8))
+        plt.figure(figsize=(10, 10))
         #mask = np.isnan(sig_df)  # Use NaN mask instead of zeros
         cmap = sns.diverging_palette(240, 10, as_cmap=True)
 
@@ -1400,6 +1424,7 @@ if __name__ == '__main__':
         heatmap = sns.heatmap(
             sig_df,
             annot=True,  # Show numbers in cells
+            #annot=annot_df,  # Use custom annotations
             cmap=cmap,  # Color map
             mask=mask,  # Mask diagonal values
             vmin=0, vmax=0.5,  # Set color scale range
@@ -1409,10 +1434,65 @@ if __name__ == '__main__':
             linecolor='none',  # Ensure no line color
             yticklabels=ordered_timepoints[::-1]  # Reverse y-axis labels
         )
+
+        for i in range(4):  # rows
+            for j in range(4):  # columns
+                if not pd.isna(sig_df.iloc[i, j]):
+                    if sig_df.iloc[i, j] < 0.001:
+                        plt.text(
+                            j + 0.625,  # x-coordinate (center of column)
+                            i + 0.45,  # y-coordinate (center of row)
+                            "***",    # annotation text
+                            ha='left',  # horizontal alignment
+                            va='center',  # vertical alignment
+                            #color='red',
+                            fontsize=10
+                        )
+                    elif sig_df.iloc[i, j] < 0.01:
+                        plt.text(
+                            j + 0.625,  # x-coordinate (center of column)
+                            i + 0.45,  # y-coordinate (center of row)
+                            "**",    # annotation text
+                            ha='left',  # horizontal alignment
+                            va='center',  # vertical alignment
+                            #color='red',
+                            fontsize=10
+                        )
+                    elif sig_df.iloc[i, j] < 0.05:
+                        plt.text(
+                            j + 0.625,  # x-coordinate (center of column)
+                            i + 0.45,  # y-coordinate (center of row)
+                            "*",    # annotation text
+                            ha='left',  # horizontal alignment
+                            va='center',  # vertical alignment
+                            #color='red',
+                            fontsize=10
+                        )
+                    elif sig_df.iloc[i, j] < 0.1:
+                        plt.text(
+                            j + 0.625,  # x-coordinate (center of column)
+                            i + 0.45,  # y-coordinate (center of row)
+                            "†",    # annotation text
+                            ha='left',  # horizontal alignment
+                            va='center',  # vertical alignment
+                            #color='red',
+                            fontsize=10
+                        )
+                    
+        
+        
         plt.title('Pairwise Comparison p-values from Mixed Effects Model')
         plt.grid(False)
         plt.tight_layout()
-        plt.savefig('Image_Processing_Scripts/significance_matrix_mixed_effects.png', dpi=300)
+
+        # Add better spacing to make room for the legend text
+        plt.subplots_adjust(bottom=0.075)  # Increased bottom margin
+
+        # Add legend for significance levels
+        plt.figtext(0.25, 0.01, "Significance levels: *** p<0.001, ** p<0.01, * p<0.05, † p<0.1",
+                ha='left', fontsize=12, style='italic')
+        
+        plt.savefig('Image_Processing_Scripts/significance_matrix_mixed_effects.png', dpi=300, bbox_inches='tight')
         plt.close()
 
 
