@@ -235,173 +235,173 @@ def map_timepoint_to_string(numeric_timepoint):
     return timepoints[closest_idx]
 
 
+if __name__ == '__main__':
+    # Main
 
-# Main
-
-# Load the ellipse data
-data=pd.read_csv('Image_Processing_Scripts/ellipse_data.csv')
-data['patient_id'] = data['patient_id'].astype(str)
-print(data.columns)
-area_data=pd.read_csv('Image_Processing_Scripts/area_data.csv')
-area_data['patient_id'] = area_data['patient_id'].astype(str)
-batch2_area_data=pd.read_csv('Image_Processing_Scripts/batch2_area_data.csv')
-batch2_area_data['patient_id'] = batch2_area_data['patient_id'].astype(str)
-print(area_data.columns)
-
-
-# array of timepoints
-timepoints = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
-timepoint_values = [50, 336, 504, 2160, 4320, 8640, 17280]
-
-# Convert numeric timepoints to strings
-batch2_area_data['timepoint'] = batch2_area_data['timepoint'].apply(map_timepoint_to_string)
-
-# Combine both data frames
-combined_area_data=pd.concat([area_data,batch2_area_data],ignore_index=True)
-area_data=combined_area_data
-
-#reorder data to be all numbers together with timepoints in order
-# Create an order for timepoint
-area_data['timepoint_order'] = area_data['timepoint'].apply(lambda x: timepoints.index(x) if x in timepoints else 999)
-# Sort the dataframe by patient_id, then by the position of timepoint in our list
-area_data = area_data.sort_values(by=['patient_id', 'timepoint_order'])
-area_data = area_data.drop('timepoint_order', axis=1) # remove sorting column
-# save to csv for plotting
-area_data[['patient_id', 'timepoint']].to_csv('patient_timepoint_matrix.csv', index=False)
+    # Load the ellipse data
+    data=pd.read_csv('Image_Processing_Scripts/ellipse_data.csv')
+    data['patient_id'] = data['patient_id'].astype(str)
+    print(data.columns)
+    area_data=pd.read_csv('Image_Processing_Scripts/area_data.csv')
+    area_data['patient_id'] = area_data['patient_id'].astype(str)
+    batch2_area_data=pd.read_csv('Image_Processing_Scripts/batch2_area_data.csv')
+    batch2_area_data['patient_id'] = batch2_area_data['patient_id'].astype(str)
+    print(area_data.columns)
 
 
+    # array of timepoints
+    timepoints = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
+    timepoint_values = [50, 336, 504, 2160, 4320, 8640, 17280]
 
-# get possible patient IDs
-patient_ids = area_data['patient_id'].unique()
-print(patient_ids)
-n = len(patient_ids) # number of colours for plotting
+    # Convert numeric timepoints to strings
+    batch2_area_data['timepoint'] = batch2_area_data['timepoint'].apply(map_timepoint_to_string)
+
+    # Combine both data frames
+    combined_area_data=pd.concat([area_data,batch2_area_data],ignore_index=True)
+    area_data=combined_area_data
+
+    #reorder data to be all numbers together with timepoints in order
+    # Create an order for timepoint
+    area_data['timepoint_order'] = area_data['timepoint'].apply(lambda x: timepoints.index(x) if x in timepoints else 999)
+    # Sort the dataframe by patient_id, then by the position of timepoint in our list
+    area_data = area_data.sort_values(by=['patient_id', 'timepoint_order'])
+    area_data = area_data.drop('timepoint_order', axis=1) # remove sorting column
+    # save to csv for plotting
+    area_data[['patient_id', 'timepoint']].to_csv('patient_timepoint_matrix.csv', index=False)
 
 
+
+    # get possible patient IDs
+    patient_ids = area_data['patient_id'].unique()
+    print(patient_ids)
+    n = len(patient_ids) # number of colours for plotting
 
 
 
 
-# Create global color map for plots
-color_map={}
-
-# h param plots
-h_param_def_dict = get_dictionary(data, patient_ids, timepoints, subset_name='h_param_def')
-h_param_ref_dict = get_dictionary(data, patient_ids, timepoints, subset_name='h_param_ref')
-
-def_df = convert_dict_to_long_df(h_param_def_dict, timepoints, value_name='h_param_def')
-ref_df = convert_dict_to_long_df(h_param_ref_dict, timepoints, value_name='h_param_ref')
-
-plot_longitudinal_data(def_df, name='h_param_def')
-plot_longitudinal_data(ref_df, name='h_param_ref')
-
-# a param plots (note a_param_ref should be the same as a_param_def)
-a_param_def_dict = get_dictionary(data, patient_ids, timepoints, subset_name='a_param_def')
-#a_param_ref_dict = get_dictionary(data, patient_ids, timepoints, subset_name='a_param_ref')
-
-defa_df = convert_dict_to_long_df(a_param_def_dict, timepoints, value_name='a_param_def')
-#refa_df = convert_dict_to_long_df(a_param_ref_dict, timepoints, value_name='a_param_ref')
-
-plot_longitudinal_data(defa_df, name='a_param_def')
-#plot_longitudinal_data(refa_df, name='a_param_ref')
-
-# Area plots [area calculated prior to rotation from orienting ellipse_data.csv '<>_<>ef_tr' columns in area_main.py]
-area_diff_dict = get_dictionary(area_data, patient_ids, timepoints, subset_name='area_diff')
-area_diff_df = convert_dict_to_long_df(area_diff_dict, timepoints, value_name='area_diff')
-plot_longitudinal_data(area_diff_df, name='area_diff')
-
-# Line plots superimposed
-
-print(area_diff_df)
-# convert timepoints to a numerical array 0 to len(timepoints)
-timepoints_num = np.arange(len(timepoints))
 
 
+    # Create global color map for plots
+    color_map={}
 
-set_publication_style()
-# Set figure size before plotting
-plt.figure(figsize=(12, 8))
-# Set default color before plotting
-default_color = 'gray'
+    # h param plots
+    h_param_def_dict = get_dictionary(data, patient_ids, timepoints, subset_name='h_param_def')
+    h_param_ref_dict = get_dictionary(data, patient_ids, timepoints, subset_name='h_param_ref')
 
-# recall patient_ids = data['patient_id'].unique() have already been collected
-# Add patient id x all timepoints to plot as scatter, create cubic spline between for each patient with more than 2 timepoints
-for patient_id in patient_ids:
-    patient_subset = area_diff_df[area_diff_df['patient_id'] == patient_id]
-    print(patient_subset['area_diff'])
-    # convert patient_subset['area_diff'] to a numpy array for plotting
-    area_diff_subset = np.array(patient_subset['area_diff'])
-    valid_indices = ~np.isnan(area_diff_subset)
+    def_df = convert_dict_to_long_df(h_param_def_dict, timepoints, value_name='h_param_def')
+    ref_df = convert_dict_to_long_df(h_param_ref_dict, timepoints, value_name='h_param_ref')
 
-    # skip patients with no valid measurements
-    if not np.any(valid_indices):
-        print(f'Patient {patient_id} has no valid area_diff measurements')
-        continue
+    plot_longitudinal_data(def_df, name='h_param_def')
+    plot_longitudinal_data(ref_df, name='h_param_ref')
 
-    # Find the earliest valid measurements
-    earliest_valid_index=np.where(valid_indices)[0][0]
-    first_area=area_diff_subset[earliest_valid_index]
+    # a param plots (note a_param_ref should be the same as a_param_def)
+    a_param_def_dict = get_dictionary(data, patient_ids, timepoints, subset_name='a_param_def')
+    #a_param_ref_dict = get_dictionary(data, patient_ids, timepoints, subset_name='a_param_ref')
 
-    # normalise data to start at 0
-    area_diff_subset = area_diff_subset - first_area
-    area_diff_subset_valid = area_diff_subset[valid_indices]
-    timepoints_num_valid = timepoints_num[valid_indices]
+    defa_df = convert_dict_to_long_df(a_param_def_dict, timepoints, value_name='a_param_def')
+    #refa_df = convert_dict_to_long_df(a_param_ref_dict, timepoints, value_name='a_param_ref')
 
-    """
-    if not np.isnan(area_diff_subset[0]):
-        first_area = area_diff_subset[0]
+    plot_longitudinal_data(defa_df, name='a_param_def')
+    #plot_longitudinal_data(refa_df, name='a_param_ref')
+
+    # Area plots [area calculated prior to rotation from orienting ellipse_data.csv '<>_<>ef_tr' columns in area_main.py]
+    area_diff_dict = get_dictionary(area_data, patient_ids, timepoints, subset_name='area_diff')
+    area_diff_df = convert_dict_to_long_df(area_diff_dict, timepoints, value_name='area_diff')
+    plot_longitudinal_data(area_diff_df, name='area_diff')
+
+    # Line plots superimposed
+
+    print(area_diff_df)
+    # convert timepoints to a numerical array 0 to len(timepoints)
+    timepoints_num = np.arange(len(timepoints))
+
+
+
+    set_publication_style()
+    # Set figure size before plotting
+    plt.figure(figsize=(12, 8))
+    # Set default color before plotting
+    default_color = 'gray'
+
+    # recall patient_ids = data['patient_id'].unique() have already been collected
+    # Add patient id x all timepoints to plot as scatter, create cubic spline between for each patient with more than 2 timepoints
+    for patient_id in patient_ids:
+        patient_subset = area_diff_df[area_diff_df['patient_id'] == patient_id]
+        print(patient_subset['area_diff'])
+        # convert patient_subset['area_diff'] to a numpy array for plotting
+        area_diff_subset = np.array(patient_subset['area_diff'])
+        valid_indices = ~np.isnan(area_diff_subset)
+
+        # skip patients with no valid measurements
+        if not np.any(valid_indices):
+            print(f'Patient {patient_id} has no valid area_diff measurements')
+            continue
+
+        # Find the earliest valid measurements
+        earliest_valid_index=np.where(valid_indices)[0][0]
+        first_area=area_diff_subset[earliest_valid_index]
+
+        # normalise data to start at 0
         area_diff_subset = area_diff_subset - first_area
-    elif np.isnan(area_diff_subset[0]):
-        if not np.isnan(area_diff_subset[1]):
-            first_area = area_diff_subset[1]
+        area_diff_subset_valid = area_diff_subset[valid_indices]
+        timepoints_num_valid = timepoints_num[valid_indices]
+
+        """
+        if not np.isnan(area_diff_subset[0]):
+            first_area = area_diff_subset[0]
             area_diff_subset = area_diff_subset - first_area
-    else:
-        print('First two area_diff values are NaN')
-        continue
-    area_diff_subset_valid = area_diff_subset[valid_indices]
-    timepoints_num_valid = timepoints_num[valid_indices]
-    """
+        elif np.isnan(area_diff_subset[0]):
+            if not np.isnan(area_diff_subset[1]):
+                first_area = area_diff_subset[1]
+                area_diff_subset = area_diff_subset - first_area
+        else:
+            print('First two area_diff values are NaN')
+            continue
+        area_diff_subset_valid = area_diff_subset[valid_indices]
+        timepoints_num_valid = timepoints_num[valid_indices]
+        """
 
-    # Create a smooth line using spline interpolation
-    # 1. interpolate
-    interpolator = interp1d(timepoints_num_valid, area_diff_subset_valid, kind='linear')
-    x_fine = np.linspace(timepoints_num_valid.min(), timepoints_num_valid.max(), 100)
-    y_fine = interpolator(x_fine)
-    print(f"interpolator: {interpolator}")
-    #plt.scatter(x_fine, y_fine, label=patient_id, color='gray')
-    # 2. Create cubic spline
-    cs=CubicSpline(timepoints_num_valid, area_diff_subset_valid, bc_type='natural')
-    #cs=CubicSpline(x_fine, y_fine, bc_type='natural')
-    x_smooth = x_fine
-    y_smooth = cs(x_smooth)
-    print(f"cs: {cs}")
-    """
-    # 2. create univariate spline
-    spline = UnivariateSpline(x_fine, y_fine)
-    x_smooth = np.linspace(timepoints_num_valid.min(), timepoints_num_valid.max(), 100)
-    y_smooth = spline(x_smooth)
-    """
+        # Create a smooth line using spline interpolation
+        # 1. interpolate
+        interpolator = interp1d(timepoints_num_valid, area_diff_subset_valid, kind='linear')
+        x_fine = np.linspace(timepoints_num_valid.min(), timepoints_num_valid.max(), 100)
+        y_fine = interpolator(x_fine)
+        print(f"interpolator: {interpolator}")
+        #plt.scatter(x_fine, y_fine, label=patient_id, color='gray')
+        # 2. Create cubic spline
+        cs=CubicSpline(timepoints_num_valid, area_diff_subset_valid, bc_type='natural')
+        #cs=CubicSpline(x_fine, y_fine, bc_type='natural')
+        x_smooth = x_fine
+        y_smooth = cs(x_smooth)
+        print(f"cs: {cs}")
+        """
+        # 2. create univariate spline
+        spline = UnivariateSpline(x_fine, y_fine)
+        x_smooth = np.linspace(timepoints_num_valid.min(), timepoints_num_valid.max(), 100)
+        y_smooth = spline(x_smooth)
+        """
 
-    color = color_map.get(patient_id, default_color)
-    print(f"Color for patient {patient_id}: {color}")
-    #if patient_id == 20174:
-    plt.plot(x_smooth, y_smooth, label=patient_id, color=color)
-    plt.scatter(timepoints_num_valid, area_diff_subset_valid, color=color, s=20, alpha=0.5)
+        color = color_map.get(patient_id, default_color)
+        print(f"Color for patient {patient_id}: {color}")
+        #if patient_id == 20174:
+        plt.plot(x_smooth, y_smooth, label=patient_id, color=color)
+        plt.scatter(timepoints_num_valid, area_diff_subset_valid, color=color, s=20, alpha=0.5)
 
-#plt.figure(figsize=(12, 8))
-#print(f"color_map: {color_map}")
-plt.xlim([0, len(timepoints)-1])
-#plt.legend(title='Patient ID')
-plt.xlabel('Time')
+    #plt.figure(figsize=(12, 8))
+    #print(f"color_map: {color_map}")
+    plt.xlim([0, len(timepoints)-1])
+    #plt.legend(title='Patient ID')
+    plt.xlabel('Time')
 
-# instead of 0-6, use timepoints
-plt.xticks(timepoints_num, timepoints)
-plt.ylabel('Area Change [mm$^2$]')
-plt.title('Area Change Over Time')
-#position legend outside of plot
-plt.tight_layout()
-plt.legend(title='Patient ID', bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
-plt.savefig('Image_Processing_Scripts/plots/area_change_longitudinal.png', bbox_inches='tight')
-plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/area_change_longitudinal.pdf', bbox_inches='tight', dpi=300)
-plt.close()
-#plt.show()
+    # instead of 0-6, use timepoints
+    plt.xticks(timepoints_num, timepoints)
+    plt.ylabel('Area Change [mm$^2$]')
+    plt.title('Area Change Over Time')
+    #position legend outside of plot
+    plt.tight_layout()
+    plt.legend(title='Patient ID', bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+    plt.savefig('Image_Processing_Scripts/plots/area_change_longitudinal.png', bbox_inches='tight')
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/area_change_longitudinal.pdf', bbox_inches='tight', dpi=300)
+    plt.close()
+    #plt.show()
 
