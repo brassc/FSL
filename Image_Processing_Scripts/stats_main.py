@@ -567,511 +567,6 @@ def create_forest_plot(valid_wilcoxon_results, filename):
 
     return
 
-def mixed_effect_boxplot_old(df, result, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], 
-                   chronic_timepoints=['3mo', '6mo', '12mo', '24mo']):
-    """
-    Create a box plot of area_diff for each timepoint with overlaid mixed effect model predictions.
-    
-    Parameters:
-    -----------
-    df : pandas DataFrame
-        DataFrame containing patient_id, timepoint, and area_diff columns
-    result : statsmodels MixedLMResults
-        The fitted mixed effects model result object
-    timepoints : list
-        List of timepoints to include in the plot, in desired order
-    chronic_timepoints : list
-        List of timepoints to be categorized as 'chronic'
-    """
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import seaborn as sns
-    import pandas as pd
-    import matplotlib.cm as cm
-    
-    # Create a copy of the dataframe
-    new_df = df.copy()
-    new_df['patient_id'] = new_df['patient_id'].astype(str)
-    
-    # Create a new combined dataframe for plotting with 'chronic' timepoint
-    # Create new timepoint category
-    def categorize_timepoint(timepoint):
-        if timepoint in chronic_timepoints:
-            return 'chronic'
-        else:
-            return timepoint
-    
-    new_df['timepoint_category'] = new_df['timepoint'].apply(categorize_timepoint)
-    
-    # Get chronic data and calculate means per patient
-    chronic_data = new_df[new_df['timepoint_category'] == 'chronic']
-    chronic_means = chronic_data.groupby('patient_id')['area_diff'].mean().reset_index()
-    chronic_means['timepoint'] = 'chronic'
-    
-    # Remove original chronic timepoints and add back the means
-    non_chronic_data = new_df[new_df['timepoint_category'] != 'chronic']
-    
-    # Create a modified timepoints list for plotting
-    # First, find all chronic timepoints in the original list
-    chronic_indices = [i for i, tp in enumerate(timepoints) if tp in chronic_timepoints]
-    
-    # Skip if no chronic timepoints
-    if not chronic_indices:
-        df_filtered = new_df.copy()
-        plot_timepoints = timepoints
-    else:
-        # Insert 'chronic' at the position of the first chronic timepoint
-        plot_timepoints = timepoints.copy()
-        first_chronic_index = min(chronic_indices)
-        
-        # Create a modified list with chronic
-        plot_timepoints = [tp for tp in timepoints if tp not in chronic_timepoints]
-        plot_timepoints.insert(first_chronic_index, 'chronic')
-        
-        # Create the combined dataframe for plotting
-        combined_data = pd.concat([non_chronic_data, chronic_means], ignore_index=True)
-        df_filtered = combined_data.copy()
-        
-    # Create figure and axis
-    fig, ax = plt.subplots(figsize=(12, 6))
-    
-    # Set color palette - adjust for the modified timepoints
-    palette = sns.color_palette("plasma", len(plot_timepoints))
-    
-    # Ensure timepoints are in the correct order
-    if 'chronic' in plot_timepoints:
-        df_filtered['timepoint'] = pd.Categorical(df_filtered['timepoint'],
-                                               categories=plot_timepoints,
-                                               ordered=True)
-    else:
-        df_filtered['timepoint'] = pd.Categorical(df_filtered['timepoint'],
-                                               categories=timepoints,
-                                               ordered=True)
-    
-    # Add horizontal line at y=0
-    ax.axhline(y=0, color='gray', linestyle='-', alpha=0.3)
-    
-    # Create a copy of the data for non-small sample sizes
-    df_regular = df_filtered.copy()
-    df_small = df_filtered.copy()
-    
-    # Create lists to track which timepoints have small sample sizes
-    small_sample_tps = []
-    regular_sample_tps = []
-    
-    for tp in plot_timepoints:
-        tp_data = df_filtered[df_filtered['timepoint'] == tp]
-        if len(tp_data) < 5:
-            small_sample_tps.append(tp)
-        else:
-            regular_sample_tps.append(tp)
-    
-    # Create a mask for each dataset
-    if small_sample_tps:
-        df_small = df_small[df_small['timepoint'].isin(small_sample_tps)]
-    else:
-        df_small = df_small[df_small['timepoint'] == 'none_placeholder']
-    
-    if regular_sample_tps:
-        df_regular = df_regular[df_regular['timepoint'].isin(regular_sample_tps)]
-    else:
-        df_regular = df_regular[df_regular['timepoint'] == 'none_placeholder']
-    
-    # Plot regular boxplots for n >= 5
-    if not df_regular.empty:
-        sns.boxplot(x='timepoint', y='area_diff', data=df_regular,
-                   palette=palette, width=0.5, ax=ax, saturation=0.7,
-                   showfliers=False)
-        
-        # Reduce opacity of box elements after creation
-        for patch in ax.patches:
-            patch.set_alpha(0.5)
-    
-    # For small sample sizes (n < 5), plot just the median as a line
-    for tp in small_sample_tps:
-        tp_data = df_filtered[df_filtered['timepoint'] == tp]
-        tp_index = plot_timepoints.index(tp)
-        median_value = tp_data['area_diff'].median()
-        
-        # Plot median as a horizontal line
-        ax.hlines(median_value, tp_index - 0.25, tp_index + 0.25,
-                 color='black', linewidth=1.0, linestyle='-',
-                 alpha=0.9, zorder=5)
-    
-    # Add scatter points for all timepoints
-    sns.stripplot(x='timepoint', y='area_diff', data=df_filtered,
-                 palette=palette, jitter=True, size=6, alpha=0.8, ax=ax)
-    
-    # Extract coefficients from the statsmodels results object
-    fe_params = result.fe_params
-    intercept = fe_params['Intercept']
-    
-    # Determine the reference category and extract coefficients
-    reference_category = None
-    predictions = {}
-    coefficient_categories = []
-    
-    # Extract all categories from the parameter names
-    for param in fe_params.index:
-        if param != 'Intercept' and '[T.' in param:
-            category = param.split('[T.')[-1].rstrip(']')
-            coefficient_categories.append(category)
-    
-    # Determine reference category (not present in coefficients)
-    all_categories = ['acute', 'ultra-fast', 'fast', 'chronic']
-    for category in all_categories:
-        if category not in coefficient_categories:
-            reference_category = category
-            break
-    
-    if reference_category is None:
-        reference_category = 'acute'  # Default if we can't determine
-    
-    # Create predictions dictionary
-    predictions = {reference_category: intercept}  # Reference category = intercept only
-    
-    # Add predictions for other categories
-    for param, value in fe_params.items():
-        if param != 'Intercept' and '[T.' in param:
-            category = param.split('[T.')[-1].rstrip(']')
-            predictions[category] = intercept + value
-    
-    # Plot the mixed effect model predictions
-    model_order = ['acute', 'ultra-fast', 'fast', 'chronic']
-    model_palette = sns.color_palette("plasma", len(model_order))
-    model_colors = {model_order[i]: model_palette[i] for i in range(len(model_order))}
-    
-    # Draw the predicted values for each category in the plot
-    for i, tp in enumerate(plot_timepoints):
-        if tp in predictions:
-            pred_value = predictions[tp]
-            ax.scatter(i, pred_value, color=model_colors.get(tp, 'black'), 
-                      marker='*', s=200, zorder=10, 
-                      edgecolor='black', linewidth=1.5)
-    
-    # Add a legend for the mixed effect model predictions
-    from matplotlib.lines import Line2D
-    legend_elements = []
-    for category in model_order:
-        if category in predictions:
-            legend_elements.append(
-                Line2D([0], [0], marker='*', color='w', 
-                       markerfacecolor=model_colors.get(category, 'black'), 
-                       markersize=15, label=f'{category.capitalize()}')
-            )
-    
-    if legend_elements:
-        ax.legend(handles=legend_elements, title='Mixed Effect Model', 
-                 loc='upper right', framealpha=0.7)
-    
-    # Set labels and title
-    ax.set_xlabel('Timepoint', fontsize=12)
-    ax.set_ylabel('Herniation Area [mm²]', fontsize=12)
-    ax.set_title('Herniation Area by Timepoint with Mixed Effect Model', fontsize=14, fontweight='bold')
-    
-    # Add grid for y-axis only
-    ax.grid(True, axis='y', linestyle='-', alpha=0.3)
-    
-    # Show count of patients per timepoint
-    for i, tp in enumerate(plot_timepoints):
-        count = len(df_filtered[df_filtered['timepoint'] == tp])
-        if count > 0:
-            ax.text(i, ax.get_ylim()[0] * 1.5, f"n={count}",
-                   ha='center', va='bottom', fontsize=10)
-    
-    # Add note about chronic timepoints if applicable
-    if 'chronic' in plot_timepoints and chronic_data.shape[0] > 0:
-        chronic_tps_present = sorted(list(set(chronic_data['timepoint'].unique())))
-        chronic_note = f"Note: '{', '.join(chronic_tps_present)}' are combined as 'chronic' in the mixed effect model"
-        plt.figtext(0.5, 0.01, chronic_note, ha='center', fontsize=10, style='italic')
-    
-    ax.xaxis.set_label_coords(0.5, -0.125)  # Move x-axis label down
-    plt.tight_layout()
-    plt.savefig('Image_Processing_Scripts/area_diff_mixed_effect_boxplot.png')
-    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/area_diff_mixed_effect_boxplot.png', dpi=600)
-    
-    return fig
-
-
-def mixed_effect_boxplot_old2(df, result, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], 
-                   chronic_timepoints=['3mo', '6mo', '12mo', '24mo']):
-    """
-    Create a box plot of area_diff for each timepoint with overlaid mixed effect model predictions.
-    
-    Parameters:
-    -----------
-    df : pandas DataFrame
-        DataFrame containing patient_id, timepoint, and area_diff columns
-    result : statsmodels MixedLMResults
-        The fitted mixed effects model result object
-    timepoints : list
-        List of timepoints to include in the plot, in desired order
-    chronic_timepoints : list
-        List of timepoints to be categorized as 'chronic'
-    """
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import seaborn as sns
-    import pandas as pd
-    import matplotlib.cm as cm
-    from matplotlib.lines import Line2D
-    
-    # Create a copy of the dataframe
-    new_df = df.copy()
-    new_df['patient_id'] = new_df['patient_id'].astype(str)
-    
-    # Create a new combined dataframe for plotting with 'chronic' timepoint
-    # Create new timepoint category
-    def categorize_timepoint(timepoint):
-        if timepoint in chronic_timepoints:
-            return 'chronic'
-        else:
-            return timepoint
-    
-    new_df['timepoint_category'] = new_df['timepoint'].apply(categorize_timepoint)
-    
-    # Get chronic data and calculate means per patient
-    chronic_data = new_df[new_df['timepoint_category'] == 'chronic']
-    chronic_means = chronic_data.groupby('patient_id')['area_diff'].mean().reset_index()
-    chronic_means['timepoint'] = 'chronic'
-    
-    # Remove original chronic timepoints and add back the means
-    non_chronic_data = new_df[new_df['timepoint_category'] != 'chronic']
-    
-    # Create a modified timepoints list for plotting
-    # First, find all chronic timepoints in the original list
-    chronic_indices = [i for i, tp in enumerate(timepoints) if tp in chronic_timepoints]
-    
-    # Skip if no chronic timepoints
-    if not chronic_indices:
-        df_filtered = new_df.copy()
-        plot_timepoints = timepoints
-    else:
-        # Insert 'chronic' at the position of the first chronic timepoint
-        plot_timepoints = timepoints.copy()
-        first_chronic_index = min(chronic_indices)
-        
-        # Create a modified list with chronic
-        plot_timepoints = [tp for tp in timepoints if tp not in chronic_timepoints]
-        plot_timepoints.insert(first_chronic_index, 'chronic')
-        
-        # Create the combined dataframe for plotting
-        combined_data = pd.concat([non_chronic_data, chronic_means], ignore_index=True)
-        df_filtered = combined_data.copy()
-        
-    # Create figure and axis
-    fig, ax = plt.subplots(figsize=(12, 6))
-    
-    # Set color palette - adjust for the modified timepoints
-    palette = sns.color_palette("plasma", len(plot_timepoints))
-    
-    # Ensure timepoints are in the correct order
-    if 'chronic' in plot_timepoints:
-        df_filtered['timepoint'] = pd.Categorical(df_filtered['timepoint'],
-                                               categories=plot_timepoints,
-                                               ordered=True)
-    else:
-        df_filtered['timepoint'] = pd.Categorical(df_filtered['timepoint'],
-                                               categories=timepoints,
-                                               ordered=True)
-    
-    # Add horizontal line at y=0
-    ax.axhline(y=0, color='gray', linestyle='-', alpha=0.3)
-    
-    # Create a copy of the data for non-small sample sizes
-    df_regular = df_filtered.copy()
-    df_small = df_filtered.copy()
-    
-    # Create lists to track which timepoints have small sample sizes
-    small_sample_tps = []
-    regular_sample_tps = []
-    
-    for tp in plot_timepoints:
-        tp_data = df_filtered[df_filtered['timepoint'] == tp]
-        if len(tp_data) < 5:
-            small_sample_tps.append(tp)
-        else:
-            regular_sample_tps.append(tp)
-    
-    # Create a mask for each dataset
-    if small_sample_tps:
-        df_small = df_small[df_small['timepoint'].isin(small_sample_tps)]
-    else:
-        df_small = df_small[df_small['timepoint'] == 'none_placeholder']
-    
-    if regular_sample_tps:
-        df_regular = df_regular[df_regular['timepoint'].isin(regular_sample_tps)]
-    else:
-        df_regular = df_regular[df_regular['timepoint'] == 'none_placeholder']
-    
-    # Plot regular boxplots for n >= 5
-    if not df_regular.empty:
-        sns.boxplot(x='timepoint', y='area_diff', data=df_regular,
-                   palette=palette, width=0.5, ax=ax, saturation=0.7,
-                   showfliers=False)
-        
-        # Reduce opacity of box elements after creation
-        for patch in ax.patches:
-            patch.set_alpha(0.5)
-    
-    # For small sample sizes (n < 5), plot just the median as a line
-    for tp in small_sample_tps:
-        tp_data = df_filtered[df_filtered['timepoint'] == tp]
-        tp_index = plot_timepoints.index(tp)
-        median_value = tp_data['area_diff'].median()
-        
-        # Plot median as a horizontal line
-        ax.hlines(median_value, tp_index - 0.25, tp_index + 0.25,
-                 color='black', linewidth=1.0, linestyle='-',
-                 alpha=0.9, zorder=5)
-    
-    # Add scatter points for all timepoints
-    sns.stripplot(x='timepoint', y='area_diff', data=df_filtered,
-                 palette=palette, jitter=True, size=6, alpha=0.8, ax=ax)
-    
-    # Extract coefficients from the statsmodels results object
-    fe_params = result.fe_params
-    intercept = fe_params['Intercept']
-    
-    # Determine the reference category and extract coefficients
-    reference_category = None
-    predictions = {}
-    coefficient_categories = []
-    
-    # Extract all categories from the parameter names
-    for param in fe_params.index:
-        if param != 'Intercept' and '[T.' in param:
-            category = param.split('[T.')[-1].rstrip(']')
-            coefficient_categories.append(category)
-    
-    # Determine reference category (not present in coefficients)
-    all_categories = ['acute', 'ultra-fast', 'fast', 'chronic']
-    for category in all_categories:
-        if category not in coefficient_categories:
-            reference_category = category
-            break
-    
-    if reference_category is None:
-        reference_category = 'acute'  # Default if we can't determine
-    
-    # Create predictions dictionary
-    predictions = {reference_category: intercept}  # Reference category = intercept only
-    
-    # Add predictions for other categories
-    for param, value in fe_params.items():
-        if param != 'Intercept' and '[T.' in param:
-            category = param.split('[T.')[-1].rstrip(']')
-            predictions[category] = intercept + value
-    
-    # Plot the mixed effect model predictions
-    model_order = ['acute', 'ultra-fast', 'fast', 'chronic']
-    model_palette = sns.color_palette("plasma", len(model_order))
-    model_colors = {model_order[i]: model_palette[i] for i in range(len(model_order))}
-    
-    # Draw the predicted values for each category in the plot
-    for i, tp in enumerate(plot_timepoints):
-        if tp in predictions:
-            pred_value = predictions[tp]
-            ax.scatter(i, pred_value, color=model_colors.get(tp, 'black'), 
-                      marker='o', s=120, zorder=10, 
-                      edgecolor='black', linewidth=1.5)
-    
-    # Add a legend for the mixed effect model predictions
-    from matplotlib.lines import Line2D
-    legend_elements = []
-    for category in model_order:
-        if category in predictions:
-            legend_elements.append(
-                Line2D([0], [0], marker='o', color='w', 
-                       markerfacecolor=model_colors.get(category, 'black'), 
-                       markersize=10, label=f'{category.capitalize()}')
-            )
-
-    # Add significance information to the legend
-    legend_elements.append(Line2D([0], [0], marker='', color='w', label=' '))  # Empty spacer
-    legend_elements.append(Line2D([0], [0], marker='', color='w', label='Statistical Significance:'))
-    legend_elements.append(Line2D([0], [0], marker='', color='w', label='*** p<0.001'))
-    legend_elements.append(Line2D([0], [0], marker='', color='w', label='** p<0.01'))
-    legend_elements.append(Line2D([0], [0], marker='', color='w', label='* p<0.05'))
-    legend_elements.append(Line2D([0], [0], marker='', color='w', label='† p<0.1'))
-    
-    if legend_elements:
-        ax.legend(handles=legend_elements, title='Mixed Effect Model Predictions \nand Statistical Significance', 
-                 loc='upper right', framealpha=0.7)
-    
-    # Get the reference category index in plot_timepoints
-    ref_idx = None
-    if reference_category in plot_timepoints:
-        ref_idx = plot_timepoints.index(reference_category)
-    
-    # Add significance bars and asterisks
-    y_max = ax.get_ylim()[1]
-    bar_height = y_max * 0.1  # Height of the significance bars
-    
-    # Track the vertical position of bars to avoid overlap
-    bar_positions = {}
-    
-    # Add significance bars comparing each category to the reference
-    # Add significance markers directly above each significant category (no bars)
-    if ref_idx is not None:
-        for category in [c for c in plot_timepoints if c != reference_category]:
-            if category in plot_timepoints:
-                cat_idx = plot_timepoints.index(category)
-                param_name = f'timepoint[T.{category}]'
-                
-                if param_name in result.pvalues:
-                    p_value = result.pvalues[param_name]
-                    
-                    # Only show significance for p < 0.1
-                    if p_value < 0.1:
-                        # Determine the significance marker
-                        if p_value < 0.001:
-                            sig_marker = '***'
-                        elif p_value < 0.01:
-                            sig_marker = '**'
-                        elif p_value < 0.05:
-                            sig_marker = '*'
-                        else:  # p < 0.1
-                            sig_marker = '†'
-                        
-                       
-                        marker_y_pos = -1650
-                        
-                        # Add the significance marker directly above the category
-                        ax.text(cat_idx, marker_y_pos, sig_marker, ha='center', va='bottom', fontsize=10)
-    
-    # Adjust the y-axis limit to accommodate the significance bars
-    if bar_positions:
-        max_bar_level = max(bar_positions.values())
-        ax.set_ylim(top=y_max + (bar_height * (max_bar_level + 2)))
-    
-    # Set labels and title
-    ax.set_xlabel('Timepoint', fontsize=12)
-    ax.set_ylabel('Herniation Area [mm²]', fontsize=12)
-    ax.set_title('Herniation Area by Timepoint with Mixed Effect Model', fontsize=14, fontweight='bold')
-    
-    # Add grid for y-axis only
-    ax.grid(True, axis='y', linestyle='-', alpha=0.3)
-    
-    # Show count of patients per timepoint
-    for i, tp in enumerate(plot_timepoints):
-        count = len(df_filtered[df_filtered['timepoint'] == tp])
-        if count > 0:
-            ax.text(i, ax.get_ylim()[0] * 1.5, f"n={count}",
-                   ha='center', va='bottom', fontsize=10)
-    
-    # Add significance notation at the bottom of the plot
-    plt.figtext(0.5, 0.01, "Significance levels: *** p<0.001, ** p<0.01, * p<0.05, † p<0.1", 
-               ha='center', fontsize=9, style='italic')
-    
-    ax.xaxis.set_label_coords(0.5, -0.125)  # Move x-axis label down
-    plt.tight_layout()
-    plt.savefig('Image_Processing_Scripts/area_diff_mixed_effect_boxplot.png')
-    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/area_diff_mixed_effect_boxplot.png', dpi=600)
-    
-    return fig
-
-
 def mixed_effect_boxplot(df, result, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], 
                    chronic_timepoints=['3mo', '6mo', '12mo', '24mo']):
     """
@@ -1862,17 +1357,63 @@ if __name__ == '__main__':
                         print(f"{tp1} vs {tp2} (t-test): p={p_value:.4f}")
 
         # Create matrix for visualization
-        sig_df = pd.DataFrame(sig_matrix, index=timepoints, columns=timepoints)
+        # Reorder timepoints
+        ordered_timepoints = ['ultra-fast', 'fast', 'acute', 'chronic']
+
+        # Reorder the significance matrix
+        ordered_sig_matrix = np.zeros((n, n))
+        for i, tp1 in enumerate(ordered_timepoints):
+            for j, tp2 in enumerate(ordered_timepoints):
+                # Get original indices
+                orig_i = timepoints.index(tp1)
+                orig_j = timepoints.index(tp2)
+                # Copy values to new matrix
+                ordered_sig_matrix[i, j] = sig_matrix[orig_i, orig_j]
+
+        # Create matrix for visualization
+        sig_df = pd.DataFrame(ordered_sig_matrix, index=ordered_timepoints, columns=ordered_timepoints)
+        # Set diagonal to NaN for better visualization
+        sig_df = sig_df.iloc[::-1, :]
+        print(sig_df)
+        
+        
+        # Mask the anti-diagonal (bottom-left to upper-right)
+        n = len(sig_df)
+        for i in range(n):
+            sig_df.iloc[n-1-i, i] = np.nan  # This sets the anti-diagonal to NaN
+
+        # Create explicit mask for NaN values
+        mask = np.isnan(sig_df.values)
+        print(sig_df)
+        
+
+        # # Set diagonal to NaN for better visualization
+        # for i in range(len(ordered_timepoints)):
+        #     sig_df.iloc[i, i] = np.nan
 
         # Plot heatmap
-        plt.figure(figsize=(8, 6))
-        sns.heatmap(sig_df, annot=True, fmt='.4f', cmap='coolwarm_r', 
-                    vmin=0, vmax=0.1, 
-                    cbar_kws={'label': 'p-value'})
-        plt.title('Pairwise Comparison p-values')
+        plt.figure(figsize=(10, 8))
+        #mask = np.isnan(sig_df)  # Use NaN mask instead of zeros
+        cmap = sns.diverging_palette(240, 10, as_cmap=True)
+
+        # Create heatmap without grid lines
+        heatmap = sns.heatmap(
+            sig_df,
+            annot=True,  # Show numbers in cells
+            cmap=cmap,  # Color map
+            mask=mask,  # Mask diagonal values
+            vmin=0, vmax=0.5,  # Set color scale range
+            center=0.15,  # Center color scale
+            fmt='.4f',  # Format as floating point with 4 decimals
+            linewidths=0,  # Remove lines between cells
+            linecolor='none',  # Ensure no line color
+            yticklabels=ordered_timepoints[::-1]  # Reverse y-axis labels
+        )
+        plt.title('Pairwise Comparison p-values from Mixed Effects Model')
+        plt.grid(False)
         plt.tight_layout()
-        plt.savefig('significance_matrix.png', dpi=300)
-        plt.show()
+        plt.savefig('Image_Processing_Scripts/significance_matrix_mixed_effects.png', dpi=300)
+        plt.close()
 
 
 
@@ -2077,13 +1618,8 @@ if __name__ == '__main__':
 
     # Mixed effect model visualisations:
 
-    #visualize_mixed_effects(result, baseline='acute', timepoints=['ultra-fast', 'fast', 'acute', 'chronic'])
-    #plot_mixed_effects_estimates_direct(result, output_path='Image_Processing_Scripts/mixed_effects_estimates.png')
-        
 
-
-    mixed_effect_boxplot(new_df, result, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], 
-                   chronic_timepoints=['3mo', '6mo', '12mo', '24mo'])
+    #mixed_effect_boxplot(new_df, result, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], chronic_timepoints=['3mo', '6mo', '12mo', '24mo'])
     
     
 
