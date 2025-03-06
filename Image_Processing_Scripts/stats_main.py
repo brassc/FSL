@@ -1290,6 +1290,27 @@ if __name__ == '__main__':
 
         print("\nPairwise Comparisons:")
 
+        # Now perform Tukey's HSD test on the data
+        # Note: Tukey's HSD is performed on the raw data, not on the model -
+        #This means it doesn't account for the random effects structure of your model.
+        tukey = pairwise_tukeyhsd(
+            endog=binned_df['area_diff'],     # The dependent variable
+            groups=binned_df['timepoint'],    # The grouping variable
+            alpha=0.05                        # The significance level
+        )
+
+        # Print the Tukey HSD results
+        print(tukey)
+
+        ## You can also visualize the results
+        fig = tukey.plot_simultaneous()
+
+        sys.exit()
+
+
+
+
+        """
         # First, fill in the known p-values from the model summary
         # These are comparisons with the baseline (acute)
         for i, param in enumerate(result.params.index):
@@ -1355,7 +1376,11 @@ if __name__ == '__main__':
                         sig_matrix[i, j] = p_value
                         sig_matrix[j, i] = p_value  # Mirror value
                         print(f"{tp1} vs {tp2} (t-test): p={p_value:.4f}")
+        """
 
+
+
+        """
         # Create matrix for visualization
         # Reorder timepoints
         ordered_timepoints = ['ultra-fast', 'fast', 'acute', 'chronic']
@@ -1385,7 +1410,7 @@ if __name__ == '__main__':
         print(sig_df)
 
         def add_significance_markers(p_df):
-            """Add significance markers to a DataFrame of p-values"""
+            ###Add significance markers to a DataFrame of p-values
             # Make a copy to avoid modifying the original
             formatted_df = p_df.copy()
             
@@ -1495,7 +1520,7 @@ if __name__ == '__main__':
         plt.savefig('Image_Processing_Scripts/significance_matrix_mixed_effects.png', dpi=300, bbox_inches='tight')
         plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/significance_matrix_mixed_effects.png', dpi=600, bbox_inches='tight')
         plt.close()
-
+        """
 
 
         # pairwise comparisons go here
