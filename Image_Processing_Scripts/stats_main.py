@@ -1014,6 +1014,7 @@ def plot_emmeans_sig_mat(sig_df, mask):
             ha='left', fontsize=12, style='italic') #*** p<0.001, 
 
     plt.savefig('significance_matrix_mixed_effects_v2.png', dpi=300, bbox_inches='tight')
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/significance_matrix_mixed_effects_v2.png', dpi=600, bbox_inches='tight')
     plt.close()
 
 ##### MAIN STARTS HERE
