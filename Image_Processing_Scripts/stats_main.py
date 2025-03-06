@@ -950,7 +950,7 @@ def emmeans_significance_matrix(py_pairs):
     
             
     # invert for better visualisation
-    sig_df = sig_df.iloc[::-1, :]
+    #sig_df = sig_df.iloc[::-1, :]
     print(sig_df)
     mask = np.isnan(sig_df.values)
 
@@ -973,7 +973,7 @@ def plot_emmeans_sig_mat(sig_df, mask):
         fmt='.4f',   # Format as floating point with 4 decimals
         linewidths=0,  # Remove lines between cells
         linecolor='none',  # Ensure no line color
-        yticklabels=ordered_timepoints[::-1]  # Reverse y-axis labels
+        yticklabels=ordered_timepoints  # Reverse y-axis labels
     )
 
     # Add significance markers
@@ -1521,8 +1521,8 @@ if __name__ == '__main__':
     #data_availability_matrix(binned_df_pivot, order, filename='data_availability_matrix_binned.png')
 
     # Plot the significance matrix
-    #sig_df, mask = emmeans_significance_matrix(py_pairs)
-    #plot_emmeans_sig_mat(sig_df, mask)  
+    sig_df, mask = emmeans_significance_matrix(py_pairs)
+    plot_emmeans_sig_mat(sig_df, mask)  
 
     #mixed_effect_boxplot(new_df, result, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], chronic_timepoints=['3mo', '6mo', '12mo', '24mo'])
    
