@@ -15,6 +15,32 @@ from itertools import combinations
 from longitudinal_main import map_timepoint_to_string
 from set_publication_style import set_publication_style
 
+import rpy2
+import rpy2.robjects as ro
+from rpy2.robjects import pandas2ri
+from rpy2.robjects.packages import importr
+from rpy2.robjects.vectors import StrVector
+from rpy2.robjects.packages import PackageNotInstalledError
+
+# Activate pandas to R conversion
+pandas2ri.activate()
+
+# First, install required R packages if not already installed
+utils = importr('utils')
+utils.chooseCRANmirror(ind=1)  # Choose the first CRAN mirror
+
+# Check and install required packages
+packnames = ('lme4', 'emmeans', 'pbkrtest', 'lmerTest')
+names_to_install = [x for x in packnames if not rpy2.robjects.packages.isinstalled(x)]
+if len(names_to_install) > 0:
+    utils.install_packages(StrVector(names_to_install))
+
+# Import necessary R packages
+base = importr('base')
+lme4 = importr('lme4')
+emmeans = importr('emmeans')
+
+
 
 set_publication_style()
 
@@ -342,7 +368,7 @@ def create_timepoint_boxplot(df, timepoints=['ultra-fast', 'fast', 'acute', '3mo
     plt.close()
     return
 
-def data_availability_matrix(data, timepoints):
+def data_availability_matrix(data, timepoints, filename='data_availability.png'):
     """
     Create a data availability matrix for the given timepoints.
     
@@ -387,8 +413,8 @@ def data_availability_matrix(data, timepoints):
     plt.title('Data Availability Matrix (number of patients)')
     plt.grid(False)
     plt.tight_layout()
-    plt.savefig('Image_Processing_Scripts/data_availability.png')
-    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/data_availability.png', dpi=600)
+    plt.savefig(f"Image_Processing_Scripts/{filename}")
+    plt.savefig(f"../Thesis/phd-thesis-template-2.4/Chapter5/Figs/{filename}", dpi=600)
     plt.close()
 
 
@@ -868,8 +894,127 @@ def mixed_effect_boxplot(df, result, timepoints=['ultra-fast', 'fast', 'acute', 
     
     return fig
 
+# returns sig_df, mask
+def emmeans_significance_matrix(py_pairs):
+    timepoints= ['ultra-fast', 'fast', 'acute', 'chronic']
+    n=len(timepoints)
+    sig_matrix=np.ones((n, n))
 
+    # Fill matrix w p_values from py_pairs
+    for index, row in py_pairs.iterrows():
+        # parse the contrast to get the two groups being compared
+        contrast = row['contrast']
 
+        if ' - (' in contrast:
+            # Case like "acute - (ultra-fast)"
+            parts = contrast.split(' - (')
+            group1 = parts[0].strip()
+            group2 = parts[1].strip(')')
+        elif ') - ' in contrast:
+            # Case like "(ultra-fast) - fast"
+            parts = contrast.split(') - ')
+            group1 = parts[0].strip('(')
+            group2 = parts[1].strip()
+        elif ' - ' in contrast:
+            # Case like "acute - fast"
+            parts = contrast.split(' - ')
+            group1 = parts[0].strip()
+            group2 = parts[1].strip()
+        else:
+            print(f"Unexpected contrast format: {contrast}")
+            continue
+
+        # Debug print to see what we're extracting
+        #print(f"Extracted: '{group1}' and '{group2}' from '{contrast}'")
+
+        
+
+        # find the indices of the groups
+        i = timepoints.index(group1)
+        j = timepoints.index(group2)
+
+        # Store the p-value in both positions (for symmetry)
+
+        
+        
+        sig_matrix[i,j]=row['p.value']
+        sig_matrix[j,i]=row['p.value']
+
+    
+    # Create DataFrame for visualization
+    sig_df = pd.DataFrame(sig_matrix, index=timepoints, columns=timepoints)
+    
+    # mask diagonal values
+    for i in range(n):
+        sig_df.iloc[i, i] = np.nan
+    
+            
+    # invert for better visualisation
+    sig_df = sig_df.iloc[::-1, :]
+    print(sig_df)
+    mask = np.isnan(sig_df.values)
+
+    return sig_df, mask
+
+def plot_emmeans_sig_mat(sig_df, mask):
+    # Plot heatmap
+    ordered_timepoints= ['ultra-fast', 'fast', 'acute', 'chronic']
+    plt.figure(figsize=(10, 10))
+    cmap = sns.diverging_palette(240, 10, as_cmap=True)
+
+    # Create heatmap
+    heatmap = sns.heatmap(
+        sig_df,
+        annot=True,  # Show numbers in cells
+        cmap=cmap,   # Color map
+        mask=mask,   # Mask diagonal values
+        vmin=0, vmax=0.5,  # Set color scale range
+        center=0.15,  # Center color scale
+        fmt='.4f',   # Format as floating point with 4 decimals
+        linewidths=0,  # Remove lines between cells
+        linecolor='none',  # Ensure no line color
+        yticklabels=ordered_timepoints[::-1]  # Reverse y-axis labels
+    )
+
+    # Add significance markers
+    for i in range(4):  # rows
+        for j in range(4):  # columns
+            if not pd.isna(sig_df.iloc[i, j]):
+                if sig_df.iloc[i, j] < 0.001:
+                    plt.text(
+                        j + 0.625,  # x-coordinate
+                        i + 0.45,   # y-coordinate
+                        "***",      # annotation text
+                        ha='left',  # horizontal alignment
+                        va='center', # vertical alignment
+                        fontsize=10
+                    )
+                elif sig_df.iloc[i, j] < 0.01:
+                    plt.text(
+                        j + 0.625, i + 0.45, "**", ha='left', va='center', fontsize=10
+                    )
+                elif sig_df.iloc[i, j] < 0.05:
+                    plt.text(
+                        j + 0.625, i + 0.45, "*", ha='left', va='center', fontsize=10
+                    )
+                elif sig_df.iloc[i, j] < 0.1:
+                    plt.text(
+                        j + 0.625, i + 0.45, "†", ha='left', va='center', fontsize=10
+                    )
+
+    plt.title('Pairwise Comparison p-values from Mixed Effects Model (emmeans)')
+    plt.grid(False)
+    plt.tight_layout()
+
+    # Add better spacing for legend
+    plt.subplots_adjust(bottom=0.075)
+
+    # Add legend for significance levels
+    plt.figtext(0.25, 0.01, "Significance levels: ** p<0.01, * p<0.05, † p<0.1",
+            ha='left', fontsize=12, style='italic') #*** p<0.001, 
+
+    plt.savefig('significance_matrix_mixed_effects_v2.png', dpi=300, bbox_inches='tight')
+    plt.close()
 
 ##### MAIN STARTS HERE
 #####
@@ -1218,7 +1363,7 @@ if __name__ == '__main__':
         else:
             print("\nNo changes in significance were found after excluding non-deformed patients.")
     """
-
+    
     ## Mixed effects model
     df = new_df.copy()
     df['patient_id'] = df['patient_id'].astype(str)
@@ -1265,436 +1410,86 @@ if __name__ == '__main__':
     ordered=True
     )
 
+    #print(binned_df)
+    # pivot the data for plotting
+    binned_df_pivot = binned_df.pivot(index='patient_id', columns='timepoint', values='area_diff')
+    #print(binned_df_pivot)
+    # reorder columns to match the order of the categories
+    binned_df_pivot = binned_df_pivot[['ultra-fast', 'fast', 'acute', 'chronic']]
+    # plot data availability matrix
+    
+    
+
     # Fit the model: area_diff as outcome, timepoint_category as fixed effect, 
     # patient_id as random effect
 
-    try:
+    #try:
         # Mixed effects model
-        model = smf.mixedlm("area_diff ~ timepoint", binned_df, groups=binned_df['patient_id'])
-        result = model.fit()
-        print("mixed effect model summary:")
-        print(result.summary())
+    model = smf.mixedlm("area_diff ~ timepoint", binned_df, groups=binned_df['patient_id'])
+    result = model.fit()
+    print("mixed effect model summary:")
+    print(result.summary())
 
-        # Extract and display the key results
-        print("\nFixed Effects Parameters:")
-        print(result.fe_params)
-        
-        print("\nRandom Effects Parameters:")
-        print(result.cov_re)
-
-        # pairwise comparisons go here
-        # Define all timepoints
-        timepoints = ['acute', 'ultra-fast', 'fast', 'chronic']
-        n = len(timepoints)
-        sig_matrix = np.ones((n, n))  # Initialize with 1s (diagonal)
-
-        print("\nPairwise Comparisons:")
-
-        # Now perform Tukey's HSD test on the data
-        # Note: Tukey's HSD is performed on the raw data, not on the model -
-        #This means it doesn't account for the random effects structure of your model.
-        tukey = pairwise_tukeyhsd(
-            endog=binned_df['area_diff'],     # The dependent variable
-            groups=binned_df['timepoint'],    # The grouping variable
-            alpha=0.05                        # The significance level
-        )
-
-        # Print the Tukey HSD results
-        print(tukey)
-
-        ## You can also visualize the results
-        fig = tukey.plot_simultaneous()
-
-        sys.exit()
-
-
-
-
-        """
-        # First, fill in the known p-values from the model summary
-        # These are comparisons with the baseline (acute)
-        for i, param in enumerate(result.params.index):
-            if param.startswith('timepoint'):
-                # Extract timepoint name from parameter
-                tp = param.split('[T.')[1].rstrip(']')
-                if tp in timepoints:
-                    j = timepoints.index(tp)
-                    p_value = result.pvalues[param]
-                    sig_matrix[0, j] = p_value
-                    sig_matrix[j, 0] = p_value  # Mirror value
-                    print(f"acute vs {tp}: p={p_value:.4f}")
-
-        # Now for the non-baseline comparisons, we need to create new models
-        # Approach: Create datasets with only the two timepoints we want to compare
-        for i in range(1, n):
-            for j in range(i+1, n):
-                tp1 = timepoints[i]
-                tp2 = timepoints[j]
-                
-                # Create a subset with just these two timepoints
-                subset = binned_df[binned_df['timepoint'].isin([tp1, tp2])].copy()
-                
-                # Re-categorize with first timepoint as baseline
-                subset['timepoint'] = pd.Categorical(
-                    subset['timepoint'],
-                    categories=[tp1, tp2],
-                    ordered=True
-                )
-                
-                # Fit a new model with this subset
-                try:
-                    sub_model = smf.mixedlm("area_diff ~ timepoint", subset, groups=subset['patient_id'])
-                    sub_result = sub_model.fit()
-                    
-                    # Get p-value for the comparison (should only be one parameter)
-                    for param in sub_result.params.index:
-                        if param.startswith('timepoint'):
-                            p_value = sub_result.pvalues[param]
-                            sig_matrix[i, j] = p_value
-                            sig_matrix[j, i] = p_value  # Mirror value
-                            print(f"{tp1} vs {tp2}: p={p_value:.4f}")
-                except Exception as e:
-                    print(f"Error comparing {tp1} vs {tp2}: {e}")
-                    # Use an alternative approach in case of convergence issues
-                    try:
-                        # Try with OLS
-                        ols_formula = "area_diff ~ C(timepoint) + C(patient_id)"
-                        ols_result = smf.ols(ols_formula, subset).fit()
-                        
-                        # Find the timepoint parameter
-                        for param in ols_result.params.index:
-                            if 'C(timepoint)' in param and tp2 in param:
-                                p_value = ols_result.pvalues[param]
-                                sig_matrix[i, j] = p_value
-                                sig_matrix[j, i] = p_value  # Mirror value
-                                print(f"{tp1} vs {tp2} (OLS): p={p_value:.4f}")
-                    except:
-                        # Last resort: t-test
-                        group1 = subset[subset['timepoint'] == tp1]['area_diff']
-                        group2 = subset[subset['timepoint'] == tp2]['area_diff']
-                        t_stat, p_value = stats.ttest_ind(group1, group2)
-                        sig_matrix[i, j] = p_value
-                        sig_matrix[j, i] = p_value  # Mirror value
-                        print(f"{tp1} vs {tp2} (t-test): p={p_value:.4f}")
-        """
-
-
-
-        """
-        # Create matrix for visualization
-        # Reorder timepoints
-        ordered_timepoints = ['ultra-fast', 'fast', 'acute', 'chronic']
-
-        # Reorder the significance matrix
-        ordered_sig_matrix = np.zeros((n, n))
-        for i, tp1 in enumerate(ordered_timepoints):
-            for j, tp2 in enumerate(ordered_timepoints):
-                # Get original indices
-                orig_i = timepoints.index(tp1)
-                orig_j = timepoints.index(tp2)
-                # Copy values to new matrix
-                ordered_sig_matrix[i, j] = sig_matrix[orig_i, orig_j]
-
-        # Create matrix for visualization
-        sig_df = pd.DataFrame(ordered_sig_matrix, index=ordered_timepoints, columns=ordered_timepoints)
-        # Set diagonal to NaN for better visualization
-        sig_df = sig_df.iloc[::-1, :]
-        
-        # Mask the anti-diagonal (bottom-left to upper-right)
-        n = len(sig_df)
-        for i in range(n):
-            sig_df.iloc[n-1-i, i] = np.nan  # This sets the anti-diagonal to NaN
-
-        # Create explicit mask for NaN values
-        mask = np.isnan(sig_df.values)
-        print(sig_df)
-
-        def add_significance_markers(p_df):
-            ###Add significance markers to a DataFrame of p-values
-            # Make a copy to avoid modifying the original
-            formatted_df = p_df.copy()
-            
-            # Add markers based on significance levels
-            for i in range(len(p_df)):
-                for j in range(len(p_df.columns)):
-                    if pd.isna(p_df.iloc[i, j]):
-                        continue
-                        
-                    p_value = p_df.iloc[i, j]
-                    
-                    if p_value < 0.001:
-                        formatted_df.iloc[i, j] = f"{p_value:.4f} ***"
-                    elif p_value < 0.01:
-                        formatted_df.iloc[i, j] = f"{p_value:.4f} **"
-                    elif p_value < 0.05:
-                        formatted_df.iloc[i, j] = f"{p_value:.4f} *"
-                    elif p_value < 0.1:
-                        formatted_df.iloc[i, j] = f"{p_value:.4f} †"
-                    else:
-                        formatted_df.iloc[i, j] = f"{p_value:.4f}"
-            
-            return formatted_df
-        
-        annot_df = add_significance_markers(sig_df)
-        # # Set diagonal to NaN for better visualization
-        # for i in range(len(ordered_timepoints)):
-        #     sig_df.iloc[i, i] = np.nan
-
-        # Plot heatmap
-        plt.figure(figsize=(10, 10))
-        #mask = np.isnan(sig_df)  # Use NaN mask instead of zeros
-        cmap = sns.diverging_palette(240, 10, as_cmap=True)
-
-        # Create heatmap without grid lines
-        heatmap = sns.heatmap(
-            sig_df,
-            annot=True,  # Show numbers in cells
-            #annot=annot_df,  # Use custom annotations
-            cmap=cmap,  # Color map
-            mask=mask,  # Mask diagonal values
-            vmin=0, vmax=0.5,  # Set color scale range
-            center=0.15,  # Center color scale
-            fmt='.4f',  # Format as floating point with 4 decimals
-            linewidths=0,  # Remove lines between cells
-            linecolor='none',  # Ensure no line color
-            yticklabels=ordered_timepoints[::-1]  # Reverse y-axis labels
-        )
-
-        for i in range(4):  # rows
-            for j in range(4):  # columns
-                if not pd.isna(sig_df.iloc[i, j]):
-                    if sig_df.iloc[i, j] < 0.001:
-                        plt.text(
-                            j + 0.625,  # x-coordinate (center of column)
-                            i + 0.45,  # y-coordinate (center of row)
-                            "***",    # annotation text
-                            ha='left',  # horizontal alignment
-                            va='center',  # vertical alignment
-                            #color='red',
-                            fontsize=10
-                        )
-                    elif sig_df.iloc[i, j] < 0.01:
-                        plt.text(
-                            j + 0.625,  # x-coordinate (center of column)
-                            i + 0.45,  # y-coordinate (center of row)
-                            "**",    # annotation text
-                            ha='left',  # horizontal alignment
-                            va='center',  # vertical alignment
-                            #color='red',
-                            fontsize=10
-                        )
-                    elif sig_df.iloc[i, j] < 0.05:
-                        plt.text(
-                            j + 0.625,  # x-coordinate (center of column)
-                            i + 0.45,  # y-coordinate (center of row)
-                            "*",    # annotation text
-                            ha='left',  # horizontal alignment
-                            va='center',  # vertical alignment
-                            #color='red',
-                            fontsize=10
-                        )
-                    elif sig_df.iloc[i, j] < 0.1:
-                        plt.text(
-                            j + 0.625,  # x-coordinate (center of column)
-                            i + 0.45,  # y-coordinate (center of row)
-                            "†",    # annotation text
-                            ha='left',  # horizontal alignment
-                            va='center',  # vertical alignment
-                            #color='red',
-                            fontsize=10
-                        )
-                    
-        
-        
-        plt.title('Pairwise Comparison p-values from Mixed Effects Model')
-        plt.grid(False)
-        plt.tight_layout()
-
-        # Add better spacing to make room for the legend text
-        plt.subplots_adjust(bottom=0.075)  # Increased bottom margin
-
-        # Add legend for significance levels
-        plt.figtext(0.25, 0.01, "Significance levels: *** p<0.001, ** p<0.01, * p<0.05, † p<0.1",
-                ha='left', fontsize=12, style='italic')
-        
-        plt.savefig('Image_Processing_Scripts/significance_matrix_mixed_effects.png', dpi=300, bbox_inches='tight')
-        plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/significance_matrix_mixed_effects.png', dpi=600, bbox_inches='tight')
-        plt.close()
-        """
-
-
-        # pairwise comparisons go here
-        # # Create a DataFrame for the Tukey test
-        # tukey_data = binned_df[['area_diff', 'timepoint']]
-
-        # # Perform Tukey's HSD test
-        # tukey = pairwise_tukeyhsd(endog=tukey_data['area_diff'], 
-        #                         groups=tukey_data['timepoint'], 
-        #                         alpha=0.05)
-        # print("\nTukey's HSD pairwise comparisons:")
-        # print(tukey)
-
-
-
-
-    except Exception as e:
-        print(f"Error fitting mixed effects model: {e}")
-        print("try using OLS with patient_id as dummy variable...")
-        formula = "area_diff ~ C(timepoint) + C(patient_id)"
-        ols_model = smf.ols(formula, binned_df).fit()
-        print(ols_model.summary())
-
-
-    # Calculate estimated marginal means
-    # def calculate_emmeans(result):
-    #     """
-    #     Calculate Estimated Marginal Means from mixed effects model results
-        
-    #     Parameters:
-    #     - result: Fitted mixed effects model results
-        
-    #     Returns:
-    #     - DataFrame with EMM estimates and confidence intervals
-    #     """
-    #     # Get parameter names (excluding the first which is the intercept)
-    #     param_names = result.model.exog_names[1:]
-        
-    #     # Initialize results list
-    #     emm_results = []
-        
-    #     # Calculate EMM for each parameter
-    #     for param in param_names:
-    #         # Get the coefficient for this parameter
-    #         coef = result.params[param]
-            
-    #         # Get standard error
-    #         se = result.bse[param]
-            
-    #         # Calculate confidence interval
-    #         t_value = stats.t.ppf(0.975, df=result.df_resid)
-    #         ci_lower = coef - t_value * se
-    #         ci_upper = coef + t_value * se
-            
-    #         # Store results
-    #         emm_results.append({
-    #             'Timepoint': param.split('.')[-1] if '[T.' in param else 'baseline',
-    #             'EMM': coef,
-    #             'Std Error': se,
-    #             'Lower CI (95%)': ci_lower,
-    #             'Upper CI (95%)': ci_upper
-    #         })
-        
-    #     return pd.DataFrame(emm_results)
+    # Extract and display the key results
+    print("\nFixed Effects Parameters:")
+    print(result.fe_params)
     
-    # emmeans = calculate_emmeans(result)
-    # print("\nEstimated Marginal Means:")
-    # print(emmeans)
+    print("\nRandom Effects Parameters:")
+    print(result.cov_re)
 
-    # def visualize_emmeans(result):
-    #     """
-    #     Visualize Estimated Marginal Means (EMMs) from a mixed effects model
-        
-    #     Parameters:
-    #     - result: Mixed effects model results
-        
-    #     Returns:
-    #     - Figure and accompanying data
-    #     """
-    #     # Extract parameters related to timepoints
-    #     timepoint_params = [param for param in result.params.index if param.startswith('timepoint')]
-        
-    #     # Prepare EMM data
-    #     emm_results = []
-    #     baseline_value = result.params['Intercept']  # Get the baseline (intercept) value
-        
-    #     for param in timepoint_params:
-    #         timepoint = param.split('[T.')[-1].rstrip(']')
-    #         effect = result.params[param]
-    #         std_error = result.bse[param]
-    #         p_value = result.pvalues[param]
-            
-    #         emm_results.append({
-    #             'Timepoint': timepoint,
-    #             'EMM': baseline_value + effect,  # Adjusted EMM
-    #             'Std Error': std_error,
-    #             'p-value': p_value
-    #         })
-        
-    #     # Convert to DataFrame
-    #     emm_data = pd.DataFrame(emm_results)
-        
-    #     # Calculate confidence intervals
-    #     from scipy import stats
-    #     confidence_level = 0.95
-    #     degrees_of_freedom = result.df_resid
-    #     t_value = stats.t.ppf((1 + confidence_level) / 2, degrees_of_freedom)
-        
-    #     emm_data['Lower CI'] = emm_data['EMM'] - t_value * emm_data['Std Error']
-    #     emm_data['Upper CI'] = emm_data['EMM'] + t_value * emm_data['Std Error']
-        
-    #     # Determine significance
-    #     def get_significance(p_value):
-    #         if p_value < 0.001:
-    #             return '***'
-    #         elif p_value < 0.01:
-    #             return '**'
-    #         elif p_value < 0.05:
-    #             return '*'
-    #         else:
-    #             return 'ns'
-        
-    #     emm_data['Significance'] = emm_data['p-value'].apply(get_significance)
-        
-    #     # Create visualization
-    #     plt.figure(figsize=(12, 6))
-        
-    #     # Bar plot with error bars
-    #     plt.subplot(1, 2, 1)
-    #     x = np.arange(len(emm_data))
-    #     plt.bar(x, emm_data['EMM'], yerr=emm_data['Std Error'], 
-    #             capsize=5, color='skyblue', edgecolor='black')
-    #     plt.title('Estimated Marginal Means')
-    #     plt.xlabel('Timepoint')
-    #     plt.ylabel('Area Difference')
-    #     plt.xticks(x, emm_data['Timepoint'], rotation=45)
-        
-    #     # Add significance annotations
-    #     for i, row in enumerate(emm_data.itertuples()):
-    #         plt.text(i, row.EMM + row._3, row.Significance, 
-    #                 horizontalalignment='center')
-        
-    #     # Detailed results table
-    #     plt.subplot(1, 2, 2)
-    #     plt.axis('off')
-    #     table_data = [
-    #         ['Timepoint', 'EMM', 'Lower CI', 'Upper CI', 'p-value', 'Sig']
-    #     ]
-    #     for _, row in emm_data.iterrows():
-    #         table_data.append([
-    #             row['Timepoint'], 
-    #             f"{row['EMM']:.2f}", 
-    #             f"{row['Lower CI']:.2f}", 
-    #             f"{row['Upper CI']:.2f}", 
-    #             f"{row['p-value']:.4f}", 
-    #             row['Significance']
-    #         ])
-        
-    #     table = plt.table(cellText=table_data, 
-    #                     loc='center', 
-    #                     cellLoc='center', 
-    #                     colWidths=[0.15]*6)
-    #     table.auto_set_font_size(False)
-    #     table.set_fontsize(9)
-    #     table.scale(1.2, 1.5)
-    #     plt.title('EMM Statistical Details')
-        
-    #     plt.tight_layout()
-        
-    #     return plt.gcf(), emm_data
+    # pairwise comparisons go here
+    # Define all timepoints
+    timepoints = ['acute', 'ultra-fast', 'fast', 'chronic']
+    n = len(timepoints)
+    sig_matrix = np.ones((n, n))  # Initialize with 1s (diagonal)
 
-    # # Example usage:
-    # fig, emm_df = visualize_emmeans(result)
-    # plt.show()
+    print("\nPairwise Comparisons:")
+
+    # Tukey test - doesnt account for random effects structure of the model
+    """
+    # Now perform Tukey's HSD test on the data
+    # Note: Tukey's HSD is performed on the raw data, not on the model -
+    #This means it doesn't account for the random effects structure of your model.
+    tukey = pairwise_tukeyhsd(
+        endog=binned_df['area_diff'],     # The dependent variable
+        groups=binned_df['timepoint'],    # The grouping variable
+        alpha=0.05                        # The significance level
+    )
+
+    # Print the Tukey HSD results
+    print(tukey)
+
+    ## You can also visualize the results
+    fig = tukey.plot_simultaneous()
+    """
+
+    # EMMEANS - estimates of marginal means
+    # Get the estimated marginal means
+    
+
+    # Convert your data to R
+    r_df = pandas2ri.py2rpy(binned_df)
+
+    # Create and fit the model in R
+    ro.globalenv['data'] = r_df
+    formula = "area_diff ~ timepoint + (1 | patient_id)"
+    r_model = lme4.lmer(formula, data=ro.globalenv['data'])
+
+    # Get the estimated marginal means
+    r_emmeans = emmeans.emmeans(r_model, specs="timepoint")
+    r_pairs = emmeans.contrast(r_emmeans, method="pairwise", adjust="tukey") 
+    # tukey adjustment controls family wise error rate, accounting for variance structure in mixed model including random effects. 
+
+    # Convert the results back to Python
+    py_pairs = pandas2ri.rpy2py(base.as_data_frame(r_pairs))
+    print(py_pairs)
+    
+
+    
+    
+    
+
+
 
 
 
@@ -1717,13 +1512,17 @@ if __name__ == '__main__':
     #create_timepoint_boxplot(new_df)
 
     # pairwise test visualisations:
-    #data_availability_matrix(pivoted_data, timepoints)
+    #data_availability_matrix(pivoted_data, timepoints,'data_availability.png')
     #significance_matrix_ttest(valid_results, timepoints, 'significance_matrix.png')
     #significance_matrix_wilcoxon(valid_wilcoxon_results, timepoints, 'significance_matrix_wilcoxon.png')
     #create_forest_plot(valid_wilcoxon_results, 'mean_differences_summary.png')
 
     # Mixed effect model visualisations:
+    #data_availability_matrix(binned_df_pivot, order, filename='data_availability_matrix_binned.png')
 
+    # Plot the significance matrix
+    #sig_df, mask = emmeans_significance_matrix(py_pairs)
+    #plot_emmeans_sig_mat(sig_df, mask)  
 
     #mixed_effect_boxplot(new_df, result, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], chronic_timepoints=['3mo', '6mo', '12mo', '24mo'])
     
