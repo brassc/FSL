@@ -1522,8 +1522,8 @@ if __name__ == '__main__':
     #data_availability_matrix(binned_df_pivot, order, filename='data_availability_matrix_binned.png')
 
     # Plot the significance matrix
-    sig_df, mask = emmeans_significance_matrix(py_pairs)
-    plot_emmeans_sig_mat(sig_df, mask)  
+    #sig_df, mask = emmeans_significance_matrix(py_pairs)
+    #plot_emmeans_sig_mat(sig_df, mask)  
 
-    #mixed_effect_boxplot(new_df, result, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], chronic_timepoints=['3mo', '6mo', '12mo', '24mo'])
+    mixed_effect_boxplot(new_df, result, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], chronic_timepoints=['3mo', '6mo', '12mo', '24mo'])
    
