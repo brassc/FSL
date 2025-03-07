@@ -1510,20 +1510,20 @@ if __name__ == '__main__':
     # Raw data visualisations:
     ## create_timepoint_scatter(new_df)
     ## create_timepoint_violin(new_df)
-    #create_timepoint_boxplot(new_df)
+    create_timepoint_boxplot(new_df)
 
     # pairwise test visualisations:
-    #data_availability_matrix(pivoted_data, timepoints,'data_availability.png')
+    data_availability_matrix(pivoted_data, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], filename='data_availability.png')
     #significance_matrix_ttest(valid_results, timepoints, 'significance_matrix.png')
     #significance_matrix_wilcoxon(valid_wilcoxon_results, timepoints, 'significance_matrix_wilcoxon.png')
     #create_forest_plot(valid_wilcoxon_results, 'mean_differences_summary.png')
 
     # Mixed effect model visualisations:
-    #data_availability_matrix(binned_df_pivot, order, filename='data_availability_matrix_binned.png')
+    data_availability_matrix(binned_df_pivot, order, filename='data_availability_matrix_binned.png')
 
     # Plot the significance matrix
-    #sig_df, mask = emmeans_significance_matrix(py_pairs)
-    #plot_emmeans_sig_mat(sig_df, mask)  
+    sig_df, mask = emmeans_significance_matrix(py_pairs)
+    plot_emmeans_sig_mat(sig_df, mask)  
 
     mixed_effect_boxplot(new_df, result, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], chronic_timepoints=['3mo', '6mo', '12mo', '24mo'])
    
