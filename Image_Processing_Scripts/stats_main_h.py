@@ -1001,7 +1001,7 @@ def plot_emmeans_sig_mat_h(sig_df, mask):
                         j + 0.625, i + 0.45, "†", ha='left', va='center', fontsize=10
                     )
 
-    plt.title('Pairwise Comparison p-values from Mixed Effects Model (emmeans) for ellipse $h$ parameter')
+    plt.title('Pairwise comparison of p-values from mixed effects model (emmeans) for ellipse $h$ parameter')
     plt.grid(False)
     plt.tight_layout()
 
@@ -1056,6 +1056,10 @@ if __name__ == '__main__':
     data = data.drop(['sort_key', 'timepoint_order'], axis=1) # remove sorting column
     #print(data)
 
+    new_df = data.copy()
+    new_df['patient_id'] = new_df['patient_id'].astype(str)
+    new_df['timepoint'] = new_df['timepoint'].astype(str)
+    new_df['h_diff'] = new_df['h_diff'].astype(float)
 
     # Drop rows where h_diff is NaN
     new_df = new_df.dropna(subset=['h_diff']) # there should be no NaN values in h_diff, but just in case
