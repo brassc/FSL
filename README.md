@@ -46,6 +46,7 @@ To redo the analysis after changes in bet, the following should be ran:
 - `contour_plot_main.py` (on cluster only)
 - `ellipse_plot_main.py`
 - `ellipse_fit_analysis.py`
+- `area_main.py`
 - `longitudinal_main.py`
 - `stats_main.py`
 
