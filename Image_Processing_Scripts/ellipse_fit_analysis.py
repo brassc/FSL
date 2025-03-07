@@ -1289,8 +1289,7 @@ def main():
         print(f"  Average Dice: {metrics_df[f'{name}_dice'].mean():.3f}")
 
     print(metrics_df.columns)
-
-    
+        
     # Create summary visualizations
     create_summary_visualisations(metrics_df, output_dir)
 
