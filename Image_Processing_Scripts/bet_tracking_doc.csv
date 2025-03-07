@@ -51,8 +51,6 @@ patient id, timepoint, bet params, crop, manual modification, inclusion (1/0)
 6DBs724, 00490, -f 0.1, 32, MODIFIED=YES
 6DBs724, 04311, -f 0.4, 32
 6DBs724, 08888, -f 0.4, 32
-6shy992, 03564, -f 0.4 -R, 32, MODIFIED=YES
-6shy992, 11055, -f 0.4, 30, MODIFIED=YES
 7NPB553, 00086, -f 0.4, 17
 7NPB553, 00086, -f 0.5, 17
 8EpS656, 00336, -f 0.4, 27
