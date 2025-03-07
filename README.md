@@ -34,7 +34,7 @@ Note: absolute paths specified so runs from repo location.
 - bash script: `manualeditbet.sh` 
 - implementation for cutting: `./manualeditbet.sh -p <patient id> -t <timepoint> -f <segmented area to be removed .nii.gz file>` 
 - implementation for adding: `./manualeditbet.sh -p <patient id> -t <timepoint> -a <segmented area to be added .nii.gz file>`
-- recorded in `tracking_doc.csv`
+- recorded in `bet_tracking_doc.csv`
 
 
 # Contour points extraction #
