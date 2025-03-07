@@ -1177,6 +1177,7 @@ def main():
         'ref_area_ratio', 'ref_iou', 'ref_dice', 'ref_area_diff_pct'
     ])
     
+    
     # Process each row
     for i in range(len(data)):
         print(f"Processing row {i+1}/{len(data)}: Patient {data['patient_id'].iloc[i]} at timepoint {data['timepoint'].iloc[i]}")
@@ -1289,6 +1290,8 @@ def main():
         print(f"  Average Dice: {metrics_df[f'{name}_dice'].mean():.3f}")
 
     print(metrics_df.columns)
+    # print all patient ids in metrics_df row 'patient_id'
+    print(metrics_df['patient_id'])
         
     # Create summary visualizations
     create_summary_visualisations(metrics_df, output_dir)
