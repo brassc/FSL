@@ -96,6 +96,7 @@ def calculate_rmse_ellipse_fit(contour_x, contour_y, ellipse_x, ellipse_y, h_par
     Returns:
     float: RMSE value
     """
+    contour_x, contour_y = resample(ellipse_x, contour_x, contour_y)
     distances = []
     
     # For each contour point, find the minimum distance to the ellipse
@@ -105,8 +106,91 @@ def calculate_rmse_ellipse_fit(contour_x, contour_y, ellipse_x, ellipse_y, h_par
         distances.append(dist)
     
     # Calculate RMSE
+
     rmse = np.sqrt(np.mean(np.array(distances)**2))
+    print(f"RMSE raw values: {distances[:5]}, calculated RMSE: {rmse}")
     return rmse
+
+
+def resample(ellipse_x, contour_x, contour_y):
+    # Check for empty or single-point contours
+    if len(contour_x) <= 1:
+        print("Warning: Contour has insufficient points for resampling")
+        return contour_x, contour_y
+        
+    num_ellipse_points = len(ellipse_x)
+    print(f"Ellipse points: {num_ellipse_points}, Contour points: {len(contour_x)}")
+    
+    # Create a continuous contour representation by connecting points
+    # with straight lines and resampling
+    resampled_x = []
+    resampled_y = []
+    
+    # Calculate the total length of the contour
+    total_length = 0
+    segment_lengths = []
+    
+    for i in range(len(contour_x) - 1):
+        dx = contour_x[i+1] - contour_x[i]
+        dy = contour_y[i+1] - contour_y[i]
+        segment_length = np.sqrt(dx**2 + dy**2)
+        segment_lengths.append(segment_length)
+        total_length += segment_length
+    
+    # Check if we have valid segment lengths
+    if total_length <= 0 or len(segment_lengths) == 0:
+        print("Warning: Zero total length or no segments found")
+        return contour_x, contour_y
+    
+    print(f"Total contour length: {total_length}, Segments: {len(segment_lengths)}")
+    
+    # Resample at equal intervals along the contour
+    for i in range(num_ellipse_points):
+        # Position along the contour (normalized)
+        target_dist = (i / (num_ellipse_points - 1 if num_ellipse_points > 1 else 1)) * total_length
+        
+        # Find which segment contains this position
+        segment_idx = 0
+        cumulative_length = 0
+        
+        while segment_idx < len(segment_lengths) and cumulative_length + segment_lengths[segment_idx] < target_dist:
+            cumulative_length += segment_lengths[segment_idx]
+            segment_idx += 1
+        
+        # Handle edge case
+        if segment_idx >= len(segment_lengths):
+            # Add the last point
+            resampled_x.append(contour_x[-1])
+            resampled_y.append(contour_y[-1])
+            continue
+        
+        # Calculate position along current segment
+        segment_pos = (target_dist - cumulative_length) / segment_lengths[segment_idx]
+        
+        # Get the segment's start and end points
+        start_idx = segment_idx
+        end_idx = segment_idx + 1
+        
+        # Ensure end_idx is valid
+        if end_idx >= len(contour_x):
+            # Just use the last point for open contours
+            end_idx = len(contour_x) - 1
+        
+        # Interpolate to get coordinates
+        x = contour_x[start_idx] + segment_pos * (contour_x[end_idx] - contour_x[start_idx])
+        y = contour_y[start_idx] + segment_pos * (contour_y[end_idx] - contour_y[start_idx])
+        
+        resampled_x.append(x)
+        resampled_y.append(y)
+    
+    print(f"Generated {len(resampled_x)} resampled points")
+    
+    # Ensure we have multiple points
+    if len(resampled_x) <= 1:
+        print("Warning: Resampling produced too few points, returning original contour")
+        return contour_x, contour_y
+        
+    return resampled_x, resampled_y
 
 def calculate_mae_ellipse_fit(contour_x, contour_y, ellipse_x, ellipse_y, h_param, a_param):
     """
@@ -121,8 +205,10 @@ def calculate_mae_ellipse_fit(contour_x, contour_y, ellipse_x, ellipse_y, h_para
     Returns:
     float: MAE value
     """
+    # resample
+    contour_x, contour_y = resample(ellipse_x, contour_x, contour_y)
+
     distances = []
-    
     # For each contour point, find the minimum distance to the ellipse
     for i in range(len(contour_x)):
         point = (contour_x[i], contour_y[i])
@@ -131,6 +217,7 @@ def calculate_mae_ellipse_fit(contour_x, contour_y, ellipse_x, ellipse_y, h_para
     
     # Calculate MAE
     mae = np.mean(np.abs(distances))
+    print(f"MAE raw values: {distances[:5]}, calculated MAE: {mae}")
     return mae
 
 def calculate_max_error_ellipse_fit(contour_x, contour_y, ellipse_x, ellipse_y, h_param, a_param):
@@ -829,10 +916,27 @@ def create_summary_visualisations(metrics_df, output_dir):
     deformed_q3 = np.percentile(deformed_rmse, 75)
     reference_q1 = np.percentile(reference_rmse, 25)
     reference_q3 = np.percentile(reference_rmse, 75)
+    deformed_median = np.median(deformed_rmse)
+    reference_median = np.median(reference_rmse)
+    combined_median = np.median(np.concatenate([deformed_rmse, reference_rmse]))
+    print(f"Combined median: {combined_median}")
 
     # Add thin horizontal lines for median
-    ax1.axhline(y=deformed_median, xmin=0.2, xmax=0.3, color=def_color, linestyle='-', linewidth=1)
-    ax1.axhline(y=reference_median, xmin=0.7, xmax=0.8, color=ref_color, linestyle='-', linewidth=1)
+    #ax1.axhline(y=deformed_median, xmin=0.15, xmax=0.35, color=def_color, linestyle='-', linewidth=1)
+    #ax1.axhline(y=reference_median, xmin=0.7, xmax=0.8, color=ref_color, linestyle='-', linewidth=1)
+
+    # add median text
+    # Instead of horizontal lines, add text labels for medians
+    # Create a boxed annotation for RMSE plot
+    props = dict(boxstyle='round,pad=0.5', facecolor='white', alpha=0.8, edgecolor='gray')
+    median_text = (f"Deformed median: {deformed_median:.2f}\n"
+                f"Reference median: {reference_median:.2f}\n"
+                f"Combined median: {combined_median:.2f}")
+
+    # Position the text box in the upper left corner
+    ax1.text(0.05, 0.95, median_text, transform=ax1.transAxes, fontsize=9,
+            verticalalignment='top', bbox=props)
+
 
     # Set titles and labels
     ax1.set_ylim(0, 10)
@@ -888,8 +992,8 @@ def create_summary_visualisations(metrics_df, output_dir):
     
     # Final adjustments
     plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, 'scatter_distribution.png'), dpi=300)
-    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/scatter_distribution.pdf', dpi=300)
+    plt.savefig(os.path.join(output_dir, 'scatter_distribution_resampled.png'), dpi=300)
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/scatter_distribution_resampled.pdf', dpi=300)
     plt.close()
 
     # Create separate figures for RMSE and MAE plots
