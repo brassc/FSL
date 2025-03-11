@@ -919,7 +919,7 @@ def create_summary_visualisations(metrics_df, output_dir):
     deformed_median = np.median(deformed_rmse)
     reference_median = np.median(reference_rmse)
     combined_median = np.median(np.concatenate([deformed_rmse, reference_rmse]))
-    print(f"Combined median: {combined_median}")
+    print(f"Combined RMSE median: {combined_median}")
 
     # Add thin horizontal lines for median
     #ax1.axhline(y=deformed_median, xmin=0.15, xmax=0.35, color=def_color, linestyle='-', linewidth=1)
@@ -934,7 +934,7 @@ def create_summary_visualisations(metrics_df, output_dir):
                 f"Combined median: {combined_median:.2f}")
 
     # Position the text box in the upper left corner
-    ax1.text(0.05, 0.95, median_text, transform=ax1.transAxes, fontsize=9,
+    ax1.text(0.025, 0.95, median_text, transform=ax1.transAxes, fontsize=9,
             verticalalignment='top', bbox=props)
 
 
@@ -1030,18 +1030,38 @@ def create_summary_visualisations(metrics_df, output_dir):
     # Calculate statistics
     deformed_median = np.median(deformed_rmse)
     reference_median = np.median(reference_rmse)
+    combined_median = np.median(np.concatenate([deformed_rmse, reference_rmse]))
+
     deformed_q1 = np.percentile(deformed_rmse, 25)
     deformed_q3 = np.percentile(deformed_rmse, 75)
     reference_q1 = np.percentile(reference_rmse, 25)
     reference_q3 = np.percentile(reference_rmse, 75)
     # Add thin horizontal lines for median
-    ax1.axhline(y=deformed_median, xmin=0.2, xmax=0.3, color=def_color, linestyle='-', linewidth=1)
-    ax1.axhline(y=reference_median, xmin=0.7, xmax=0.8, color=ref_color, linestyle='-', linewidth=1)
+    #ax1.axhline(y=deformed_median, xmin=0.2, xmax=0.3, color=def_color, linestyle='-', linewidth=1)
+    #ax1.axhline(y=reference_median, xmin=0.7, xmax=0.8, color=ref_color, linestyle='-', linewidth=1)
     # Set titles and labels
     ax1.set_ylim(0, 10)
     ax1.set_title('RMSE by Configuration')
     ax1.set_xlabel('Configuration')
     ax1.set_ylabel('Root Mean Square Error')
+
+
+    # Add thin horizontal lines for median
+    #ax1.axhline(y=deformed_median, xmin=0.15, xmax=0.35, color=def_color, linestyle='-', linewidth=1)
+    #ax1.axhline(y=reference_median, xmin=0.7, xmax=0.8, color=ref_color, linestyle='-', linewidth=1)
+
+    # add median text
+    # Instead of horizontal lines, add text labels for medians
+    # Create a boxed annotation for RMSE plot
+    props = dict(boxstyle='round,pad=0.5', facecolor='white', alpha=0.8, edgecolor='gray')
+    median_text = (f"Deformed median: {deformed_median:.2f}\n"
+                f"Reference median: {reference_median:.2f}\n"
+                f"Combined median: {combined_median:.2f}")
+
+    # Position the text box in the upper left corner
+    plt.text(0.025, 0.95, median_text, transform=ax1.transAxes, fontsize=9,
+            verticalalignment='top', bbox=props)
+
 
     # Save RMSE figure
     plt.tight_layout()
@@ -1063,6 +1083,7 @@ def create_summary_visualisations(metrics_df, output_dir):
     # Get data for each configuration
     deformed_mae = mae_data[mae_data['configuration'] == 'Deformed']['metric_value'].values
     reference_mae = mae_data[mae_data['configuration'] == 'Reference']['metric_value'].values
+    
     # Add only scatter points for Deformed
     ax2.scatter(
         [0] * len(deformed_mae),
@@ -1082,9 +1103,22 @@ def create_summary_visualisations(metrics_df, output_dir):
     # Calculate statistics
     deformed_median_mae = np.median(deformed_mae)
     reference_median_mae = np.median(reference_mae)
+    combined_median_mae = np.median(np.concatenate([deformed_mae, reference_mae]))
+    
+    # Create a boxed annotation for RMSE plot
+    props = dict(boxstyle='round,pad=0.5', facecolor='white', alpha=0.8, edgecolor='gray')
+    median_text = (f"Deformed median: {deformed_median_mae:.2f}\n"
+                f"Reference median: {reference_median_mae:.2f}\n"
+                f"Combined median: {combined_median_mae:.2f}")
+
+    # Position the text box in the upper left corner
+    plt.text(0.025, 0.95, median_text, transform=ax2.transAxes, fontsize=9,
+            verticalalignment='top', bbox=props)
+    
+    
     # Add thin horizontal lines for median
-    ax2.axhline(y=deformed_median_mae, xmin=0.2, xmax=0.3, color=def_color, linestyle='-', linewidth=1)
-    ax2.axhline(y=reference_median_mae, xmin=0.7, xmax=0.8, color=ref_color, linestyle='-', linewidth=1)
+    #ax2.axhline(y=deformed_median_mae, xmin=0.2, xmax=0.3, color=def_color, linestyle='-', linewidth=1)
+    #ax2.axhline(y=reference_median_mae, xmin=0.7, xmax=0.8, color=ref_color, linestyle='-', linewidth=1)
     # Set titles and labels
     ax2.set_title('MAE by Configuration')
     ax2.set_xlabel('Configuration')
