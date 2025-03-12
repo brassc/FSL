@@ -12,140 +12,82 @@ def resample(contour_x, contour_y):
     # Check for empty or single-point contours
     #return contour_x, contour_y # skip resampling
 
-    if len(contour_x) <= 1:
-        print("Warning: Contour has insufficient points for resampling")
-        return contour_x, contour_y
+    # if len(contour_x) <= 1:
+    #     print("Warning: Contour has insufficient points for resampling")
+    #     return contour_x, contour_y
     
-    # sort contour_x, contour_y by contour_x
-    sorted_indices = np.argsort(contour_x)
-    contour_x = contour_x[sorted_indices]
-    contour_y = contour_y[sorted_indices]
+    # # sort contour_x, contour_y by contour_x
+    # sorted_indices = np.argsort(contour_x)
+    # contour_x = contour_x[sorted_indices]
+    # contour_y = contour_y[sorted_indices]
 
-    # calculate gaps between adjacent x points
-    x_gaps = np.diff(contour_x)
+    # # calculate gaps between adjacent x points
+    # x_gaps = np.diff(contour_x)
 
-    # identify large gaps that need resampling
-    # if min_gap_threshold is not provided, calculate it as a percentage of the range
-    x_range=max(contour_x)-min(contour_x)
-    min_gap_threshold = 0.1*x_range # 10% of the range
+    # # identify large gaps that need resampling
+    # # if min_gap_threshold is not provided, calculate it as a percentage of the range
+    # x_range=max(contour_x)-min(contour_x)
+    # min_gap_threshold = 0.1*x_range # 10% of the range
 
-    # Make sure we have a reasonable threshold
-    if min_gap_threshold <= 0:
-        return contour_x, contour_y
+    # # Make sure we have a reasonable threshold
+    # if min_gap_threshold <= 0:
+    #     return contour_x, contour_y
 
-    large_gaps = np.where(x_gaps > min_gap_threshold)[0]
+    # large_gaps = np.where(x_gaps > min_gap_threshold)[0]
 
-    # if there are no large gaps, return the original contour
-    if len(large_gaps) == 0:
-        return contour_x, contour_y
+    # # if there are no large gaps, return the original contour
+    # if len(large_gaps) == 0:
+    #     return contour_x, contour_y
     
-    # resample the contour at the large gaps
-    resampled_x = contour_x.copy().tolist()
-    resampled_y = contour_y.copy().tolist()
+    # # resample the contour at the large gaps
+    # resampled_x = contour_x.copy().tolist()
+    # resampled_y = contour_y.copy().tolist()
 
-    # keep track of how many points added
-    points_added = 0
+    # # keep track of how many points added
+    # points_added = 0
 
-    # For each large gap, add interpolated points
-    for idx in large_gaps:
-        # current gap
-        gap_size=x_gaps[idx]
+    # # For each large gap, add interpolated points
+    # for idx in large_gaps:
+    #     # current gap
+    #     gap_size=x_gaps[idx]
 
-        # calculate how manyt points to add proportional to the gap size
-        num_points_to_add = max(1, int(gap_size / min_gap_threshold)-1)
-        num_points_to_add = min(num_points_to_add, 3) # limit to 10 points avoid overfitting
+    #     # calculate how manyt points to add proportional to the gap size
+    #     num_points_to_add = max(1, int(gap_size / min_gap_threshold)-1)
+    #     num_points_to_add = min(num_points_to_add, 3) # limit to 10 points avoid overfitting
 
-        # current points
-        x1, y1 = contour_x[idx], contour_y[idx]
-        x2, y2 = contour_x[idx+1], contour_y[idx+1]
+    #     # current points
+    #     x1, y1 = contour_x[idx], contour_y[idx]
+    #     x2, y2 = contour_x[idx+1], contour_y[idx+1]
 
-        # insert interpolated points
-        for i in range(1, num_points_to_add+1):
-            t= i/(num_points_to_add+1)
-            new_x=x1+t*(x2-x1)
-            new_y=y1+t*(y2-y1)
+    #     # insert interpolated points
+    #     for i in range(1, num_points_to_add+1):
+    #         t= i/(num_points_to_add+1)
+    #         new_x=x1+t*(x2-x1)
+    #         new_y=y1+t*(y2-y1)
 
-            # insert at correct position
-            insert_idx = idx + 1 + points_added
-            resampled_x.insert(insert_idx, new_x)
-            resampled_y.insert(insert_idx, new_y)
-            points_added += 1
+    #         # insert at correct position
+    #         insert_idx = idx + 1 + points_added
+    #         resampled_x.insert(insert_idx, new_x)
+    #         resampled_y.insert(insert_idx, new_y)
+    #         points_added += 1
 
-    # sort points correctly
-    sorted_indices = np.argsort(resampled_x)
-    resampled_x = np.array(resampled_x)[sorted_indices]
-    resampled_y = np.array(resampled_y)[sorted_indices]
+    # # sort points correctly
+    # sorted_indices = np.argsort(resampled_x)
+    # resampled_x = np.array(resampled_x)[sorted_indices]
+    # resampled_y = np.array(resampled_y)[sorted_indices]
 
-    print(f"added {points_added} points in large gaps")
-    plt.scatter(resampled_x, resampled_y, color='green', marker='o', linestyle='-', s=20)
-    plt.scatter(contour_x, contour_y, color='blue', s=5)
-    plt.gca().set_aspect('equal', adjustable='box')
-    plt.close()
+    # print(f"added {points_added} points in large gaps")
+    # plt.scatter(resampled_x, resampled_y, color='green', marker='o', linestyle='-', s=20)
+    # plt.scatter(contour_x, contour_y, color='blue', s=5)
+    # plt.gca().set_aspect('equal', adjustable='box')
+    # plt.close()
 
-    # downsample - prevent overfitting
-        # --- DOWNSAMPLE IF TOO MANY POINTS ---
-    max_points = 25
-    if len(resampled_x) > max_points:
-        print(f"Downsampling from {len(resampled_x)} to {max_points} points")
-        
-        # Preserve first and last points
-        first_x, first_y = resampled_x[0], resampled_y[0]
-        last_x, last_y = resampled_x[-1], resampled_y[-1]
-        resample_x_copy = resampled_x.copy()
-        resample_y_copy = resampled_y.copy()
-
-        # Calculate distances between adjacent points
-        distances = np.diff(resampled_x)
-        
-        # Create an array to track point density (smaller distance = higher density)
-        # For each point, calculate the average distance to its neighbors
-        point_densities = np.ones(len(resampled_x))
-        for i in range(1, len(resampled_x)-1):
-            point_densities[i] = (distances[i-1] + distances[i]) / 2
-        
-        # Set endpoint densities to their adjacent points
-        point_densities[0] = distances[0]
-        point_densities[-1] = distances[-1]
-        
-        # Sort points by density (but exclude first and last points)
-        middle_indices = np.arange(1, len(resampled_x)-1)
-        middle_densities = point_densities[middle_indices]
-        
-        # Sort middle points by density (ascending)
-        sorted_by_density = middle_indices[np.argsort(middle_densities)]
-        
-        # Determine how many points to remove
-        points_to_keep = min(max_points, len(resampled_x))
-        points_to_remove = len(resampled_x) - points_to_keep
-        
-        # Select the densest points to remove (those with smallest distances)
-        if points_to_remove > 0:
-            points_to_remove_indices = sorted_by_density[:points_to_remove]
-            
-            # Create a mask to keep non-removed points
-            mask = np.ones(len(resampled_x), dtype=bool)
-            mask[points_to_remove_indices] = False
-            
-            # Keep only the points not marked for removal
-            resampled_x = resampled_x[mask]
-            resampled_y = resampled_y[mask]
-            
-            print(f"Removed {points_to_remove} points from densest regions")
-            print(f"Final point count: {len(resampled_x)}")
-
-
-
-        plt.scatter(resampled_x, resampled_y, color='green', marker='o', linestyle='-', s=50)
-        plt.scatter(contour_x, contour_y, color='blue', s=10)
-        plt.scatter(resample_x_copy, resample_y_copy, color='orange', marker='o', linestyle='-', s=2)
-        plt.gca().set_aspect('equal', adjustable='box')
-        plt.close()
+    
 
 
 
 
-
-    return np.array(resampled_x), np.array(resampled_y)
+    # return np.array(resampled_x), np.array(resampled_y)
 
 
 
@@ -154,6 +96,20 @@ def resample(contour_x, contour_y):
         return contour_x, contour_y
     
     print(f"Contour points: {len(contour_x)}")
+
+    plt.scatter(contour_x, contour_y, color='blue', s=5)
+    plt.gca().set_aspect('equal', adjustable='box')
+    
+      
+    # hardcoded positions for skull end points
+    first_point_x=contour_x[-2]
+    first_point_y=contour_y[-2]
+    last_point_x=contour_x[-1]
+    last_point_y=contour_y[-1]
+    # plt.scatter(first_point_x, first_point_y, color='orange', s=50)
+    # plt.scatter(last_point_x, last_point_y, color='orange', s=50)
+    # plt.show()
+
 
     # sort (contour_x, contour_y) by contour_x
     sorted_indices = np.argsort(contour_x)
@@ -238,8 +194,8 @@ def resample(contour_x, contour_y):
         resampled_y.append(y)
     
     # Explicitly add the last point to ensure it's preserved
-    resampled_x.append(contour_x[-1])
-    resampled_y.append(contour_y[-1])
+    resampled_x.append(last_point_x)
+    resampled_y.append(last_point_y)
     
     print(f"Generated {len(resampled_x)} resampled points")
     
@@ -249,16 +205,15 @@ def resample(contour_x, contour_y):
         return contour_x, contour_y
     
     # Downsample if necessary, preserve end points
-    max_points = 50
+    max_points = 10
     resample_x_copy = resampled_x.copy()
     resample_y_copy = resampled_y.copy()
     if len(resampled_x) > max_points:
         print(f"Downsampling from {len(resampled_x)} to {max_points} points")
         # Get first point
         first_x, first_y = resampled_x[0], resampled_y[0]
-        # Get last point
-        last_x, last_y = resampled_x[-1], resampled_y[-1]
-        
+        # Find the last point where y=0 (or very close to 0)
+                
         # Downsample the middle points
         step = (len(resampled_x) - 2) // (max_points - 2)
         middle_indices = range(1, len(resampled_x) - 1, step)
@@ -266,14 +221,14 @@ def resample(contour_x, contour_y):
         middle_y = [resampled_y[i] for i in middle_indices]
         
         # Combine the points
-        resampled_x = [first_x] + middle_x + [last_x]
-        resampled_y = [first_y] + middle_y + [last_y]
-    # plt.scatter(first_x, first_y, color='orange', s=50)
-    # plt.scatter(last_x, last_y, color='green', s=10)
-    # plt.scatter(resampled_x, resampled_y, color='green', marker='o', linestyle='-', s=20)
-    # plt.scatter(contour_x, contour_y, color='blue', s=5)
-    # plt.gca().set_aspect('equal', adjustable='box')
-    # plt.show()
+        resampled_x = [first_point_x] + middle_x + [last_point_x]
+        resampled_y = [first_point_y] + middle_y + [last_point_y]
+    plt.scatter(first_point_x, first_point_y, color='orange', s=50)
+    plt.scatter(last_point_x, last_point_y, color='orange', s=50)
+    plt.scatter(resampled_x, resampled_y, color='green', marker='o', linestyle='-', s=20)
+    plt.scatter(contour_x, contour_y, color='blue', s=5)
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.close()
 
     
     return np.array(resampled_x), np.array(resampled_y)
@@ -778,12 +733,12 @@ def fit_ellipse(data):
     
 if __name__=='__main__':
     ## MAIN SCRIPT TO PLOT ELLIPSE FORM
-    data = pd.read_csv('Image_Processing_Scripts/data_entries.csv')
-    side_data=pd.read_csv('Image_Processing_Scripts/included_patient_info.csv')
-    ellipse_data_filename='ellipse_data.csv'
-    # data = pd.read_csv('Image_Processing_Scripts/batch2_data_entries.csv')
-    # side_data=pd.read_csv('Image_Processing_Scripts/batch2_included_patient_info.csv')
-    # ellipse_data_filename='batch2_ellipse_data.csv'
+    # data = pd.read_csv('Image_Processing_Scripts/data_entries.csv')
+    # side_data=pd.read_csv('Image_Processing_Scripts/included_patient_info.csv')
+    # ellipse_data_filename='ellipse_data.csv'
+    data = pd.read_csv('Image_Processing_Scripts/batch2_data_entries.csv')
+    side_data=pd.read_csv('Image_Processing_Scripts/batch2_included_patient_info.csv')
+    ellipse_data_filename='batch2_ellipse_data.csv'
 
     # filtered according to exclusion flag (first column)
     side_data=side_data[side_data['excluded?'] == 0]
