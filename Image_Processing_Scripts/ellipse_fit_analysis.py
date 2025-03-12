@@ -1226,7 +1226,7 @@ def main():
     output_dir = 'Image_Processing_Scripts/ellipse_fit_analysis'
 
     # flags
-    plot_ellipse_flag = False
+    plot_ellipse_flag = True
     
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
