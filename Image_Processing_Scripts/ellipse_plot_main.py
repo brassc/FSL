@@ -8,6 +8,94 @@ from scipy.linalg import eig
 from scipy.optimize import curve_fit
 
 
+def resample(contour_x, contour_y):
+    # Check for empty or single-point contours
+    if len(contour_x) <= 1:
+        print("Warning: Contour has insufficient points for resampling")
+        return contour_x, contour_y
+    
+    print(f"Contour points: {len(contour_x)}")
+    
+    # Create a continuous contour representation by connecting points
+    # with straight lines and resampling
+    resampled_x = []
+    resampled_y = []
+    
+    # Calculate the total length of the contour
+    total_length = 0
+    segment_lengths = []
+    for i in range(len(contour_x) - 1):
+        dx = contour_x[i+1] - contour_x[i]
+        dy = contour_y[i+1] - contour_y[i]
+        segment_length = np.sqrt(dx**2 + dy**2)
+        segment_lengths.append(segment_length)
+        total_length += segment_length
+    
+    # Check if we have valid segment lengths
+    if total_length <= 0 or len(segment_lengths) == 0:
+        print("Warning: Zero total length or no segments found")
+        return contour_x, contour_y
+    
+    # Determine number of points based on minimum segment length
+    min_segment_length = min(segment_lengths)
+    try:
+        num_points = max(int(total_length / min_segment_length), len(contour_x))
+    except OverflowError:
+        print("Warning: Overflow error calculating number of points")
+        # choose next smallest segment size as minimum segment length
+        min_segment_length = sorted(segment_lengths)[1]
+        num_points = max(int(total_length / min_segment_length), len(contour_x))
+    
+    print(f"Total contour length: {total_length}, Segments: {len(segment_lengths)}")
+    print(f"Using {num_points} points based on minimum segment length of {min_segment_length:.4f}")
+    
+    # Resample at equal intervals along the contour
+    for i in range(num_points):
+        # Position along the contour (normalized)
+        target_dist = (i / (num_points - 1 if num_points > 1 else 1)) * total_length
+        
+        # Find which segment contains this position
+        segment_idx = 0
+        cumulative_length = 0
+        while segment_idx < len(segment_lengths) and cumulative_length + segment_lengths[segment_idx] < target_dist:
+            cumulative_length += segment_lengths[segment_idx]
+            segment_idx += 1
+        
+        # Handle edge case
+        if segment_idx >= len(segment_lengths):
+            # Add the last point
+            resampled_x.append(contour_x[-1])
+            resampled_y.append(contour_y[-1])
+            continue
+        
+        # Calculate position along current segment
+        segment_pos = (target_dist - cumulative_length) / segment_lengths[segment_idx]
+        
+        # Get the segment's start and end points
+        start_idx = segment_idx
+        end_idx = segment_idx + 1
+        
+        # Ensure end_idx is valid
+        if end_idx >= len(contour_x):
+            # Just use the last point for open contours
+            end_idx = len(contour_x) - 1
+        
+        # Interpolate to get coordinates
+        x = contour_x[start_idx] + segment_pos * (contour_x[end_idx] - contour_x[start_idx])
+        y = contour_y[start_idx] + segment_pos * (contour_y[end_idx] - contour_y[start_idx])
+        
+        resampled_x.append(x)
+        resampled_y.append(y)
+    
+    print(f"Generated {len(resampled_x)} resampled points")
+    
+    # Ensure we have multiple points
+    if len(resampled_x) <= 1:
+        print("Warning: Resampling produced too few points, returning original contour")
+        return contour_x, contour_y
+    
+    return np.array(resampled_x), np.array(resampled_y)
+
 def set_publication_style():
     """Set matplotlib parameters for publication-quality figures."""
     plt.rcParams.update({
@@ -615,6 +703,15 @@ if __name__=='__main__':
             transformed_data=transformed_data.reset_index(drop=True)
             print(f"pre function reset index: {transformed_data.index}")
 
+        print("transformed data.columns: \n", transformed_data.columns)
+
+        ##  apply resampling function for the transformed_data row we are working with (row [0])
+        h_def = transformed_data.loc[0, 'h_def_cent']
+        v_def = transformed_data.loc[0, 'v_def_cent']
+        resampled_x, resampled_y = resample(h_def, v_def)
+        transformed_data.at[0, 'h_def_cent'] = resampled_x
+        transformed_data.at[0, 'v_def_cent'] = resampled_y
+        
 
         ellipse_data = fit_ellipse(transformed_data)
         print(f"transformed_data_shape post ellipse: {ellipse_data.shape}")
