@@ -53,7 +53,7 @@ def resample(contour_x, contour_y):
 
         # calculate how manyt points to add proportional to the gap size
         num_points_to_add = max(1, int(gap_size / min_gap_threshold)-1)
-        num_points_to_add = min(num_points_to_add, 10) # limit to 3 points avoid overfitting
+        num_points_to_add = min(num_points_to_add, 3) # limit to 10 points avoid overfitting
 
         # current points
         x1, y1 = contour_x[idx], contour_y[idx]
@@ -716,9 +716,13 @@ def fit_ellipse(data):
     
 if __name__=='__main__':
     ## MAIN SCRIPT TO PLOT ELLIPSE FORM
-    data = pd.read_csv('Image_Processing_Scripts/data_entries.csv')
-    side_data=pd.read_csv('Image_Processing_Scripts/included_patient_info.csv')
-    ellipse_data_filename='ellipse_data.csv'
+    # data = pd.read_csv('Image_Processing_Scripts/data_entries.csv')
+    # side_data=pd.read_csv('Image_Processing_Scripts/included_patient_info.csv')
+    # ellipse_data_filename='ellipse_data.csv'
+    data = pd.read_csv('Image_Processing_Scripts/batch2_data_entries.csv')
+    side_data=pd.read_csv('Image_Processing_Scripts/batch2_included_patient_info.csv')
+    ellipse_data_filename='batch2_ellipse_data.csv'
+
     # filtered according to exclusion flag (first column)
     side_data=side_data[side_data['excluded?'] == 0]
     side_data = side_data.rename(columns={' side (L/R)': 'side'})
