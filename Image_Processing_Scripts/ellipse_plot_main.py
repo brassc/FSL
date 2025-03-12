@@ -82,6 +82,68 @@ def resample(contour_x, contour_y):
     plt.gca().set_aspect('equal', adjustable='box')
     plt.close()
 
+    # downsample - prevent overfitting
+        # --- DOWNSAMPLE IF TOO MANY POINTS ---
+    max_points = 25
+    if len(resampled_x) > max_points:
+        print(f"Downsampling from {len(resampled_x)} to {max_points} points")
+        
+        # Preserve first and last points
+        first_x, first_y = resampled_x[0], resampled_y[0]
+        last_x, last_y = resampled_x[-1], resampled_y[-1]
+        resample_x_copy = resampled_x.copy()
+        resample_y_copy = resampled_y.copy()
+
+        # Calculate distances between adjacent points
+        distances = np.diff(resampled_x)
+        
+        # Create an array to track point density (smaller distance = higher density)
+        # For each point, calculate the average distance to its neighbors
+        point_densities = np.ones(len(resampled_x))
+        for i in range(1, len(resampled_x)-1):
+            point_densities[i] = (distances[i-1] + distances[i]) / 2
+        
+        # Set endpoint densities to their adjacent points
+        point_densities[0] = distances[0]
+        point_densities[-1] = distances[-1]
+        
+        # Sort points by density (but exclude first and last points)
+        middle_indices = np.arange(1, len(resampled_x)-1)
+        middle_densities = point_densities[middle_indices]
+        
+        # Sort middle points by density (ascending)
+        sorted_by_density = middle_indices[np.argsort(middle_densities)]
+        
+        # Determine how many points to remove
+        points_to_keep = min(max_points, len(resampled_x))
+        points_to_remove = len(resampled_x) - points_to_keep
+        
+        # Select the densest points to remove (those with smallest distances)
+        if points_to_remove > 0:
+            points_to_remove_indices = sorted_by_density[:points_to_remove]
+            
+            # Create a mask to keep non-removed points
+            mask = np.ones(len(resampled_x), dtype=bool)
+            mask[points_to_remove_indices] = False
+            
+            # Keep only the points not marked for removal
+            resampled_x = resampled_x[mask]
+            resampled_y = resampled_y[mask]
+            
+            print(f"Removed {points_to_remove} points from densest regions")
+            print(f"Final point count: {len(resampled_x)}")
+
+
+
+        plt.scatter(resampled_x, resampled_y, color='green', marker='o', linestyle='-', s=50)
+        plt.scatter(contour_x, contour_y, color='blue', s=10)
+        plt.scatter(resample_x_copy, resample_y_copy, color='orange', marker='o', linestyle='-', s=2)
+        plt.gca().set_aspect('equal', adjustable='box')
+        plt.close()
+
+
+
+
 
     return np.array(resampled_x), np.array(resampled_y)
 
