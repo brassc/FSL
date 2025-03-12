@@ -10,6 +10,83 @@ from scipy.optimize import curve_fit
 
 def resample(contour_x, contour_y):
     # Check for empty or single-point contours
+    #return contour_x, contour_y # skip resampling
+
+    if len(contour_x) <= 1:
+        print("Warning: Contour has insufficient points for resampling")
+        return contour_x, contour_y
+    
+    # sort contour_x, contour_y by contour_x
+    sorted_indices = np.argsort(contour_x)
+    contour_x = contour_x[sorted_indices]
+    contour_y = contour_y[sorted_indices]
+
+    # calculate gaps between adjacent x points
+    x_gaps = np.diff(contour_x)
+
+    # identify large gaps that need resampling
+    # if min_gap_threshold is not provided, calculate it as a percentage of the range
+    x_range=max(contour_x)-min(contour_x)
+    min_gap_threshold = 0.1*x_range # 10% of the range
+
+    # Make sure we have a reasonable threshold
+    if min_gap_threshold <= 0:
+        return contour_x, contour_y
+
+    large_gaps = np.where(x_gaps > min_gap_threshold)[0]
+
+    # if there are no large gaps, return the original contour
+    if len(large_gaps) == 0:
+        return contour_x, contour_y
+    
+    # resample the contour at the large gaps
+    resampled_x = contour_x.copy().tolist()
+    resampled_y = contour_y.copy().tolist()
+
+    # keep track of how many points added
+    points_added = 0
+
+    # For each large gap, add interpolated points
+    for idx in large_gaps:
+        # current gap
+        gap_size=x_gaps[idx]
+
+        # calculate how manyt points to add proportional to the gap size
+        num_points_to_add = max(1, int(gap_size / min_gap_threshold)-1)
+        num_points_to_add = min(num_points_to_add, 10) # limit to 3 points avoid overfitting
+
+        # current points
+        x1, y1 = contour_x[idx], contour_y[idx]
+        x2, y2 = contour_x[idx+1], contour_y[idx+1]
+
+        # insert interpolated points
+        for i in range(1, num_points_to_add+1):
+            t= i/(num_points_to_add+1)
+            new_x=x1+t*(x2-x1)
+            new_y=y1+t*(y2-y1)
+
+            # insert at correct position
+            insert_idx = idx + 1 + points_added
+            resampled_x.insert(insert_idx, new_x)
+            resampled_y.insert(insert_idx, new_y)
+            points_added += 1
+
+    # sort points correctly
+    sorted_indices = np.argsort(resampled_x)
+    resampled_x = np.array(resampled_x)[sorted_indices]
+    resampled_y = np.array(resampled_y)[sorted_indices]
+
+    print(f"added {points_added} points in large gaps")
+    plt.scatter(resampled_x, resampled_y, color='green', marker='o', linestyle='-', s=20)
+    plt.scatter(contour_x, contour_y, color='blue', s=5)
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.show()
+
+
+    return np.array(resampled_x), np.array(resampled_y)
+
+
+
     if len(contour_x) <= 1:
         print("Warning: Contour has insufficient points for resampling")
         return contour_x, contour_y
@@ -55,6 +132,10 @@ def resample(contour_x, contour_y):
 
     print(f"Total contour length: {total_length}, Segments: {len(segment_lengths)}")
     print(f"Using {num_points} points based on minimum segment length of {segment_length:.4f}")
+
+    # Explicitly add the first point to ensure it's preserved
+    resampled_x.append(contour_x[0])
+    resampled_y.append(contour_y[0])
     
     # Resample at equal intervals along the contour
     for i in range(num_points):
@@ -94,12 +175,44 @@ def resample(contour_x, contour_y):
         resampled_x.append(x)
         resampled_y.append(y)
     
+    # Explicitly add the last point to ensure it's preserved
+    resampled_x.append(contour_x[-1])
+    resampled_y.append(contour_y[-1])
+    
     print(f"Generated {len(resampled_x)} resampled points")
     
     # Ensure we have multiple points
     if len(resampled_x) <= 1:
         print("Warning: Resampling produced too few points, returning original contour")
         return contour_x, contour_y
+    
+    # Downsample if necessary, preserve end points
+    max_points = 50
+    resample_x_copy = resampled_x.copy()
+    resample_y_copy = resampled_y.copy()
+    if len(resampled_x) > max_points:
+        print(f"Downsampling from {len(resampled_x)} to {max_points} points")
+        # Get first point
+        first_x, first_y = resampled_x[0], resampled_y[0]
+        # Get last point
+        last_x, last_y = resampled_x[-1], resampled_y[-1]
+        
+        # Downsample the middle points
+        step = (len(resampled_x) - 2) // (max_points - 2)
+        middle_indices = range(1, len(resampled_x) - 1, step)
+        middle_x = [resampled_x[i] for i in middle_indices]
+        middle_y = [resampled_y[i] for i in middle_indices]
+        
+        # Combine the points
+        resampled_x = [first_x] + middle_x + [last_x]
+        resampled_y = [first_y] + middle_y + [last_y]
+    # plt.scatter(first_x, first_y, color='orange', s=50)
+    # plt.scatter(last_x, last_y, color='green', s=10)
+    # plt.scatter(resampled_x, resampled_y, color='green', marker='o', linestyle='-', s=20)
+    # plt.scatter(contour_x, contour_y, color='blue', s=5)
+    # plt.gca().set_aspect('equal', adjustable='box')
+    # plt.show()
+
     
     return np.array(resampled_x), np.array(resampled_y)
 
@@ -284,10 +397,33 @@ def find_intersection_height(h_coords, v_coords):
     right_index = len(h_coords) - np.abs(h_coords[::-1]).argmin() - 2
     print(f"Left index: {left_index}\nRight index: {right_index}")
 
-    # Perform linear interpolation between the points
-    slope = (v_coords[right_index] - v_coords[left_index]) / (h_coords[right_index] - h_coords[left_index])
-    intersection_height = v_coords[left_index] - slope * h_coords[left_index]
+    # Check if indices are the same
+    if left_index == right_index:
+        print("Warning: Left and right indices are the same. Using point height directly.")
+        return v_coords[left_index]  # Just use the height at this point
 
+
+    # Perform linear interpolation between the points
+    try:
+        slope = (v_coords[right_index] - v_coords[left_index]) / (h_coords[right_index] - h_coords[left_index])
+        intersection_height = v_coords[left_index] - slope * h_coords[left_index]
+    except:
+        # use the height at the left index
+        print("Warning: Zero division error. Using point height directly.")
+        intersection_height=v_coords[left_index]
+    
+
+
+    plt.scatter(h_coords, v_coords, color='blue', s=5)
+    plt.scatter(h_coords[left_index], v_coords[left_index], color='red', s=20)
+    plt.scatter(h_coords[right_index], v_coords[right_index], color='red', s=20)
+    plt.axhline(y=0, color='black', linestyle='--')
+    #print intersectio height on plot
+    plt.text(0, intersection_height, f"intersection height: {intersection_height}")
+    #plt.text(f"intersection height: {intersection_height}")
+    plt.show()
+    
+    print(f"Intersection height: {intersection_height}")
     return intersection_height
 
 def funcb(x, h, a, b, c=0, d=0):
