@@ -15,6 +15,11 @@ def resample(contour_x, contour_y):
         return contour_x, contour_y
     
     print(f"Contour points: {len(contour_x)}")
+
+    # sort (contour_x, contour_y) by contour_x
+    sorted_indices = np.argsort(contour_x)
+    contour_x = contour_x[sorted_indices]
+    contour_y = contour_y[sorted_indices]
     
     # Create a continuous contour representation by connecting points
     # with straight lines and resampling
@@ -37,17 +42,19 @@ def resample(contour_x, contour_y):
         return contour_x, contour_y
     
     # Determine number of points based on minimum segment length
-    min_segment_length = min(segment_lengths)
-    try:
-        num_points = max(int(total_length / min_segment_length), len(contour_x))
-    except OverflowError:
-        print("Warning: Overflow error calculating number of points")
-        # choose next smallest segment size as minimum segment length
-        min_segment_length = sorted(segment_lengths)[1]
-        num_points = max(int(total_length / min_segment_length), len(contour_x))
+    #min_segment_length = min(segment_lengths)
+    sorted_segments = sorted([length for length in segment_lengths if length > 0])
     
+    for segment_length in sorted_segments:
+        try:
+            num_points = max(int(total_length / segment_length), len(contour_x))
+            break  # Success - exit the loop
+        except (OverflowError, ValueError):
+            continue
+
+
     print(f"Total contour length: {total_length}, Segments: {len(segment_lengths)}")
-    print(f"Using {num_points} points based on minimum segment length of {min_segment_length:.4f}")
+    print(f"Using {num_points} points based on minimum segment length of {segment_length:.4f}")
     
     # Resample at equal intervals along the contour
     for i in range(num_points):
@@ -706,17 +713,42 @@ if __name__=='__main__':
         print("transformed data.columns: \n", transformed_data.columns)
 
         ##  apply resampling function for the transformed_data row we are working with (row [0])
-        h_def = transformed_data.loc[0, 'h_def_cent']
-        v_def = transformed_data.loc[0, 'v_def_cent']
-        resampled_x, resampled_y = resample(h_def, v_def)
-        transformed_data.at[0, 'h_def_cent'] = resampled_x
-        transformed_data.at[0, 'v_def_cent'] = resampled_y
+        for name in ['def', 'ref']:
+            h_name = f'h_{name}_cent'
+            v_name = f'v_{name}_cent'
+
+            # Create copies of original data with '_og' suffix
+            transformed_data[f'{h_name}_og'] = transformed_data[h_name].copy()
+            transformed_data[f'{v_name}_og'] = transformed_data[v_name].copy()
+
+            h_val = transformed_data.loc[0, h_name]
+            v_val = transformed_data.loc[0, v_name]
+            resampled_x, resampled_y = resample(h_val, v_val)
+            transformed_data.at[0, h_name] = resampled_x
+            transformed_data.at[0, v_name] = resampled_y
+        
         
 
         ellipse_data = fit_ellipse(transformed_data)
         print(f"transformed_data_shape post ellipse: {ellipse_data.shape}")
         #print(f"ellipse data: \n {ellipse_data}")
         print(f"ellipse_data columns: {ellipse_data.columns}")
+
+        # rename transformed data for name in ['def', 'ref'] from 'h_<name>_cent' to 'h_name>_cent_resampled
+            # and 'h_<name>_cent_og' to 'h_<name>_cent'
+        for name in ['def', 'ref']:
+            h_name = f'h_{name}_cent'
+            v_name = f'v_{name}_cent'
+            h_name_og = f'h_{name}_cent_og'
+            v_name_og = f'v_{name}_cent_og'
+            h_name_resampled = f'h_{name}_cent_resampled'
+            v_name_resampled = f'v_{name}_cent_resampled'
+
+            transformed_data[h_name_resampled] = transformed_data[h_name]
+            transformed_data[v_name_resampled] = transformed_data[v_name]
+            transformed_data[h_name] = transformed_data[h_name_og]
+            transformed_data[v_name] = transformed_data[v_name_og]
+          
         
 
         # PLOT FITTED ELLIPSE
