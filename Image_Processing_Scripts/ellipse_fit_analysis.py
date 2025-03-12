@@ -120,6 +120,12 @@ def resample(ellipse_x, contour_x, contour_y):
         
     num_ellipse_points = len(ellipse_x)
     print(f"Ellipse points: {num_ellipse_points}, Contour points: {len(contour_x)}")
+
+    # Sort the contour points by x-coordinate
+    # Sort (contour_x, contour_y) by contour_x
+    sorted_indices = np.argsort(contour_x)
+    contour_x = contour_x[sorted_indices]
+    contour_y = contour_y[sorted_indices]
     
     # Create a continuous contour representation by connecting points
     # with straight lines and resampling
@@ -189,8 +195,14 @@ def resample(ellipse_x, contour_x, contour_y):
     if len(resampled_x) <= 1:
         print("Warning: Resampling produced too few points, returning original contour")
         return contour_x, contour_y
+    
+    # #plot with thickness of 10
+    # plt.scatter(contour_x, contour_y, label='Original Contour', linewidth=10)
+    # plt.plot(resampled_x, resampled_y, label='Resampled Contour')
+    # plt.legend()
+    # plt.show()
         
-    return resampled_x, resampled_y
+    return np.array(resampled_x), np.array(resampled_y)
 
 def calculate_mae_ellipse_fit(contour_x, contour_y, ellipse_x, ellipse_y, h_param, a_param):
     """
@@ -293,7 +305,8 @@ def calculate_area_ratio(contour_x, contour_y, ellipse_x, ellipse_y):
     # Create polygons
     contour_polygon = ShapelyPolygon(list(zip(contour_x, contour_y)))
     ellipse_polygon = ShapelyPolygon(list(zip(ellipse_x, ellipse_y)))
-    
+
+        
     # Calculate areas
     contour_area = contour_polygon.area
     ellipse_area = ellipse_polygon.area
@@ -746,8 +759,10 @@ def visualize_fit_analysis(contour_x, contour_y, ellipse_x, ellipse_y, metrics, 
     metrics_text = (
         f"Metrics:\n"
         f"RMSE: {metrics['rmse']:.3f}\n"
-        f"R²: {metrics['r2']:.3f}\n"
-        f"Area Similarity: {metrics['area_diff_pct']:.1f}%\n"
+        f"MAE: {metrics['mae']:.3f}\n"
+        f"Dice: {metrics['dice']:.3f}\n"
+        #f"R²: {metrics['r2']:.3f}\n"
+        #f"Area Similarity: {metrics['area_diff_pct']:.1f}%\n"
         f"h: {metrics['h_param']:.2f}"
     )
     
@@ -1211,7 +1226,7 @@ def main():
     output_dir = 'Image_Processing_Scripts/ellipse_fit_analysis'
 
     # flags
-    plot_ellipse_flag = False
+    plot_ellipse_flag = True
     
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
@@ -1560,18 +1575,23 @@ def create_combined_plot(data, i, metrics_row, output_dir):
         def_metrics = (
             f"Deformed Metrics:\n"
             f"RMSE: {metrics_row['def_rmse']:.3f}\n"
-            f"R²: {metrics_row['def_r2']:.3f}\n"
+            f"MAE: {metrics_row['def_mae']:.3f}\n"
+            f"Dice: {metrics_row['def_dice']:.3f}\n"
+            #f"R²: {metrics_row['def_r2']:.3f}\n"
             #f"Area Similarity: {def_area_similarity:.1f}%\n"
-            f"Area Similarity: {metrics_row['def_area_diff_pct']:.1f}%\n"
+            
+            #f"Area Similarity: {metrics_row['def_area_diff_pct']:.1f}%\n"
             f"h: {data['h_param_def'].iloc[i]:.2f}"
         )
         
         ref_metrics = (
             f"Reference Metrics:\n"
             f"RMSE: {metrics_row['ref_rmse']:.3f}\n"
-            f"R²: {metrics_row['ref_r2']:.3f}\n"
+            f"MAE: {metrics_row['ref_mae']:.3f}\n"
+            f"Dice: {metrics_row['ref_dice']:.3f}\n"
+            #f"R²: {metrics_row['ref_r2']:.3f}\n"
             #f"Area Similarity: {ref_area_similarity:.1f}%\n"
-            f"Area Similarity: {metrics_row['ref_area_diff_pct']:.1f}%\n"
+            #f"Area Similarity: {metrics_row['ref_area_diff_pct']:.1f}%\n"
             f"h: {data['h_param_ref'].iloc[i]:.2f}"
         )
         
