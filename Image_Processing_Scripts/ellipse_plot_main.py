@@ -80,7 +80,7 @@ def resample(contour_x, contour_y):
     plt.scatter(resampled_x, resampled_y, color='green', marker='o', linestyle='-', s=20)
     plt.scatter(contour_x, contour_y, color='blue', s=5)
     plt.gca().set_aspect('equal', adjustable='box')
-    plt.show()
+    plt.close()
 
 
     return np.array(resampled_x), np.array(resampled_y)
@@ -412,17 +412,6 @@ def find_intersection_height(h_coords, v_coords):
         print("Warning: Zero division error. Using point height directly.")
         intersection_height=v_coords[left_index]
     
-
-
-    plt.scatter(h_coords, v_coords, color='blue', s=5)
-    plt.scatter(h_coords[left_index], v_coords[left_index], color='red', s=20)
-    plt.scatter(h_coords[right_index], v_coords[right_index], color='red', s=20)
-    plt.axhline(y=0, color='black', linestyle='--')
-    #print intersectio height on plot
-    plt.text(0, intersection_height, f"intersection height: {intersection_height}")
-    #plt.text(f"intersection height: {intersection_height}")
-    plt.show()
-    
     print(f"Intersection height: {intersection_height}")
     return intersection_height
 
@@ -625,7 +614,7 @@ def filter_fitted_values(h_values, v_fitted):
     second_derivatives = np.gradient(gradients, h_values_filtered)
 
     # Define threshold for sudden changes in gradient
-    second_derivative_threshold = 50#200  # Adjust this value based on your data
+    second_derivative_threshold = 80#200  # Adjust this value based on your data
     
     # Define threshold for steep segments
     #max_gradient_threshold = 100.0  # For steep segments
@@ -727,9 +716,9 @@ def fit_ellipse(data):
     
 if __name__=='__main__':
     ## MAIN SCRIPT TO PLOT ELLIPSE FORM
-    data = pd.read_csv('Image_Processing_Scripts/data_entries.csv')
-    side_data=pd.read_csv('Image_Processing_Scripts/included_patient_info.csv')
-    ellipse_data_filename='ellipse_data.csv'
+    data = pd.read_csv('Image_Processing_Scripts/batch2_data_entries.csv')
+    side_data=pd.read_csv('Image_Processing_Scripts/batch2_included_patient_info.csv')
+    ellipse_data_filename='batch2_ellipse_data.csv'
     # filtered according to exclusion flag (first column)
     side_data=side_data[side_data['excluded?'] == 0]
     side_data = side_data.rename(columns={' side (L/R)': 'side'})
