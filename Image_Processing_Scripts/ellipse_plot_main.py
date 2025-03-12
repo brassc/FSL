@@ -10,7 +10,7 @@ from scipy.optimize import curve_fit
 
 def resample(contour_x, contour_y):
     # Check for empty or single-point contours
-    return contour_x, contour_y # skip resampling
+    #return contour_x, contour_y # skip resampling
 
     if len(contour_x) <= 1:
         print("Warning: Contour has insufficient points for resampling")
