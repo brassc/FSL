@@ -955,7 +955,6 @@ def emmeans_significance_matrix(py_pairs):
     mask = np.isnan(sig_df.values)
 
     return sig_df, mask
-
 def plot_emmeans_sig_mat(sig_df, mask):
     # Plot heatmap
     ordered_timepoints= ['ultra-fast', 'fast', 'acute', 'chronic']
@@ -1016,6 +1015,8 @@ def plot_emmeans_sig_mat(sig_df, mask):
     plt.savefig('significance_matrix_mixed_effects_v2.png', dpi=300, bbox_inches='tight')
     plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/significance_matrix_mixed_effects_v2.png', dpi=600, bbox_inches='tight')
     plt.close()
+
+
 
 ##### MAIN STARTS HERE
 #####
