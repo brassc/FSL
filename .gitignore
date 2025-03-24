@@ -164,4 +164,4 @@ Imaging_center_CT_CDE_longitudinal*.csv
 CENTER_TBI_Scans*.csv
 Image_Processing_Scripts/ellipse_fit_analysis/*
 Sophie_Data*
-DTI_Processing_Scripts/patient_scanner_data.csv
+DTI_Processing_Scripts/*patient_scanner_data*.csv
