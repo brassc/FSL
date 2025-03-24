@@ -23,7 +23,10 @@ batch1['patient_id'] = batch1['patient_id'].astype(str)
 
 # concatenate the two batches
 batch = pd.concat([batch1, batch2])
-print(batch.columns)
+# pop the row if excluded == 1
+batch = batch[batch['excluded'] != 1]
+print(batch)
+
 
 # get the patient ids
 patientids = batch['patient_id'].unique()
