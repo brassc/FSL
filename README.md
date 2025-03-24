@@ -234,9 +234,9 @@ The `main.sh` script located in `DTI_Processing_Scripts` folder extracts already
 
 BET extraction is performed on `DTI_corrected.nii.gz` using `fslmaths` to multiply it with an ANTS mask, from same dataset. 
 
-For each patient and timepoint, this BET extraction, FA and MD scans are registered to the corresponding T1 at the relevant timepoint. 
+For each patient and timepoint, this BET extraction, FA and MD scans are registered to the corresponding T1 at the relevant timepoint. The T1 mask is then transformed to DTI space to avoid disturbing the DTI data. `$dtiregmatinv = ${save_dir}dtiregmatinv_${timepoint}.mat`.
 
-Region of interest analysis is completed using 10mm sphere around the end points of contour (manually picked coordinates).  These are recorded in `included_patient_info.csv`. 
+Region of interest analysis is completed using 12mm sphere around the end points of contour (manually picked coordinates).  These coordinates are recorded in `included_patient_info.csv`. The script `create_roi_native_space.sh` takes these files and gets FA and MD data within that space, saves it as a `.pkl` file (`{patient_id}_{timepoint}_dti_values.pkl`).  
 
 
 
