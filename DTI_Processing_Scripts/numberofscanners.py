@@ -63,7 +63,7 @@ sites=all_scanner_data['Site'].unique()
 print(sites)
 print(len(sites))
 
-print(all_scanner_data)
+print(all_scanner_data.head)
 # save .csv file
 all_scanner_data.to_csv('DTI_Processing_Scripts/patient_scanner_data.csv', index=False)
 
