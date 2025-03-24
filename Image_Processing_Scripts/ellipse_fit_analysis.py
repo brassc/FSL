@@ -96,6 +96,7 @@ def calculate_rmse_ellipse_fit(contour_x, contour_y, ellipse_x, ellipse_y, h_par
     Returns:
     float: RMSE value
     """
+    contour_x, contour_y = resample(ellipse_x, contour_x, contour_y)
     distances = []
     
     # For each contour point, find the minimum distance to the ellipse
@@ -105,8 +106,103 @@ def calculate_rmse_ellipse_fit(contour_x, contour_y, ellipse_x, ellipse_y, h_par
         distances.append(dist)
     
     # Calculate RMSE
+
     rmse = np.sqrt(np.mean(np.array(distances)**2))
+    print(f"RMSE raw values: {distances[:5]}, calculated RMSE: {rmse}")
     return rmse
+
+
+def resample(ellipse_x, contour_x, contour_y):
+    # Check for empty or single-point contours
+    if len(contour_x) <= 1:
+        print("Warning: Contour has insufficient points for resampling")
+        return contour_x, contour_y
+        
+    num_ellipse_points = len(ellipse_x)
+    print(f"Ellipse points: {num_ellipse_points}, Contour points: {len(contour_x)}")
+
+    # Sort the contour points by x-coordinate
+    # Sort (contour_x, contour_y) by contour_x
+    sorted_indices = np.argsort(contour_x)
+    contour_x = contour_x[sorted_indices]
+    contour_y = contour_y[sorted_indices]
+    
+    # Create a continuous contour representation by connecting points
+    # with straight lines and resampling
+    resampled_x = []
+    resampled_y = []
+    
+    # Calculate the total length of the contour
+    total_length = 0
+    segment_lengths = []
+    
+    for i in range(len(contour_x) - 1):
+        dx = contour_x[i+1] - contour_x[i]
+        dy = contour_y[i+1] - contour_y[i]
+        segment_length = np.sqrt(dx**2 + dy**2)
+        segment_lengths.append(segment_length)
+        total_length += segment_length
+    
+    # Check if we have valid segment lengths
+    if total_length <= 0 or len(segment_lengths) == 0:
+        print("Warning: Zero total length or no segments found")
+        return contour_x, contour_y
+    
+    print(f"Total contour length: {total_length}, Segments: {len(segment_lengths)}")
+    
+    # Resample at equal intervals along the contour
+    for i in range(num_ellipse_points):
+        # Position along the contour (normalized)
+        target_dist = (i / (num_ellipse_points - 1 if num_ellipse_points > 1 else 1)) * total_length
+        
+        # Find which segment contains this position
+        segment_idx = 0
+        cumulative_length = 0
+        
+        while segment_idx < len(segment_lengths) and cumulative_length + segment_lengths[segment_idx] < target_dist:
+            cumulative_length += segment_lengths[segment_idx]
+            segment_idx += 1
+        
+        # Handle edge case
+        if segment_idx >= len(segment_lengths):
+            # Add the last point
+            resampled_x.append(contour_x[-1])
+            resampled_y.append(contour_y[-1])
+            continue
+        
+        # Calculate position along current segment
+        segment_pos = (target_dist - cumulative_length) / segment_lengths[segment_idx]
+        
+        # Get the segment's start and end points
+        start_idx = segment_idx
+        end_idx = segment_idx + 1
+        
+        # Ensure end_idx is valid
+        if end_idx >= len(contour_x):
+            # Just use the last point for open contours
+            end_idx = len(contour_x) - 1
+        
+        # Interpolate to get coordinates
+        x = contour_x[start_idx] + segment_pos * (contour_x[end_idx] - contour_x[start_idx])
+        y = contour_y[start_idx] + segment_pos * (contour_y[end_idx] - contour_y[start_idx])
+        
+        resampled_x.append(x)
+        resampled_y.append(y)
+    
+    print(f"Generated {len(resampled_x)} resampled points")
+    
+    # Ensure we have multiple points
+    if len(resampled_x) <= 1:
+        print("Warning: Resampling produced too few points, returning original contour")
+        return contour_x, contour_y
+    
+    # #plot with thickness of 10
+    # plt.scatter(contour_x, contour_y, label='Original Contour', linewidth=10)
+    # plt.plot(resampled_x, resampled_y, label='Resampled Contour')
+    # plt.legend()
+    # plt.show()
+        
+    return np.array(resampled_x), np.array(resampled_y)
 
 def calculate_mae_ellipse_fit(contour_x, contour_y, ellipse_x, ellipse_y, h_param, a_param):
     """
@@ -121,8 +217,10 @@ def calculate_mae_ellipse_fit(contour_x, contour_y, ellipse_x, ellipse_y, h_para
     Returns:
     float: MAE value
     """
+    # resample
+    contour_x, contour_y = resample(ellipse_x, contour_x, contour_y)
+
     distances = []
-    
     # For each contour point, find the minimum distance to the ellipse
     for i in range(len(contour_x)):
         point = (contour_x[i], contour_y[i])
@@ -131,6 +229,7 @@ def calculate_mae_ellipse_fit(contour_x, contour_y, ellipse_x, ellipse_y, h_para
     
     # Calculate MAE
     mae = np.mean(np.abs(distances))
+    print(f"MAE raw values: {distances[:5]}, calculated MAE: {mae}")
     return mae
 
 def calculate_max_error_ellipse_fit(contour_x, contour_y, ellipse_x, ellipse_y, h_param, a_param):
@@ -206,7 +305,8 @@ def calculate_area_ratio(contour_x, contour_y, ellipse_x, ellipse_y):
     # Create polygons
     contour_polygon = ShapelyPolygon(list(zip(contour_x, contour_y)))
     ellipse_polygon = ShapelyPolygon(list(zip(ellipse_x, ellipse_y)))
-    
+
+        
     # Calculate areas
     contour_area = contour_polygon.area
     ellipse_area = ellipse_polygon.area
@@ -659,8 +759,10 @@ def visualize_fit_analysis(contour_x, contour_y, ellipse_x, ellipse_y, metrics, 
     metrics_text = (
         f"Metrics:\n"
         f"RMSE: {metrics['rmse']:.3f}\n"
-        f"R²: {metrics['r2']:.3f}\n"
-        f"Area Similarity: {metrics['area_diff_pct']:.1f}%\n"
+        f"MAE: {metrics['mae']:.3f}\n"
+        f"Dice: {metrics['dice']:.3f}\n"
+        #f"R²: {metrics['r2']:.3f}\n"
+        #f"Area Similarity: {metrics['area_diff_pct']:.1f}%\n"
         f"h: {metrics['h_param']:.2f}"
     )
     
@@ -829,10 +931,27 @@ def create_summary_visualisations(metrics_df, output_dir):
     deformed_q3 = np.percentile(deformed_rmse, 75)
     reference_q1 = np.percentile(reference_rmse, 25)
     reference_q3 = np.percentile(reference_rmse, 75)
+    deformed_median = np.median(deformed_rmse)
+    reference_median = np.median(reference_rmse)
+    combined_median = np.median(np.concatenate([deformed_rmse, reference_rmse]))
+    print(f"Combined RMSE median: {combined_median}")
 
     # Add thin horizontal lines for median
-    ax1.axhline(y=deformed_median, xmin=0.2, xmax=0.3, color=def_color, linestyle='-', linewidth=1)
-    ax1.axhline(y=reference_median, xmin=0.7, xmax=0.8, color=ref_color, linestyle='-', linewidth=1)
+    #ax1.axhline(y=deformed_median, xmin=0.15, xmax=0.35, color=def_color, linestyle='-', linewidth=1)
+    #ax1.axhline(y=reference_median, xmin=0.7, xmax=0.8, color=ref_color, linestyle='-', linewidth=1)
+
+    # add median text
+    # Instead of horizontal lines, add text labels for medians
+    # Create a boxed annotation for RMSE plot
+    props = dict(boxstyle='round,pad=0.5', facecolor='white', alpha=0.8, edgecolor='gray')
+    median_text = (f"Deformed median: {deformed_median:.2f}\n"
+                f"Reference median: {reference_median:.2f}\n"
+                f"Combined median: {combined_median:.2f}")
+
+    # Position the text box in the upper left corner
+    ax1.text(0.025, 0.95, median_text, transform=ax1.transAxes, fontsize=9,
+            verticalalignment='top', bbox=props)
+
 
     # Set titles and labels
     ax1.set_ylim(0, 10)
@@ -888,8 +1007,8 @@ def create_summary_visualisations(metrics_df, output_dir):
     
     # Final adjustments
     plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, 'scatter_distribution.png'), dpi=300)
-    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/scatter_distribution.pdf', dpi=300)
+    plt.savefig(os.path.join(output_dir, 'scatter_distribution_resampled.png'), dpi=300)
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/scatter_distribution_resampled.pdf', dpi=300)
     plt.close()
 
     # Create separate figures for RMSE and MAE plots
@@ -926,18 +1045,38 @@ def create_summary_visualisations(metrics_df, output_dir):
     # Calculate statistics
     deformed_median = np.median(deformed_rmse)
     reference_median = np.median(reference_rmse)
+    combined_median = np.median(np.concatenate([deformed_rmse, reference_rmse]))
+
     deformed_q1 = np.percentile(deformed_rmse, 25)
     deformed_q3 = np.percentile(deformed_rmse, 75)
     reference_q1 = np.percentile(reference_rmse, 25)
     reference_q3 = np.percentile(reference_rmse, 75)
     # Add thin horizontal lines for median
-    ax1.axhline(y=deformed_median, xmin=0.2, xmax=0.3, color=def_color, linestyle='-', linewidth=1)
-    ax1.axhline(y=reference_median, xmin=0.7, xmax=0.8, color=ref_color, linestyle='-', linewidth=1)
+    #ax1.axhline(y=deformed_median, xmin=0.2, xmax=0.3, color=def_color, linestyle='-', linewidth=1)
+    #ax1.axhline(y=reference_median, xmin=0.7, xmax=0.8, color=ref_color, linestyle='-', linewidth=1)
     # Set titles and labels
     ax1.set_ylim(0, 10)
     ax1.set_title('RMSE by Configuration')
     ax1.set_xlabel('Configuration')
     ax1.set_ylabel('Root Mean Square Error')
+
+
+    # Add thin horizontal lines for median
+    #ax1.axhline(y=deformed_median, xmin=0.15, xmax=0.35, color=def_color, linestyle='-', linewidth=1)
+    #ax1.axhline(y=reference_median, xmin=0.7, xmax=0.8, color=ref_color, linestyle='-', linewidth=1)
+
+    # add median text
+    # Instead of horizontal lines, add text labels for medians
+    # Create a boxed annotation for RMSE plot
+    props = dict(boxstyle='round,pad=0.5', facecolor='white', alpha=0.8, edgecolor='gray')
+    median_text = (f"Deformed median: {deformed_median:.2f}\n"
+                f"Reference median: {reference_median:.2f}\n"
+                f"Combined median: {combined_median:.2f}")
+
+    # Position the text box in the upper left corner
+    plt.text(0.025, 0.95, median_text, transform=ax1.transAxes, fontsize=9,
+            verticalalignment='top', bbox=props)
+
 
     # Save RMSE figure
     plt.tight_layout()
@@ -959,6 +1098,7 @@ def create_summary_visualisations(metrics_df, output_dir):
     # Get data for each configuration
     deformed_mae = mae_data[mae_data['configuration'] == 'Deformed']['metric_value'].values
     reference_mae = mae_data[mae_data['configuration'] == 'Reference']['metric_value'].values
+    
     # Add only scatter points for Deformed
     ax2.scatter(
         [0] * len(deformed_mae),
@@ -978,9 +1118,22 @@ def create_summary_visualisations(metrics_df, output_dir):
     # Calculate statistics
     deformed_median_mae = np.median(deformed_mae)
     reference_median_mae = np.median(reference_mae)
+    combined_median_mae = np.median(np.concatenate([deformed_mae, reference_mae]))
+    
+    # Create a boxed annotation for RMSE plot
+    props = dict(boxstyle='round,pad=0.5', facecolor='white', alpha=0.8, edgecolor='gray')
+    median_text = (f"Deformed median: {deformed_median_mae:.2f}\n"
+                f"Reference median: {reference_median_mae:.2f}\n"
+                f"Combined median: {combined_median_mae:.2f}")
+
+    # Position the text box in the upper left corner
+    plt.text(0.025, 0.95, median_text, transform=ax2.transAxes, fontsize=9,
+            verticalalignment='top', bbox=props)
+    
+    
     # Add thin horizontal lines for median
-    ax2.axhline(y=deformed_median_mae, xmin=0.2, xmax=0.3, color=def_color, linestyle='-', linewidth=1)
-    ax2.axhline(y=reference_median_mae, xmin=0.7, xmax=0.8, color=ref_color, linestyle='-', linewidth=1)
+    #ax2.axhline(y=deformed_median_mae, xmin=0.2, xmax=0.3, color=def_color, linestyle='-', linewidth=1)
+    #ax2.axhline(y=reference_median_mae, xmin=0.7, xmax=0.8, color=ref_color, linestyle='-', linewidth=1)
     # Set titles and labels
     ax2.set_title('MAE by Configuration')
     ax2.set_xlabel('Configuration')
@@ -1073,7 +1226,7 @@ def main():
     output_dir = 'Image_Processing_Scripts/ellipse_fit_analysis'
 
     # flags
-    plot_ellipse_flag = False
+    plot_ellipse_flag = True
     
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
@@ -1176,6 +1329,7 @@ def main():
         'ref_rmse', 'ref_mae', 'ref_max_error', 'ref_r2', 
         'ref_area_ratio', 'ref_iou', 'ref_dice', 'ref_area_diff_pct'
     ])
+    
     
     # Process each row
     for i in range(len(data)):
@@ -1289,6 +1443,8 @@ def main():
         print(f"  Average Dice: {metrics_df[f'{name}_dice'].mean():.3f}")
 
     print(metrics_df.columns)
+    # print all patient ids in metrics_df row 'patient_id'
+    print(metrics_df['patient_id'])
         
     # Create summary visualizations
     create_summary_visualisations(metrics_df, output_dir)
@@ -1419,18 +1575,23 @@ def create_combined_plot(data, i, metrics_row, output_dir):
         def_metrics = (
             f"Deformed Metrics:\n"
             f"RMSE: {metrics_row['def_rmse']:.3f}\n"
-            f"R²: {metrics_row['def_r2']:.3f}\n"
+            f"MAE: {metrics_row['def_mae']:.3f}\n"
+            f"Dice: {metrics_row['def_dice']:.3f}\n"
+            #f"R²: {metrics_row['def_r2']:.3f}\n"
             #f"Area Similarity: {def_area_similarity:.1f}%\n"
-            f"Area Similarity: {metrics_row['def_area_diff_pct']:.1f}%\n"
+            
+            #f"Area Similarity: {metrics_row['def_area_diff_pct']:.1f}%\n"
             f"h: {data['h_param_def'].iloc[i]:.2f}"
         )
         
         ref_metrics = (
             f"Reference Metrics:\n"
             f"RMSE: {metrics_row['ref_rmse']:.3f}\n"
-            f"R²: {metrics_row['ref_r2']:.3f}\n"
+            f"MAE: {metrics_row['ref_mae']:.3f}\n"
+            f"Dice: {metrics_row['ref_dice']:.3f}\n"
+            #f"R²: {metrics_row['ref_r2']:.3f}\n"
             #f"Area Similarity: {ref_area_similarity:.1f}%\n"
-            f"Area Similarity: {metrics_row['ref_area_diff_pct']:.1f}%\n"
+            #f"Area Similarity: {metrics_row['ref_area_diff_pct']:.1f}%\n"
             f"h: {data['h_param_ref'].iloc[i]:.2f}"
         )
         

@@ -61,6 +61,8 @@ data=pd.read_csv('/Users/charlottebrass/repos/FSL/patient_timeline_map.csv')
 
 # Fill empty cells with NaN
 data = data.fillna(0)
+# remove patient with id 6shy992 from data
+data = data[data['Patient ID'] != '6shy992']
 
 # Apply filtering to keep only patients with 2+ scans
 filtered_data = filter_patients(data)

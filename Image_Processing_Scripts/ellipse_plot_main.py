@@ -8,6 +8,231 @@ from scipy.linalg import eig
 from scipy.optimize import curve_fit
 
 
+def resample(contour_x, contour_y):
+    # Check for empty or single-point contours
+    #return contour_x, contour_y # skip resampling
+
+    # if len(contour_x) <= 1:
+    #     print("Warning: Contour has insufficient points for resampling")
+    #     return contour_x, contour_y
+    
+    # # sort contour_x, contour_y by contour_x
+    # sorted_indices = np.argsort(contour_x)
+    # contour_x = contour_x[sorted_indices]
+    # contour_y = contour_y[sorted_indices]
+
+    # # calculate gaps between adjacent x points
+    # x_gaps = np.diff(contour_x)
+
+    # # identify large gaps that need resampling
+    # # if min_gap_threshold is not provided, calculate it as a percentage of the range
+    # x_range=max(contour_x)-min(contour_x)
+    # min_gap_threshold = 0.1*x_range # 10% of the range
+
+    # # Make sure we have a reasonable threshold
+    # if min_gap_threshold <= 0:
+    #     return contour_x, contour_y
+
+    # large_gaps = np.where(x_gaps > min_gap_threshold)[0]
+
+    # # if there are no large gaps, return the original contour
+    # if len(large_gaps) == 0:
+    #     return contour_x, contour_y
+    
+    # # resample the contour at the large gaps
+    # resampled_x = contour_x.copy().tolist()
+    # resampled_y = contour_y.copy().tolist()
+
+    # # keep track of how many points added
+    # points_added = 0
+
+    # # For each large gap, add interpolated points
+    # for idx in large_gaps:
+    #     # current gap
+    #     gap_size=x_gaps[idx]
+
+    #     # calculate how manyt points to add proportional to the gap size
+    #     num_points_to_add = max(1, int(gap_size / min_gap_threshold)-1)
+    #     num_points_to_add = min(num_points_to_add, 3) # limit to 10 points avoid overfitting
+
+    #     # current points
+    #     x1, y1 = contour_x[idx], contour_y[idx]
+    #     x2, y2 = contour_x[idx+1], contour_y[idx+1]
+
+    #     # insert interpolated points
+    #     for i in range(1, num_points_to_add+1):
+    #         t= i/(num_points_to_add+1)
+    #         new_x=x1+t*(x2-x1)
+    #         new_y=y1+t*(y2-y1)
+
+    #         # insert at correct position
+    #         insert_idx = idx + 1 + points_added
+    #         resampled_x.insert(insert_idx, new_x)
+    #         resampled_y.insert(insert_idx, new_y)
+    #         points_added += 1
+
+    # # sort points correctly
+    # sorted_indices = np.argsort(resampled_x)
+    # resampled_x = np.array(resampled_x)[sorted_indices]
+    # resampled_y = np.array(resampled_y)[sorted_indices]
+
+    # print(f"added {points_added} points in large gaps")
+    # plt.scatter(resampled_x, resampled_y, color='green', marker='o', linestyle='-', s=20)
+    # plt.scatter(contour_x, contour_y, color='blue', s=5)
+    # plt.gca().set_aspect('equal', adjustable='box')
+    # plt.close()
+
+    
+
+
+
+
+    # return np.array(resampled_x), np.array(resampled_y)
+
+
+
+    if len(contour_x) <= 1:
+        print("Warning: Contour has insufficient points for resampling")
+        return contour_x, contour_y
+    
+    print(f"Contour points: {len(contour_x)}")
+
+    plt.scatter(contour_x, contour_y, color='blue', s=5)
+    plt.gca().set_aspect('equal', adjustable='box')
+    
+      
+    # hardcoded positions for skull end points
+    first_point_x=contour_x[-2]
+    first_point_y=contour_y[-2]
+    last_point_x=contour_x[-1]
+    last_point_y=contour_y[-1]
+    # plt.scatter(first_point_x, first_point_y, color='orange', s=50)
+    # plt.scatter(last_point_x, last_point_y, color='orange', s=50)
+    # plt.show()
+
+
+    # sort (contour_x, contour_y) by contour_x
+    sorted_indices = np.argsort(contour_x)
+    contour_x = contour_x[sorted_indices]
+    contour_y = contour_y[sorted_indices]
+    
+    # Create a continuous contour representation by connecting points
+    # with straight lines and resampling
+    resampled_x = []
+    resampled_y = []
+    
+    # Calculate the total length of the contour
+    total_length = 0
+    segment_lengths = []
+    for i in range(len(contour_x) - 1):
+        dx = contour_x[i+1] - contour_x[i]
+        dy = contour_y[i+1] - contour_y[i]
+        segment_length = np.sqrt(dx**2 + dy**2)
+        segment_lengths.append(segment_length)
+        total_length += segment_length
+    
+    # Check if we have valid segment lengths
+    if total_length <= 0 or len(segment_lengths) == 0:
+        print("Warning: Zero total length or no segments found")
+        return contour_x, contour_y
+    
+    # Determine number of points based on minimum segment length
+    #min_segment_length = min(segment_lengths)
+    sorted_segments = sorted([length for length in segment_lengths if length > 0])
+    
+    for segment_length in sorted_segments:
+        try:
+            num_points = max(int(total_length / segment_length), len(contour_x))
+            break  # Success - exit the loop
+        except (OverflowError, ValueError):
+            continue
+
+
+    print(f"Total contour length: {total_length}, Segments: {len(segment_lengths)}")
+    print(f"Using {num_points} points based on minimum segment length of {segment_length:.4f}")
+
+    # Explicitly add the first point to ensure it's preserved
+    resampled_x.append(contour_x[0])
+    resampled_y.append(contour_y[0])
+    
+    # Resample at equal intervals along the contour
+    for i in range(num_points):
+        # Position along the contour (normalized)
+        target_dist = (i / (num_points - 1 if num_points > 1 else 1)) * total_length
+        
+        # Find which segment contains this position
+        segment_idx = 0
+        cumulative_length = 0
+        while segment_idx < len(segment_lengths) and cumulative_length + segment_lengths[segment_idx] < target_dist:
+            cumulative_length += segment_lengths[segment_idx]
+            segment_idx += 1
+        
+        # Handle edge case
+        if segment_idx >= len(segment_lengths):
+            # Add the last point
+            resampled_x.append(contour_x[-1])
+            resampled_y.append(contour_y[-1])
+            continue
+        
+        # Calculate position along current segment
+        segment_pos = (target_dist - cumulative_length) / segment_lengths[segment_idx]
+        
+        # Get the segment's start and end points
+        start_idx = segment_idx
+        end_idx = segment_idx + 1
+        
+        # Ensure end_idx is valid
+        if end_idx >= len(contour_x):
+            # Just use the last point for open contours
+            end_idx = len(contour_x) - 1
+        
+        # Interpolate to get coordinates
+        x = contour_x[start_idx] + segment_pos * (contour_x[end_idx] - contour_x[start_idx])
+        y = contour_y[start_idx] + segment_pos * (contour_y[end_idx] - contour_y[start_idx])
+        
+        resampled_x.append(x)
+        resampled_y.append(y)
+    
+    # Explicitly add the last point to ensure it's preserved
+    resampled_x.append(last_point_x)
+    resampled_y.append(last_point_y)
+    
+    print(f"Generated {len(resampled_x)} resampled points")
+    
+    # Ensure we have multiple points
+    if len(resampled_x) <= 1:
+        print("Warning: Resampling produced too few points, returning original contour")
+        return contour_x, contour_y
+    
+    # Downsample if necessary, preserve end points
+    max_points = 10
+    resample_x_copy = resampled_x.copy()
+    resample_y_copy = resampled_y.copy()
+    if len(resampled_x) > max_points:
+        print(f"Downsampling from {len(resampled_x)} to {max_points} points")
+        # Get first point
+        first_x, first_y = resampled_x[0], resampled_y[0]
+        # Find the last point where y=0 (or very close to 0)
+                
+        # Downsample the middle points
+        step = (len(resampled_x) - 2) // (max_points - 2)
+        middle_indices = range(1, len(resampled_x) - 1, step)
+        middle_x = [resampled_x[i] for i in middle_indices]
+        middle_y = [resampled_y[i] for i in middle_indices]
+        
+        # Combine the points
+        resampled_x = [first_point_x] + middle_x + [last_point_x]
+        resampled_y = [first_point_y] + middle_y + [last_point_y]
+    plt.scatter(first_point_x, first_point_y, color='orange', s=50)
+    plt.scatter(last_point_x, last_point_y, color='orange', s=50)
+    plt.scatter(resampled_x, resampled_y, color='green', marker='o', linestyle='-', s=20)
+    plt.scatter(contour_x, contour_y, color='blue', s=5)
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.close()
+
+    
+    return np.array(resampled_x), np.array(resampled_y)
+
 def set_publication_style():
     """Set matplotlib parameters for publication-quality figures."""
     plt.rcParams.update({
@@ -189,10 +414,22 @@ def find_intersection_height(h_coords, v_coords):
     right_index = len(h_coords) - np.abs(h_coords[::-1]).argmin() - 2
     print(f"Left index: {left_index}\nRight index: {right_index}")
 
-    # Perform linear interpolation between the points
-    slope = (v_coords[right_index] - v_coords[left_index]) / (h_coords[right_index] - h_coords[left_index])
-    intersection_height = v_coords[left_index] - slope * h_coords[left_index]
+    # Check if indices are the same
+    if left_index == right_index:
+        print("Warning: Left and right indices are the same. Using point height directly.")
+        return v_coords[left_index]  # Just use the height at this point
 
+
+    # Perform linear interpolation between the points
+    try:
+        slope = (v_coords[right_index] - v_coords[left_index]) / (h_coords[right_index] - h_coords[left_index])
+        intersection_height = v_coords[left_index] - slope * h_coords[left_index]
+    except:
+        # use the height at the left index
+        print("Warning: Zero division error. Using point height directly.")
+        intersection_height=v_coords[left_index]
+    
+    print(f"Intersection height: {intersection_height}")
     return intersection_height
 
 def funcb(x, h, a, b, c=0, d=0):
@@ -394,7 +631,7 @@ def filter_fitted_values(h_values, v_fitted):
     second_derivatives = np.gradient(gradients, h_values_filtered)
 
     # Define threshold for sudden changes in gradient
-    second_derivative_threshold = 50#200  # Adjust this value based on your data
+    second_derivative_threshold = 80#200  # Adjust this value based on your data
     
     # Define threshold for steep segments
     #max_gradient_threshold = 100.0  # For steep segments
@@ -496,9 +733,13 @@ def fit_ellipse(data):
     
 if __name__=='__main__':
     ## MAIN SCRIPT TO PLOT ELLIPSE FORM
-    data = pd.read_csv('Image_Processing_Scripts/batch2_data_entries.csv')
-    side_data=pd.read_csv('Image_Processing_Scripts/batch2_included_patient_info.csv')
-    ellipse_data_filename='batch2_ellipse_data.csv'
+    data = pd.read_csv('Image_Processing_Scripts/data_entries.csv')
+    side_data=pd.read_csv('Image_Processing_Scripts/included_patient_info.csv')
+    ellipse_data_filename='ellipse_data.csv'
+    # data = pd.read_csv('Image_Processing_Scripts/batch2_data_entries.csv')
+    # side_data=pd.read_csv('Image_Processing_Scripts/batch2_included_patient_info.csv')
+    # ellipse_data_filename='batch2_ellipse_data.csv'
+
     # filtered according to exclusion flag (first column)
     side_data=side_data[side_data['excluded?'] == 0]
     side_data = side_data.rename(columns={' side (L/R)': 'side'})
@@ -615,11 +856,45 @@ if __name__=='__main__':
             transformed_data=transformed_data.reset_index(drop=True)
             print(f"pre function reset index: {transformed_data.index}")
 
+        print("transformed data.columns: \n", transformed_data.columns)
+
+        ##  apply resampling function for the transformed_data row we are working with (row [0])
+        for name in ['def', 'ref']:
+            h_name = f'h_{name}_cent'
+            v_name = f'v_{name}_cent'
+
+            # Create copies of original data with '_og' suffix
+            transformed_data[f'{h_name}_og'] = transformed_data[h_name].copy()
+            transformed_data[f'{v_name}_og'] = transformed_data[v_name].copy()
+
+            h_val = transformed_data.loc[0, h_name]
+            v_val = transformed_data.loc[0, v_name]
+            resampled_x, resampled_y = resample(h_val, v_val)
+            transformed_data.at[0, h_name] = resampled_x
+            transformed_data.at[0, v_name] = resampled_y
+        
+        
 
         ellipse_data = fit_ellipse(transformed_data)
         print(f"transformed_data_shape post ellipse: {ellipse_data.shape}")
         #print(f"ellipse data: \n {ellipse_data}")
         print(f"ellipse_data columns: {ellipse_data.columns}")
+
+        # rename transformed data for name in ['def', 'ref'] from 'h_<name>_cent' to 'h_name>_cent_resampled
+            # and 'h_<name>_cent_og' to 'h_<name>_cent'
+        for name in ['def', 'ref']:
+            h_name = f'h_{name}_cent'
+            v_name = f'v_{name}_cent'
+            h_name_og = f'h_{name}_cent_og'
+            v_name_og = f'v_{name}_cent_og'
+            h_name_resampled = f'h_{name}_cent_resampled'
+            v_name_resampled = f'v_{name}_cent_resampled'
+
+            transformed_data[h_name_resampled] = transformed_data[h_name]
+            transformed_data[v_name_resampled] = transformed_data[v_name]
+            transformed_data[h_name] = transformed_data[h_name_og]
+            transformed_data[v_name] = transformed_data[v_name_og]
+          
         
 
         # PLOT FITTED ELLIPSE

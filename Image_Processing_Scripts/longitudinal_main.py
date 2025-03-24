@@ -367,6 +367,7 @@ if __name__ == '__main__':
 
     # Reset the index
     area_diff_df = area_diff_df.reset_index(drop=True)
+    
 
        
 

@@ -46,8 +46,10 @@ To redo the analysis after changes in bet, the following should be ran:
 - `contour_plot_main.py` (on cluster only)
 - `ellipse_plot_main.py`
 - `ellipse_fit_analysis.py`
+- `area_main.py`
 - `longitudinal_main.py`
 - `stats_main.py`
+- `stats_main_h.py`
 
 
 ### Patient selection criteria: ###
@@ -123,7 +125,8 @@ The loop in step 4 performs the following processes:
     - This average is applied to both reference and deformed horizontal contour points to center about $x=0$.
     - The centered horizontal contours are stored in `h_def_cent` and `h_ref_cent`, new columns `v_def_cent` and `v_ref_cent` to store corresponding `v_def_rot` and `v_ref_rot` data in a cohesive naming convention are created.
     - The data slice is returned.
-5. Fit ellipse using least squares method in `fit_ellipse` function
+5. Resample and downsample - the contour lines for `def` and `ref` contours are reconstructed (linear interpolation) and the points cloud resampled at regular $x$ ($h$) intervals whilst preserving the end points. This avoids overfitting and clusters of points having increased influence over the ellipse that is fit. 
+6. Fit ellipse using least squares method in `fit_ellipse` function
     - For each set of contours marked by `def` and `ref`, the `fit_ellipse` function takes a given data slice and returns a new data slice with added `ellipse_h_def`, `ellipse_v_def`, `ellipse_h_ref`, `ellipse_v_ref` columns as `ellipse_data`.
         - The columns are initialised using `initialize_columns` function. 
         - Data is fitted using `fit_data` function, returning `params` (an array of $h$ and $a$ values). 

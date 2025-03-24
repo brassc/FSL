@@ -14,7 +14,7 @@ from statsmodels.stats.multicomp import pairwise_tukeyhsd
 from itertools import combinations
 from longitudinal_main import map_timepoint_to_string
 from set_publication_style import set_publication_style
-
+import pickle as pkl
 import rpy2
 import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
@@ -127,12 +127,12 @@ def paired_ttest(data, time1, time2):
 
 def create_timepoint_scatter(df, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']):
     """
-    Create a scatter plot of area_diff for each timepoint.
+    Create a scatter plot of h_diff for each timepoint.
     
     Parameters:
     -----------
     df : pandas.DataFrame
-        Long format dataframe with columns: patient_id, timepoint, area_diff
+        Long format dataframe with columns: patient_id, timepoint, h_diff
     timepoints : list
         List of timepoints in the desired order
         
@@ -167,12 +167,12 @@ def create_timepoint_scatter(df, timepoints=['ultra-fast', 'fast', 'acute', '3mo
             x_jittered = np.random.normal(positions[i], jitter_width, size=len(tp_data))
             
             # Plot scatter points
-            ax.scatter(x_jittered, tp_data['area_diff'], 
+            ax.scatter(x_jittered, tp_data['h_diff'], 
                       color=palette[i], alpha=0.7, s=20, 
                       edgecolor=palette[i], linewidth=0.5)
             
             # Optional: Add mean line
-            mean_value = tp_data['area_diff'].mean()
+            mean_value = tp_data['h_diff'].mean()
             ax.hlines(mean_value, positions[i]-0.3, positions[i]+0.3, 
                      color=palette[i], linewidth=2, linestyle='-')
     
@@ -199,14 +199,14 @@ def create_timepoint_scatter(df, timepoints=['ultra-fast', 'fast', 'acute', '3mo
                    ha='center', va='bottom', fontsize=10)
     ax.xaxis.set_label_coords(0.5, -0.25)  # Move x-axis label down
     plt.tight_layout()
-    plt.savefig('Image_Processing_Scripts/area_diff_scatter.png')
-    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/area_diff_scatter.png', dpi=600)
+    plt.savefig('Image_Processing_Scripts/h_diff_scatter.png')
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/h_diff_scatter.png', dpi=600)
     plt.close()
     return
 
 def create_timepoint_violin(df, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']):
     """
-    Create a violin plot of area_diff for each timepoint with overlaid scatter points.
+    Create a violin plot of h_diff for each timepoint with overlaid scatter points.
     """
     import matplotlib.pyplot as plt
     import numpy as np
@@ -226,18 +226,18 @@ def create_timepoint_violin(df, timepoints=['ultra-fast', 'fast', 'acute', '3mo'
                                              ordered=True)
     
     # Create violin plot
-    sns.violinplot(x='timepoint', y='area_diff', data=df_filtered, 
+    sns.violinplot(x='timepoint', y='h_diff', data=df_filtered, 
                   palette=palette, inner=None, ax=ax, saturation=0.7, alpha=0.5)
     
     # Add scatter points on top
-    sns.stripplot(x='timepoint', y='area_diff', data=df_filtered,
+    sns.stripplot(x='timepoint', y='h_diff', data=df_filtered,
                  palette=palette, jitter=True, size=5, alpha=0.7, ax=ax)
     
     # Add mean markers
     for i, tp in enumerate(timepoints):
         tp_data = df[df['timepoint'] == tp]
         if len(tp_data) > 0:
-            mean_value = tp_data['area_diff'].mean()
+            mean_value = tp_data['h_diff'].mean()
             ax.hlines(mean_value, i-0.3, i+0.3,
                      color=palette[i], linewidth=2, linestyle='-')
     
@@ -261,14 +261,14 @@ def create_timepoint_violin(df, timepoints=['ultra-fast', 'fast', 'acute', '3mo'
     
     ax.xaxis.set_label_coords(0.5, -0.125) # Move x-axis label down
     plt.tight_layout()
-    plt.savefig('Image_Processing_Scripts/area_diff_violin.png')
-    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/area_diff_violin.png', dpi=600)
+    plt.savefig('Image_Processing_Scripts/h_diff_violin.png')
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/h_diff_violin.png', dpi=600)
     plt.close()
     return
 
 def create_timepoint_boxplot(df, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']):
     """
-    Create a box plot of area_diff for each timepoint with overlaid scatter points.
+    Create a box plot of h_diff for each timepoint with overlaid scatter points.
     """
     import matplotlib.pyplot as plt
     import numpy as np
@@ -321,7 +321,7 @@ def create_timepoint_boxplot(df, timepoints=['ultra-fast', 'fast', 'acute', '3mo
     
     # Plot regular boxplots for n >= 5
     if not df_regular.empty:
-        sns.boxplot(x='timepoint', y='area_diff', data=df_regular,
+        sns.boxplot(x='timepoint', y='h_diff', data=df_regular,
                   palette=palette, width=0.5, ax=ax, saturation=0.7,
                   showfliers=False)
     
@@ -335,7 +335,7 @@ def create_timepoint_boxplot(df, timepoints=['ultra-fast', 'fast', 'acute', '3mo
     for tp in small_sample_tps:
         tp_data = df[df['timepoint'] == tp]
         tp_index = timepoints.index(tp)
-        median_value = tp_data['area_diff'].median()
+        median_value = tp_data['h_diff'].median()
         
         # Plot median as a horizontal line
         ax.hlines(median_value, tp_index - 0.25, tp_index + 0.25,
@@ -343,7 +343,7 @@ def create_timepoint_boxplot(df, timepoints=['ultra-fast', 'fast', 'acute', '3mo
                  alpha=0.9, zorder=5)
     
     # Add scatter points for all timepoints
-    sns.stripplot(x='timepoint', y='area_diff', data=df_filtered,
+    sns.stripplot(x='timepoint', y='h_diff', data=df_filtered,
                  palette=palette, jitter=True, size=6, alpha=0.8, ax=ax)
         
     # Set labels and title
@@ -363,8 +363,8 @@ def create_timepoint_boxplot(df, timepoints=['ultra-fast', 'fast', 'acute', '3mo
     
     ax.xaxis.set_label_coords(0.5, -0.125) # Move x-axis label down
     plt.tight_layout()
-    plt.savefig('Image_Processing_Scripts/area_diff_boxplot_v2.png')
-    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/area_diff_boxplot_v2.png', dpi=600)
+    plt.savefig('Image_Processing_Scripts/h_diff_boxplot_v2.png')
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/h_diff_boxplot_v2.png', dpi=600)
     plt.close()
     return
 
@@ -596,13 +596,13 @@ def create_forest_plot(valid_wilcoxon_results, filename):
 def mixed_effect_boxplot(df, result, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], 
                    chronic_timepoints=['3mo', '6mo', '12mo', '24mo']):
     """
-    Create a box plot of area_diff for each timepoint with overlaid mixed effect model predictions.
+    Create a box plot of h_diff for each timepoint with overlaid mixed effect model predictions.
     Colors are assigned based on statistical significance.
     
     Parameters:
     -----------
     df : pandas DataFrame
-        DataFrame containing patient_id, timepoint, and area_diff columns
+        DataFrame containing patient_id, timepoint, and h_diff columns
     result : statsmodels MixedLMResults
         The fitted mixed effects model result object
     timepoints : list
@@ -635,7 +635,7 @@ def mixed_effect_boxplot(df, result, timepoints=['ultra-fast', 'fast', 'acute', 
     
     # Get chronic data and calculate means per patient
     chronic_data = new_df[new_df['timepoint_category'] == 'chronic']
-    chronic_means = chronic_data.groupby('patient_id')['area_diff'].mean().reset_index()
+    chronic_means = chronic_data.groupby('patient_id')['h_diff'].mean().reset_index()
     chronic_means['timepoint'] = 'chronic'
     
     # Remove original chronic timepoints and add back the means
@@ -709,7 +709,7 @@ def mixed_effect_boxplot(df, result, timepoints=['ultra-fast', 'fast', 'acute', 
     
     # Plot regular boxplots for n >= 5
     if not df_regular.empty:
-        sns.boxplot(x='timepoint', y='area_diff', data=df_regular,
+        sns.boxplot(x='timepoint', y='h_diff', data=df_regular,
                    palette=palette, width=0.5, ax=ax, saturation=0.7,
                    showfliers=False)
         
@@ -721,7 +721,7 @@ def mixed_effect_boxplot(df, result, timepoints=['ultra-fast', 'fast', 'acute', 
     for tp in small_sample_tps:
         tp_data = df_filtered[df_filtered['timepoint'] == tp]
         tp_index = plot_timepoints.index(tp)
-        median_value = tp_data['area_diff'].median()
+        median_value = tp_data['h_diff'].median()
         
         # Plot median as a horizontal line
         ax.hlines(median_value, tp_index - 0.25, tp_index + 0.25,
@@ -729,7 +729,7 @@ def mixed_effect_boxplot(df, result, timepoints=['ultra-fast', 'fast', 'acute', 
                  alpha=0.9, zorder=5)
     
     # Add scatter points for all timepoints
-    sns.stripplot(x='timepoint', y='area_diff', data=df_filtered,
+    sns.stripplot(x='timepoint', y='h_diff', data=df_filtered,
                  palette=palette, jitter=True, size=6, alpha=0.8, ax=ax)
     
     # Extract coefficients from the statsmodels results object
@@ -889,8 +889,8 @@ def mixed_effect_boxplot(df, result, timepoints=['ultra-fast', 'fast', 'acute', 
     
     ax.xaxis.set_label_coords(0.5, -0.125)  # Move x-axis label down
     plt.tight_layout()
-    plt.savefig('Image_Processing_Scripts/area_diff_mixed_effect_boxplot.png', dpi=300)
-    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/area_diff_mixed_effect_boxplot.png', dpi=600)
+    plt.savefig('Image_Processing_Scripts/h_diff_mixed_effect_boxplot.png', dpi=300)
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/h_diff_mixed_effect_boxplot.png', dpi=600)
     
     return fig
 
@@ -955,7 +955,7 @@ def emmeans_significance_matrix(py_pairs):
     mask = np.isnan(sig_df.values)
 
     return sig_df, mask
-def plot_emmeans_sig_mat(sig_df, mask):
+def plot_emmeans_sig_mat_h(sig_df, mask):
     # Plot heatmap
     ordered_timepoints= ['ultra-fast', 'fast', 'acute', 'chronic']
     plt.figure(figsize=(10, 10))
@@ -1001,7 +1001,7 @@ def plot_emmeans_sig_mat(sig_df, mask):
                         j + 0.625, i + 0.45, "†", ha='left', va='center', fontsize=10
                     )
 
-    plt.title('Pairwise Comparison p-values from Mixed Effects Model (emmeans)')
+    plt.title('Pairwise comparison of p-values from mixed effects model (emmeans) for ellipse $h$ parameter')
     plt.grid(False)
     plt.tight_layout()
 
@@ -1012,8 +1012,8 @@ def plot_emmeans_sig_mat(sig_df, mask):
     plt.figtext(0.25, 0.01, "Significance levels: ** p<0.01, * p<0.05, † p<0.1",
             ha='left', fontsize=12, style='italic') #*** p<0.001, 
 
-    plt.savefig('significance_matrix_mixed_effects_v2.png', dpi=300, bbox_inches='tight')
-    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/significance_matrix_mixed_effects_v2.png', dpi=600, bbox_inches='tight')
+    plt.savefig('significance_matrix_mixed_effects_h.png', dpi=300, bbox_inches='tight')
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/significance_matrix_mixed_effects_h.png', dpi=600, bbox_inches='tight')
     plt.close()
 
 
@@ -1026,14 +1026,19 @@ if __name__ == '__main__':
     print('running stats_main.py')
     
     # Load the data (note this data does not contain all timepoints w NaN value if not exist - only contains timepoints w data per original data)
-    batch1_data = pd.read_csv('Image_Processing_Scripts/area_data.csv')
-    batch2_data = pd.read_csv('Image_Processing_Scripts/batch2_area_data.csv')
+    # Load the data from batch2_ellipse_data.pkl and ellipse_data.pkl
+    batch1_data=pkl.load(open('Image_Processing_Scripts/ellipse_data.pkl', 'rb'))
+    batch2_data=pkl.load(open('Image_Processing_Scripts/batch2_ellipse_data.pkl', 'rb'))
     batch2_data['timepoint'] = batch2_data['timepoint'].apply(map_timepoint_to_string) # convert to string category
     # Combine the two batches
     data = pd.concat([batch1_data, batch2_data], ignore_index=True)
+    # retain only the columns we need h_param_def, h_param_ref, patient_id, timepoint
+    data = data[['patient_id', 'timepoint', 'h_param_def', 'h_param_ref']]
+    # do h_param_def - h_param_ref to get h_diff
+    data['h_diff'] = data['h_param_def'] - data['h_param_ref']
+    # drop h_param_def and h_param_ref
+    data = data.drop(columns=['h_param_def', 'h_param_ref'], axis=1)
 
-    # sort data according to patient id then timepoint
-    # Sort data by patient_id numerically when possible
     def get_sort_key(patient_id):
         try:
             return (0, int(patient_id))  # Numeric IDs first, sorted numerically
@@ -1051,25 +1056,18 @@ if __name__ == '__main__':
     data = data.drop(['sort_key', 'timepoint_order'], axis=1) # remove sorting column
     #print(data)
 
+    new_df = data.copy()
+    new_df['patient_id'] = new_df['patient_id'].astype(str)
+    new_df['timepoint'] = new_df['timepoint'].astype(str)
+    new_df['h_diff'] = new_df['h_diff'].astype(float)
 
-    # drop cols from dataframe: remove area_def, area_ref and side
-    new_df=data.drop(columns='area_def', axis=1)
-    new_df=new_df.drop(columns='area_ref', axis=1)
-    new_df=new_df.drop(columns='side', axis=1)
-
-    # Drop rows where area_diff is NaN
-    new_df = new_df.dropna(subset=['area_diff']) # there should be no NaN values in area_diff, but just in case
+    # Drop rows where h_diff is NaN
+    new_df = new_df.dropna(subset=['h_diff']) # there should be no NaN values in h_diff, but just in case
     print('rows dropped')
     # Ensure categorical values are categorical
     print('ensuring categorical values are categorical')
     new_df['timepoint']=pd.Categorical(new_df['timepoint'], categories=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
-    #print(new_df.head(10))
-    #sys.exit()
-
-    #create_timepoint_scatter(new_df)
-    #create_timepoint_violin(new_df)
-    #create_timepoint_boxplot(new_df)
-    #sys.exit()
+    
 
 
     # Check for duplicates
@@ -1080,7 +1078,7 @@ if __name__ == '__main__':
         print("Sample of duplicates:")
         print(new_df[dupes])# Using all available data
 
-    pivoted_data = new_df.pivot(index='patient_id', columns='timepoint', values='area_diff')
+    pivoted_data = new_df.pivot(index='patient_id', columns='timepoint', values='h_diff')
     pivoted_data = pivoted_data.rename_axis(None, axis=1)
 
     
@@ -1382,8 +1380,8 @@ if __name__ == '__main__':
     chronic_data=df[df['timepoint_category']=='chronic']
     
 
-    # group by patient_id and take the mean of the area_diff
-    chronic_means=chronic_data.groupby('patient_id')['area_diff'].mean().reset_index()
+    # group by patient_id and take the mean of the h_diff
+    chronic_means=chronic_data.groupby('patient_id')['h_diff'].mean().reset_index()
     chronic_means['timepoint'] = 'chronic'
 
     # remove original chronic timepoints and add back the means
@@ -1414,7 +1412,7 @@ if __name__ == '__main__':
 
     #print(binned_df)
     # pivot the data for plotting
-    binned_df_pivot = binned_df.pivot(index='patient_id', columns='timepoint', values='area_diff')
+    binned_df_pivot = binned_df.pivot(index='patient_id', columns='timepoint', values='h_diff')
     #print(binned_df_pivot)
     # reorder columns to match the order of the categories
     binned_df_pivot = binned_df_pivot[['ultra-fast', 'fast', 'acute', 'chronic']]
@@ -1422,12 +1420,12 @@ if __name__ == '__main__':
     
     
 
-    # Fit the model: area_diff as outcome, timepoint_category as fixed effect, 
+    # Fit the model: h_diff as outcome, timepoint_category as fixed effect, 
     # patient_id as random effect
 
     #try:
         # Mixed effects model
-    model = smf.mixedlm("area_diff ~ timepoint", binned_df, groups=binned_df['patient_id'])
+    model = smf.mixedlm("h_diff ~ timepoint", binned_df, groups=binned_df['patient_id'])
     result = model.fit()
     print("mixed effect model summary:")
     print(result.summary())
@@ -1453,7 +1451,7 @@ if __name__ == '__main__':
     # Note: Tukey's HSD is performed on the raw data, not on the model -
     #This means it doesn't account for the random effects structure of your model.
     tukey = pairwise_tukeyhsd(
-        endog=binned_df['area_diff'],     # The dependent variable
+        endog=binned_df['h_diff'],     # The dependent variable
         groups=binned_df['timepoint'],    # The grouping variable
         alpha=0.05                        # The significance level
     )
@@ -1474,7 +1472,7 @@ if __name__ == '__main__':
 
     # Create and fit the model in R
     ro.globalenv['data'] = r_df
-    formula = "area_diff ~ timepoint + (1 | patient_id)"
+    formula = "h_diff ~ timepoint + (1 | patient_id)"
     r_model = lme4.lmer(formula, data=ro.globalenv['data'])
 
     # Get the estimated marginal means
@@ -1523,8 +1521,8 @@ if __name__ == '__main__':
     #data_availability_matrix(binned_df_pivot, order, filename='data_availability_matrix_binned.png')
 
     # Plot the significance matrix
-    #sig_df, mask = emmeans_significance_matrix(py_pairs)
-    #plot_emmeans_sig_mat(sig_df, mask)  
+    sig_df, mask = emmeans_significance_matrix(py_pairs)
+    plot_emmeans_sig_mat_h(sig_df, mask)  
 
     #mixed_effect_boxplot(new_df, result, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], chronic_timepoints=['3mo', '6mo', '12mo', '24mo'])
    
