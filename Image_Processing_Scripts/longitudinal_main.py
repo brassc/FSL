@@ -229,14 +229,27 @@ def map_timepoint_to_string(numeric_timepoint):
     """
 
     timepoints = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
-    timepoint_values = [50, 336, 504, 2160, 4320, 8640, 17280] # always the same
+    timepoint_ranges = [
+        (0, 72),        # ultra-fast
+        (72, 192),      # fast
+        (192, 1320),    # acute
+        (1320, 3144),   # 3mo
+        (3144, 5712),   # 6mo
+        (5712, 21768),  # 12mo
+        (21768, float('inf'))  # 24mo (no upper bound)
+    ]
+
 
     if pd.isna(numeric_timepoint):
         return None
     
-    # Find the closest reference timepoint
-    closest_idx = np.argmin([abs(numeric_timepoint - tp) for tp in timepoint_values])
-    return timepoints[closest_idx]
+    # Check which range the numeric_timepoint falls into
+    for idx, (start, end) in enumerate(timepoint_ranges):
+        if start <= numeric_timepoint < end:
+            return timepoints[idx]
+    
+    # If no range is found, return None
+    return None
 
 
 if __name__ == '__main__':
@@ -255,7 +268,17 @@ if __name__ == '__main__':
 
     # array of timepoints
     timepoints = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
-    timepoint_values = [50, 336, 504, 2160, 4320, 8640, 17280]
+    #old_timepoint_values = [50, 336, 504, 2160, 4320, 8640, 17280]
+    timepoint_ranges = [
+        (0, 72),        # ultra-fast
+        (72, 192),      # fast
+        (192, 1320),    # acute
+        (1320, 3144),   # 3mo
+        (3144, 5712),   # 6mo
+        (5712, 21768),  # 12mo
+        (21768, float('inf'))  # 24mo (no upper bound, so use infinity)
+    ]
+
 
     # Convert numeric timepoints to strings
     batch2_area_data['timepoint'] = batch2_area_data['timepoint'].apply(map_timepoint_to_string)
