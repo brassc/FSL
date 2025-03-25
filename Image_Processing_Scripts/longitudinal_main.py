@@ -230,14 +230,16 @@ def map_timepoint_to_string(numeric_timepoint):
 
     timepoints = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
     timepoint_ranges = [
-        (0, 72),        # ultra-fast
-        (72, 192),      # fast
-        (192, 1320),    # acute
-        (1320, 3144),   # 3mo
-        (3144, 5712),   # 6mo
-        (5712, 21768),  # 12mo
-        (21768, float('inf'))  # 24mo (no upper bound)
+    (0, 72), # ultra-fast
+    (72, 240), # fast
+    (240, 1536), # acute
+    (1536, 4300), # 3mo
+    (4300, 6696), # 6mo
+    (6696, 18040), # 12mo
+    (18040, 500000) # 24mo (no upper bound)
     ]
+
+    
 
 
     if pd.isna(numeric_timepoint):
@@ -270,19 +272,22 @@ if __name__ == '__main__':
     timepoints = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
     #old_timepoint_values = [50, 336, 504, 2160, 4320, 8640, 17280]
     timepoint_ranges = [
-        (0, 72),        # ultra-fast
-        (72, 192),      # fast
-        (192, 1320),    # acute
-        (1320, 3144),   # 3mo
-        (3144, 5712),   # 6mo
-        (5712, 21768),  # 12mo
-        (21768, float('inf'))  # 24mo (no upper bound, so use infinity)
+    (0, 72), # ultra-fast
+    (72, 240), # fast
+    (240, 1536), # acute
+    (1536, 4300), # 3mo
+    (4300, 6696), # 6mo
+    (6696, 18048), # 12mo
+    (18048, float('inf')) # 24mo (no upper bound)
     ]
 
+    #print(batch2_area_data[['patient_id','timepoint']])
+    #sys.exit()
 
     # Convert numeric timepoints to strings
     batch2_area_data['timepoint'] = batch2_area_data['timepoint'].apply(map_timepoint_to_string)
-
+    #print(batch2_area_data[['patient_id','timepoint']])
+    #sys.exit()
     # Combine both data frames
     combined_area_data=pd.concat([area_data,batch2_area_data],ignore_index=True)
     area_data=combined_area_data
