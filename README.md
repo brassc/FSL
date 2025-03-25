@@ -49,6 +49,7 @@ To redo the analysis after changes in bet, the following should be ran:
 - `area_main.py`
 - `longitudinal_main.py`
 - `stats_main.py`
+- `area_main_ellipse.py`
 - `stats_main_h.py`
 
 
