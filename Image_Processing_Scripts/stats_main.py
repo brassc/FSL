@@ -464,20 +464,20 @@ def create_timepoint_boxplot(df, timepoints=['ultra-fast', 'fast', 'acute', '3mo
                  palette=palette, jitter=True, size=6, alpha=0.8, ax=ax)
     
 
-    # Add patient ID labels to scatter points
-    for i, tp in enumerate(timepoints):
-        tp_data = df_filtered[df_filtered['timepoint'] == tp]
-        # Calculate approximate positions of points (similar to stripplot jitter)
-        n_points = len(tp_data)
-        if n_points > 0:
-            # Get x-y coordinates of the plotted points
-            # This is an approximation of stripplot's jitter
-            jitter_amount = 0.2
-            x_positions = np.random.uniform(i-jitter_amount, i+jitter_amount, size=n_points)
-            for j, (_, row) in enumerate(tp_data.iterrows()):
-                ax.text(x_positions[j] + 0.1, row['area_diff'], 
-                    str(row['patient_id']), 
-                    fontsize=8, alpha=0.7, ha='left', va='center')  
+    # # Add patient ID labels to scatter points
+    # for i, tp in enumerate(timepoints):
+    #     tp_data = df_filtered[df_filtered['timepoint'] == tp]
+    #     # Calculate approximate positions of points (similar to stripplot jitter)
+    #     n_points = len(tp_data)
+    #     if n_points > 0:
+    #         # Get x-y coordinates of the plotted points
+    #         # This is an approximation of stripplot's jitter
+    #         jitter_amount = 0.2
+    #         x_positions = np.random.uniform(i-jitter_amount, i+jitter_amount, size=n_points)
+    #         for j, (_, row) in enumerate(tp_data.iterrows()):
+    #             ax.text(x_positions[j] + 0.1, row['area_diff'], 
+    #                 str(row['patient_id']), 
+    #                 fontsize=8, alpha=0.7, ha='left', va='center')  
         
     # Set labels and title
     ax.set_xlabel('Timepoint', fontsize=12)
