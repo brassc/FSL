@@ -1068,6 +1068,74 @@ if __name__ == '__main__':
     print('ensuring categorical values are categorical')
     new_df['timepoint']=pd.Categorical(new_df['timepoint'], categories=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
     
+    # Now get new ranges for categories based on date since injury
+    sep_df =new_df.copy()
+    print(sep_df.head(100))
+    
+    days_data=pd.read_csv('DTI_Processing_Scripts/patient_scanner_data_with_timepoints.csv')
+    days_data=days_data.drop(columns=['Cohort','Site','Model','Scan_date'], axis=1)
+    pd.set_option('display.max_rows', None)  # Show all rows
+    #print(days_data.head(100))
+
+    
+    # remove rows that have no value in timepoint
+    days_data=days_data.dropna(subset=['timepoint'])
+    #print(days_data.head(100))
+    
+    # sort values by patient ID and timepoint in order ultra-fast, fast, acute, 3mo, 6mo, 12mo, 24mo
+    timepoint_order=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
+    days_data['timepoint']=pd.Categorical(days_data['timepoint'], categories=timepoint_order)
+    days_data=days_data.sort_values(by=['patient_id', 'timepoint']).reset_index(drop=True)
+    print(days_data.head(100))
+    #if patient_id and timepoint combination not in sep_df, pop days_data row
+    # remove duplicates
+    days_data=days_data.drop_duplicates(subset=['patient_id', 'timepoint']).reset_index(drop=True)
+    print(days_data.head(100))
+
+    # remove duplicates from days_data
+    #days_data=days_data.drop_duplicates(subset=['patient_id', 'timepoint'], keep='first')
+    #print(days_data.head(100))
+    # Create a set of patient_id and timepoint combinations from sep_df
+    # Fix data types to ensure consistent comparison
+    sep_df['patient_id'] = sep_df['patient_id'].astype(str)
+    days_data['patient_id'] = days_data['patient_id'].astype(str)
+
+    # Normalize timepoint strings
+    sep_df['timepoint'] = sep_df['timepoint'].str.strip()
+    days_data['timepoint'] = days_data['timepoint'].str.strip()
+
+    # Filter days_data to keep only rows with matching combinations in sep_df
+    valid_pairs = set(zip(sep_df['patient_id'], sep_df['timepoint']))
+    filtered_days_data = days_data[
+        days_data.apply(lambda row: (str(row['patient_id']), row['timepoint']) in valid_pairs, axis=1)
+    ]
+
+    # Merge with the filtered dataframe
+    sep_df = sep_df.merge(
+        filtered_days_data[['patient_id', 'timepoint', 'Days_since_injury']],
+        on=['patient_id', 'timepoint'],
+        how='left'
+    )
+    print(sep_df)
+
+    # Redo ranges
+
+    recategorised_df = sep_df.copy()
+    ranges = [(0,2), (2,8), (8, 42), (42, 179), (179, 278), (278, 540), (540, 500000)]
+    labels = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
+    recategorised_df['timepoint'] = pd.cut(recategorised_df['Days_since_injury'], bins=[0, 2, 8, 42, 179, 278, 540, 500000], labels=labels)
+    
+    #print rows where recategorised_df is different from sep_df
+    print(recategorised_df[recategorised_df['timepoint'] != sep_df['timepoint']])
+    # drop duplicate patient_id timepoint combinations
+    recategorised_df=recategorised_df.drop_duplicates(subset=['patient_id', 'timepoint'])
+
+    #create_timepoint_boxplot_recategorised(recategorised_df)
+    
+
+    new_df=recategorised_df.drop(columns='Days_since_injury', axis=1)
+
+
 
 
     # Check for duplicates
