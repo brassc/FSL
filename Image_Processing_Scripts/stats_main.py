@@ -124,6 +124,123 @@ def paired_ttest(data, time1, time2):
 
 
 # Visualisation/plot functions
+def create_timepoint_boxplot_recategorised(df, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']):
+    """
+    Create a box plot of area_diff for each timepoint with overlaid scatter points.
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import seaborn as sns
+    import pandas as pd
+    import matplotlib.cm as cm
+    
+    # Create figure and axis
+    fig, ax = plt.subplots(figsize=(12, 6))
+    
+    # Set color palette
+    palette = sns.color_palette("plasma", len(timepoints))
+    
+    # Filter the dataframe to include only timepoints in the specified list
+    df_filtered = df[df['timepoint'].isin(timepoints)].copy()
+    
+    # Ensure timepoints are in the correct order
+    df_filtered['timepoint'] = pd.Categorical(df_filtered['timepoint'],
+                                             categories=timepoints,
+                                             ordered=True)
+    
+    # Add horizontal line at y=0
+    ax.axhline(y=0, color='gray', linestyle='-', alpha=0.3)
+    
+    # Create a copy of the data for non-small sample sizes
+    df_regular = df_filtered.copy()
+    df_small = df_filtered.copy()
+    
+    # Create lists to track which timepoints have small sample sizes
+    small_sample_tps = []
+    regular_sample_tps = []
+    
+    for tp in timepoints:
+        tp_data = df[df['timepoint'] == tp]
+        if len(tp_data) < 5:
+            small_sample_tps.append(tp)
+        else:
+            regular_sample_tps.append(tp)
+    
+    # Create a mask for each dataset
+    if small_sample_tps:
+        df_small = df_small[df_small['timepoint'].isin(small_sample_tps)]
+    else:
+        df_small = df_small[df_small['timepoint'] == 'none_placeholder']
+        
+    if regular_sample_tps:
+        df_regular = df_regular[df_regular['timepoint'].isin(regular_sample_tps)]
+    else:
+        df_regular = df_regular[df_regular['timepoint'] == 'none_placeholder']
+    
+    # Plot regular boxplots for n >= 5
+    if not df_regular.empty:
+        sns.boxplot(x='timepoint', y='area_diff', data=df_regular,
+                  palette=palette, width=0.5, ax=ax, saturation=0.7,
+                  showfliers=False)
+    
+    # Reduce opacity of box elements after creation
+    for patch in ax.patches:
+        patch.set_alpha(0.5)
+    
+    
+    
+    # For small sample sizes (n < 5), plot just the median as a line
+    for tp in small_sample_tps:
+        tp_data = df[df['timepoint'] == tp]
+        tp_index = timepoints.index(tp)
+        median_value = tp_data['area_diff'].median()
+        
+        # Plot median as a horizontal line
+        ax.hlines(median_value, tp_index - 0.25, tp_index + 0.25,
+                 color='black', linewidth=1.0, linestyle='-',
+                 alpha=0.9, zorder=5)
+    
+    # Add scatter points for all timepoints
+    sns.stripplot(x='timepoint', y='area_diff', data=df_filtered,
+                 palette=palette, jitter=True, size=6, alpha=0.8, ax=ax)
+    
+
+    # Add patient ID labels to scatter points
+    for i, tp in enumerate(timepoints):
+        tp_data = df_filtered[df_filtered['timepoint'] == tp]
+        # Calculate approximate positions of points (similar to stripplot jitter)
+        n_points = len(tp_data)
+        if n_points > 0:
+            # Get x-y coordinates of the plotted points
+            # This is an approximation of stripplot's jitter
+            jitter_amount = 0.2
+            x_positions = np.random.uniform(i-jitter_amount, i+jitter_amount, size=n_points)
+            for j, (_, row) in enumerate(tp_data.iterrows()):
+                ax.text(x_positions[j] + 0.1, row['area_diff'], 
+                    str(row['patient_id']), 
+                    fontsize=8, alpha=0.7, ha='left', va='center')  
+        
+    # Set labels and title
+    ax.set_xlabel('Timepoint', fontsize=12)
+    ax.set_ylabel('Herniation Area [mm²]', fontsize=12)
+    ax.set_title('Herniation Area by Timepoint', fontsize=14, fontweight='bold')
+    
+    # Add grid for y-axis only
+    ax.grid(True, axis='y', linestyle='-', alpha=0.3)
+    
+    # Show count of patients per timepoint
+    for i, tp in enumerate(timepoints):
+        count = len(df[df['timepoint'] == tp])
+        if count > 0:
+            ax.text(i, ax.get_ylim()[0] * 1.5, f"n={count}",
+                   ha='center', va='bottom', fontsize=10)
+    
+    ax.xaxis.set_label_coords(0.5, -0.125) # Move x-axis label down
+    plt.tight_layout()
+    plt.savefig('Image_Processing_Scripts/area_diff_boxplot__recategorised.png')
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/area_diff_boxplot_recategorised.png', dpi=600)
+    plt.close()
+    return
 
 def create_timepoint_scatter(df, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']):
     """
@@ -1087,6 +1204,76 @@ if __name__ == '__main__':
     #create_timepoint_boxplot(new_df)
     #sys.exit()
 
+    # Now get new ranges for categories based on date since injury
+    sep_df =new_df.copy()
+    print(sep_df.head(100))
+    
+    days_data=pd.read_csv('DTI_Processing_Scripts/patient_scanner_data_with_timepoints.csv')
+    days_data=days_data.drop(columns=['Cohort','Site','Model','Scan_date'], axis=1)
+    pd.set_option('display.max_rows', None)  # Show all rows
+    #print(days_data.head(100))
+
+    
+    # remove rows that have no value in timepoint
+    days_data=days_data.dropna(subset=['timepoint'])
+    #print(days_data.head(100))
+    
+    # sort values by patient ID and timepoint in order ultra-fast, fast, acute, 3mo, 6mo, 12mo, 24mo
+    timepoint_order=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
+    days_data['timepoint']=pd.Categorical(days_data['timepoint'], categories=timepoint_order)
+    days_data=days_data.sort_values(by=['patient_id', 'timepoint']).reset_index(drop=True)
+    print(days_data.head(100))
+    #if patient_id and timepoint combination not in sep_df, pop days_data row
+    # remove duplicates
+    days_data=days_data.drop_duplicates(subset=['patient_id', 'timepoint']).reset_index(drop=True)
+    print(days_data.head(100))
+
+    # remove duplicates from days_data
+    #days_data=days_data.drop_duplicates(subset=['patient_id', 'timepoint'], keep='first')
+    #print(days_data.head(100))
+    # Create a set of patient_id and timepoint combinations from sep_df
+    # Fix data types to ensure consistent comparison
+    sep_df['patient_id'] = sep_df['patient_id'].astype(str)
+    days_data['patient_id'] = days_data['patient_id'].astype(str)
+
+    # Normalize timepoint strings
+    sep_df['timepoint'] = sep_df['timepoint'].str.strip()
+    days_data['timepoint'] = days_data['timepoint'].str.strip()
+
+    # Filter days_data to keep only rows with matching combinations in sep_df
+    valid_pairs = set(zip(sep_df['patient_id'], sep_df['timepoint']))
+    filtered_days_data = days_data[
+        days_data.apply(lambda row: (str(row['patient_id']), row['timepoint']) in valid_pairs, axis=1)
+    ]
+
+    # Merge with the filtered dataframe
+    sep_df = sep_df.merge(
+        filtered_days_data[['patient_id', 'timepoint', 'Days_since_injury']],
+        on=['patient_id', 'timepoint'],
+        how='left'
+    )
+    print(sep_df)
+
+    # Redo ranges
+
+    recategorised_df = sep_df.copy()
+    ranges = [(0,2), (2,8), (8, 42), (42, 179), (179, 278), (278, 540), (540, 500000)]
+    labels = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
+    recategorised_df['timepoint'] = pd.cut(recategorised_df['Days_since_injury'], bins=[0, 2, 8, 42, 179, 278, 540, 500000], labels=labels)
+    
+    #print rows where recategorised_df is different from sep_df
+    print(recategorised_df[recategorised_df['timepoint'] != sep_df['timepoint']])
+    # drop duplicate patient_id timepoint combinations
+    recategorised_df=recategorised_df.drop_duplicates(subset=['patient_id', 'timepoint'])
+
+    create_timepoint_boxplot_recategorised(recategorised_df)
+    
+
+    new_df=recategorised_df.drop(columns='Days_since_injury', axis=1)
+
+    
+
+
 
     # Check for duplicates
     print("Checking for duplicates:")
@@ -1502,6 +1689,12 @@ if __name__ == '__main__':
     py_pairs = pandas2ri.rpy2py(base.as_data_frame(r_pairs))
     print(py_pairs)
     
+
+
+
+
+    
+
 
     
     
