@@ -16,34 +16,101 @@ transform_coordinates() {
     local baseline_anterior_x="$6"
     local baseline_posterior_x="$7"
     local z="$8"
+    local in_img="$9" # T1
+    local ref_img="${10}" # DWI
+    local patient_id="${11}"
+    local timepoint="${12}"
+
+    echo "original anterior coordinates: $anterior_x, $anterior_y, $z">&2
+    echo "original posterior coordinates: $posterior_x, $posterior_y, $z">&2
+    echo "original baseline anterior coordinates: $baseline_anterior_x, $anterior_y, $z">&2
+    echo "original baseline posterior coordinates: $baseline_posterior_x, $posterior_y, $z">&2
     
-    python3 - <<EOF
-import numpy as np
+    
 
-# Load the transformation matrix
-mat_file = '$t1_2_dwi_mat'
-try: 
-    transformation_matrix = np.loadtxt(mat_file)
+    # Check if files exist
+    if [[ ! -f "$t1_2_dwi_mat" ]]; then
+        echo "ERROR: Transformation matrix for $patient_id $timepoint not found: $t1_2_dwi_mat">&2
+        return 1
+    fi
+    echo "transform matrix:">&2
+    cat "$t1_2_dwi_mat">&2
+    
+    if [[ ! -f "$in_img" ]]; then
+        echo "ERROR: Source image for $patient_id $timepoint not found: $in_img">&2
+        return 1
+    fi
+    
+    if [[ ! -f "$ref_img" ]]; then
+        echo "ERROR: Reference image for $patient_id $timepoint not found: $ref_img">&2
+        return 1
+    fi
 
-    # Define the individual coordinates for transformation
-    anterior_coords = np.array([$anterior_x, $anterior_y, $z, 1])
-    posterior_coords = np.array([$posterior_x, $posterior_y, $z, 1])
-    anterior_baseline_coords = np.array([$baseline_anterior_x, $anterior_y, $z, 1])
-    posterior_baseline_coords = np.array([$baseline_posterior_x, $posterior_y, $z, 1])
+    local coords_file=$(mktemp)
+    # Write coords to file (three numbers per line, space separated)
+    echo "$anterior_x $anterior_y $z" > "$coords_file"
+    echo "$posterior_x $posterior_y $z" >> "$coords_file"
+    echo "$baseline_anterior_x $anterior_y $z" >> "$coords_file"
+    echo "$baseline_posterior_x $posterior_y $z" >> "$coords_file"
 
-    # Apply the transformation matrix to the coordinates
-    transformed_anterior = np.dot(transformation_matrix, anterior_coords)
-    transformed_posterior = np.dot(transformation_matrix, posterior_coords)
-    transformed_baseline_anterior = np.dot(transformation_matrix, anterior_baseline_coords)
-    transformed_baseline_posterior = np.dot(transformation_matrix, posterior_baseline_coords)
+    echo "DEBUG: Coordinates file content:">&2
+    cat "$coords_file">&2
 
-    # Output the transformed coordinates
-    print(f"{transformed_anterior[0]:.1f},{transformed_anterior[1]:.1f},{transformed_anterior[2]:.1f},{transformed_posterior[0]:.1f},{transformed_posterior[1]:.1f},{transformed_posterior[2]:.1f},{transformed_baseline_anterior[0]:.1f},{transformed_baseline_posterior[0]:.1f}")
-except Exception as e:
-    print(f"Error: {e}")
-    exit(1)
-EOF
+    local transformed=$(img2imgcoord -src "$in_img" -dest "$ref_img" -xfm "$t1_2_dwi_mat" -vox "$coords_file")
+
+    rm "$coords_file"
+
+    echo "DEBUG: Raw transformation output:">&2
+    echo "$transformed">&2
+    
+
+    
+    
+    # Parse outputs
+    # Parse all coordinates at once using a single awk command
+    local coords=$(echo "$transformed" | awk '
+        NR==2 {anterior_x=sprintf("%.0f",$1); anterior_y=sprintf("%.0f",$2); anterior_z=sprintf("%.0f",$3)}
+        NR==3 {posterior_x=sprintf("%.0f",$1); posterior_y=sprintf("%.0f",$2); posterior_z=sprintf("%.0f",$3)}
+        NR==4 {baseline_anterior_x=sprintf("%.0f",$1); baseline_anterior_y=sprintf("%.0f",$2); baseline_anterior_z=sprintf("%.0f",$3)}
+        NR==5 {baseline_posterior_x=sprintf("%.0f",$1); baseline_posterior_y=sprintf("%.0f",$2); baseline_posterior_z=sprintf("%.0f",$3)}
+        END {print anterior_x","anterior_y","anterior_z","posterior_x","posterior_y","posterior_z","baseline_anterior_x","baseline_anterior_y","baseline_anterior_z","baseline_posterior_x","baseline_posterior_y","baseline_posterior_z}
+        ')>&2
+
+    echo "DEBUG: Transformed coordinates (rounded): $coords">&2
+    echo "$coords"
 }
+    
+    
+
+#     """
+#     python3 - <<EOF
+# import numpy as np
+
+# # Load the transformation matrix
+# mat_file = '$t1_2_dwi_mat'
+# try: 
+#     transformation_matrix = np.loadtxt(mat_file)
+
+#     # Define the individual coordinates for transformation
+#     anterior_coords = np.array([$anterior_x, $anterior_y, $z, 1])
+#     posterior_coords = np.array([$posterior_x, $posterior_y, $z, 1])
+#     anterior_baseline_coords = np.array([$baseline_anterior_x, $anterior_y, $z, 1])
+#     posterior_baseline_coords = np.array([$baseline_posterior_x, $posterior_y, $z, 1])
+
+#     # Apply the transformation matrix to the coordinates
+#     transformed_anterior = np.dot(transformation_matrix, anterior_coords)
+#     transformed_posterior = np.dot(transformation_matrix, posterior_coords)
+#     transformed_baseline_anterior = np.dot(transformation_matrix, anterior_baseline_coords)
+#     transformed_baseline_posterior = np.dot(transformation_matrix, posterior_baseline_coords)
+
+#     # Output the transformed coordinates
+#     print(f"{transformed_anterior[0]:.1f},{transformed_anterior[1]:.1f},{transformed_anterior[2]:.1f},{transformed_posterior[0]:.1f},{transformed_posterior[1]:.1f},{transformed_posterior[2]:.1f},{transformed_baseline_anterior[0]:.1f},{transformed_baseline_posterior[0]:.1f}")
+# except Exception as e:
+#     print(f"Error: {e}")
+#     exit(1)
+# EOF
+# }
+# """
 
 # Main function
 main() {
@@ -63,7 +130,7 @@ main() {
         side=$(printf "%s" "$side" | xargs)
         
         echo "Processing: Patient ID: $patient_id, Timepoint: $timepoint"
-    
+        
         # Skip excluded patients
         if [[ "$excluded" -eq 0 ]]; then
             process_patient "$patient_id" "$timepoint" "$z" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x"
@@ -71,8 +138,75 @@ main() {
     done
 }
 
+find_T1_image_file() {
+    local patient_id="$1"
+    local timepoint="$2"
+    local directory="/home/cmb247/Desktop/Project_3/BET_Extractions/${patient_id}/T1w_time1_bias_corr_registered_scans/BET_Output"
+    
+    echo "DEBUG: Searching for files in $directory for patient $patient_id, timepoint $timepoint">&2
+    
+    # Define patterns (from broad to specific)
+    local broad_pattern_priority="*${timepoint}*_bet*modified*.nii.gz"
+    local broad_pattern="*${timepoint}*_bet*.nii.gz"
+    local pattern_priority="*${timepoint}*_bet_mask*modifiedmask*.nii.gz"
+    local pattern="*${timepoint}*_bet_mask*.nii.gz"
+    
+    # First, search for priority broad pattern (excluding mask files)
+    local img_filepath=$(find "$directory" -name "$broad_pattern_priority" | grep -v "mask" | head -n 1)
+    
+    # If not found, try regular broad pattern
+    if [ -z "$img_filepath" ]; then
+        img_filepath=$(find "$directory" -name "$broad_pattern" | grep -v "mask" | head -n 1)
+    fi
+    
+    # Handle special case for 'fast' timepoint
+    if [ -n "$img_filepath" ] && [ "$timepoint" = "fast" ]; then
+        # Find paths with "fast" but not "ultra-fast"
+        local filtered_path=$(echo "$img_filepath" | grep "fast" | grep -v "ultra-fast" | head -n 1)
+        if [ -n "$filtered_path" ]; then
+            img_filepath="$filtered_path"
+        fi
+    fi
+    
+    # If image file found, return it
+    if [ -n "$img_filepath" ]; then
+        echo "DEBUG: Found image file: $img_filepath">&2
+        echo "$img_filepath"
+        return 0
+    fi
+    
+    echo "DEBUG: No image file found, searching for mask file instead...">&2
+    
+    # If no image file found, try to find mask files
+    local mask_filepath=$(find "$directory" -name "$pattern_priority" | head -n 1)
+    
+    if [ -z "$mask_filepath" ]; then
+        mask_filepath=$(find "$directory" -name "$pattern" | head -n 1)
+    fi
+    
+    # Handle special case for 'fast' timepoint
+    if [ -n "$mask_filepath" ] && [ "$timepoint" = "fast" ]; then
+        local filtered_mask=$(echo "$mask_filepath" | grep "fast" | grep -v "ultra-fast" | head -n 1)
+        if [ -n "$filtered_mask" ]; then
+            mask_filepath="$filtered_mask"
+        fi
+    fi
+    
+    # If mask file found, return it
+    if [ -n "$mask_filepath" ]; then
+        echo "DEBUG: Found mask file: $mask_filepath">&2
+        echo "$mask_filepath"
+        return 0
+    fi
+    
+    # If nothing found
+    echo "ERROR: No file found for patient_id $patient_id, timepoint $timepoint" >&2
+    return 1
+}
+
 # Function to process each patient
 process_patient() {
+    echo "Processing patient: $1, Timepoint: $2 function started"
     local patient_id="$1"
     local timepoint="$2"
     local z="$3"
@@ -92,31 +226,54 @@ process_patient() {
     local dti_data_dir="${base_dir}/dti_reg/dtifitdir/"
     local native_dti_data="${dti_data_dir}dtifit_${timepoint}_FA.nii.gz"  # Non-registered FA in native space
     local t1_2_dwi_mat="${base_dir}/dti_reg/dtiregmatinv_${timepoint}.mat"  # Inverse transformation matrix
+    local t1_img="${base_dir}/T1w_time1_bias_corr_registered_scans/BET_Output/t1_reg_${timepoint}.nii.gz"
+    echo "native dti data: $native_dti_data"
+    echo "t1_2_dwi_mat: $t1_2_dwi_mat"
     
+    # Define paths for T1
+    # Find source T1 image
+    local t1_img=$(find_T1_image_file "$patient_id" "$timepoint")
+    echo "source image: $t1_img"
+    
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Could not find source image for patient $patient_id, timepoint $timepoint"
+        exit 1
+    fi
+    
+
     # Check if transformation matrix exists
     if [[ ! -f "$t1_2_dwi_mat" ]]; then
         echo "ERROR: Transformation matrix not found: $t1_2_dwi_mat"
-        return 1
+        exit 1
     fi
     
     # Check if native DTI data exists
     if [[ ! -f "$native_dti_data" ]]; then
         echo "ERROR: Native DTI data not found: $native_dti_data"
-        return 1
+        exit 1
+    fi
+
+    # Check if T1 image exists
+    if [[ ! -f "$t1_img" ]]; then
+        echo "ERROR: T1 image not found: $t1_img"
+        exit 1
     fi
     
     # Transform coordinates from T1 space to native DTI space
     echo "Transforming coordinates from T1 space to native DTI space..."
-    transformed_coords=$(transform_coordinates "$t1_2_dwi_mat" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x" "$z")
     
+    
+    transformed_coords=$(transform_coordinates "$t1_2_dwi_mat" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x" "$z" "$t1_img" "$native_dti_data"  "$patient_id" "$timepoint")
     # Check if transformation was successful
     if [[ $? -ne 0 ]]; then
         echo "ERROR: Failed to transform coordinates"
         return 1
     fi
-    
+    echo "transformed coordinates for $patient_id $timepoint : $transformed_coords"
+    exit
     # Parse the transformed coordinates
-    IFS=',' read -r ant_x ant_y ant_z post_x post_y post_z base_ant_x base_post_x <<< "$transformed_coords"
+    IFS=',' read -r ant_x ant_y ant_z post_x post_y post_z base_ant_x base_ant_y
+    base_post_x <<< "$transformed_coords"
     
     echo "Transformed coordinates:"
     echo "  Anterior: ($ant_x, $ant_y, $ant_z)"
