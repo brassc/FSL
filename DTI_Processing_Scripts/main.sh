@@ -33,7 +33,7 @@ for sub in "${subdirectories[@]}"; do
            #echo "DTIspace_dir: $DTIspace_dir"
            
            
-           DTI_corr_scan="${DTIspace_dir}dwi_proc/DTI_corrected.nii.gz"
+           DTI_corr_scan="${DTIspace_dir}dwi_proc/DTI_denoised_gibbs_eddy.nii.gz" # use the denoised_gibbs_eddy scan
            DTI_bval="${DTIspace_dir}dwi_proc/DTI_corrected.bval"
            DTI_bvec="${DTIspace_dir}dwi_proc/DTI_corrected.bvec"
            DTI_mask="${DTIspace_dir}masks/ANTS_T1_brain_mask.nii.gz"
