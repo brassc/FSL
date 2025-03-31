@@ -223,7 +223,7 @@ process_dwi() {
         --bvals=${bval_file} \
         --out=${output_dir}/${filename_base}_eddy_corrected
     
-    exit
+    
 
     # Copy the bvec and bval files to the output directory
     cp ${bvec_file} ${output_dir}/${filename_base}_eddy_corrected.bvec
