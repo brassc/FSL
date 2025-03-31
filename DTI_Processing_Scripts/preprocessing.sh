@@ -200,7 +200,7 @@ process_dwi() {
         echo "Creating a basic mask from b0 image (not optimal)..."
         fslmaths ${output_dir}/${filename_base}_b0.nii.gz -bin ${output_dir}/${filename_base}_brain_mask.nii.gz
     fi
-    exit
+    
     # Run eddy_openmp (standard eddy)
     echo "Running eddy_openmp..."
     eddy_openmp \
@@ -220,7 +220,7 @@ process_dwi() {
     echo "Final bvecs: ${output_dir}/${filename_base}_eddy_corrected.eddy_rotated_bvecs"
     echo "Final bvals: ${output_dir}/${filename_base}.bval"
     echo "Note: Brain extraction (BET) has not been performed."
-    exit
+    
     return 0
 }
 
