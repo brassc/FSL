@@ -128,6 +128,17 @@ process_dwi() {
     done
     echo $indx > ${output_dir}/index.txt
 
+
+    # Create acquisition parameters file for eddy
+    # Format: [PhaseEncodingDirection x y z] [TotalReadoutTime]
+    # Most common configuration: anterior-posterior phase encoding
+    echo "0 -1 0 0.05" > ${output_dir}/acqp.txt
+    echo "# This is an assumed configuration for anterior-posterior phase encoding" >> ${output_dir}/acqp.txt
+    echo "# If eddy correction fails, try one of these alternatives:" >> ${output_dir}/acqp.txt
+    echo "# 0 1 0 0.05 (posterior-anterior)" >> ${output_dir}/acqp.txt
+    echo "# -1 0 0 0.05 (left-right)" >> ${output_dir}/acqp.txt
+    echo "# 1 0 0 0.05 (right-left)" >> ${output_dir}/acqp.txt
+
     # Find which volumes are b=0
     bvals=$(cat ${bval_file})
     b0_masks=""
@@ -203,22 +214,25 @@ process_dwi() {
     
     # Run eddy_openmp (standard eddy)
     echo "Running eddy_openmp..."
-    eddy_openmp \
+    eddy --verbose \
         --imain=${output_dir}/${filename_base}_denoised_degibbs.nii.gz \
         --mask=${output_dir}/${filename_base}_brain_mask.nii.gz \
+        --acqp=${output_dir}/acqp.txt \
         --index=${output_dir}/index.txt \
         --bvecs=${bvec_file} \
         --bvals=${bval_file} \
         --out=${output_dir}/${filename_base}_eddy_corrected
+    
+    exit
 
     # Copy the bvec and bval files to the output directory
-    cp ${bvec_file} ${output_dir}/${filename_base}_eddy_corrected.eddy_rotated_bvecs
-    cp ${bval_file} ${output_dir}/${filename_base}.bval
+    cp ${bvec_file} ${output_dir}/${filename_base}_eddy_corrected.bvec
+    cp ${bval_file} ${output_dir}/${filename_base}_eddy_corrected.bval
 
     echo "Preprocessing complete for ${patient}, ${tp}!"
     echo "Final preprocessed DWI: ${output_dir}/${filename_base}_eddy_corrected.nii.gz"
-    echo "Final bvecs: ${output_dir}/${filename_base}_eddy_corrected.eddy_rotated_bvecs"
-    echo "Final bvals: ${output_dir}/${filename_base}.bval"
+    echo "Final bvecs: ${output_dir}/${filename_base}_eddy_corrected.bvec"
+    echo "Final bvals: ${output_dir}/${filename_base}_eddy_corrected.bval"
     echo "Note: Brain extraction (BET) has not been performed."
     
     return 0
