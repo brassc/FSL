@@ -254,7 +254,8 @@ if [ "$process_all" = true ]; then
         fi
 
         # Skip if T1 directory doesn't exist for this patient
-        if [ ! -d "${patient_dir}/*/T1_space_bet" ]; then
+        if [ -z "$(find "${patient_dir}" -maxdepth 2 -type d -name "T1_space_bet" | head -n 1)" ]; then
+        echo "patient_dir: ${patient_dir}"
             echo "T1 directory not found for patient ${current_patient}"
             echo "Skipping this patient."
             continue
