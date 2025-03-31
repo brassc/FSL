@@ -252,6 +252,15 @@ if [ "$process_all" = true ]; then
             echo "Skipping invalid patient directory: ${patient_dir}"
             continue
         fi
+
+        # Skip if T1 directory doesn't exist for this patient
+        if [ ! -d "${patient_dir}/*/T1_space_bet" ]; then
+            echo "T1 directory not found for patient ${current_patient}"
+            echo "Skipping this patient."
+            continue
+        fi
+
+
         
         # Find all timepoint directories for current patient
         for timepoint_dir in $(find ${patient_dir} -maxdepth 1 -type d); do
