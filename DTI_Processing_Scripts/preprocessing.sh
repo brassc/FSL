@@ -246,6 +246,12 @@ if [ "$process_all" = true ]; then
     # Find all patient directories
     for patient_dir in $(find ${basepath} -maxdepth 1 -type d -not -path "${basepath}"); do
         current_patient=$(basename ${patient_dir})
+
+        # Skip if this isn't a valid patient directory
+        if [ ! -d "${patient_dir}" ]; then
+            echo "Skipping invalid patient directory: ${patient_dir}"
+            continue
+        fi
         
         # Find all timepoint directories for current patient
         for timepoint_dir in $(find ${patient_dir} -maxdepth 1 -type d); do
