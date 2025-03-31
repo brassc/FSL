@@ -55,8 +55,24 @@ transform_coordinates() {
 
     echo "DEBUG: Coordinates file content:">&2
     cat "$coords_file">&2
+    local T1_coords=$(cat "$coords_file" | img2stdcoord -img "$t1_img" -std "$t1_img" )
+    echo "DEBUG: T1 coordinates: $T1_coords">&2
+    
+    
+    # Transform coordinates using img2imgcoord
+    local dwi_coords=$(echo "$T1_coords" | img2imgcoord -src "$in_img" -dest "$ref_img" -xfm "$t1_2_dwi_mat" -mm)
+    echo "DEBUG: DWI coordinates: $dwi_coords">&2
+    local filtered_dwi_coords=$(echo "$dwi_coords" | tail -n +2)
+    
+    # transform back to voxels using std2imgcoord
+    local transformed=$(echo "$filtered_dwi_coords" | std2imgcoord -img "$ref_img" -std "$ref_img" -vox)
+    echo "DEBUG: Transformed coordinates: $transformed">&2
+    exit
 
-    local transformed=$(img2imgcoord -src "$in_img" -dest "$ref_img" -xfm "$t1_2_dwi_mat" -vox "$coords_file")
+
+
+    #local transformed=$(cat "$coords_file" | img2imgcoord -src "$in_img" -dest "$ref_img" -xfm "$t1_2_dwi_mat" -vox)
+    ##local transformed=$(img2imgcoord -src "$in_img" -dest "$ref_img" -xfm "$t1_2_dwi_mat" -vox "$coords_file")
 
     rm "$coords_file"
 
@@ -79,38 +95,7 @@ transform_coordinates() {
     echo "DEBUG: Transformed coordinates (rounded): $coords">&2
     echo "$coords"
 }
-    
-    
 
-#     """
-#     python3 - <<EOF
-# import numpy as np
-
-# # Load the transformation matrix
-# mat_file = '$t1_2_dwi_mat'
-# try: 
-#     transformation_matrix = np.loadtxt(mat_file)
-
-#     # Define the individual coordinates for transformation
-#     anterior_coords = np.array([$anterior_x, $anterior_y, $z, 1])
-#     posterior_coords = np.array([$posterior_x, $posterior_y, $z, 1])
-#     anterior_baseline_coords = np.array([$baseline_anterior_x, $anterior_y, $z, 1])
-#     posterior_baseline_coords = np.array([$baseline_posterior_x, $posterior_y, $z, 1])
-
-#     # Apply the transformation matrix to the coordinates
-#     transformed_anterior = np.dot(transformation_matrix, anterior_coords)
-#     transformed_posterior = np.dot(transformation_matrix, posterior_coords)
-#     transformed_baseline_anterior = np.dot(transformation_matrix, anterior_baseline_coords)
-#     transformed_baseline_posterior = np.dot(transformation_matrix, posterior_baseline_coords)
-
-#     # Output the transformed coordinates
-#     print(f"{transformed_anterior[0]:.1f},{transformed_anterior[1]:.1f},{transformed_anterior[2]:.1f},{transformed_posterior[0]:.1f},{transformed_posterior[1]:.1f},{transformed_posterior[2]:.1f},{transformed_baseline_anterior[0]:.1f},{transformed_baseline_posterior[0]:.1f}")
-# except Exception as e:
-#     print(f"Error: {e}")
-#     exit(1)
-# EOF
-# }
-# """
 
 # Main function
 main() {
@@ -133,7 +118,7 @@ main() {
         
         # Skip excluded patients
         if [[ "$excluded" -eq 0 ]]; then
-            process_patient "$patient_id" "$timepoint" "$z" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x"
+            process_patient "$patient_id" "$timepoint" "$z" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x" "$t1_img" "$dwi_img"
         fi
     done
 }
@@ -216,6 +201,8 @@ process_patient() {
     local posterior_y="$7"
     local baseline_anterior_x="$8"
     local baseline_posterior_x="$9"
+    local t1_img="${10}"
+    local dwi_img="${11}"
 
     # Define directories and files
     local base_dir="/home/cmb247/Desktop/Project_3/BET_Extractions/${patient_id}"
@@ -224,11 +211,14 @@ process_patient() {
     
     # Define paths for native DTI space data and transformation matrix
     local dti_data_dir="${base_dir}/dti_reg/dtifitdir/"
-    local native_dti_data="${dti_data_dir}dtifit_${timepoint}_FA.nii.gz"  # Non-registered FA in native space
+    local native_fa_data="${dti_data_dir}dtifit_${timepoint}_FA.nii.gz"  # Non-registered FA in native space
     local t1_2_dwi_mat="${base_dir}/dti_reg/dtiregmatinv_${timepoint}.mat"  # Inverse transformation matrix
     local t1_img="${base_dir}/T1w_time1_bias_corr_registered_scans/BET_Output/t1_reg_${timepoint}.nii.gz"
     echo "native dti data: $native_dti_data"
     echo "t1_2_dwi_mat: $t1_2_dwi_mat"
+    echo "t1_img: $t1_img"
+    echo "native_fa_data: $native_fa_data"
+    
     
     # Define paths for T1
     # Find source T1 image
@@ -248,8 +238,8 @@ process_patient() {
     fi
     
     # Check if native DTI data exists
-    if [[ ! -f "$native_dti_data" ]]; then
-        echo "ERROR: Native DTI data not found: $native_dti_data"
+    if [[ ! -f "$native_fa_data" ]]; then
+        echo "ERROR: Native DTI FA data not found: $native_fa_data"
         exit 1
     fi
 
@@ -261,15 +251,63 @@ process_patient() {
     
     # Transform coordinates from T1 space to native DTI space
     echo "Transforming coordinates from T1 space to native DTI space..."
+
+    # get img coordinates from voxel coordinates
+    #img2stdcoord -img <image_file> -vox <x y z>
+    #img2stdcoord -img "$t1_img" -vox "$anterior_x $anterior_y $z"
+    #exit
     
     
-    transformed_coords=$(transform_coordinates "$t1_2_dwi_mat" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x" "$z" "$t1_img" "$native_dti_data"  "$patient_id" "$timepoint")
+    transformed_coords=$(transform_coordinates "$t1_2_dwi_mat" "$anterior_x" "$anterior_y" "$posterior_x" "$posterior_y" "$baseline_anterior_x" "$baseline_posterior_x" "$z" "$t1_img" "$native_fa_data"  "$patient_id" "$timepoint")
     # Check if transformation was successful
     if [[ $? -ne 0 ]]; then
         echo "ERROR: Failed to transform coordinates"
         return 1
     fi
     echo "transformed coordinates for $patient_id $timepoint : $transformed_coords"
+    exit
+
+    # Create a blank volume matching T1 dimensions
+    fslmaths "$t1_img" -mul 0 coords_volume.nii.gz
+
+    if [ ! -f coords_volume.nii.gz ]; then
+        echo "ERROR: Failed to create coords_volume.nii.gz"
+        exit 1
+    else
+        echo "Successfully created coords_volume.nii.gz"
+    fi
+
+    # Step 3: Set specific voxels to 1 (one at a time with confirmation)
+    echo "Setting coordinate points..."
+    # First point (anterior)
+    fslmaths coords_volume.nii.gz -add 1 -roi 132 1 160 1 148 1 0 1 point1.nii.gz
+    echo "Added point 1"
+    # Second point (posterior)
+    fslmaths coords_volume.nii.gz -add 1 -roi 143 1 50 1 148 1 0 1 point2.nii.gz
+    echo "Added point 2"
+
+    # Third point (baseline anterior)
+    fslmaths coords_volume.nii.gz -add 1 -roi 47 1 160 1 148 1 0 1 point3.nii.gz
+    echo "Added point 3"
+
+    # Fourth point (baseline posterior)
+    fslmaths coords_volume.nii.gz -add 1 -roi 31 1 50 1 148 1 0 1 point4.nii.gz
+    echo "Added point 4"
+
+    # Combine all points
+    fslmaths point1.nii.gz -add point2.nii.gz -add point3.nii.gz -add point4.nii.gz -bin all_points.nii.gz
+    echo "Combined all points"
+
+    # Transform to DTI space
+    flirt -in all_points.nii.gz -ref "$native_fa_data" -out coords_in_dti.nii.gz -init "$t1_2_dwi_mat" -applyxfm
+    
+    # Find coordinates of non-zero voxels in DTI space
+    coords_in_dti=$(fslstats coords_in_dti.nii.gz -x)
+    echo "Coordinates in DTI space: $coords_in_dti"
+
+
+
+
     exit
     # Parse the transformed coordinates
     IFS=',' read -r ant_x ant_y ant_z post_x post_y post_z base_ant_x base_ant_y
