@@ -145,7 +145,7 @@ process_dwi() {
     # Step 5: Run FSL's eddy correction
     echo "Step 5: Running eddy correction..."
 
-    # Register T1 mask to DWI space for eddy
+     # Register T1 mask to DWI space for eddy
     echo "Step 5: Registering T1 brain mask to DWI space..."
     t1_mask_dir="${basepath}/${patient}/${tp}/T1_space_bet"
     
@@ -155,7 +155,7 @@ process_dwi() {
     if [ -f "$t1_mask_file" ]; then
         echo "Found T1 brain mask: $t1_mask_file"
         
-        # Find T1 image (in the same directory but without "mask" in the name)
+        # Find T1 image (assuming it's in the same directory but without "mask" in the name)
         t1_image=$(find "${t1_mask_dir}" -type f -name "*.nii.gz" -not -name "*mask*" | head -n 1)
         
         if [ -z "$t1_image" ]; then
@@ -167,25 +167,30 @@ process_dwi() {
         if [ -f "$t1_image" ]; then
             echo "Found T1 image: $t1_image"
             
-            # Register T1 to DWI using the b0 image as target
-            echo "Registering T1 to DWI space..."
-            flirt -in "$t1_image" \
-                  -ref "${output_dir}/${filename_base}_b0.nii.gz" \
-                  -omat "${output_dir}/T1_to_DWI.mat" \
-                  -dof 6
-            
-            # Apply transformation to the T1 brain mask
-            echo "Transforming T1 mask to DWI space..."
-            flirt -in "$t1_mask_file" \
-                  -ref "${output_dir}/${filename_base}_b0.nii.gz" \
-                  -applyxfm -init "${output_dir}/T1_to_DWI.mat" \
-                  -out "${output_dir}/${filename_base}_brain_mask.nii.gz" \
-                  -interp nearestneighbour
-            
-            # Ensure binary mask
-            fslmaths "${output_dir}/${filename_base}_brain_mask.nii.gz" -bin "${output_dir}/${filename_base}_brain_mask.nii.gz"
-            
-            echo "T1 mask successfully registered to DWI space"
+            # Check if transformation matrix already exists
+            if [ -f "${output_dir}/T1_to_DWI.mat" ] && [ -f "${output_dir}/${filename_base}_brain_mask.nii.gz" ]; then
+                echo "T1-to-DWI transformation matrix and brain mask already exist. Skipping registration."
+            else
+                # Register T1 to DWI using the b0 image as target
+                echo "Registering T1 to DWI space..."
+                flirt -in "$t1_image" \
+                      -ref "${output_dir}/${filename_base}_b0.nii.gz" \
+                      -omat "${output_dir}/T1_to_DWI.mat" \
+                      -dof 6
+                
+                # Apply transformation to the T1 brain mask
+                echo "Transforming T1 mask to DWI space..."
+                flirt -in "$t1_mask_file" \
+                      -ref "${output_dir}/${filename_base}_b0.nii.gz" \
+                      -applyxfm -init "${output_dir}/T1_to_DWI.mat" \
+                      -out "${output_dir}/${filename_base}_brain_mask.nii.gz" \
+                      -interp nearestneighbour
+                
+                # Ensure binary mask
+                fslmaths "${output_dir}/${filename_base}_brain_mask.nii.gz" -bin "${output_dir}/${filename_base}_brain_mask.nii.gz"
+                
+                echo "T1 mask successfully registered to DWI space"
+            fi
         else
             echo "Error: Could not find T1 image for registration. Using fallback method."
             fslmaths ${output_dir}/${filename_base}_b0.nii.gz -bin ${output_dir}/${filename_base}_brain_mask.nii.gz
@@ -214,8 +219,8 @@ process_dwi() {
     echo "Final preprocessed DWI: ${output_dir}/${filename_base}_eddy_corrected.nii.gz"
     echo "Final bvecs: ${output_dir}/${filename_base}_eddy_corrected.eddy_rotated_bvecs"
     echo "Final bvals: ${output_dir}/${filename_base}.bval"
-    echo "Note: Brain extraction (BET) has not been performed as per request."
-    
+    echo "Note: Brain extraction (BET) has not been performed."
+    exit
     return 0
 }
 
