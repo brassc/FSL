@@ -115,7 +115,7 @@ process_dwi() {
         # Use the -fslgrad option to explicitly provide bvec and bval files
         dwiextract -fslgrad ${bvec_file} ${bval_file} ${output_dir}/${filename_base}_denoised_degibbs.nii.gz -bzero ${output_dir}/${filename_base}_b0.nii.gz
     fi
-    exit
+    
 
     # Step 4: Prepare for eddy correction
     echo "Step 4: Preparing for eddy correction..."
@@ -195,7 +195,7 @@ process_dwi() {
         echo "Creating a basic mask from b0 image (not optimal)..."
         fslmaths ${output_dir}/${filename_base}_b0.nii.gz -bin ${output_dir}/${filename_base}_brain_mask.nii.gz
     fi
-
+    exit
     # Run eddy_openmp (standard eddy)
     echo "Running eddy_openmp..."
     eddy_openmp \
