@@ -213,28 +213,31 @@ process_dwi() {
     fi
     
     # Run eddy_openmp (standard eddy)
-    echo "Running eddy_openmp..."
-    eddy --verbose \
-        --imain=${output_dir}/${filename_base}_denoised_degibbs.nii.gz \
-        --mask=${output_dir}/${filename_base}_brain_mask.nii.gz \
-        --acqp=${output_dir}/acqp.txt \
-        --index=${output_dir}/index.txt \
-        --bvecs=${bvec_file} \
-        --bvals=${bval_file} \
-        --out=${output_dir}/${filename_base}_eddy_corrected
-    
-    
 
-    # Copy the bvec and bval files to the output directory
-    cp ${bvec_file} ${output_dir}/${filename_base}_eddy_corrected.bvec
-    cp ${bval_file} ${output_dir}/${filename_base}_eddy_corrected.bval
+    # Check if eddy correction has already been completed
+    if [ -f "${output_dir}/${filename_base}_eddy_corrected.nii.gz" ]; then
+        echo "Eddy correction already completed. Skipping this step."
+    else
+        echo "Running eddy_openmp..."
+        eddy --verbose \
+            --imain=${output_dir}/${filename_base}_denoised_degibbs.nii.gz \
+            --mask=${output_dir}/${filename_base}_brain_mask.nii.gz \
+            --acqp=${output_dir}/acqp.txt \
+            --index=${output_dir}/index.txt \
+            --bvecs=${bvec_file} \
+            --bvals=${bval_file} \
+            --out=${output_dir}/${filename_base}_eddy_corrected
 
+        # Copy the bvec and bval files to the output directory
+        cp ${bvec_file} ${output_dir}/${filename_base}_eddy_corrected.bvec
+        cp ${bval_file} ${output_dir}/${filename_base}_eddy_corrected.bval
+    fi
     echo "Preprocessing complete for ${patient}, ${tp}!"
     echo "Final preprocessed DWI: ${output_dir}/${filename_base}_eddy_corrected.nii.gz"
     echo "Final bvecs: ${output_dir}/${filename_base}_eddy_corrected.bvec"
     echo "Final bvals: ${output_dir}/${filename_base}_eddy_corrected.bval"
     echo "Note: Brain extraction (BET) has not been performed."
-    
+
     return 0
 }
 
