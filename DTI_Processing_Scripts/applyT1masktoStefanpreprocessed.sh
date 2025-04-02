@@ -199,7 +199,7 @@ apply_mask_to_dti() {
         echo "Error: Failed to create masked DTI"
         return 1
     fi
-    fsleyes "${dti_file}" "${output_file}" "${registered_mask}"
+    
     return 0
 }
 
