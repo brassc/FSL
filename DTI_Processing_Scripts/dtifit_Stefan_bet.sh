@@ -1,7 +1,7 @@
 # This script takees DTI_corrected_bet (created by applyT1masktoStefanpreprocessed.sh) and performs FSL dtifit
 
 #!/bin/bash
-
+module load fsl
 # Base directory containing all patient data
 BASE_DIR="/home/cmb247/rds/hpc-work/April2025_DWI"
 
@@ -23,22 +23,31 @@ for patient_dir in ${BASE_DIR}/*; do
                 if [ -d "$PREPROC_DIR" ]; then
                     # Input files
                     DATA_FILE="${PREPROC_DIR}/DTI_corrected_bet.nii.gz"
-                    MASK_FILE="${PREPROC_DIR}/DTI_corrected_bet_mask.nii.gz"
+                    MASK_FILE="${PREPROC_DIR}/T1_mask_in_DTI_space.nii.gz"
                     BVEC_FILE="${PREPROC_DIR}/DTI_corrected_bet.bvec"
                     BVAL_FILE="${PREPROC_DIR}/DTI_corrected_bet.bval"
+
+                    # echo "    Found preprocessed directory: ${PREPROC_DIR}"
+                    # echo "    Data file: ${DATA_FILE}"
+                    # echo "    Mask file: ${MASK_FILE}"
+                    # echo "    Bvec file: ${BVEC_FILE}"
+                    # echo "    Bval file: ${BVAL_FILE}"
+                    
                     
                     # Output basename
                     OUT_BASE="${PREPROC_DIR}/dti"
                     
                     # Check if all required files exist
                     if [ -f "$DATA_FILE" ] && [ -f "$BVEC_FILE" ] && [ -f "$BVAL_FILE" ]; then
-                        echo "    Running dtifit on ${PREPROC_DIR}"
+                        echo "    Running dtifit for ${patient_id}/${timepoint}"
                         
                         # Check if mask file exists
                         if [ ! -f "$MASK_FILE" ]; then
-                            echo "    Warning: Mask file not found. Using data file for automatic mask generation."
-                            MASK_FILE="$DATA_FILE"
+                            echo "    Warning: Mask file not found. Skipping dtifit for ${patient_id}/${timepoint}"
+                            echo "    You may need to create a mask using FSL bet or similar."
+                            return
                         fi
+                        
                         
                         # Run dtifit (single-threaded)
                         dtifit \
@@ -50,6 +59,7 @@ for patient_dir in ${BASE_DIR}/*; do
                             --save_tensor
                         
                         echo "    Completed dtifit for ${patient_id}/${timepoint}"
+                        
                     else
                         echo "    Error: Required files not found in ${PREPROC_DIR}"
                         echo "    Skipping this directory"
