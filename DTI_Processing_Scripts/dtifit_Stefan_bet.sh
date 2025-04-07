@@ -5,6 +5,17 @@ module load fsl
 # Base directory containing all patient data
 BASE_DIR="/home/cmb247/rds/hpc-work/April2025_DWI"
 
+# Function to check if dtifit has already been completed
+check_dtifit_completed() {
+    local out_base="$1"
+    # Check for key output files that dtifit produces
+    if [ -f "${out_base}_FA.nii.gz" ] && [ -f "${out_base}_MD.nii.gz" ] && [ -f "${out_base}_V1.nii.gz" ]; then
+        return 0  # Files exist, dtifit has been completed
+    else
+        return 1  # Files don't exist, dtifit has not been completed
+    fi
+}
+
 # Find all patient directories
 for patient_dir in ${BASE_DIR}/*; do
     if [ -d "$patient_dir" ]; then
@@ -36,6 +47,13 @@ for patient_dir in ${BASE_DIR}/*; do
                     
                     # Output basename
                     OUT_BASE="${PREPROC_DIR}/dti"
+
+                    # Check if dtifit has already been completed
+                    if check_dtifit_completed "$OUT_BASE"; then
+                        echo " dtifit already completed for ${patient_id}/${timepoint}, skipping"
+                        continue
+                    fi
+                    
                     
                     # Check if all required files exist
                     if [ -f "$DATA_FILE" ] && [ -f "$BVEC_FILE" ] && [ -f "$BVAL_FILE" ]; then
