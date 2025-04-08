@@ -96,8 +96,13 @@ def main():
             row = [col.strip() for col in row]
             all_rows.append(row)
     
+
+
+
+
     # Process each row and apply transformations
     transformed_rows = []
+
     for row in all_rows:
         # Skip rows with insufficient columns
         if len(row) < len(header):
@@ -200,31 +205,41 @@ def main():
                 logging.warning(f"Transform matrix not found for patient {patient_id} at timepoint {timepoint}")
 
         print(f"writing this print output log file...")
-
+                # Construct the new row with original data and transformed coordinates
+        new_row = row.copy()  # Start with the original row
         
-        continue
-        # Create a new row with the transformed coordinates
-        new_row = row[:]
         # Insert the transformed coordinates before the comments column
         comments_index = header.index("comments") if "comments" in header else len(row)
-        for i, coord in enumerate(dwispace_coords):
-            new_row.insert(comments_index + i, coord)
         
+        # Add extra elements to the row if needed to ensure we have enough space
+        while len(new_row) < comments_index:
+            new_row.append("")
+            
+        # Insert transformed coordinates at the right position
+        for i, coord in enumerate(dwispace_coords):
+            if comments_index + i >= len(new_row):
+                new_row.append(coord)  # Append if we're beyond the current row length
+            else:
+                new_row.insert(comments_index + i, coord)  # Insert otherwise
+                
+        # Ensure the row has the right length (should match new_header)
+        while len(new_row) < len(new_header):
+            new_row.append("")
+            
+        # Trim if too long
+        if len(new_row) > len(new_header):
+            new_row = new_row[:len(new_header)]
+            
         transformed_rows.append(new_row)
-        # if patient_id == "12519":
-        print(f"\nTransformed row for patient {patient_id} at timepoint {timepoint}:")
-        for header, value in zip(new_header, new_row):
-            print(f"{header}: {value}")
 
         
-        
-    # # Write the transformed data to the output CSV
-    # with open(output_csv, 'w', newline='') as csvfile:
-    #     writer = csv.writer(csvfile)
-    #     writer.writerow(new_header)
-    #     writer.writerows(transformed_rows)
+    # Write the transformed data to the output CSV
+    with open(output_csv, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(new_header)
+        writer.writerows(transformed_rows)
     
-    # print(f"Coordinate transformation complete. Results saved to {output_csv}")
+    print(f"Coordinate transformation complete. Results saved to {output_csv}")
 
 if __name__ == "__main__":
     main()
