@@ -188,6 +188,37 @@ def main():
                         baseline_posterior_dwi[2] = avg_z
                         # print(f"New z coordinate: {avg_z}")
                         logging.info(f"New z coordinate: {avg_z}")
+                    
+                    y_coords = [anterior_dwi[1], posterior_dwi[1], baseline_anterior_dwi[1], baseline_posterior_dwi[1]]
+                    if anterior_dwi[1] != baseline_anterior_dwi[1]:
+                        # Find average anterior y coordinate out of anterior_dwi[1] and baseline_anterior_dwi[1]
+                        avg_ant_y = int(round(np.mean([anterior_dwi[1], baseline_anterior_dwi[1]])))
+                        # set the y coordinate of the anterior to the average
+                        anterior_dwi[1] = avg_ant_y
+                        # set the y coordinate of the baseline anterior to the average
+                        baseline_anterior_dwi[1] = avg_ant_y
+                        logging.warning(f"Setting y coordinate to average of anterior and baseline anterior for patient {patient_id} at timepoint {timepoint}.")
+
+
+                        # set the y coordinate of the anterior to the y coordinate of the baseline anterior
+                        #baseline_anterior_dwi[1] = anterior_dwi[1]
+                        # print(f"Warning: y coordinate of anterior and baseline anterior do not match for patient {patient_id} at timepoint {timepoint}. Setting baseline anterior to anterior.")
+                        #logging.warning(f"y coordinate of anterior and baseline anterior do not match for patient {patient_id} at timepoint {timepoint}. Setting baseline anterior y equal to anterior y ({anterior_dwi[1]}).")
+                    
+                    if posterior_dwi[1] != baseline_posterior_dwi[1]:
+                        # Find average posterior y coordinate out of posterior_dwi[1] and baseline_posterior_dwi[1]
+                        avg_ant_y = int(round(np.mean([posterior_dwi[1], baseline_posterior_dwi[1]])))
+                        # set the y coordinate of the posterior to the average
+                        posterior_dwi[1] = avg_ant_y
+                        # set the y coordinate of the baseline posterior to the average
+                        baseline_posterior_dwi[1] = avg_ant_y
+                        logging.warning(f"Setting y coordinate to average of posterior and baseline posterior for patient {patient_id} at timepoint {timepoint}.")
+
+                        # # set the y coordinate of the posterior to the y coordinate of the baseline posterior
+                        # baseline_posterior_dwi[1] = posterior_dwi[1]
+                        # # print(f"Warning: y coordinate of posterior and baseline posterior do not match for patient {patient_id} at timepoint {timepoint}. Setting baseline posterior to posterior.")
+                        # logging.warning(f"y coordinate of posterior and baseline posterior do not match for patient {patient_id} at timepoint {timepoint}. Setting basline posterior y equal to posterior y ({posterior_dwi[1]}).")
+
 
                     # Store the transformed coordinates
                     dwispace_coords = [
