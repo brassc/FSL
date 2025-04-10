@@ -57,6 +57,7 @@ def main():
     output_csv = os.path.join(REPO_LOCATION, "DTI_Processing_Scripts", "LEGACY_DTI_coords_transformed.csv")
     temp_csv = os.path.join(REPO_LOCATION, "DTI_Processing_Scripts", "LEGACY_DTI_coords_temp.csv")
 
+
     # print(f"Copying {input_csv} to {temp_csv}...")
     
     
@@ -93,8 +94,20 @@ def main():
         # Read the rest of the rows
         reader = csv.reader(csvfile)
         for row in reader:
+            if not row:  # Skip empty rows
+                continue
             row = [col.strip() for col in row]
             all_rows.append(row)
+
+        # print rows with both letter and number in patient_id
+        for row in all_rows:
+            patient_id = row[header.index("patient_id")].strip()
+            if any(c.isdigit() for c in patient_id) and any(c.isalpha() for c in patient_id):
+                print(f"Row with mixed patient_id: {row}")
+        
+
+
+
     
 
 
@@ -140,12 +153,56 @@ def main():
         
         # Only process non-excluded entries (excluded = 0)
         if excluded == "0":
-            # Define transformation matrix path
-            transform_matrix = os.path.join(BASEPATH, patient_id, timepoint, "Stefan_preprocessed_DWI_space", "T1_to_DTI.mat")
-            print(f"Transform matrix path: {transform_matrix}")
+            # Check if patient_id contains both numbers and letters
+            has_mixed_id = any(c.isdigit() for c in patient_id) and any(c.isalpha() for c in patient_id)
             
+            # If patient_id has mixed characters, handle the special case
+            # # skip numeric patient_id
+            # if not has_mixed_id:
+            #     # skip
+            #     print(f"Skipping patient_id {patient_id} as it does not contain both letters and numbers.")
+            #     continue
+
+            if has_mixed_id:
+                print(f"timepoint: {timepoint}")
+                
+                # Check if timepoint is numeric (5 digits)
+                if timepoint.isdigit() and len(timepoint) == 5:
+                    
+                    # Find the matching timepoint directory
+                    
+                    patient_path = os.path.join(BASEPATH, patient_id)
+                    matching_dirs = []
+                    
+                    # List directories in the patient folder
+                    if os.path.exists(patient_path):
+                        
+                        for item in os.listdir(patient_path):
+                            item_path = os.path.join(patient_path, item)
+                            # Check if it's a directory and matches the expected pattern
+                            if os.path.isdir(item_path) and item.startswith(f"Hour-{timepoint}") and "_dwi" in item:
+                                matching_dirs.append(item)
+                                
+                    
+                    if matching_dirs:
+                        # Use the first matching directory (or you could add more logic if multiple matches)
+                        timepoint_dir = matching_dirs[0]
+                        print(f"timepoint_dir: {timepoint_dir}")
+                        
+                        # Use the alternative path structure for transform matrix
+                        transform_matrix = os.path.join(BASEPATH, patient_id, timepoint_dir, 
+                                                    "T1_space_bet/coordinates_files/", "T1_to_DTI.mat")
+            else:
+                # Standard case - use the original path structure
+                transform_matrix = os.path.join(BASEPATH, patient_id, timepoint, 
+                                            "Stefan_preprocessed_DWI_space", "T1_to_DTI.mat")
+            
+            print(f"Transform matrix path: {transform_matrix}")
+
+
             if os.path.isfile(transform_matrix):
                 print(f"Processing patient {patient_id} at timepoint {timepoint}...")
+                
                 
                 
                 try:
