@@ -1,95 +1,117 @@
 #!/bin/bash
+module load fsl
 # Input parameters
 patient_id=$1
 timepoint=$2
-dwi_space_path=$3 # Path to the diffusion weighted image
+tp_base=$3
+mask_path=$4    # Path to the mask file
+fa_path=$5      # Path to the FA image
+md_path=$6      # Path to the MD image
+csv_path=${7:-"DTI_Processing_Scripts/LEGACY_DTI_coords_transformed_manually_adjusted.csv"}  # Optional CSV path, defaults to coordinates.csv
+
+# Check if all required parameters are provided
+if [ -z "$patient_id" ] || [ -z "$timepoint" ] || [ -z "$mask_path" ] || [ -z "$fa_path" ] || [ -z "$md_path" ]; then
+    echo "Usage: $0 <patient_id> <timepoint> <mask_path> <fa_path> <md_path> [csv_path]"
+    echo "Example: $0 SUBJ001 baseline /path/to/mask.nii.gz /path/to/fa.nii.gz /path/to/md.nii.gz"
+    exit 1
+fi
+
+# Check if files exist
+for file in "$mask_path" "$fa_path" "$md_path" "$csv_path"; do
+    if [ ! -f "$file" ]; then
+        echo "Error: File not found: $file"
+        exit 1
+    fi
+done
+
 
 # Get coordinates from CSV using the patient_id and timepoint
-# This would require a way to look up in your CSV - could use awk/grep
-ant_x=$(grep "$patient_id,$timepoint" coordinates.csv | awk -F, '{print $12}')
-ant_y=$(grep "$patient_id,$timepoint" coordinates.csv | awk -F, '{print $13}')
-ant_z=$(grep "$patient_id,$timepoint" coordinates.csv | awk -F, '{print $14}')
-post_x=$(grep "$patient_id,$timepoint" coordinates.csv | awk -F, '{print $15}')
-post_y=$(grep "$patient_id,$timepoint" coordinates.csv | awk -F, '{print $16}')
-post_z=$(grep "$patient_id,$timepoint" coordinates.csv | awk -F, '{print $17}')
-baseline_ant_x=$(grep "$patient_id,$timepoint" coordinates.csv | awk -F, '{print $18}')
-baseline_ant_y=$(grep "$patient_id,$timepoint" coordinates.csv | awk -F, '{print $19}')
-baseline_ant_z=$(grep "$patient_id,$timepoint" coordinates.csv | awk -F, '{print $20}')
-baseline_post_x=$(grep "$patient_id,$timepoint" coordinates.csv | awk -F, '{print $21}')
-baseline_post_y=$(grep "$patient_id,$timepoint" coordinates.csv | awk -F, '{print $22}')
-baseline_post_z=$(grep "$patient_id,$timepoint" coordinates.csv | awk -F, '{print $23}')
+ant_x=$(grep "$patient_id,$timepoint" $csv_path | awk -F, '{print $12}')
+ant_y=$(grep "$patient_id,$timepoint" $csv_path | awk -F, '{print $13}')
+ant_z=$(grep "$patient_id,$timepoint" $csv_path | awk -F, '{print $14}')
+post_x=$(grep "$patient_id,$timepoint" $csv_path | awk -F, '{print $15}')
+post_y=$(grep "$patient_id,$timepoint" $csv_path | awk -F, '{print $16}')
+post_z=$(grep "$patient_id,$timepoint" $csv_path | awk -F, '{print $17}')
+baseline_ant_x=$(grep "$patient_id,$timepoint" $csv_path | awk -F, '{print $18}')
+baseline_ant_y=$(grep "$patient_id,$timepoint" $csv_path | awk -F, '{print $19}')
+baseline_ant_z=$(grep "$patient_id,$timepoint" $csv_path | awk -F, '{print $20}')
+baseline_post_x=$(grep "$patient_id,$timepoint" $csv_path | awk -F, '{print $21}')
+baseline_post_y=$(grep "$patient_id,$timepoint" $csv_path | awk -F, '{print $22}')
+baseline_post_z=$(grep "$patient_id,$timepoint" $csv_path | awk -F, '{print $23}')
+
+# Verify that coordinates were found
+if [ -z "$ant_x" ] || [ -z "$ant_y" ] || [ -z "$ant_z" ] || [ -z "$post_x" ] || [ -z "$post_y" ] || [ -z "$post_z" ] || \
+   [ -z "$baseline_ant_x" ] || [ -z "$baseline_ant_y" ] || [ -z "$baseline_ant_z" ] || \
+   [ -z "$baseline_post_x" ] || [ -z "$baseline_post_y" ] || [ -z "$baseline_post_z" ]; then
+    echo "Error: Could not find coordinates for patient $patient_id at timepoint $timepoint in $csv_path"
+    exit 1
+fi
+
 
 # Create spherical ROIs for each point
-output_dir="output/${patient_id}/${timepoint}"
+if [[ "$patient_id" =~ ^[0-9]+$ ]]; then
+    # Patient ID contains only numbers
+    output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${timepoint}/roi_files"
+else
+    output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${tp_base}_dwi/roi_files"
+fi
+
 mkdir -p $output_dir
 
-# Create anterior ROI
-fslmaths $dwi_space_path -mul 0 -add 1 -roi $ant_x 1 $ant_y 1 $ant_z 1 0 1 $output_dir/ant_point -odt float
+# Create point ROIs
+fslmaths $mask_path -mul 0 -add 1 -roi $ant_x 1 $ant_y 1 $ant_z 1 0 1 $output_dir/ant_point -odt float
+fslmaths $mask_path -mul 0 -add 1 -roi $post_x 1 $post_y 1 $post_z 1 0 1 $output_dir/post_point -odt float
+fslmaths $mask_path -mul 0 -add 1 -roi $baseline_ant_x 1 $baseline_ant_y 1 $baseline_ant_z 1 0 1 $output_dir/baseline_ant_point -odt float
+fslmaths $mask_path -mul 0 -add 1 -roi $baseline_post_x 1 $baseline_post_y 1 $baseline_post_z 1 0 1 $output_dir/baseline_post_point -odt float
 
-# Create posterior ROI
-fslmaths $dwi_space_path -mul 0 -add 1 -roi $post_x 1 $post_y 1 $post_z 1 0 1 $output_dir/post_point -odt float
+echo "Creating ROI rings within mask..."
 
-# Create baseline anterior ROI
-fslmaths $dwi_space_path -mul 0 -add 1 -roi $baseline_ant_x 1 $baseline_ant_y 1 $baseline_ant_z 1 0 1 $output_dir/baseline_ant_point -odt float
+# Function to create rings for a specific point and metric
+create_metric_rings() {
+    local point_name=$1
+    local metric_path=$2
+    local metric_name=$3
+    
+    # Create directories for metric-specific output
+    mkdir -p $output_dir/${metric_name}
+    echo "Output directory for $patient_id $timepoint $metric_name: $output_dir/${metric_name}"
+    
+    for i in {1..5}; do
+        radius=$i
+        prev_radius=$((i-1))
+        
+        if [ $prev_radius -eq 0 ]; then
+            # First ring - create spherical dilation then mask with the brain mask
+            fslmaths $output_dir/${point_name}_point -kernel sphere $radius -dilM -mul $mask_path $output_dir/${metric_name}/${point_name}_ring${i}
+            # Extract metric values within the ring
+            fslmaths $output_dir/${metric_name}/${point_name}_ring${i} -mul $metric_path $output_dir/${metric_name}/${point_name}_ring${i}_${metric_name}
+            # Save a copy of whole sphere for subsequent rings
+            fslmaths $output_dir/${metric_name}/${point_name}_ring${i} $output_dir/${metric_name}/${point_name}_whole_${i}
+        else
+            # Subsequent rings (donuts)
+            fslmaths $output_dir/${point_name}_point -kernel sphere $radius -dilM -mul $mask_path $output_dir/${metric_name}/${point_name}_whole_temp
+            # Subtract the previous sphere to get a ring
+            fslmaths $output_dir/${metric_name}/${point_name}_whole_temp -sub $output_dir/${metric_name}/${point_name}_whole_$((i-1)) $output_dir/${metric_name}/${point_name}_ring${i}
+            # Extract metric values within the ring
+            fslmaths $output_dir/${metric_name}/${point_name}_ring${i} -mul $metric_path $output_dir/${metric_name}/${point_name}_ring${i}_${metric_name}
+            # Save a copy of this whole sphere for the next iteration
+            fslmaths $output_dir/${metric_name}/${point_name}_whole_temp $output_dir/${metric_name}/${point_name}_whole_${i}
+            # Clean up temporary files
+            rm -f $output_dir/${metric_name}/${point_name}_whole_temp.*
+        fi
+    done
+}
 
-# Create baseline posterior ROI
-fslmaths $dwi_space_path -mul 0 -add 1 -roi $baseline_post_x 1 $baseline_post_y 1 $baseline_post_z 1 0 1 $output_dir/baseline_post_point -odt float
-
-# Create rings around anterior point
-for i in {1..5}; do
-    radius=$i
-    prev_radius=$((i-1))
-    if [ $prev_radius -eq 0 ]; then
-        # First ring
-        fslmaths $output_dir/ant_point -kernel sphere $radius -dilM $output_dir/ant_ring${i}
-    else
-        # Subsequent rings (donuts)
-        fslmaths $output_dir/ant_point -kernel sphere $radius -dilM $output_dir/ant_whole_${i}
-        fslmaths $output_dir/ant_whole_${i} -sub $output_dir/ant_whole_$((i-1)) $output_dir/ant_ring${i}
-    fi
+# Process for all points with FA
+for point in "ant" "post" "baseline_ant" "baseline_post"; do
+    create_metric_rings $point $fa_path "FA"
 done
 
-# Create rings around posterior point
-for i in {1..5}; do
-    radius=$i
-    prev_radius=$((i-1))
-    if [ $prev_radius -eq 0 ]; then
-        # First ring
-        fslmaths $output_dir/post_point -kernel sphere $radius -dilM $output_dir/post_ring${i}
-    else
-        # Subsequent rings (donuts)
-        fslmaths $output_dir/post_point -kernel sphere $radius -dilM $output_dir/post_whole_${i}
-        fslmaths $output_dir/post_whole_${i} -sub $output_dir/post_whole_$((i-1)) $output_dir/post_ring${i}
-    fi
+# Process for all points with MD
+for point in "ant" "post" "baseline_ant" "baseline_post"; do
+    create_metric_rings $point $md_path "MD"
 done
 
-# Create rings around baseline anterior point
-for i in {1..5}; do
-    radius=$i
-    prev_radius=$((i-1))
-    if [ $prev_radius -eq 0 ]; then
-        # First ring
-        fslmaths $output_dir/baseline_ant_point -kernel sphere $radius -dilM $output_dir/baseline_ant_ring${i}
-    else
-        # Subsequent rings (donuts)
-        fslmaths $output_dir/baseline_ant_point -kernel sphere $radius -dilM $output_dir/baseline_ant_whole_${i}
-        fslmaths $output_dir/baseline_ant_whole_${i} -sub $output_dir/baseline_ant_whole_$((i-1)) $output_dir/baseline_ant_ring${i}
-    fi
-done
-
-# Create rings around baseline posterior point
-for i in {1..5}; do
-    radius=$i
-    prev_radius=$((i-1))
-    if [ $prev_radius -eq 0 ]; then
-        # First ring
-        fslmaths $output_dir/baseline_post_point -kernel sphere $radius -dilM $output_dir/baseline_post_ring${i}
-    else
-        # Subsequent rings (donuts)
-        fslmaths $output_dir/baseline_post_point -kernel sphere $radius -dilM $output_dir/baseline_post_whole_${i}
-        fslmaths $output_dir/baseline_post_whole_${i} -sub $output_dir/baseline_post_whole_$((i-1)) $output_dir/baseline_post_ring${i}
-    fi
-done
 
 # Print confirmation message
 echo "ROIs created successfully for patient $patient_id at timepoint $timepoint"
