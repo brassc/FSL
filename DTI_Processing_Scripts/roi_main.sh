@@ -7,10 +7,8 @@ coord_csv="DTI_Processing_Scripts/LEGACY_DTI_coords_transformed_manually_adjuste
 # Base directory for mixed IDs (letters and numbers)
 mixed_base="/home/cmb247/rds/hpc-work/Feb2025_data/CT_Brass/Charlotte_brass_Feb2025/MRI"
 
-dwi_base="path/to/dwi/images"
-fa_base="path/to/fa/maps"
-md_base="path/to/md/maps"
-results_dir="results"
+dwi_base="/home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi/"
+results_dir="DTI_Processing_Scripts/results"
 
 mkdir -p $results_dir
 
@@ -24,11 +22,23 @@ grep -v "^1," $coord_csv | while IFS=, read excluded patient_id timepoint rest; 
         
         # Determine path structure based on patient_id format
         if [[ "$patient_id" =~ ^[0-9]+$ ]]; then
-            continue
-            # # Patient ID contains only numbers
-            # dwi_path="$dwi_base/sub-${patient_id}/${timepoint}/dwi.nii.gz"
-            # fa_path="$fa_base/sub-${patient_id}/${timepoint}/dti_FA.nii.gz"
-            # md_path="$md_base/sub-${patient_id}/${timepoint}/dti_MD.nii.gz"
+            # if patient id is just numbers
+            echo "Processing patient $patient_id at timepoint $timepoint"
+            tp_dir=$dwi_base/$patient_id/$timepoint
+            echo "tp_dir: $tp_dir"
+            # Find the DTIspace directory
+            dti_dir=$(find "$tp_dir" -type d -name "DTIspace" | head -n 1)
+            echo "DTI directory: $dti_dir"
+
+            mask_path="$dti_dir/masks/ANTS_T1_brain_mask.nii.gz"
+            fa_path="$dti_dir/dti/dtifitWLS_FA.nii.gz"
+            md_path="$dti_dir/dti/dtifitWLS_MD.nii.gz"
+
+            echo "Paths:"
+            echo "ANTS mask path: $mask_path"
+            echo "FA path: $fa_path"
+            echo "MD path: $md_path"
+            
         else
             echo "Processing patient $patient_id at timepoint $timepoint"
             echo "mixed base: $mixed_base"
@@ -61,7 +71,7 @@ grep -v "^1," $coord_csv | while IFS=, read excluded patient_id timepoint rest; 
             echo "we are here"
             
             # Step 1: Create spherical ROIs
-            ./DTI_Processing_Scripts/roi_create.sh "$patient_id" "$timepoint" "$tp_base" "$mask_path" "$fa_path" "$md_path"
+            ./DTI_Processing_Scripts/roi_create.sh "$patient_id" "$timepoint" "$tp_base" "$mask_path" "$fa_path" "$md_path" "4"
             exit 0
             # Step 2: Extract metrics
             # ./roi_extract.sh "$patient_id" "$timepoint" "$fa_path" "$md_path" "rois/${patient_id}/${timepoint}"

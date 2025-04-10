@@ -7,7 +7,8 @@ tp_base=$3
 mask_path=$4    # Path to the mask file
 fa_path=$5      # Path to the FA image
 md_path=$6      # Path to the MD image
-csv_path=${7:-"DTI_Processing_Scripts/LEGACY_DTI_coords_transformed_manually_adjusted.csv"}  # Optional CSV path, defaults to coordinates.csv
+bin_size=$7 # Size of the bin for the rings
+csv_path=${8:-"DTI_Processing_Scripts/LEGACY_DTI_coords_transformed_manually_adjusted.csv"}  # Optional CSV path, defaults to coordinates.csv
 
 # Check if all required parameters are provided
 if [ -z "$patient_id" ] || [ -z "$timepoint" ] || [ -z "$mask_path" ] || [ -z "$fa_path" ] || [ -z "$md_path" ]; then
@@ -59,10 +60,20 @@ fi
 mkdir -p $output_dir
 
 # Create point ROIs
+echo "Creating point ROIs..."
 fslmaths $mask_path -mul 0 -add 1 -roi $ant_x 1 $ant_y 1 $ant_z 1 0 1 $output_dir/ant_point -odt float
 fslmaths $mask_path -mul 0 -add 1 -roi $post_x 1 $post_y 1 $post_z 1 0 1 $output_dir/post_point -odt float
 fslmaths $mask_path -mul 0 -add 1 -roi $baseline_ant_x 1 $baseline_ant_y 1 $baseline_ant_z 1 0 1 $output_dir/baseline_ant_point -odt float
 fslmaths $mask_path -mul 0 -add 1 -roi $baseline_post_x 1 $baseline_post_y 1 $baseline_post_z 1 0 1 $output_dir/baseline_post_point -odt float
+
+
+# Debug information
+echo "Ant coordinates: $ant_x $ant_y $ant_z"
+echo "Post coordinates: $post_x $post_y $post_z"
+echo "Baseline ant coordinates: $baseline_ant_x $baseline_ant_y $baseline_ant_z"
+echo "Baseline post coordinates: $baseline_post_x $baseline_post_y $baseline_post_z"
+
+
 
 echo "Creating ROI rings within mask..."
 
@@ -75,10 +86,14 @@ create_metric_rings() {
     # Create directories for metric-specific output
     mkdir -p $output_dir/${metric_name}
     echo "Output directory for $patient_id $timepoint $metric_name: $output_dir/${metric_name}"
+    echo "bin size: $bin_size"
+    
     
     for i in {1..5}; do
-        radius=$i
-        prev_radius=$((i-1))
+        radius=$((i*$bin_size))
+        prev_radius=$(($radius-$bin_size))
+        echo "prev_radius: $prev_radius"
+        echo "radius: $radius"
         
         if [ $prev_radius -eq 0 ]; then
             # First ring - create spherical dilation then mask with the brain mask
