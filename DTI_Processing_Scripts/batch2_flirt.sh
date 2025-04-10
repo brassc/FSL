@@ -88,13 +88,13 @@ for patient_dir in ${basepath}/*; do
                 # Register T1 to DWI
                 flirt -in "${t1_image}" \
                       -ref "${dwi_file}" \
-                      -omat "${output_dir}/T1_to_DWI.mat" \
+                      -omat "${output_dir}/T1_to_DTI.mat" \
                       -dof 6
                 
                 # Apply transformation to the mask
                 flirt -in "${t1_mask}" \
                       -ref "${dwi_file}" \
-                      -applyxfm -init "${output_dir}/T1_to_DWI.mat" \
+                      -applyxfm -init "${output_dir}/T1_to_DTI.mat" \
                       -out "${output_dir}/T1_mask_in_DTI_space.nii.gz" \
                       -interp nearestneighbour
                 
