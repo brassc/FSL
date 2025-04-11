@@ -71,13 +71,13 @@ grep -v "^1," $coord_csv | while IFS=, read excluded patient_id timepoint rest; 
             echo "we are here"
             
             # Step 1: Create spherical ROIs
-            ./DTI_Processing_Scripts/roi_create.sh "$patient_id" "$timepoint" "$tp_base" "$mask_path" "$fa_path" "$md_path" "4"
+            #./DTI_Processing_Scripts/roi_create.sh "$patient_id" "$timepoint" "$tp_base" "$mask_path" "$fa_path" "$md_path" "4"
             
             # Step 2: Extract metrics
-            # ./roi_extract.sh "$patient_id" "$timepoint" "$fa_path" "$md_path" "rois/${patient_id}/${timepoint}"
+            ./DTI_Processing_Scripts/roi_extract.sh "$patient_id" "$timepoint" "$tp_base" "$fa_path" "$md_path" 
             
             # Append to master CSV
-            # cat "results/${patient_id}_${timepoint}_metrics.csv" | tail -n 1 >> $master_csv
+            cat "results/${patient_id}_${timepoint}_metrics.csv" | tail -n 1 >> $master_csv
         else
             echo "Missing files for patient $patient_id at timepoint $timepoint"
         fi
