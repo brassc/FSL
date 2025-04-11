@@ -25,30 +25,30 @@ grep -v "^1," $coord_csv | while IFS=, read excluded patient_id timepoint rest; 
             # if patient id is just numbers
             echo "Processing patient $patient_id at timepoint $timepoint"
             tp_dir=$dwi_base/$patient_id/$timepoint
-            echo "tp_dir: $tp_dir"
+            # echo "tp_dir: $tp_dir"
             # Find the DTIspace directory
             dti_dir=$(find "$tp_dir" -type d -name "DTIspace" | head -n 1)
-            echo "DTI directory: $dti_dir"
+            # echo "DTI directory: $dti_dir"
 
             mask_path="$dti_dir/masks/ANTS_T1_brain_mask.nii.gz"
             fa_path="$dti_dir/dti/dtifitWLS_FA.nii.gz"
             md_path="$dti_dir/dti/dtifitWLS_MD.nii.gz"
 
-            echo "Paths:"
-            echo "ANTS mask path: $mask_path"
-            echo "FA path: $fa_path"
-            echo "MD path: $md_path"
+            # echo "Paths:"
+            # echo "ANTS mask path: $mask_path"
+            # echo "FA path: $fa_path"
+            # echo "MD path: $md_path"
             
         else
             echo "Processing patient $patient_id at timepoint $timepoint"
-            echo "mixed base: $mixed_base"
+            # echo "mixed base: $mixed_base"
             
             # Patient ID contains letters and numbers
             # tp_dir=$(find "$mixed_base/$patient_id" -type d -name "*Hour-${timepoint}_*" -path
             tp_dir=$(find "$mixed_base/$patient_id" -type d -name "Sub-*" -exec find {} -type d -name "Hour-${timepoint}_*" \; | head -n 1)
-            echo "tp_dir: $tp_dir"
+            # echo "tp_dir: $tp_dir"
             tp_base=$(basename "$tp_dir")
-            echo "tp_base: $tp_base"
+            # echo "tp_base: $tp_base"
             dti_dir="${tp_dir}/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace"
             #  "/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace" | head -n 1)
             if [ -z "$tp_dir" ]; then
@@ -59,17 +59,16 @@ grep -v "^1," $coord_csv | while IFS=, read excluded patient_id timepoint rest; 
             fa_path="$dti_dir/dti/dtifitWLS_FA.nii.gz"
             md_path="$dti_dir/dti/dtifitWLS_MD.nii.gz"
         fi
-        echo "Paths:"
-        echo "ANTS mask path: $mask_path"
-        echo "FA path: $fa_path"
-        echo "MD path: $md_path"
+        # echo "Paths:"
+        # echo "ANTS mask path: $mask_path"
+        # echo "FA path: $fa_path"
+        # echo "MD path: $md_path"
         
 
         
         # Check if files exist
         if [ -f "$mask_path" ] && [ -f "$fa_path" ] && [ -f "$md_path" ]; then
-            echo "we are here"
-            
+            echo "All required files found for patient $patient_id at timepoint $timepoint"   
             # Step 1: Create spherical ROIs
             #./DTI_Processing_Scripts/roi_create.sh "$patient_id" "$timepoint" "$tp_base" "$mask_path" "$fa_path" "$md_path" "4"
             
