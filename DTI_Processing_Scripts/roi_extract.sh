@@ -3,12 +3,22 @@
 # Input parameters
 patient_id=$1
 timepoint=$2
-fa_map=$3  # Path to FA map
-md_map=$4  # Path to MD map
-roi_dir=$5 # Directory containing ROIs
+tp_base=$3  # Base directory for the timepoint
+fa_map=$4  # Path to FA map
+md_map=$5  # Path to MD map
 
+# Set ROI dir
+# Create spherical ROIs for each point
+if [[ "$patient_id" =~ ^[0-9]+$ ]]; then
+    # Patient ID contains only numbers
+    roi_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${timepoint}/roi_files"
+else
+    roi_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${tp_base}_dwi/roi_files"
+fi
+
+exit 0
 # Output CSV file
-output_csv="results/${patient_id}_${timepoint}_metrics.csv"
+output_csv="DTI_Processing_Scripts/results/${patient_id}_${timepoint}_metrics.csv"
 mkdir -p $(dirname $output_csv)
 
 # Initialize CSV header
