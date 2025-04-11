@@ -19,7 +19,13 @@ echo "ROI directory: $roi_dir"
 
 # Output CSV file
 output_csv="DTI_Processing_Scripts/results/${patient_id}_${timepoint}_metrics.csv"
+# if output_csv already exists, remove it
+if [ -f "$output_csv" ]; then
+    rm -f "$output_csv"
+fi
+# create new
 mkdir -p $(dirname $output_csv)
+
 
 echo "Output CSV: $output_csv"
 
