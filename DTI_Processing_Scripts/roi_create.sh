@@ -93,8 +93,8 @@ create_metric_rings() {
     for ((i=1; i<=$num_bins; i++)); do
         radius=$((i*$bin_size))
         prev_radius=$(($radius-$bin_size))
-        echo "prev_radius: $prev_radius"
-        echo "radius: $radius"
+        echo "prev_radius: $prev_radius; current radius: $radius"
+        #echo "radius: $radius"
         
         if [ $prev_radius -eq 0 ]; then
             # First ring - create spherical dilation then mask with the brain mask
