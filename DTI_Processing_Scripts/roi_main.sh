@@ -88,7 +88,7 @@ grep -v "^1," $coord_csv | while IFS=, read excluded patient_id timepoint rest; 
             ./DTI_Processing_Scripts/roi_create.sh "$patient_id" "$timepoint" "$tp_base" "$mask_path" "$fa_path" "$md_path" "$bin_size" "$num_bins"
             
             # Step 2: Extract metrics
-            #./DTI_Processing_Scripts/roi_extract.sh "$patient_id" "$timepoint" "$tp_base" "$fa_path" "$md_path" 
+            #./DTI_Processing_Scripts/roi_extract.sh "$patient_id" "$timepoint" "$tp_base" "$fa_path" "$md_path" "$bin_size" "$num_bins"
             
             # Append to master CSV
             #cat "DTI_Processing_Scripts/results/${patient_id}_${timepoint}_metrics.csv" | tail -n 1 >> $master_csv
