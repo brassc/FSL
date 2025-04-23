@@ -90,7 +90,7 @@ create_metric_rings() {
     echo "bin size: $bin_size"
     
     
-    for i in {1..10}; do
+    for ((i=1; i<=$num_bins; i++)); do
         radius=$((i*$bin_size))
         prev_radius=$(($radius-$bin_size))
         echo "prev_radius: $prev_radius"
