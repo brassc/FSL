@@ -8,7 +8,8 @@ mask_path=$4    # Path to the mask file
 fa_path=$5      # Path to the FA image
 md_path=$6      # Path to the MD image
 bin_size=$7 # Size of the bin for the rings
-csv_path=${8:-"DTI_Processing_Scripts/LEGACY_DTI_coords_transformed_manually_adjusted.csv"}  # Optional CSV path, defaults to coordinates.csv
+num_bins=$8 # Number of bins for the rings
+csv_path=${9:-"DTI_Processing_Scripts/LEGACY_DTI_coords_transformed_manually_adjusted.csv"}  # Optional CSV path, defaults to coordinates.csv
 
 # Check if all required parameters are provided
 if [ -z "$patient_id" ] || [ -z "$timepoint" ] || [ -z "$mask_path" ] || [ -z "$fa_path" ] || [ -z "$md_path" ]; then
@@ -52,9 +53,9 @@ fi
 # Create spherical ROIs for each point
 if [[ "$patient_id" =~ ^[0-9]+$ ]]; then
     # Patient ID contains only numbers
-    output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${timepoint}/roi_files_bin_2"
+    output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${timepoint}/roi_files_${num_bins}x${bin_size}vox"
 else
-    output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${tp_base}_dwi/roi_files_bin_2"
+    output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${tp_base}_dwi/roi_files_${num_bins}x${bin_size}vox"
 fi
 
 mkdir -p $output_dir
