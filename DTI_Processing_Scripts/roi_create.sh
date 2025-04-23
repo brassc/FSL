@@ -52,9 +52,9 @@ fi
 # Create spherical ROIs for each point
 if [[ "$patient_id" =~ ^[0-9]+$ ]]; then
     # Patient ID contains only numbers
-    output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${timepoint}/roi_files"
+    output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${timepoint}/roi_files_bin_2"
 else
-    output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${tp_base}_dwi/roi_files"
+    output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${tp_base}_dwi/roi_files_bin_2"
 fi
 
 mkdir -p $output_dir
@@ -89,7 +89,7 @@ create_metric_rings() {
     echo "bin size: $bin_size"
     
     
-    for i in {1..5}; do
+    for i in {1..10}; do
         radius=$((i*$bin_size))
         prev_radius=$(($radius-$bin_size))
         echo "prev_radius: $prev_radius"
