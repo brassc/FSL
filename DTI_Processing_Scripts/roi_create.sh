@@ -67,7 +67,7 @@ if [ ! -f "$output_dir/ant_point.nii.gz" ]; then
     #echo "Creating point ROI for anterior point..."
     fslmaths $mask_path -mul 0 -add 1 -roi $ant_x 1 $ant_y 1 $ant_z 1 0 1 $output_dir/ant_point -odt float
 fi
-f#slmaths $mask_path -mul 0 -add 1 -roi $ant_x 1 $ant_y 1 $ant_z 1 0 1 $output_dir/ant_point -odt float
+#fslmaths $mask_path -mul 0 -add 1 -roi $ant_x 1 $ant_y 1 $ant_z 1 0 1 $output_dir/ant_point -odt float
 # if $output_dir/post_point does not exist, perform fslmaths
 if [ ! -f "$output_dir/post_point.nii.gz" ]; then
     #echo "Creating point ROI for posterior point..."
