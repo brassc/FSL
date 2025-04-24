@@ -13,10 +13,10 @@ results_dir="DTI_Processing_Scripts/results"
 mkdir -p $results_dir
 
 # Create master results CSV # CHANGE THESE THINGS HERE!
-num_bins=10
-bin_size=2
-#num_bins=5
-#bin_size=4
+#num_bins=10
+#bin_size=2
+num_bins=5
+bin_size=4
 
 master_csv="$results_dir/all_metrics_${num_bins}x${bin_size}vox.csv"
 if [ $num_bins -eq 10 ]; then
