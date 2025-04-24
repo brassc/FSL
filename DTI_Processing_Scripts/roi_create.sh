@@ -62,10 +62,31 @@ mkdir -p $output_dir
 
 # Create point ROIs
 echo "Creating point ROIs..."
-fslmaths $mask_path -mul 0 -add 1 -roi $ant_x 1 $ant_y 1 $ant_z 1 0 1 $output_dir/ant_point -odt float
-fslmaths $mask_path -mul 0 -add 1 -roi $post_x 1 $post_y 1 $post_z 1 0 1 $output_dir/post_point -odt float
-fslmaths $mask_path -mul 0 -add 1 -roi $baseline_ant_x 1 $baseline_ant_y 1 $baseline_ant_z 1 0 1 $output_dir/baseline_ant_point -odt float
-fslmaths $mask_path -mul 0 -add 1 -roi $baseline_post_x 1 $baseline_post_y 1 $baseline_post_z 1 0 1 $output_dir/baseline_post_point -odt float
+# if $output_dir/ant_point does not exist, perform fslmaths
+if [ ! -f "$output_dir/ant_point.nii.gz" ]; then
+    #echo "Creating point ROI for anterior point..."
+    fslmaths $mask_path -mul 0 -add 1 -roi $ant_x 1 $ant_y 1 $ant_z 1 0 1 $output_dir/ant_point -odt float
+fi
+f#slmaths $mask_path -mul 0 -add 1 -roi $ant_x 1 $ant_y 1 $ant_z 1 0 1 $output_dir/ant_point -odt float
+# if $output_dir/post_point does not exist, perform fslmaths
+if [ ! -f "$output_dir/post_point.nii.gz" ]; then
+    #echo "Creating point ROI for posterior point..."
+    fslmaths $mask_path -mul 0 -add 1 -roi $post_x 1 $post_y 1 $post_z 1 0 1 $output_dir/post_point -odt float
+fi
+#fslmaths $mask_path -mul 0 -add 1 -roi $post_x 1 $post_y 1 $post_z 1 0 1 $output_dir/post_point -odt float
+
+# if $output_dir/baseline_ant_point does not exist, perform fslmaths
+if [ ! -f "$output_dir/baseline_ant_point.nii.gz" ]; then
+    #echo "Creating point ROI for baseline anterior point..."
+    fslmaths $mask_path -mul 0 -add 1 -roi $baseline_ant_x 1 $baseline_ant_y 1 $baseline_ant_z 1 0 1 $output_dir/baseline_ant_point -odt float
+fi
+#fslmaths $mask_path -mul 0 -add 1 -roi $baseline_ant_x 1 $baseline_ant_y 1 $baseline_ant_z 1 0 1 $output_dir/baseline_ant_point -odt float
+
+if [ ! -f "$output_dir/baseline_post_point.nii.gz" ]; then
+    #echo "Creating point ROI for baseline posterior point..."
+    fslmaths $mask_path -mul 0 -add 1 -roi $baseline_post_x 1 $baseline_post_y 1 $baseline_post_z 1 0 1 $output_dir/baseline_post_point -odt float
+fi
+#fslmaths $mask_path -mul 0 -add 1 -roi $baseline_post_x 1 $baseline_post_y 1 $baseline_post_z 1 0 1 $output_dir/baseline_post_point -odt float
 
 
 # Debug information
@@ -120,12 +141,20 @@ create_metric_rings() {
 
 # Process for all points with FA
 for point in "ant" "post" "baseline_ant" "baseline_post"; do
-    create_metric_rings $point $fa_path "FA"
+    # if files dont exist, do function
+    if [ ! -f "$output_dir/FA/${point}_whole_${num_bins}.nii.gz" ]; then
+        #echo "Creating rings for $point with FA..."
+        create_metric_rings $point $fa_path "FA"
+    fi
 done
 
 # Process for all points with MD
 for point in "ant" "post" "baseline_ant" "baseline_post"; do
-    create_metric_rings $point $md_path "MD"
+    # if files dont exist, do function
+    if [ ! -f "$output_dir/MD/${point}_whole_${num_bins}.nii.gz" ]; then
+        #echo "Creating rings for $point with MD..."
+        create_metric_rings $point $md_path "MD"
+    fi
 done
 
 
