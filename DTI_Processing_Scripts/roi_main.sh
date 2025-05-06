@@ -1,14 +1,40 @@
 #!/bin/bash
 
+# # Parse command line arguments
+# if [ $# -lt 2 ]; then
+#     echo "Usage: $0 <num_bins> <bin_size>"
+#     echo "Example: $0 5 4"
+#     exit 1
+# fi
+
+# num_bins=$1
+# bin_size=$2
+
 # Parse command line arguments
-if [ $# -lt 2 ]; then
-    echo "Usage: $0 <num_bins> <bin_size>"
-    echo "Example: $0 5 4"
+num_bins=""
+bin_size=""
+
+for arg in "$@"; do
+    case $arg in
+        --num_bins=*)
+        num_bins="${arg#*=}"
+        ;;
+        --bin_size=*)
+        bin_size="${arg#*=}"
+        ;;
+        *)
+        # Unknown option
+        ;;
+    esac
+done
+
+# Check if required parameters are provided
+if [ -z "$num_bins" ] || [ -z "$bin_size" ]; then
+    echo "Usage: $0 --num_bins=<value> --bin_size=<value>"
+    echo "Example: $0 --num_bins=5 --bin_size=4"
     exit 1
 fi
 
-num_bins=$1
-bin_size=$2
 
 # Path to your CSV with coordinates
 coord_csv="DTI_Processing_Scripts/LEGACY_DTI_coords_transformed_manually_adjusted.csv"
