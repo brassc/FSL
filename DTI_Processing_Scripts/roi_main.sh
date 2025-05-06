@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# Parse command line arguments
+if [ $# -lt 2 ]; then
+    echo "Usage: $0 <num_bins> <bin_size>"
+    echo "Example: $0 5 4"
+    exit 1
+fi
+
+num_bins=$1
+bin_size=$2
+
 # Path to your CSV with coordinates
 coord_csv="DTI_Processing_Scripts/LEGACY_DTI_coords_transformed_manually_adjusted.csv"
 
@@ -12,11 +22,11 @@ results_dir="DTI_Processing_Scripts/results"
 
 mkdir -p $results_dir
 
-# Create master results CSV # CHANGE THESE THINGS HERE!
+# Create master results CSV # SUPPLIED AT INPUT WHEN CALLING FUNCTION
 #num_bins=10
 #bin_size=2
-num_bins=5
-bin_size=4
+#num_bins=5
+#bin_size=4
 
 master_csv="$results_dir/all_metrics_${num_bins}x${bin_size}vox.csv"
 if [ $num_bins -eq 10 ]; then
