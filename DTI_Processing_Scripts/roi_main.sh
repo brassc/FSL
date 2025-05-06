@@ -35,7 +35,6 @@ if [ -z "$num_bins" ] || [ -z "$bin_size" ]; then
     exit 1
 fi
 
-
 # Path to your CSV with coordinates
 coord_csv="DTI_Processing_Scripts/LEGACY_DTI_coords_transformed_manually_adjusted.csv"
 
