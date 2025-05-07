@@ -38,9 +38,9 @@ for arg in "$@"; do
 done
 
 # Check if required parameters are provided
-if [ -z "$num_bins" ] || [ -z "$bin_size" ]; then
-    echo "Usage: $0 --num_bins=<value> --bin_size=<value>"
-    echo "Example: $0 --num_bins=5 --bin_size=4"
+if [ -z "$num_bins" ] || [ -z "$bin_size" ] || [ -z "$num_cpus" ] ; then
+    echo "Usage: $0 --num_bins=<value> --bin_size=<value> --num_cpus=<value>"
+    echo "Example: $0 --num_bins=5 --bin_size=4 --num_cpus=4"
     exit 1
 fi
 
@@ -59,6 +59,7 @@ mixed_base="/home/cmb247/rds/hpc-work/Feb2025_data/CT_Brass/Charlotte_brass_Feb2
 
 dwi_base="/home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi/"
 results_dir="DTI_Processing_Scripts/results"
+
 
 mkdir -p $results_dir
 
@@ -83,7 +84,10 @@ fi
 
 #echo "patient_id,timepoint,FA_anterior_ring_1,FA_anterior_ring_2,FA_anterior_ring_3,FA_anterior_ring_4,FA_anterior_ring_5,FA_posterior_ring_1,FA_posterior_ring_2,FA_posterior_ring_3,FA_posterior_ring_4,FA_posterior_ring_5,FA_baseline_anterior_ring_1,FA_baseline_anterior_ring_2,FA_baseline_anterior_ring_3,FA_baseline_anterior_ring_4,FA_baseline_anterior_ring_5,FA_baseline_posterior_ring_1,FA_baseline_posterior_ring_2,FA_baseline_posterior_ring_3,FA_baseline_posterior_ring_4,FA_baseline_posterior_ring_5,MD_anterior_ring_1,MD_anterior_ring_2,MD_anterior_ring_3,MD_anterior_ring_4,MD_anterior_ring_5,MD_posterior_ring_1,MD_posterior_ring_2,MD_posterior_ring_3,MD_posterior_ring_4,MD_posterior_ring_5,MD_baseline_anterior_ring_1,MD_baseline_anterior_ring_2,MD_baseline_anterior_ring_3,MD_baseline_anterior_ring_4,MD_baseline_anterior_ring_5,MD_baseline_posterior_ring_1,MD_baseline_posterior_ring_2,MD_baseline_posterior_ring_3,MD_baseline_posterior_ring_4,MD_baseline_posterior_ring_5" > $master_csv
 # Process each non-excluded patient
-grep -v "^1," $coord_csv | parallel -j $num_cpus --colsep ',' '
+# Export variables for parallel
+export dwi_base mixed_base bin_size num_bins results_dir master_csv
+parallel --citation 2>/dev/null || true
+grep -v "^1," $coord_csv | parallel --will-cite -d "\r\n" --env dwi_base,mixed_base,bin_size,num_bins,results_dir,master_csv -j $num_cpus --colsep ',' '
     excluded={1}
     patient_id={2}
     timepoint={3}
@@ -98,7 +102,15 @@ grep -v "^1," $coord_csv | parallel -j $num_cpus --colsep ',' '
             # echo "tp_dir: $tp_dir"
             # Find the DTIspace directory
             dti_dir=$(find "$tp_dir" -type d -name "DTIspace" | head -n 1)
+            echo "DTI directory: $dti_dir"
+            exit 0
+            # if there is more than one dtispace directory (dti_dir), echo the first one as well as patient id and timepoint
+            if [ $(echo "$dti_dir" | wc -l) -gt 1 ]; then
+                echo "WARNING: More than one DTIspace directory found for patient $patient_id at timepoint $timepoint. Using the first one."
+            fi
             # echo "DTI directory: $dti_dir"
+            # break out of the loop and restart for new patient id and timepoint
+            exit 0
 
             mask_path="$dti_dir/masks/ANTS_T1_brain_mask.nii.gz"
             fa_path="$dti_dir/dti/dtifitWLS_FA.nii.gz"
@@ -111,16 +123,34 @@ grep -v "^1," $coord_csv | parallel -j $num_cpus --colsep ',' '
             
         else
             echo "Processing patient $patient_id at timepoint $timepoint"
-            # echo "mixed base: $mixed_base"
+            #echo "mixed base: $mixed_base"
+            #echo "patient id: $patient_id"
+            #echo "timepoint: $timepoint"
+            
             
             # Patient ID contains letters and numbers
             # tp_dir=$(find "$mixed_base/$patient_id" -type d -name "*Hour-${timepoint}_*" -path
-            tp_dir=$(find "$mixed_base/$patient_id" -type d -name "Sub-*" -exec find {} -type d -name "Hour-${timepoint}_*" \; | head -n 1)
-            # echo "tp_dir: $tp_dir"
+            patient_dir="$mixed_base/$patient_id"
+            #echo "patient_dir: $patient_dir"
+            
+            #tp_dir=$(find "$mixed_base/$patient_id" -type d -name "Sub-*" -exec find {} -type d -name "Hour-${timepoint}_*" \; | head -n 1)
+            #tp_dir=$(find "$patient_dir" -type d -name "Sub-*" -exec find {} -type d -name "Hour-${timepoint}_*" \; 2>/dev/null | head -n 1)
+            
+            tp_dir=$(find "$patient_dir" -type d -path "*Hour-${timepoint}*" -o -path "*Hour_${timepoint}*" 2>/dev/null | head -n 1)
+            #echo "tp_dir: $tp_dir"
             tp_base=$(basename "$tp_dir")
             # echo "tp_base: $tp_base"
             dti_dir="${tp_dir}/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace"
             #  "/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace" | head -n 1)
+            echo "dti_dir: $dti_dir"
+            
+            exit 0
+
+            # if mre than one dti_dir, echo the first one as well as patient id and timepoint
+            if [ $(echo "$dti_dir" | wc -l) -gt 1 ]; then
+                echo "WARNING: More than one DTIspace directory found for patient $patient_id at timepoint $timepoint. Using the first one."
+            fi
+            exit 0
             if [ -z "$tp_dir" ]; then
                 echo "ERROR: Could not find directory containing timepoint $timepoint for patient $patient_id"
                 exit 1
