@@ -1,0 +1,101 @@
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//12519/ultra-fast/Hour_00030.8831-Date_20070312/U-ID11206/nipype/DATASINK/DTIspace
+Processing patient 12519 at timepoint acute
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//12519/acute/Hour_01110.9833-Date_20070427/U-ID11556/nipype/DATASINK/DTIspace
+Processing patient 12519 at timepoint 6mo
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//12519/6mo/Hour_04662.0668-Date_20070925/U-ID12201/nipype/DATASINK/DTIspace
+Processing patient 12519 at timepoint 24mo
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//12519/24mo/Hour_20646.9165-Date_20090721/U-ID16773/nipype/DATASINK/DTIspace
+Processing patient 13782 at timepoint ultra-fast
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//13782/ultra-fast/Hour_00070.8517-Date_20071121/U-ID13119/nipype/DATASINK/DTIspace
+Processing patient 13782 at timepoint 3mo
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//13782/3mo/Hour_01632.0-Date_20080121/U-ID13481/nipype/DATASINK/DTIspace
+Processing patient 13990 at timepoint fast
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//13990/fast/Hour_00130.7495-Date_20080214/U-ID13860/nipype/DATASINK/DTIspace
+Processing patient 13990 at timepoint acute
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//13990/acute/Hour_00419.7161-Date_20080226/U-ID14047/nipype/DATASINK/DTIspace
+Processing patient 14324 at timepoint ultra-fast
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//14324/ultra-fast/Hour_00049.50118-Date_20080711/U-ID14872/nipype/DATASINK/DTIspace
+Processing patient 14324 at timepoint acute
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//14324/acute/Hour_00528.83318-Date_20080801/U-ID15035/nipype/DATASINK/DTIspace
+Processing patient 14324 at timepoint 12mo
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//14324/12mo/Hour_06720.08368-Date_20090414/U-ID16285/nipype/DATASINK/DTIspace
+Processing patient 16754 at timepoint fast
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//16754/fast/Hour_00158.06698-Date_20120221/U-ID23805/nipype/DATASINK/DTIspace
+Processing patient 16754 at timepoint acute
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//16754/acute/Hour_00566.98348-Date_20120308/U-ID24030/nipype/DATASINK/DTIspace
+Processing patient 19344 at timepoint fast
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//19344/fast/Hour_00109.4008-Date_20110308/U-ID21134/nipype/DATASINK/DTIspace
+Processing patient 19344 at timepoint acute
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//19344/acute/Hour_00470.2338-Date_20110323/U-ID21262/nipype/DATASINK/DTIspace
+Processing patient 19575 at timepoint fast
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//19575/fast/Hour_00152.16718-Date_20110519/U-ID21639/nipype/DATASINK/DTIspace
+Processing patient 19575 at timepoint 12mo
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//19575/12mo/Hour_09634.05028-Date_20120619/U-ID24921/nipype/DATASINK/DTIspace
+Processing patient 19978 at timepoint ultra-fast
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//19978/ultra-fast/Hour_00034.8016-Date_20111024/U-ID22691/nipype/DATASINK/DTIspace
+Processing patient 19978 at timepoint fast
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//19978/fast/Hour_00106.4008-Date_20111027/U-ID22723/nipype/DATASINK/DTIspace
+Processing patient 19978 at timepoint acute
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//19978/acute/Hour_00222.9519-Date_20111102/U-ID22791/nipype/DATASINK/DTIspace
+Processing patient 19981 at timepoint ultra-fast
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//19981/ultra-fast/Hour_00045.9833-Date_20111025/U-ID22696/nipype/DATASINK/DTIspace
+Processing patient 19981 at timepoint 6mo
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//19981/6mo/Hour_04966.7996-Date_20120515/U-ID24240/nipype/DATASINK/DTIspace
+Processing patient 19981 at timepoint 24mo
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//19981/24mo/Hour_36889.5491-Date_20160105/Unknown/nipype/DATASINK/DTIspace
+Processing patient 20651 at timepoint fast
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//20651/fast/Hour_00082.334-Date_20120412/U-ID24378/nipype/DATASINK/DTIspace
+Processing patient 20651 at timepoint acute
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//20651/acute/Hour_00398.6493-Date_20120425/U-ID24555/nipype/DATASINK/DTIspace
+Processing patient 20942 at timepoint fast
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//20942/fast/Hour_00107.64948-Date_20120608/U-ID25098/nipype/DATASINK/DTIspace
+Processing patient 20942 at timepoint acute
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//20942/acute/Hour_00275.91668-Date_20120615/U-ID25185/FSL_20942_acute_originals/nipype/DATASINK/DTIspace
+Processing patient 20942 at timepoint 6mo
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//20942/6mo/Hour_05766.79978-Date_20130129/Unknown/nipype/DATASINK/DTIspace
+Processing patient 21221 at timepoint acute
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//21221/acute/Hour_00226.56598-Date_20120813/U-ID25797/nipype/DATASINK/DTIspace
+Processing patient 21221 at timepoint fast
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//21221/fast/Hour_00086.81648-Date_20120807/U-ID25748/nipype/DATASINK/DTIspace
+Processing patient 22725 at timepoint ultra-fast
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//22725/ultra-fast/Hour_00062.33418-Date_20131107/U-ID29607/nipype/DATASINK/DTIspace
+Processing patient 22725 at timepoint acute
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//22725/acute/Hour_00331.53258-Date_20131118/U-ID29681/nipype/DATASINK/DTIspace
+Processing patient 22725 at timepoint 12mo
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//22725/12mo/Hour_07984.68288-Date_20141002/Unknown/nipype/DATASINK/DTIspace
+Processing patient 23348 at timepoint fast
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//23348/fast/Hour_00116.0334-Date_20140501/U-ID31222/nipype/DATASINK/DTIspace
+Processing patient 23348 at timepoint acute
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//23348/acute/Hour_00301.8163-Date_20140509/U-ID31322/nipype/DATASINK/DTIspace
+Processing patient 23348 at timepoint 3mo
+DTI directory: /home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi//23348/3mo/Hour_01742.2505-Date_20140709/U-ID31975/nipype/DATASINK/DTIspace
+Processing patient 2ZFz639 at timepoint 00376
+dti_dir: /home/cmb247/rds/hpc-work/Feb2025_data/CT_Brass/Charlotte_brass_Feb2025/MRI/2ZFz639/Sub-040-2ZFz639/Hour-00376_E21717/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace
+Processing patient 2ZFz639 at timepoint 04310
+dti_dir: /home/cmb247/rds/hpc-work/Feb2025_data/CT_Brass/Charlotte_brass_Feb2025/MRI/2ZFz639/Sub-040-2ZFz639/Hour-04310_E65784/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace
+Processing patient 2ZFz639 at timepoint 08659
+dti_dir: /home/cmb247/rds/hpc-work/Feb2025_data/CT_Brass/Charlotte_brass_Feb2025/MRI/2ZFz639/Sub-040-2ZFz639/Hour-08659_E65788/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace
+Processing patient 2ZFz639 at timepoint 18046
+dti_dir: /home/cmb247/rds/hpc-work/Feb2025_data/CT_Brass/Charlotte_brass_Feb2025/MRI/2ZFz639/Sub-040-2ZFz639/Hour-18046_E65792/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace
+Processing patient 6DBs724 at timepoint 00490
+dti_dir: /home/cmb247/rds/hpc-work/Feb2025_data/CT_Brass/Charlotte_brass_Feb2025/MRI/6DBs724/Sub-087-6DBs724/Hour-00490_E04991/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace
+Processing patient 6DBs724 at timepoint 04311
+dti_dir: /home/cmb247/rds/hpc-work/Feb2025_data/CT_Brass/Charlotte_brass_Feb2025/MRI/6DBs724/Sub-087-6DBs724/Hour-04311_E13585/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace
+Processing patient 6DBs724 at timepoint 08888
+dti_dir: /home/cmb247/rds/hpc-work/Feb2025_data/CT_Brass/Charlotte_brass_Feb2025/MRI/6DBs724/Sub-087-6DBs724/Hour-08888_E21292/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace
+Processing patient 8EpS656 at timepoint 00336
+dti_dir: /home/cmb247/rds/hpc-work/Feb2025_data/CT_Brass/Charlotte_brass_Feb2025/MRI/8EpS656/Sub-008-8EpS656/Hour-00336_E25516/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace
+Processing patient 8EpS656 at timepoint 10079
+dti_dir: /home/cmb247/rds/hpc-work/Feb2025_data/CT_Brass/Charlotte_brass_Feb2025/MRI/8EpS656/Sub-008-8EpS656/Hour-10079_E43116/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace
+Processing patient 8sRv548 at timepoint 00041
+dti_dir: /home/cmb247/rds/hpc-work/Feb2025_data/CT_Brass/Charlotte_brass_Feb2025/MRI/8sRv548/Sub-155-8sRv548/Hour-00041_E04447/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace
+Processing patient 8sRv548 at timepoint 00354
+dti_dir: /home/cmb247/rds/hpc-work/Feb2025_data/CT_Brass/Charlotte_brass_Feb2025/MRI/8sRv548/Sub-155-8sRv548/Hour-00354_E04476/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace
+Processing patient 9GfT823 at timepoint 00588
+dti_dir: /home/cmb247/rds/hpc-work/Feb2025_data/CT_Brass/Charlotte_brass_Feb2025/MRI/9GfT823/Sub-043-9GfT823/Hour-00588_E11586/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace
+Processing patient 9GfT823 at timepoint 04378
+dti_dir: /home/cmb247/rds/hpc-work/Feb2025_data/CT_Brass/Charlotte_brass_Feb2025/MRI/9GfT823/Sub-043-9GfT823/Hour-04378_E13002/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace
+Processing patient 9GfT823 at timepoint 09305
+dti_dir: /home/cmb247/rds/hpc-work/Feb2025_data/CT_Brass/Charlotte_brass_Feb2025/MRI/9GfT823/Sub-043-9GfT823/Hour-09305_E21654/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace
+Processing patient 9GfT823 at timepoint 18728
+dti_dir: /home/cmb247/rds/hpc-work/Feb2025_data/CT_Brass/Charlotte_brass_Feb2025/MRI/9GfT823/Sub-043-9GfT823/Hour-18728_E39166/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace
