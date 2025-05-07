@@ -102,8 +102,8 @@ grep -v "^1," $coord_csv | parallel --will-cite -d "\r\n" --env dwi_base,mixed_b
             # echo "tp_dir: $tp_dir"
             # Find the DTIspace directory
             dti_dir=$(find "$tp_dir" -type d -name "DTIspace" | head -n 1)
-            echo "DTI directory: $dti_dir"
-            exit 0
+            #echo "DTI directory: $dti_dir"
+            
             # if there is more than one dtispace directory (dti_dir), echo the first one as well as patient id and timepoint
             if [ $(echo "$dti_dir" | wc -l) -gt 1 ]; then
                 echo "WARNING: More than one DTIspace directory found for patient $patient_id at timepoint $timepoint. Using the first one."
@@ -142,7 +142,7 @@ grep -v "^1," $coord_csv | parallel --will-cite -d "\r\n" --env dwi_base,mixed_b
             # echo "tp_base: $tp_base"
             dti_dir="${tp_dir}/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace"
             #  "/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace" | head -n 1)
-            echo "dti_dir: $dti_dir"
+            #echo "dti_dir: $dti_dir"
             
             
 
@@ -150,7 +150,7 @@ grep -v "^1," $coord_csv | parallel --will-cite -d "\r\n" --env dwi_base,mixed_b
             if [ $(echo "$dti_dir" | wc -l) -gt 1 ]; then
                 echo "WARNING: More than one DTIspace directory found for patient $patient_id at timepoint $timepoint. Using the first one."
             fi
-            exit 0
+            
             if [ -z "$tp_dir" ]; then
                 echo "ERROR: Could not find directory containing timepoint $timepoint for patient $patient_id"
                 exit 1
@@ -175,7 +175,7 @@ grep -v "^1," $coord_csv | parallel --will-cite -d "\r\n" --env dwi_base,mixed_b
             # Step 2: Extract metrics
             ./DTI_Processing_Scripts/roi_extract.sh "$patient_id" "$timepoint" "$tp_base" "$bin_size" "$num_bins" "$fa_path" "$md_path" 
             
-            # Append to master CSV with file locking
+            Append to master CSV with file locking
             {
                 flock -x 200
                 cat "DTI_Processing_Scripts/results/${patient_id}_${timepoint}_metrics_${num_bins}x${bin_size}vox.csv" | tail -n 1 >> $master_csv
