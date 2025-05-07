@@ -110,7 +110,7 @@ grep -v "^1," $coord_csv | parallel --will-cite -d "\r\n" --env dwi_base,mixed_b
             fi
             # echo "DTI directory: $dti_dir"
             # break out of the loop and restart for new patient id and timepoint
-            exit 0
+            
 
             mask_path="$dti_dir/masks/ANTS_T1_brain_mask.nii.gz"
             fa_path="$dti_dir/dti/dtifitWLS_FA.nii.gz"
@@ -144,7 +144,7 @@ grep -v "^1," $coord_csv | parallel --will-cite -d "\r\n" --env dwi_base,mixed_b
             #  "/dwi/proc_set1_nobzero/nipype/DATASINK/DTIspace" | head -n 1)
             echo "dti_dir: $dti_dir"
             
-            exit 0
+            
 
             # if mre than one dti_dir, echo the first one as well as patient id and timepoint
             if [ $(echo "$dti_dir" | wc -l) -gt 1 ]; then
