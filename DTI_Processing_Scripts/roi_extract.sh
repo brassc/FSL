@@ -15,9 +15,20 @@ master_csv=$8 # Path to the master CSV file
 if [[ "$patient_id" =~ ^[0-9]+$ ]]; then
     # Patient ID contains only numbers
     roi_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${timepoint}/roi_files_${num_bins}x${bin_size}vox"
+    # if $ num bins =5 and $ bin size =4 set roi_dir to the same as above but NEW
+    if [ $num_bins -eq 5 ] && [ $bin_size -eq 4 ]; then
+        roi_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${timepoint}/roi_files_${num_bins}x${bin_size}vox_NEW"
+    fi
 else
     roi_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${tp_base}_dwi/roi_files_${num_bins}x${bin_size}vox"
+    # if $ num bins =5 and $ bin size =4 set roi_dir to the same as above but NEW
+    if [ $num_bins -eq 5 ] && [ $bin_size -eq 4 ]; then
+        roi_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${tp_base}_dwi/roi_files_${num_bins}x${bin_size}vox_NEW"
+    fi
 fi
+
+
+
 echo "ROI directory: $roi_dir"
 
 if [ ! -d "$roi_dir" ]; then
@@ -32,6 +43,10 @@ fi
 
 # Output CSV file
 output_csv="DTI_Processing_Scripts/results/${patient_id}_${timepoint}_metrics_${num_bins}x${bin_size}vox.csv"
+
+if [ $num_bins -eq 5 ] && [ $bin_size -eq 4 ]; then
+    output_csv="DTI_Processing_Scripts/results/${patient_id}_${timepoint}_metrics_${num_bins}x${bin_size}vox_NEW.csv"
+fi
 # if output_csv already exists, remove it
 if [ -f "$output_csv" ]; then
     rm -f "$output_csv"

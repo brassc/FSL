@@ -55,9 +55,17 @@ if [[ "$patient_id" =~ ^[0-9]+$ ]]; then
     # Patient ID contains only numbers
     output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${timepoint}/roi_files_${num_bins}x${bin_size}vox"
     base_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${timepoint}"
+    if [ $num_bins -eq 5 ] && [ $bin_size -eq 4 ]; then
+        output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${timepoint}/roi_files_${num_bins}x${bin_size}vox_NEW"
+    fi
+
+
 else
     output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${tp_base}_dwi/roi_files_${num_bins}x${bin_size}vox"
     base_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${tp_base}_dwi"
+    if [ $num_bins -eq 5 ] && [ $bin_size -eq 4 ]; then
+        output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${tp_base}_dwi/roi_files_${num_bins}x${bin_size}vox_NEW"
+    fi
 fi
 
 mkdir -p $output_dir
