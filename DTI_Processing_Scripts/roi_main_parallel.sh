@@ -177,7 +177,7 @@ grep -v "^1," $coord_csv | parallel --will-cite -d "\r\n" --env dwi_base,mixed_b
             
             # Append to master CSV with file locking
             {
-                flock -x 200
+                flock -w 60 -x 200
                 cat "DTI_Processing_Scripts/results/${patient_id}_${timepoint}_metrics_${num_bins}x${bin_size}vox.csv" | tail -n 1 >> $master_csv
             } 200>$master_csv.lock
         else
