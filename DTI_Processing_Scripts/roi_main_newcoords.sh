@@ -13,6 +13,7 @@
 # Parse command line arguments
 num_bins=""
 bin_size=""
+filter_fa_values="false"
 
 for arg in "$@"; do
     case $arg in
@@ -22,6 +23,9 @@ for arg in "$@"; do
         --bin_size=*)
         bin_size="${arg#*=}"
         ;;
+        --filter_fa_values=*)
+        filter_fa_values="${arg#*=}"
+        ;;
         *)
         # Unknown option
         ;;
@@ -29,9 +33,10 @@ for arg in "$@"; do
 done
 
 # Check if required parameters are provided
-if [ -z "$num_bins" ] || [ -z "$bin_size" ]; then
-    echo "Usage: $0 --num_bins=<value> --bin_size=<value>"
-    echo "Example: $0 --num_bins=5 --bin_size=4"
+if [ -z "$num_bins" ] || [ -z "$bin_size" ] || [ -z "$filter_fa_values" ] ; then
+    echo "Usage: $0 --num_bins=<value> --bin_size=<value> --filter_fa_values=<true/false (Default: false)>"
+    echo "Example: $0 --num_bins=5 --bin_size=4 --filter_fa_values=true"
+    echo "Note: filter_fa_values defaults to false if not specified"
     exit 1
 fi
 
@@ -54,8 +59,13 @@ mkdir -p $results_dir
 #bin_size=4
 
 master_csv="$results_dir/all_metrics_${num_bins}x${bin_size}vox.csv"
-if [ $num_bins -eq 5 && $bin_size -eq 4 ]; then 
+if [ $num_bins -eq 5 ] &&  [ $bin_size -eq 4 ]; then 
     master_csv="$results_dir/all_metrics_${num_bins}x${bin_size}vox_NEW.csv"
+fi
+
+# if filtered_fa_values is true, append to the filename
+if [ "$filter_fa_values" == "true" ]; then
+    master_csv="${master_csv%.csv}_filtered.csv"
 fi
 
 if [ $num_bins -eq 10 ]; then
@@ -124,10 +134,10 @@ grep -v "^1," $coord_csv | while IFS=, read excluded patient_id timepoint rest; 
         if [ -f "$mask_path" ] && [ -f "$fa_path" ] && [ -f "$md_path" ]; then
             echo "All required files found for patient $patient_id at timepoint $timepoint"   
             # Step 1: Create spherical ROIs
-            ./DTI_Processing_Scripts/roi_create.sh "$patient_id" "$timepoint" "$tp_base" "$mask_path" "$fa_path" "$md_path" "$bin_size" "$num_bins"
+            ./DTI_Processing_Scripts/roi_create.sh "$patient_id" "$timepoint" "$tp_base" "$mask_path" "$fa_path" "$md_path" "$bin_size" "$num_bins" "$filter_fa_values"
             
             # Step 2: Extract metrics
-            ./DTI_Processing_Scripts/roi_extract.sh "$patient_id" "$timepoint" "$tp_base" "$bin_size" "$num_bins" "$fa_path" "$md_path" "$master_csv"
+            ./DTI_Processing_Scripts/roi_extract.sh "$patient_id" "$timepoint" "$tp_base" "$bin_size" "$num_bins" "$fa_path" "$md_path" "$master_csv" "$filter_fa_values"
             
             # Append to master CSV
             #cat "DTI_Processing_Scripts/results/${patient_id}_${timepoint}_metrics_${num_bins}x${bin_size}vox.csv" | tail -n 1 >> $master_csv

@@ -10,6 +10,7 @@ md_path=$6      # Path to the MD image
 bin_size=$7 # Size of the bin for the rings
 num_bins=$8 # Number of bins for the rings
 csv_path=${9:-"DTI_Processing_Scripts/LEGACY_DTI_coords_transformed_manually_adjusted.csv"}  # Optional CSV path, defaults to coordinates.csv
+filtered_fa_values=${10:-"false"}  # Optional filter flag, defaults to false
 
 # Check if all required parameters are provided
 if [ -z "$patient_id" ] || [ -z "$timepoint" ] || [ -z "$mask_path" ] || [ -z "$fa_path" ] || [ -z "$md_path" ]; then
@@ -66,6 +67,11 @@ else
     if [ $num_bins -eq 5 ] && [ $bin_size -eq 4 ]; then
         output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${tp_base}_dwi/roi_files_${num_bins}x${bin_size}vox_NEW"
     fi
+fi
+
+# if filtered_fa_values is true, add "_filtered" to the output directory
+if [ "$filtered_fa_values" == "true" ]; then
+    output_dir="${output_dir}_filtered"
 fi
 
 mkdir -p $output_dir
