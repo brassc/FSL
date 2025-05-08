@@ -27,6 +27,8 @@ for file in "$mask_path" "$fa_path" "$md_path" "$csv_path"; do
     fi
 done
 
+echo "hello"
+
 
 # Get coordinates from CSV using the patient_id and timepoint
 ant_x=$(grep "$patient_id,$timepoint" $csv_path | awk -F, '{print $12}')
@@ -69,9 +71,17 @@ else
     fi
 fi
 
+
+
 # if filtered_fa_values is true, add "_filtered" to the output directory
 if [ "$filtered_fa_values" == "true" ]; then
     output_dir="${output_dir}_filtered"
+fi
+
+# if output_dir contains "NEW" and already exists, delete it
+if [[ "$output_dir" == *"NEW"* ]] && [ -d "$output_dir" ]; then
+    echo "Deleting existing directory: $output_dir"
+    rm -rf "$output_dir"
 fi
 
 mkdir -p $output_dir
@@ -110,6 +120,10 @@ done
 
 # Create point ROIs
 echo "Creating point ROIs..."
+
+
+
+
 # if $output_dir/ant_point does not exist, perform fslmaths
 if [ ! -f "$output_dir/ant_point.nii.gz" ]; then
     #echo "Creating point ROI for anterior point..."
