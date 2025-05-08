@@ -54,11 +54,45 @@ fi
 if [[ "$patient_id" =~ ^[0-9]+$ ]]; then
     # Patient ID contains only numbers
     output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${timepoint}/roi_files_${num_bins}x${bin_size}vox"
+    base_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${timepoint}"
 else
     output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${tp_base}_dwi/roi_files_${num_bins}x${bin_size}vox"
+    base_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${tp_base}_dwi"
 fi
 
 mkdir -p $output_dir
+
+# if there is a directory with the same bin_size but lower num_bins, copy the files from that directory to the new dir (output_dir)
+# search for search_dir based on output dir "/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${tp_base}_dwi/roi_files_${find_what_this_is}x${bin_size}vox"
+# Search for directories with same bin_size but lower num_bins
+echo "Looking for existing ROI directories with same bin size ($bin_size) but lower number of bins..."
+# Find all matching directories
+for dir in "$base_dir"/roi_files_*x${bin_size}vox; do
+    if [ -d "$dir" ]; then
+        # Extract the number of bins from the directory name
+        dir_num_bins=$(echo "$dir" | grep -o 'roi_files_[0-9]*x' | sed 's/roi_files_//g' | sed 's/x//g')
+        
+        # If the directory has a lower number of bins, copy its files
+        if [ "$dir_num_bins" -lt "$num_bins" ]; then
+            echo "Found directory with $dir_num_bins bins for bin size $bin_size: $dir"
+            echo "Copying these files recursively to $output_dir"
+             # Use find to copy files recursively while preserving structure
+            find "$dir" -type f -print0 | while IFS= read -r -d '' file; do
+                # Get relative path
+                rel_path="${file#$dir/}"
+                # Create target directory if needed
+                target_dir="$output_dir/$(dirname "$rel_path")"
+                mkdir -p "$target_dir"
+                # Copy if target doesn't exist
+                if [ ! -f "$output_dir/$rel_path" ]; then
+                    cp "$file" "$output_dir/$rel_path"
+                fi
+            done
+        fi
+    fi
+done
+
+
 
 # Create point ROIs
 echo "Creating point ROIs..."
@@ -109,13 +143,27 @@ create_metric_rings() {
     mkdir -p $output_dir/${metric_name}
     echo "Output directory for $patient_id $timepoint $metric_name: $output_dir/${metric_name}"
     echo "bin size: $bin_size"
+
+    # Variable to track the last existing whole sphere
+    local last_whole_sphere=""
     
     
     for ((i=1; i<=$num_bins; i++)); do
         radius=$((i*$bin_size))
         prev_radius=$(($radius-$bin_size))
-        echo "prev_radius: $prev_radius; current radius: $radius"
-        #echo "radius: $radius"
+        echo "Processing ring $i: prev_radius: $prev_radius; current radius: $radius"
+
+        # Check if the ring and metric files already exist
+        ring_file="$output_dir/${metric_name}/${point_name}_ring${i}.nii.gz"
+        metric_file="$output_dir/${metric_name}/${point_name}_ring${i}_${metric_name}.nii.gz"
+        whole_file="$output_dir/${metric_name}/${point_name}_whole_${i}.nii.gz"
+
+        # NEW: If all files exist, we can skip this iteration
+        if [ -f "$ring_file" ] && [ -f "$metric_file" ] && [ -f "$whole_file" ]; then
+            echo "Files for ring $i already exist, skipping..."
+            last_whole_sphere="$whole_file"
+            continue
+        fi
         
         if [ $prev_radius -eq 0 ]; then
             # First ring - create spherical dilation then mask with the brain mask
@@ -124,7 +172,22 @@ create_metric_rings() {
             fslmaths $output_dir/${metric_name}/${point_name}_ring${i} -mul $metric_path $output_dir/${metric_name}/${point_name}_ring${i}_${metric_name}
             # Save a copy of whole sphere for subsequent rings
             fslmaths $output_dir/${metric_name}/${point_name}_ring${i} $output_dir/${metric_name}/${point_name}_whole_${i}
+            # Track the whole sphere file
+            last_whole_sphere="$whole_file"
         else
+
+            # Check if we have a reference to the last whole sphere
+            if [ -z "$last_whole_sphere" ]; then
+                # If not, look for the previous whole sphere file
+                prev_whole="$output_dir/${metric_name}/${point_name}_whole_$((i-1)).nii.gz"
+                if [ ! -f "$prev_whole" ]; then
+                    echo "ERROR: Cannot find previous whole sphere file: $prev_whole"
+                    echo "Cannot continue processing for this point. Exiting function."
+                    return 1
+                fi
+                last_whole_sphere="$prev_whole"
+            fi
+
             # Subsequent rings (donuts)
             fslmaths $output_dir/${point_name}_point -kernel sphere $radius -dilM -mul $mask_path $output_dir/${metric_name}/${point_name}_whole_temp
             # Subtract the previous sphere to get a ring
