@@ -175,7 +175,7 @@ grep -v "^1," $coord_csv | parallel --will-cite -d "\r\n" --env dwi_base,mixed_b
             # Step 2: Extract metrics
             ./DTI_Processing_Scripts/roi_extract.sh "$patient_id" "$timepoint" "$tp_base" "$bin_size" "$num_bins" "$fa_path" "$md_path" 
             
-            Append to master CSV with file locking
+            # Append to master CSV with file locking
             {
                 flock -x 200
                 cat "DTI_Processing_Scripts/results/${patient_id}_${timepoint}_metrics_${num_bins}x${bin_size}vox.csv" | tail -n 1 >> $master_csv
