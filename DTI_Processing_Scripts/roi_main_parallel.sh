@@ -85,12 +85,29 @@ fi
 #echo "patient_id,timepoint,FA_anterior_ring_1,FA_anterior_ring_2,FA_anterior_ring_3,FA_anterior_ring_4,FA_anterior_ring_5,FA_posterior_ring_1,FA_posterior_ring_2,FA_posterior_ring_3,FA_posterior_ring_4,FA_posterior_ring_5,FA_baseline_anterior_ring_1,FA_baseline_anterior_ring_2,FA_baseline_anterior_ring_3,FA_baseline_anterior_ring_4,FA_baseline_anterior_ring_5,FA_baseline_posterior_ring_1,FA_baseline_posterior_ring_2,FA_baseline_posterior_ring_3,FA_baseline_posterior_ring_4,FA_baseline_posterior_ring_5,MD_anterior_ring_1,MD_anterior_ring_2,MD_anterior_ring_3,MD_anterior_ring_4,MD_anterior_ring_5,MD_posterior_ring_1,MD_posterior_ring_2,MD_posterior_ring_3,MD_posterior_ring_4,MD_posterior_ring_5,MD_baseline_anterior_ring_1,MD_baseline_anterior_ring_2,MD_baseline_anterior_ring_3,MD_baseline_anterior_ring_4,MD_baseline_anterior_ring_5,MD_baseline_posterior_ring_1,MD_baseline_posterior_ring_2,MD_baseline_posterior_ring_3,MD_baseline_posterior_ring_4,MD_baseline_posterior_ring_5" > $master_csv
 # Process each non-excluded patient
 # Export variables for parallel
-export dwi_base mixed_base bin_size num_bins results_dir master_csv
+export dwi_base mixed_base bin_size num_bins results_dir master_csv PARALLEL_UNBUFFERED=1
 parallel --citation 2>/dev/null || true
-grep -v "^1," $coord_csv | parallel --will-cite -d "\r\n" --env dwi_base,mixed_base,bin_size,num_bins,results_dir,master_csv -j $num_cpus --colsep ',' '
+# Add this before the parallel call
+
+
+# Then modify your parallel call to force unbuffered output
+#grep -v "^1," $coord_csv | parallel --will-cite -d "\r\n" --env dwi_base,mixed_base,bin_size,num_bins,results_dir,master_csv -j $num_cpus --colsep ',' '
+
+
+grep -v "^1," $coord_csv | parallel --will-cite -d "\r\n" \
+    --env dwi_base,mixed_base,bin_size,num_bins,results_dir,master_csv -j $num_cpus --colsep ',' '
+
+
     excluded={1}
     patient_id={2}
     timepoint={3}
+
+    # Force unbuffered output for all commands in this script
+    exec > >(tee -a "DTI_Processing_Scripts/results/parallel_job_${patient_id}_${timepoint}.log")
+    exec 2>&1
+
+
+
     if [ "$excluded" == "0" ]; then
         
         
@@ -173,13 +190,19 @@ grep -v "^1," $coord_csv | parallel --will-cite -d "\r\n" --env dwi_base,mixed_b
             ./DTI_Processing_Scripts/roi_create.sh "$patient_id" "$timepoint" "$tp_base" "$mask_path" "$fa_path" "$md_path" "$bin_size" "$num_bins"
             
             # Step 2: Extract metrics
-            ./DTI_Processing_Scripts/roi_extract.sh "$patient_id" "$timepoint" "$tp_base" "$bin_size" "$num_bins" "$fa_path" "$md_path" 
+            ./DTI_Processing_Scripts/roi_extract.sh "$patient_id" "$timepoint" "$tp_base" "$bin_size" "$num_bins" "$fa_path" "$md_path" "$master_csv"
             
+            echo "back in main script"
             # Append to master CSV with file locking
-            {
-                flock -w 60 -x 200
-                cat "DTI_Processing_Scripts/results/${patient_id}_${timepoint}_metrics_${num_bins}x${bin_size}vox.csv" | tail -n 1 >> $master_csv
-            } 200>$master_csv.lock
+            exit 0
+            #tail -n 1 "DTI_Processing_Scripts/results/${patient_id}_${timepoint}_metrics_${num_bins}x${bin_size}vox.csv" >> $master_csv
+            echo "after tail"
+            #cat "DTI_Processing_Scripts/results/${patient_id}_${timepoint}_metrics_${num_bins}x${bin_size}vox.csv" | tail -n 1 >> $master_csv
+            # {
+            #     flock -w 60 -x 200
+            #     cat "DTI_Processing_Scripts/results/${patient_id}_${timepoint}_metrics_${num_bins}x${bin_size}vox.csv" | tail -n 1 >> $master_csv
+            # } 200>$master_csv.lock
+            
         else
             echo "Missing files for patient $patient_id at timepoint $timepoint"
         fi

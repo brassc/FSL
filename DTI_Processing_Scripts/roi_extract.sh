@@ -8,6 +8,7 @@ bin_size=$4 # Size of the bin for the rings
 num_bins=$5 # Number of bins for the rings
 fa_map=$6  # Path to FA map (not used in this script)
 md_map=$7  # Path to MD map (not used in this script)
+master_csv=$8 # Path to the master CSV file
 
 # Set ROI dir
 # Create spherical ROIs for each point
@@ -163,6 +164,19 @@ rm -f DTI_Processing_Scripts/results/temp.csv
 # Write data to CSV
 echo "Writing data to CSV..."
 echo "$data_line" >> $output_csv
+
+# Write to master CSV here
+# Write DIRECTLY to the master CSV with file locking
+echo "Writing data to master CSV..."
+(
+    # Use flock for safe concurrent access
+    flock -w 30 200
+    echo "$data_line" >> "$master_csv"
+    # Explicitly flush file system buffers
+    sync
+) 200>"${master_csv}.lock"
+
+
 # echo "$patient_id,$timepoint,$fa_ant_r1,$fa_ant_r2,$fa_ant_r3,$fa_ant_r4,$fa_ant_r5,$fa_post_r1,$fa_post_r2,$fa_post_r3,$fa_post_r4,$fa_post_r5,$fa_base_ant_r1,$fa_base_ant_r2,$fa_base_ant_r3,$fa_base_ant_r4,$fa_base_ant_r5,$fa_base_post_r1,$fa_base_post_r2,$fa_base_post_r3,$fa_base_post_r4,$fa_base_post_r5,$md_ant_r1,$md_ant_r2,$md_ant_r3,$md_ant_r4,$md_ant_r5,$md_post_r1,$md_post_r2,$md_post_r3,$md_post_r4,$md_post_r5,$md_base_ant_r1,$md_base_ant_r2,$md_base_ant_r3,$md_base_ant_r4,$md_base_ant_r5,$md_base_post_r1,$md_base_post_r2,$md_base_post_r3,$md_base_post_r4,$md_base_post_r5" >> $output_csv
 echo "Extraction complete for patient $patient_id at timepoint $timepoint"
 
