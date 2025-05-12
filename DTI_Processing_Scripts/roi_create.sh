@@ -11,6 +11,7 @@ bin_size=$7 # Size of the bin for the rings
 num_bins=$8 # Number of bins for the rings
 csv_path=${9:-"DTI_Processing_Scripts/LEGACY_DTI_coords_transformed_manually_adjusted.csv"}  # Optional CSV path, defaults to coordinates.csv
 filtered_fa_values=${10:-"false"}  # Optional filter flag, defaults to false
+overwrite=${11:-"false"}  # Optional overwrite flag, defaults to false
 
 # Check if all required parameters are provided
 if [ -z "$patient_id" ] || [ -z "$timepoint" ] || [ -z "$mask_path" ] || [ -z "$fa_path" ] || [ -z "$md_path" ]; then
@@ -60,7 +61,7 @@ if [[ "$patient_id" =~ ^[0-9]+$ ]]; then
     base_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${timepoint}"
     if [ $num_bins -eq 5 ] && [ $bin_size -eq 4 ]; then
         output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${timepoint}/roi_files_${num_bins}x${bin_size}vox_NEW"
-    elif [ $num_bins -eq 10 ] && [$bin_size -eq 4 ]; then
+    elif [ $num_bins -eq 10 ] && [ $bin_size -eq 4 ]; then
         output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${timepoint}/roi_files_${num_bins}x${bin_size}vox_NEW"
     fi
 
@@ -82,10 +83,17 @@ if [ "$filtered_fa_values" == "true" ]; then
     output_dir="${output_dir}_filtered"
 fi
 
-# if output_dir contains "NEW" and already exists, delete it
-if [[ "$output_dir" == *"NEW"* ]] && [ -d "$output_dir" ]; then
-    echo "Deleting existing directory: $output_dir"
-    rm -rf "$output_dir"
+# Then, modify the check for existing directories
+# if output_dir contains "NEW" and already exists, delete it if overwrite is true
+if [ -d "$output_dir" ]; then
+    if [ "$overwrite" == "true" ]; then
+        echo "Overwrite flag set to true. Deleting existing directory: $output_dir"
+        rm -rf "$output_dir"
+    else
+        echo "Directory already exists: $output_dir"
+        echo "Skipping ROI creation. Use --overwrite=true to force recreation."
+        exit 0  # Exit with success, but don't recreate ROIs
+    fi
 fi
 
 mkdir -p $output_dir
