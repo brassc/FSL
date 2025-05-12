@@ -240,7 +240,94 @@ BET extraction is performed on `DTI_corrected.nii.gz` using `fslmaths` to multip
 
 For each patient and timepoint, this BET extraction, FA and MD scans are registered to the corresponding T1 at the relevant timepoint. The T1 mask is then transformed to DTI space to avoid disturbing the DTI data. `$dtiregmatinv = ${save_dir}dtiregmatinv_${timepoint}.mat`.
 
-Region of interest analysis is completed using 12mm sphere around the end points of contour (manually picked coordinates).  These coordinates are recorded in `included_patient_info.csv`. The script `create_roi_native_space.sh` takes these files and gets FA and MD data within that space, saves it as a `.pkl` file (`{patient_id}_{timepoint}_dti_values.pkl`).  
+## Region of Interest Extraction Pipeline
+
+Region of interest analysis is completed using sequentially larger spheres around the end points of contour (manually picked coordinates).  These coordinates are recorded in `LEGACY_DTI_coords_fully_manual.csv`. 
+
+### Overview
+The pipeline consists of three main scripts:
+
+1. `roi_main_new_coords.sh` - Main orchestration script that processes patients/timepoints and manages the overall workflow
+2. `roi_create.sh` - Creates spherical ROIs around anatomical points of interest
+3. `roi_extract.sh` - Extracts DTI metrics from the created ROIs
+
+### Requirements
+
+- FSL (FMRIB Software Library)
+- Bash shell environment
+- Input DTI data including:
+  - FA maps (dtifitWLS_FA.nii.gz)
+  - MD maps (dtifitWLS_MD.nii.gz)
+  - Brain masks (ANTS_T1_brain_mask.nii.gz)
+  - Coordinate CSV file with anatomical points of interest
+
+### Usage
+
+#### Main Script
+
+```bash
+./roi_main.sh --num_bins=<value> --bin_size=<value> --filter_fa_values=<true/false> --overwrite=<true/false>
+```
+
+### Input Data Structure
+The scripts expect a specific directory structure:
+
+For numeric patient IDs: `/home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi/<patient_id>/<timepoint>/`
+For alphanumeric patient IDs: `/home/cmb247/rds/hpc-work/Feb2025_data/CT_Brass/Charlotte_brass_Feb2025/MRI/<patient_id>/`
+
+The coordinate CSV file should be located within the repo at `DTI_Processing_Scripts/LEGACY_DTI_coords_fully_manual.csv` and follow a specific format with anatomical coordinates.
+
+### Script Details 
+#### `roi_main_newcoords.sh`
+This script:
+
+1. Parses command line arguments
+2. Iterates through non-excluded patients in the coordinate CSV
+3. Locates relevant DTI data (mask, FA, MD maps)
+4. Calls roi_create.sh to create ROIs
+5. Calls roi_extract.sh to extract metrics and output to individual and master CSV files
+
+#### `roi_create.sh`
+
+This script:
+
+1. Creates output directories for ROIs
+2. Retrieves anatomical coordinates from CSV
+3. Creates point ROIs at specified coordinates
+4. Creates concentric rings (spheres) around these points
+5. Applies brain mask to constrain ROIs to brain tissue
+6. Optimizes processing by reusing existing ROIs when possible
+
+
+#### `roi_extract.sh`
+This script:
+
+1. Calculates mean FA and MD values for each ROI ring
+2. Optionally filters FA values > 1 (which are physically implausible)
+3. Outputs results to individual and master CSV files
+
+
+### Special Features
+
+- `NEW` suffix: When using `num_bins=5` or `num_bins=10` with `bin_size=4`, the scripts use a `"_NEW"` suffix for output directories and files
+- Filtering: Option to filter out implausible FA values (> 1)
+- Overwrite control: Option to skip ROI creation if directories already exist
+- Optimization: Intelligent reuse of existing ROIs when creating larger bins
+- Concurrency safety: File locking when writing to master CSV
+
+### Output Files
+
+- Individual ROI files: `/home/cmb247/rds/hpc-work/April2025_DWI/<patient_id>/<timepoint>/roi_files_<num_bins>x<bin_size>vox/`
+- Individual CSV results: `DTI_Processing_Scripts/results/<patient_id>_<timepoint>_metrics_<num_bins>x<bin_size>vox.csv`
+- Master CSV results: `DTI_Processing_Scripts/results/all_metrics_<num_bins>x<bin_size>vox.csv`
+
+Note: When using special parameters or filtering, appropriate suffixes are added to file and directory names. Most current is with suffix `NEW_filtered`. 
+
+
+
+
+[comment]: # The script `create_roi_native_space.sh` takes these files and gets FA and MD data within that space, saves it as a `.pkl` file (`{patient_id}_{timepoint}_dti_values.pkl`).  
+
 
 
 
