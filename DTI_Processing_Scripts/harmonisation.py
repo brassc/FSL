@@ -65,16 +65,6 @@ def check_singularities(valid_data):
     return singularity_risk
 
 
-# Example usage:
-# singularity_risk = check_singularities(valid_data)
-# if singularity_risk:
-#     print("Using Days_since_injury as continuous variable instead of timepoint")
-# else:
-#     print("No singularity issues detected, can use timepoint as categorical")
-
-
-
-
 def merge_scanner_info_with_metrics(metrics_df, scanner_info_df, output_filename):
     """
     Merge scanner information (Cohort, Site, Model) with metrics data.
@@ -156,191 +146,201 @@ def merge_scanner_info_with_metrics(metrics_df, scanner_info_df, output_filename
     
     return metrics_df
 
-# load data 
-# Load Sophie's scan database
-scandataloc = 'Sophie_Data/Sophies_scan_database_20220822.csv'
-scandata = pd.read_csv(scandataloc)
-#print(scandata.columns)
-
-# import patient scanner data
-patient_scanner_data = pd.read_csv('DTI_Processing_Scripts/patient_scanner_data_with_timepoints.csv')
-# tidy it
-patient_scanner_data = patient_scanner_data.dropna(subset=['timepoint'])
-print(f"Total entries in patient_scanner_data: {len(patient_scanner_data)}")
-# get unique patient id and timepoint combinations
-patient_scanner_data = patient_scanner_data.drop_duplicates(subset=['patient_id', 'timepoint'])
-print(f"Unique patient_id and timepoint combinations: {len(patient_scanner_data)}")
-
-
-
-
-# # load the metrics data from DTI_Processing_Scripts/results/all_metrics_*.csv
-all_metrics_5x4vox = pd.read_csv('DTI_Processing_Scripts/results/all_metrics_5x4vox.csv')
-
-all_metrics_5x4vox_merged = merge_scanner_info_with_metrics(
-    all_metrics_5x4vox, 
-    patient_scanner_data, 
-    'DTI_Processing_Scripts/merged_data_5x4vox.csv'
-)
-
-## HARMONISATION
-# Extract FA data for harmonisation
-print("\nHarmonizing FA metrics...")
-# Create a combined Site_Model batch variable
-all_metrics_5x4vox_merged['Site_Model'] = all_metrics_5x4vox_merged['Site'].astype(str) + '_' + all_metrics_5x4vox_merged['Model'].astype(str)
-print(f"\nUnique Site_Model combinations: {all_metrics_5x4vox_merged['Site_Model'].unique()}")
-
-
-
-print(f"\nMissing values in Site_Model: {all_metrics_5x4vox_merged['Site_Model'].isna().sum()}")
-print(f"Missing values in timepoint: {all_metrics_5x4vox_merged['timepoint'].isna().sum()}")
-print(f"Missing values in Cohort: {all_metrics_5x4vox_merged['Cohort'].isna().sum()}")
-print(f"Missing values in days_since_injury: {all_metrics_5x4vox_merged['Days_since_injury'].isna().sum()}")
-
-
-# # Filter out rows with missing batch variable
-valid_data = all_metrics_5x4vox_merged.dropna(subset=['Site_Model'])
-print(f"\nRows after removing missing Site_Model: {len(valid_data)} (removed {len(all_metrics_5x4vox_merged) - len(valid_data)} rows)")
-
-
-check_singularities(valid_data)
-
-#print(f"valid data columns: {valid_data.columns}")
-
-# mod matrix / R like implementation
-# formula = "~ C(timepoint) + C(Cohort)"
-# mod = patsy.dmatrix(formula, data=valid_data)
-# print(f"\nCreated model matrix with {mod.shape[1]} variables")
-# print(f"Model matrix: \n{mod}")
-
-
-
-# Extract FA data for harmonisation
-print("\nHarmonizing FA metrics...")
-fa_columns = [col for col in valid_data.columns if col.startswith('fa_')]
-if len(fa_columns) > 0:
-    print(f"Found {len(fa_columns)} FA metrics")
-    fa_data = valid_data[fa_columns].values.T  # neuroCombat expects features in rows
+def process_metrics_file(input_filename):
+    """
+    Process a metrics file through the entire pipeline.
     
-    # Set up covariates following the exact function signature: 
-    # neuroCombat(dat: Any, covars: Any, batch_col: Any, categorical_cols: Any | None = None, 
-    #             continuous_cols: Any | None = None, eb: bool = True, parametric: bool = True, 
-    #             mean_only: bool = False, ref_batch: Any | None = None) -> dict[str, Any]
-    
-    covars_dict = {
-        'batch': valid_data['Site_Model'].values,
-        'timepoint': valid_data['timepoint'].values,
-        'Cohort': valid_data['Cohort'].values,
-        'Days_since_injury': valid_data['Days_since_injury'].values
-    }
+    Args:
+        input_filename: Path to the metrics CSV file (e.g., all_metrics_5x4vox.csv)
+    """
+    # load data 
+    # Load Sophie's scan database
+    scandataloc = 'Sophie_Data/Sophies_scan_database_20220822.csv'
+    scandata = pd.read_csv(scandataloc)
+    #print(scandata.columns)
 
-    covars_df = pd.DataFrame(covars_dict)
+    # import patient scanner data
+    patient_scanner_data = pd.read_csv('DTI_Processing_Scripts/patient_scanner_data_with_timepoints.csv')
+    # tidy it
+    patient_scanner_data = patient_scanner_data.dropna(subset=['timepoint'])
+    print(f"Total entries in patient_scanner_data: {len(patient_scanner_data)}")
+    # get unique patient id and timepoint combinations
+    patient_scanner_data = patient_scanner_data.drop_duplicates(subset=['patient_id', 'timepoint'])
+    print(f"Unique patient_id and timepoint combinations: {len(patient_scanner_data)}")
 
-    
-    
-    # Apply neuroCombat for FA metrics
-    print("Running neuroCombat on FA metrics...")
-    fa_combat_data = neuroCombat(
-        dat=fa_data,
-        covars=covars_df,
-        batch_col='batch',
-        #categorical_cols=categorical_cols,
-        categorical_cols=None,
-        #continuous_cols=None,
-        continuous_cols=['Days_since_injury'],
-        eb=True,
-        parametric=True,
-        mean_only=True,
-        ref_batch=None
+
+
+
+    # # load the metrics data from input file
+    all_metrics = pd.read_csv(input_filename)
+
+    all_metrics_merged = merge_scanner_info_with_metrics(
+        all_metrics, 
+        patient_scanner_data, 
+        'DTI_Processing_Scripts/merged_data_5x4vox.csv'
     )
-    
-    # Create FA harmonized dataframe
-    fa_harmonized_df = pd.DataFrame(
-        fa_combat_data['data'].T,  # Transpose back to original orientation
-        columns=[f"harmonized_{col}" for col in fa_columns],
-        index=valid_data.index
-    )
-else:
-    print("No FA columns found!")
-    fa_harmonized_df = pd.DataFrame(index=valid_data.index)
+
+    ## HARMONISATION
+    # Extract FA data for harmonisation
+    print("\nHarmonizing FA metrics...")
+    # Create a combined Site_Model batch variable
+    all_metrics_merged['Site_Model'] = all_metrics_merged['Site'].astype(str) + '_' + all_metrics_merged['Model'].astype(str)
+    print(f"\nUnique Site_Model combinations: {all_metrics_merged['Site_Model'].unique()}")
+
+
+
+    print(f"\nMissing values in Site_Model: {all_metrics_merged['Site_Model'].isna().sum()}")
+    print(f"Missing values in timepoint: {all_metrics_merged['timepoint'].isna().sum()}")
+    print(f"Missing values in Cohort: {all_metrics_merged['Cohort'].isna().sum()}")
+    print(f"Missing values in days_since_injury: {all_metrics_merged['Days_since_injury'].isna().sum()}")
+
+
+    # # Filter out rows with missing batch variable
+    valid_data = all_metrics_merged.dropna(subset=['Site_Model'])
+    print(f"\nRows after removing missing Site_Model: {len(valid_data)} (removed {len(all_metrics_merged) - len(valid_data)} rows)")
+
+
+    check_singularities(valid_data)
+
+    #print(f"valid data columns: {valid_data.columns}")
+
+    # mod matrix / R like implementation
+    # formula = "~ C(timepoint) + C(Cohort)"
+    # mod = patsy.dmatrix(formula, data=valid_data)
+    # print(f"\nCreated model matrix with {mod.shape[1]} variables")
+    # print(f"Model matrix: \n{mod}")
+
+
+
+    # Extract FA data for harmonisation
+    print("\nHarmonizing FA metrics...")
+    fa_columns = [col for col in valid_data.columns if col.startswith('fa_')]
+    if len(fa_columns) > 0:
+        print(f"Found {len(fa_columns)} FA metrics")
+        fa_data = valid_data[fa_columns].values.T  # neuroCombat expects features in rows
+        
+        # Set up covariates following the exact function signature: 
+        # neuroCombat(dat: Any, covars: Any, batch_col: Any, categorical_cols: Any | None = None, 
+        #             continuous_cols: Any | None = None, eb: bool = True, parametric: bool = True, 
+        #             mean_only: bool = False, ref_batch: Any | None = None) -> dict[str, Any]
+        
+        covars_dict = {
+            'batch': valid_data['Site_Model'].values,
+            'timepoint': valid_data['timepoint'].values,
+            'Cohort': valid_data['Cohort'].values,
+            'Days_since_injury': valid_data['Days_since_injury'].values
+        }
+
+        covars_df = pd.DataFrame(covars_dict)
+
+        
+        
+        # Apply neuroCombat for FA metrics
+        print("Running neuroCombat on FA metrics...")
+        fa_combat_data = neuroCombat(
+            dat=fa_data,
+            covars=covars_df,
+            batch_col='batch',
+            #categorical_cols=categorical_cols,
+            categorical_cols=None,
+            #continuous_cols=None,
+            continuous_cols=['Days_since_injury'],
+            eb=True,
+            parametric=True,
+            mean_only=True,
+            ref_batch=None
+        )
+        
+        # Create FA harmonized dataframe
+        fa_harmonized_df = pd.DataFrame(
+            fa_combat_data['data'].T,  # Transpose back to original orientation
+            columns=[f"harmonized_{col}" for col in fa_columns],
+            index=valid_data.index
+        )
+    else:
+        print("No FA columns found!")
+        fa_harmonized_df = pd.DataFrame(index=valid_data.index)
 
 
 
 
 
-# Add this code after the FA harmonization section in your script
+    # Add this code after the FA harmonization section in your script
 
-# Extract MD data for harmonisation
-print("\nHarmonizing MD metrics...")
-md_columns = [col for col in valid_data.columns if col.startswith('md_')]
-if len(md_columns) > 0:
-    print(f"Found {len(md_columns)} MD metrics")
-    md_data = valid_data[md_columns].values.T  # neuroCombat expects features in rows
-    
-    # Set up covariates following the exact function signature (same as FA harmonization)
-    covars_dict = {
-        'batch': valid_data['Site_Model'].values,
-        'timepoint': valid_data['timepoint'].values,
-        'Cohort': valid_data['Cohort'].values,
-        'Days_since_injury': valid_data['Days_since_injury'].values
-    }
+    # Extract MD data for harmonisation
+    print("\nHarmonizing MD metrics...")
+    md_columns = [col for col in valid_data.columns if col.startswith('md_')]
+    if len(md_columns) > 0:
+        print(f"Found {len(md_columns)} MD metrics")
+        md_data = valid_data[md_columns].values.T  # neuroCombat expects features in rows
+        
+        # Set up covariates following the exact function signature (same as FA harmonization)
+        covars_dict = {
+            'batch': valid_data['Site_Model'].values,
+            'timepoint': valid_data['timepoint'].values,
+            'Cohort': valid_data['Cohort'].values,
+            'Days_since_injury': valid_data['Days_since_injury'].values
+        }
 
-    covars_df = pd.DataFrame(covars_dict)
-    
-    # Apply neuroCombat for MD metrics
-    print("Running neuroCombat on MD metrics...")
-    md_combat_data = neuroCombat(
-        dat=md_data,
-        covars=covars_df,
-        batch_col='batch',
-        categorical_cols=None,
-        continuous_cols=['Days_since_injury'],
-        eb=True,
-        parametric=True,
-        mean_only=True,
-        ref_batch=None
-    )
-    
-    # Create MD harmonized dataframe
-    md_harmonized_df = pd.DataFrame(
-        md_combat_data['data'].T,  # Transpose back to original orientation
-        columns=[f"harmonized_{col}" for col in md_columns],
-        index=valid_data.index
-    )
-else:
-    print("No MD columns found!")
-    md_harmonized_df = pd.DataFrame(index=valid_data.index)
+        covars_df = pd.DataFrame(covars_dict)
+        
+        # Apply neuroCombat for MD metrics
+        print("Running neuroCombat on MD metrics...")
+        md_combat_data = neuroCombat(
+            dat=md_data,
+            covars=covars_df,
+            batch_col='batch',
+            categorical_cols=None,
+            continuous_cols=['Days_since_injury'],
+            eb=True,
+            parametric=True,
+            mean_only=True,
+            ref_batch=None
+        )
+        
+        # Create MD harmonized dataframe
+        md_harmonized_df = pd.DataFrame(
+            md_combat_data['data'].T,  # Transpose back to original orientation
+            columns=[f"harmonized_{col}" for col in md_columns],
+            index=valid_data.index
+        )
+    else:
+        print("No MD columns found!")
+        md_harmonized_df = pd.DataFrame(index=valid_data.index)
 
-print("md_harmonized_df columns:")
-print(md_harmonized_df.columns)
+    print("md_harmonized_df columns:")
+    print(md_harmonized_df.columns)
 
-# Create a new dataframe that's a copy of the original data
-harmonized_data = valid_data.copy()
+    # Create a new dataframe that's a copy of the original data
+    harmonized_data = valid_data.copy()
 
-# Replace FA values with harmonized versions
-if len(fa_columns) > 0:
-    # Replace original FA columns with harmonized values
-    for i, col in enumerate(fa_columns):
-        # The harmonized values are already in fa_harmonized_df, we just need to extract them
-        harmonized_col_name = f"harmonized_{col}"
-        if harmonized_col_name in fa_harmonized_df.columns:
-            harmonized_data[col] = fa_harmonized_df[harmonized_col_name].values
-    print(f"Replaced {len(fa_columns)} FA columns with their harmonized versions")
+    # Replace FA values with harmonized versions
+    if len(fa_columns) > 0:
+        # Replace original FA columns with harmonized values
+        for i, col in enumerate(fa_columns):
+            # The harmonized values are already in fa_harmonized_df, we just need to extract them
+            harmonized_col_name = f"harmonized_{col}"
+            if harmonized_col_name in fa_harmonized_df.columns:
+                harmonized_data[col] = fa_harmonized_df[harmonized_col_name].values
+        print(f"Replaced {len(fa_columns)} FA columns with their harmonized versions")
 
-# Replace MD values with harmonized versions
-if len(md_columns) > 0:
-    # Replace original MD columns with harmonized values
-    for i, col in enumerate(md_columns):
-        # The harmonized values are already in md_harmonized_df, we just need to extract them
-        harmonized_col_name = f"harmonized_{col}"
-        if harmonized_col_name in md_harmonized_df.columns:
-            harmonized_data[col] = md_harmonized_df[harmonized_col_name].values
-    print(f"Replaced {len(md_columns)} MD columns with their harmonized versions")
+    # Replace MD values with harmonized versions
+    if len(md_columns) > 0:
+        # Replace original MD columns with harmonized values
+        for i, col in enumerate(md_columns):
+            # The harmonized values are already in md_harmonized_df, we just need to extract them
+            harmonized_col_name = f"harmonized_{col}"
+            if harmonized_col_name in md_harmonized_df.columns:
+                harmonized_data[col] = md_harmonized_df[harmonized_col_name].values
+        print(f"Replaced {len(md_columns)} MD columns with their harmonized versions")
 
-# Get the original file name from the input
-original_file = 'DTI_Processing_Scripts/merged_data_5x4vox.csv'
-# Create new filename with _harmonised suffix
-harmonized_output_file = original_file.replace('.csv', '_harmonised.csv')
+    # Get the original file name from the input
+    original_file = 'DTI_Processing_Scripts/merged_data_5x4vox.csv'
+    # Create new filename with _harmonised suffix
+    harmonized_output_file = original_file.replace('.csv', '_harmonised.csv')
 
-# Save harmonized data
-harmonized_data.to_csv(harmonized_output_file, index=False)
+    # Save harmonized data
+    harmonized_data.to_csv(harmonized_output_file, index=False)
+
+# Example usage (comment this out when not in use)
+process_metrics_file('DTI_Processing_Scripts/results/all_metrics_5x4vox.csv')
