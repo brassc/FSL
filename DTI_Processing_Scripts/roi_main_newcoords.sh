@@ -14,6 +14,7 @@
 num_bins=""
 bin_size=""
 filter_fa_values="false"
+overwrite="false"
 
 for arg in "$@"; do
     case $arg in
@@ -26,6 +27,9 @@ for arg in "$@"; do
         --filter_fa_values=*)
         filter_fa_values="${arg#*=}"
         ;;
+        --overwrite=*)
+        overwrite="${arg#*=}"
+        ;;
         *)
         # Unknown option
         ;;
@@ -33,10 +37,10 @@ for arg in "$@"; do
 done
 
 # Check if required parameters are provided
-if [ -z "$num_bins" ] || [ -z "$bin_size" ] || [ -z "$filter_fa_values" ] ; then
-    echo "Usage: $0 --num_bins=<value> --bin_size=<value> --filter_fa_values=<true/false (Default: false)>"
-    echo "Example: $0 --num_bins=5 --bin_size=4 --filter_fa_values=true"
-    echo "Note: filter_fa_values defaults to false if not specified"
+if [ -z "$num_bins" ] || [ -z "$bin_size" ] || [ -z "$filter_fa_values" ] || [ -z "$overwrite" ]; then
+    echo "Usage: $0 --num_bins=<value> --bin_size=<value> --filter_fa_values=<true/false (Default: false)> --overwrite=<true/false (Default: false)>"
+    echo "Example: $0 --num_bins=5 --bin_size=4 --filter_fa_values=true --overwrite=false"
+    echo "Note: filter_fa_values and overwrite default to false if not specified"
     exit 1
 fi
 
@@ -136,7 +140,7 @@ grep -v "^1," $coord_csv | while IFS=, read excluded patient_id timepoint rest; 
         if [ -f "$mask_path" ] && [ -f "$fa_path" ] && [ -f "$md_path" ]; then
             echo "All required files found for patient $patient_id at timepoint $timepoint"   
             # Step 1: Create spherical ROIs
-            ./DTI_Processing_Scripts/roi_create.sh "$patient_id" "$timepoint" "$tp_base" "$mask_path" "$fa_path" "$md_path" "$bin_size" "$num_bins" "$coord_csv" "$filter_fa_values"
+            ./DTI_Processing_Scripts/roi_create.sh "$patient_id" "$timepoint" "$tp_base" "$mask_path" "$fa_path" "$md_path" "$bin_size" "$num_bins" "$coord_csv" "$filter_fa_values" "$overwrite"
             
             # Step 2: Extract metrics
             ./DTI_Processing_Scripts/roi_extract.sh "$patient_id" "$timepoint" "$tp_base" "$bin_size" "$num_bins" "$fa_path" "$md_path" "$master_csv" "$filter_fa_values"
