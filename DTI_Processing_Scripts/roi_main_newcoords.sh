@@ -61,6 +61,8 @@ mkdir -p $results_dir
 master_csv="$results_dir/all_metrics_${num_bins}x${bin_size}vox.csv"
 if [ $num_bins -eq 5 ] &&  [ $bin_size -eq 4 ]; then 
     master_csv="$results_dir/all_metrics_${num_bins}x${bin_size}vox_NEW.csv"
+elif [ $num_bins -eq 10 ] &&  [ $bin_size -eq 4 ]; then 
+    master_csv="$results_dir/all_metrics_${num_bins}x${bin_size}vox_NEW.csv"
 fi
 
 # if filtered_fa_values is true, append to the filename

@@ -60,6 +60,8 @@ if [[ "$patient_id" =~ ^[0-9]+$ ]]; then
     base_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${timepoint}"
     if [ $num_bins -eq 5 ] && [ $bin_size -eq 4 ]; then
         output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${timepoint}/roi_files_${num_bins}x${bin_size}vox_NEW"
+    elif [ $num_bins -eq 10 ] && [$bin_size -eq 4 ]; then
+        output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${timepoint}/roi_files_${num_bins}x${bin_size}vox_NEW"
     fi
 
 
@@ -67,6 +69,8 @@ else
     output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${tp_base}_dwi/roi_files_${num_bins}x${bin_size}vox"
     base_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${tp_base}_dwi"
     if [ $num_bins -eq 5 ] && [ $bin_size -eq 4 ]; then
+        output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${tp_base}_dwi/roi_files_${num_bins}x${bin_size}vox_NEW"
+    elif [ $num_bins -eq 10 ] && [ $bin_size -eq 4 ]; then
         output_dir="/home/cmb247/rds/hpc-work/April2025_DWI/$patient_id/${tp_base}_dwi/roi_files_${num_bins}x${bin_size}vox_NEW"
     fi
 fi
@@ -91,30 +95,50 @@ mkdir -p $output_dir
 # Search for directories with same bin_size but lower num_bins
 echo "Looking for existing ROI directories with same bin size ($bin_size) but lower number of bins..."
 # Find all matching directories
-for dir in "$base_dir"/roi_files_*x${bin_size}vox; do
-    if [ -d "$dir" ]; then
-        # Extract the number of bins from the directory name
-        dir_num_bins=$(echo "$dir" | grep -o 'roi_files_[0-9]*x' | sed 's/roi_files_//g' | sed 's/x//g')
-        
-        # If the directory has a lower number of bins, copy its files
-        if [ "$dir_num_bins" -lt "$num_bins" ]; then
-            echo "Found directory with $dir_num_bins bins for bin size $bin_size: $dir"
-            echo "Copying these files recursively to $output_dir"
-             # Use find to copy files recursively while preserving structure
-            find "$dir" -type f -print0 | while IFS= read -r -d '' file; do
-                # Get relative path
-                rel_path="${file#$dir/}"
-                # Create target directory if needed
-                target_dir="$output_dir/$(dirname "$rel_path")"
-                mkdir -p "$target_dir"
-                # Copy if target doesn't exist
-                if [ ! -f "$output_dir/$rel_path" ]; then
-                    cp "$file" "$output_dir/$rel_path"
-                fi
-            done
+new_dir="${base_dir}/roi_files_5x4vox_NEW"
+if [ -d "$new_dir" ] && [ "$bin_size" -eq 4 ] && [ "$num_bins" -gt 5 ]; then
+    echo "Found 5x4vox_NEW directory: $new_dir"
+    echo "Copying these files recursively to $output_dir"
+
+    # Use find to copy files recursively while preserving structure
+    find "$new_dir" -type f -print0 | while IFS= read -r -d '' file; do
+        # Get relative path
+        rel_path="${file#$new_dir/}"
+        # Create target directory if needed
+        target_dir="$output_dir/$(dirname "$rel_path")"
+        mkdir -p "$target_dir"
+        # Copy if target doesn't exist
+        if [ ! -f "$output_dir/$rel_path" ]; then
+            cp "$file" "$output_dir/$rel_path"
         fi
-    fi
-done
+    done
+else
+
+    for dir in "$base_dir"/roi_files_*x${bin_size}vox; do
+        if [ -d "$dir" ]; then
+            # Extract the number of bins from the directory name
+            dir_num_bins=$(echo "$dir" | grep -o 'roi_files_[0-9]*x' | sed 's/roi_files_//g' | sed 's/x//g')
+            
+            # If the directory has a lower number of bins, copy its files
+            if [ "$dir_num_bins" -lt "$num_bins" ]; then
+                echo "Found directory with $dir_num_bins bins for bin size $bin_size: $dir"
+                echo "Copying these files recursively to $output_dir"
+                # Use find to copy files recursively while preserving structure
+                find "$dir" -type f -print0 | while IFS= read -r -d '' file; do
+                    # Get relative path
+                    rel_path="${file#$dir/}"
+                    # Create target directory if needed
+                    target_dir="$output_dir/$(dirname "$rel_path")"
+                    mkdir -p "$target_dir"
+                    # Copy if target doesn't exist
+                    if [ ! -f "$output_dir/$rel_path" ]; then
+                        cp "$file" "$output_dir/$rel_path"
+                    fi
+                done
+            fi
+        fi
+    done
+fi
 
 
 
