@@ -146,7 +146,7 @@ def merge_scanner_info_with_metrics(metrics_df, scanner_info_df, output_filename
     
     return metrics_df
 
-def process_metrics_file(input_filename):
+def process_metrics_file(input_filename, harmonized_output_filename):
     """
     Process a metrics file through the entire pipeline.
     
@@ -173,11 +173,13 @@ def process_metrics_file(input_filename):
 
     # # load the metrics data from input file
     all_metrics = pd.read_csv(input_filename)
+    pre_harmonised_filename=harmonized_output_filename.replace('_harmonised.csv', '.csv')
+    
 
     all_metrics_merged = merge_scanner_info_with_metrics(
         all_metrics, 
         patient_scanner_data, 
-        'DTI_Processing_Scripts/merged_data_5x4vox.csv'
+        pre_harmonised_filename
     )
 
     ## HARMONISATION
@@ -335,12 +337,13 @@ def process_metrics_file(input_filename):
         print(f"Replaced {len(md_columns)} MD columns with their harmonized versions")
 
     # Get the original file name from the input
-    original_file = 'DTI_Processing_Scripts/merged_data_5x4vox.csv'
+    # original_file = merged_filename
     # Create new filename with _harmonised suffix
-    harmonized_output_file = original_file.replace('.csv', '_harmonised.csv')
+    #harmonized_output_file = original_file.replace('.csv', '_harmonised.csv')
 
     # Save harmonized data
-    harmonized_data.to_csv(harmonized_output_file, index=False)
+    harmonized_data.to_csv(harmonized_output_filename, index=False)
 
 # Example usage (comment this out when not in use)
-process_metrics_file('DTI_Processing_Scripts/results/all_metrics_5x4vox.csv')
+process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_5x4vox.csv', 
+                     harmonized_output_filename='DTI_Processing_Scripts/merged_data_5x4vox_harmonised.csv')
