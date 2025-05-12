@@ -103,3 +103,89 @@ all_metrics_5x4vox_merged = merge_scanner_info_with_metrics(
     'DTI_Processing_Scripts/merged_data_5x4vox.csv'
 )
 
+## HARMONISATION
+# Extract FA data for harmonisation
+print("\nHarmonizing FA metrics...")
+# Create a combined Site_Model batch variable
+all_metrics_5x4vox_merged['Site_Model'] = all_metrics_5x4vox_merged['Site'].astype(str) + '_' + all_metrics_5x4vox_merged['Model'].astype(str)
+print(f"\nUnique Site_Model combinations: {all_metrics_5x4vox_merged['Site_Model'].unique()}")
+
+sys.exit()
+print(f"\nMissing values in Site_Model: {all_metrics_5x4vox_merged['Site_Model'].isna().sum()}")
+print(f"Missing values in timepoint: {all_metrics_5x4vox_merged['timepoint'].isna().sum()}")
+print(f"Missing values in Cohort: {all_metrics_5x4vox_merged['Cohort'].isna().sum()}")
+
+
+fa_columns = [col for col in all_metrics_5x4vox_merged.columns if col.startswith('fa_')]
+fa_data = all_metrics_5x4vox_merged[fa_columns].values.T  # neuroCombat expects features in rows
+#md_columns = [col for col in all_metrics_5x4vox_merged.columns if col.startswith('md_')]
+#md_data = all_metrics_5x4vox_merged[md_columns].values.T  # neuroCombat expects features in rows
+
+
+# Define batch variable (scanner model)
+batch = all_metrics_5x4vox_merged['Model'].values
+
+# Define covariates to preserve biological variability
+categorical_cols = ['timepoint', 'Cohort']
+continuous_cols = []  # Add 'age' if available
+covars = {'batch': batch}
+
+# Add categorical covariates
+for col in categorical_cols:
+    if col in all_metrics_5x4vox_merged.columns:
+        covars[col] = all_metrics_5x4vox_merged[col].values
+
+
+
+"""
+# Load metrics data and scanner information
+metrics_df = pd.read_csv('DTI_Processing_Scripts/results/all_metrics_5x4vox.csv')
+scanner_info_df = pd.read_csv('DTI_Processing_Scripts/patient_scanner_data_with_timepoints.csv')
+
+# Merge metrics with scanner information
+merged_data = merge_scanner_info_with_metrics(
+   metrics_df, 
+   scanner_info_df, 
+   'DTI_Processing_Scripts/merged_data_5x4vox.csv'
+)
+
+# Extract data for harmonisation
+# For example, if harmonizing FA metrics:
+fa_columns = [col for col in merged_data.columns if col.startswith('fa_')]
+data = merged_data[fa_columns].values.T  # neuroCombat expects features in rows
+
+# Define batch variable (scanner model)
+batch = merged_data['Model'].values
+
+# Optional: Define covariates to preserve biological variability
+categorical_cols = ['timepoint']
+continuous_cols = ['age']
+covars = {'batch': batch}
+if categorical_cols:
+   for col in categorical_cols:
+       covars[col] = merged_data[col].values
+if continuous_cols:
+   for col in continuous_cols:
+       covars[col] = merged_data[col].values
+
+# Apply neuroCombat
+combat_data = neuroCombat(
+   dat=data,
+   covars=covars,
+   batch_col='batch',
+   categorical_cols=categorical_cols,
+   continuous_cols=continuous_cols
+)
+
+# The harmonized data is in combat_data['data']
+# Transform back to original shape and store in DataFrame
+harmonized_df = pd.DataFrame(
+   combat_data['data'].T,  # Transpose back to original orientation
+   columns=fa_columns,
+   index=merged_data.index
+)
+
+# Combine with non-harmonized columns and save
+result_df = merged_data.drop(columns=fa_columns)
+result_df = pd.concat([result_df, harmonized_df], axis=1)
+result_df.to_csv('DTI_Processing_Scripts/harmonized_metrics.csv', index=False)"""
