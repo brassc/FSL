@@ -109,8 +109,9 @@ print("\nHarmonizing FA metrics...")
 # Create a combined Site_Model batch variable
 all_metrics_5x4vox_merged['Site_Model'] = all_metrics_5x4vox_merged['Site'].astype(str) + '_' + all_metrics_5x4vox_merged['Model'].astype(str)
 print(f"\nUnique Site_Model combinations: {all_metrics_5x4vox_merged['Site_Model'].unique()}")
-
+hello. 
 sys.exit()
+
 print(f"\nMissing values in Site_Model: {all_metrics_5x4vox_merged['Site_Model'].isna().sum()}")
 print(f"Missing values in timepoint: {all_metrics_5x4vox_merged['timepoint'].isna().sum()}")
 print(f"Missing values in Cohort: {all_metrics_5x4vox_merged['Cohort'].isna().sum()}")
