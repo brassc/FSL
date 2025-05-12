@@ -329,6 +329,42 @@ Note: When using special parameters or filtering, appropriate suffixes are added
 [comment]: # The script `create_roi_native_space.sh` takes these files and gets FA and MD data within that space, saves it as a `.pkl` file (`{patient_id}_{timepoint}_dti_values.pkl`).  
 
 
+## Harmonisation
+
+After extracting DTI metrics from ROIs, it's often necessary to harmonize data across different scanners to account for scanner-related variability. This pipeline uses the neuroCombat package for batch effect correction.
+
+### Overview
+
+The harmonisation script:
+1. Merges DTI metrics with scanner information
+2. Applies the neuroCombat algorithm to correct for scanner-related batch effects
+3. Outputs harmonized metrics for further analysis
+
+### Requirements
+
+- Python 3.6+
+- Required packages:
+ - numpy
+ - pandas
+ - matplotlib
+ - neuroCombat
+
+### Scanner Information
+
+The script expects a CSV file containing scanner information with the following columns:
+- `patient_id`: Unique identifier for each patient
+- `timepoint`: Timepoint of the scan
+- `Cohort`: Study cohort information
+- `Site`: Scanner site location
+- `Model`: Scanner model
+
+### Usage
+
+Run `python DTI_Processing_Scripts/harmonisation.py` to harmonise data. Data is output in `DTI_Processing_Scripts/results_harmonised/` directory as CSV. 
+
+
+
+
 
 
 Freesurfer location: `/home/cmb247/Desktop/Project_3/Freesurfer/`
