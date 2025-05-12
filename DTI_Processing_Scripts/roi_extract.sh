@@ -139,7 +139,7 @@ for ((i=1; i<=$num_bins; i++)); do
   # data_line="${data_line},${fa_array}"
 
   # Just gets the mean value without --showall
-  if [ "$filter_fa_flag" = "true" ]; then
+  if [ "$filter_fa_values" = "true" ]; then
       fa_mean=$(extract_filtered_fa_value "$roi_dir/FA/ant_ring${i}_FA.nii.gz" "$roi_dir/FA/ant_ring${i}.nii.gz")
   else
       fa_mean=$(fslmeants -i "$roi_dir/FA/ant_ring${i}_FA.nii.gz" -m "$roi_dir/FA/ant_ring${i}.nii.gz")
