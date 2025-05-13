@@ -103,7 +103,15 @@ mkdir -p $output_dir
 # Search for directories with same bin_size but lower num_bins
 echo "Looking for existing ROI directories with same bin size ($bin_size) but lower number of bins..."
 # Find all matching directories
-new_dir="${base_dir}/roi_files_5x4vox_NEW"
+
+# if filtered_fa_values is true, add "_filtered" to the search
+if [ "$filtered_fa_values" == "true" ]; then
+    new_dir="${base_dir}/roi_files_5x4vox_NEW_filtered"
+else
+    new_dir="${base_dir}/roi_files_5x4vox_NEW"
+fi
+
+#new_dir="${base_dir}/roi_files_5x4vox_NEW"
 if [ -d "$new_dir" ] && [ "$bin_size" -eq 4 ] && [ "$num_bins" -gt 5 ]; then
     echo "Found 5x4vox_NEW directory: $new_dir"
     echo "Copying these files recursively to $output_dir"
