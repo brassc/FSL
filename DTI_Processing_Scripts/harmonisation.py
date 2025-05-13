@@ -64,7 +64,6 @@ def check_singularities(valid_data):
         
     return singularity_risk
 
-
 def merge_scanner_info_with_metrics(metrics_df, scanner_info_df, output_filename):
     """
     Merge scanner information (Cohort, Site, Model) with metrics data.
@@ -344,6 +343,18 @@ def process_metrics_file(input_filename, harmonized_output_filename):
     # Save harmonized data
     harmonized_data.to_csv(harmonized_output_filename, index=False)
 
-# Example usage (comment this out when not in use)
-process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_5x4vox.csv', 
-                     harmonized_output_filename='DTI_Processing_Scripts/merged_data_5x4vox_harmonised.csv')
+# Usage
+
+# process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_5x4vox.csv', 
+#                      harmonized_output_filename='DTI_Processing_Scripts/merged_data_5x4vox_harmonised.csv')
+
+process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_5x4vox_NEW.csv',
+                     harmonized_output_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_harmonised.csv')
+
+
+process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_5x4vox_NEW_filtered.csv',
+                     harmonized_output_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_harmonised.csv')
+
+# process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_10x4vox_NEW_filtered.csv',
+#                         harmonized_output_filename='DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_harmonised.csv')
+
