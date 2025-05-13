@@ -99,7 +99,7 @@ def get_color(patient_id, color_map):
     
     return new_color
 
-def plot_all_rings_combined(df, parameter, save_path=None):
+def plot_all_rings_combined(df, parameter, num_bins=5, save_path=None):
     """
     Plot all rings data on a single figure with days since injury on x-axis.
     Each patient has a unique color, and different ring types use different markers/line styles.
@@ -122,18 +122,44 @@ def plot_all_rings_combined(df, parameter, save_path=None):
     
     # Define markers for different ring types to distinguish them
     # Define markers for different ring types to distinguish them (without parameter prefixes)
-    ring_markers = {
-        'anterior_ring_1': 'o',
-        'anterior_ring_2': 's',
-        'anterior_ring_3': '^',
-        'anterior_ring_4': 'D',
-        'anterior_ring_5': 'p',
-        'posterior_ring_1': 'o',
-        'posterior_ring_2': 's',
-        'posterior_ring_3': '^',
-        'posterior_ring_4': 'D',
-        'posterior_ring_5': 'p',
-    }
+    
+    if num_bins == 5:
+        ring_markers = {
+            'anterior_ring_1': 'o',
+            'anterior_ring_2': 's',
+            'anterior_ring_3': '^',
+            'anterior_ring_4': 'D',
+            'anterior_ring_5': 'p',
+            'posterior_ring_1': 'o',
+            'posterior_ring_2': 's',
+            'posterior_ring_3': '^',
+            'posterior_ring_4': 'D',
+            'posterior_ring_5': 'p',
+        }
+    elif num_bins == 10:
+        ring_markers = {
+            'anterior_ring_1': 'o',
+            'anterior_ring_2': 's',
+            'anterior_ring_3': '^',
+            'anterior_ring_4': 'D',
+            'anterior_ring_5': 'p',
+            'anterior_ring_6': 'X',
+            'anterior_ring_7': 'H',
+            'anterior_ring_8': 'P',
+            'anterior_ring_9': 'v',
+            'anterior_ring_10': '<',
+            'posterior_ring_1': 'o',
+            'posterior_ring_2': 's',
+            'posterior_ring_3': '^',
+            'posterior_ring_4': 'D',
+            'posterior_ring_5': 'p',
+            'posterior_ring_6': 'X',
+            'posterior_ring_7': 'H',
+            'posterior_ring_8': 'P',
+            'posterior_ring_9': 'v',
+            'posterior_ring_10': '<',
+        }
+    
     
     # Define line styles for anterior vs posterior
     line_styles = {
@@ -180,7 +206,7 @@ def plot_all_rings_combined(df, parameter, save_path=None):
     # All possible column names for rings
     ring_cols = []
     for region in ['anterior', 'posterior']:
-        for ring_num in range(1, 6):
+        for ring_num in range(1, num_bins + 1):
             ring_cols.append(f'{parameter}_{region}_ring_{ring_num}')
             ring_cols.append(f'{parameter}_baseline_{region}_ring_{ring_num}')
     
@@ -380,6 +406,20 @@ def plot_all_rings_combined(df, parameter, save_path=None):
                 except Exception as e:
                     print(f"Could not create smooth curve for patient {pid}, {col}: {e}")
     
+    # Add any missing ring types to the legend when num_bins=10
+    if num_bins == 10:
+        for region in ['anterior', 'posterior']:
+            for ring_num in range(1, 11):
+                ring_type_id = f"{region}_ring_{ring_num}"
+                if ring_type_id not in ring_type_added_to_legend:
+                    marker = ring_markers[ring_type_id]
+                    line_style = line_styles[region]
+                    legend_handles.append(Line2D([0], [0], color='black', marker=marker, linestyle=line_style, 
+                                            markersize=6))
+                    legend_labels.append(f"{region.capitalize()} Ring {ring_num}")
+                    ring_type_added_to_legend.add(ring_type_id)
+
+
     # Add baseline vs current markers to legend
     legend_handles.append(plt.Line2D([0], [0], color='black', marker='o', linestyle='None', 
                                markersize=6, alpha=alpha_values['current'], 
@@ -390,12 +430,12 @@ def plot_all_rings_combined(df, parameter, save_path=None):
                                markersize=6, alpha=alpha_values['baseline']))
     legend_labels.append('Baseline')
     
-    # Add anterior vs posterior line styles to legend
-    legend_handles.append(Line2D([0], [0], color='black', linestyle=line_styles['anterior']))
-    legend_labels.append('Anterior')
+    # # Add anterior vs posterior line styles to legend
+    # legend_handles.append(Line2D([0], [0], color='black', linestyle=line_styles['anterior']))
+    # legend_labels.append('Anterior')
     
-    legend_handles.append(Line2D([0], [0], color='black', linestyle=line_styles['posterior']))
-    legend_labels.append('Posterior')
+    # legend_handles.append(Line2D([0], [0], color='black', linestyle=line_styles['posterior']))
+    # legend_labels.append('Posterior')
     
     # Set labels and title
     ax.set_xlabel('Days Since Injury')
@@ -465,7 +505,7 @@ if __name__ == '__main__':
     print('running dti_results_plotting_main.py')
     
     # Load the data 
-    data_5x4vox=pd.read_csv('DTI_Processing_Scripts/merged_data_5x4vox_NEW.csv')
+    data_5x4vox=pd.read_csv('DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered.csv')
     data_5x4vox['patient_id'] = data_5x4vox['patient_id'].astype(str)
     timepoints = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
     string_mask = data_5x4vox['timepoint'].isin(timepoints)
@@ -522,7 +562,7 @@ if __name__ == '__main__':
     
     # Now data_5x4vox has been recategorized based on Days_since_injury, exactly the same as the deformation analysis
 
-    plot_all_rings_combined(df=data_5x4vox, parameter='fa', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox.png')
+    plot_all_rings_combined(df=data_5x4vox, parameter='fa', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox_filtered.png')
 
 
 
