@@ -6,10 +6,12 @@ from scipy import stats
 import statsmodels.formula.api as smf
 import seaborn as sns
 import sys
+import os
 import statsmodels.stats.multitest as smm
 from statsmodels.stats.multitest import multipletests
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
 from itertools import combinations
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from Image_Processing_Scripts.longitudinal_main import map_timepoint_to_string
 from Image_Processing_Scripts.set_publication_style import set_publication_style
 
@@ -42,5 +44,25 @@ emmeans = importr('emmeans')
 # Set publication style for matplotlib
 set_publication_style()
 
+if __name__ == '__main__':
+    print('running dti_results_plotting_main.py')
+    
+    # Load the data 
+    data_5x4vox=pd.read_csv('DTI_Processing_Scripts/merged_data_5x4vox_NEW.csv')
+    data_5x4vox['patient_id'] = data_5x4vox['patient_id'].astype(str)
+    timepoints = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
+    string_mask = data_5x4vox['timepoint'].isin(timepoints)
+    numeric_mask = ~string_mask & data_5x4vox['timepoint'].apply(lambda x: pd.notnull(pd.to_numeric(x, errors='coerce')))
+
+    # Step 2: Convert numeric values to their appropriate string representations
+    for idx in data_5x4vox[numeric_mask].index:
+        try:
+            numeric_value = float(data_5x4vox.loc[idx, 'timepoint'])
+            data_5x4vox.loc[idx, 'timepoint'] = map_timepoint_to_string(numeric_value)
+        except (ValueError, TypeError):
+            continue
+    
+    #data_5x4vox['timepoint'] = data_5x4vox['timepoint'].apply(map_timepoint_to_string) # convert to string category
+    print(f"data_5x4vox:\n{data_5x4vox}")
 
 
