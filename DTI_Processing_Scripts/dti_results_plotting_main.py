@@ -5,6 +5,7 @@ import pandas as pd
 from scipy import stats
 from scipy.interpolate import CubicSpline
 from matplotlib.colors import LinearSegmentedColormap, rgb2hex
+from matplotlib.lines import Line2D
 import matplotlib as mpl
 import statsmodels.formula.api as smf
 import seaborn as sns
@@ -17,6 +18,8 @@ from itertools import combinations
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from Image_Processing_Scripts.longitudinal_main import map_timepoint_to_string
 from Image_Processing_Scripts.set_publication_style import set_publication_style
+
+
 
 import rpy2
 import rpy2.robjects as ro
@@ -43,6 +46,7 @@ base = importr('base')
 lme4 = importr('lme4')
 emmeans = importr('emmeans')
 
+
 def create_hex_color_map_from_cmap(cmap_name, n):
     """Create a list of hex colors from a colormap."""
     cmap = plt.get_cmap(cmap_name)
@@ -95,7 +99,7 @@ def get_color(patient_id, color_map):
     
     return new_color
 
-def plot_all_rings_combined(df, parameter='fa', save_path=None):
+def plot_all_rings_combined(df, parameter, save_path=None):
     """
     Plot all rings data on a single figure with days since injury on x-axis.
     Each patient has a unique color, and different ring types use different markers/line styles.
@@ -114,8 +118,10 @@ def plot_all_rings_combined(df, parameter='fa', save_path=None):
     
     # Create a figure
     fig, ax = plt.subplots(figsize=(15, 10))
+    fig2, ax2 = plt.subplots(figsize=(15, 10))  # Timepoint category plot
     
     # Define markers for different ring types to distinguish them
+    # Define markers for different ring types to distinguish them (without parameter prefixes)
     ring_markers = {
         'anterior_ring_1': 'o',
         'anterior_ring_2': 's',
@@ -146,6 +152,30 @@ def plot_all_rings_combined(df, parameter='fa', save_path=None):
     legend_labels = []
     patient_added_to_legend = set()
     ring_type_added_to_legend = set()
+
+    # fig2 plotting
+    # Define timepoint order 
+    timepoint_order = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
+    
+    # Create a mapping for timepoints to numerical positions
+    timepoint_spacing = 3.0  # Adjust this value to control the gutter width
+    # timepoint_positions = {tp: i * timepoint_spacing for i, tp in enumerate(timepoint_order)}
+
+    # We'll use a simple numeric sequence as the base positions
+    base_positions = list(range(len(timepoint_order)))
+    
+    # Apply spacing to create the actual positions
+    spaced_positions = [pos * timepoint_spacing for pos in base_positions]
+    
+    # Create mapping from timepoint names to spaced positions
+    timepoint_positions = {tp: spaced_positions[i] for i, tp in enumerate(timepoint_order)}
+
+    # Create a numerical index for each patient ID to determine offset
+    patient_indices = {pid: i for i, pid in enumerate(sorted(patient_ids))}
+    total_patients = len(patient_ids)
+
+    # Calculate the width to allocate for each timepoint
+    timepoint_width = 0.8  # Width allocated for each timepoint
     
     # All possible column names for rings
     ring_cols = []
@@ -154,6 +184,59 @@ def plot_all_rings_combined(df, parameter='fa', save_path=None):
             ring_cols.append(f'{parameter}_{region}_ring_{ring_num}')
             ring_cols.append(f'{parameter}_baseline_{region}_ring_{ring_num}')
     
+    #print(f"Ring columns: {ring_cols}")
+    
+    # For the timepoint plot, first collect all data points per timepoint and patient
+    # to determine better offset calculations
+    timepoint_data_collection = {}
+    
+    # First pass: collect data by timepoint and patient
+    for pid in patient_ids:
+        patient_data = df[df['patient_id'] == pid].copy()
+        if patient_data.empty or 'timepoint' not in patient_data.columns:
+            continue
+            
+        for tp in timepoint_order:
+            if tp not in timepoint_data_collection:
+                timepoint_data_collection[tp] = {}
+                
+            tp_data = patient_data[patient_data['timepoint'] == tp]
+            if not tp_data.empty:
+                timepoint_data_collection[tp][pid] = tp_data
+    
+    # For each timepoint, determine which patients have data and assign positions
+    timepoint_patient_positions = {}
+    for tp in timepoint_order:
+        if tp in timepoint_data_collection:
+            # Get patients that have data for this timepoint
+            patients_with_data = list(timepoint_data_collection[tp].keys())
+            
+            # If there are patients with data
+            if patients_with_data:
+                # Sort patients for consistent ordering
+                patients_with_data.sort()
+                
+                # Create evenly distributed positions for this timepoint
+                timepoint_width = 0.8  # Width allocated for each timepoint
+                
+                # Assign positions
+                if len(patients_with_data) > 1:
+                    for i, pid in enumerate(patients_with_data):
+                        # Calculate offset to center the distribution
+                        offset = (i - (len(patients_with_data) - 1) / 2) * (timepoint_width / len(patients_with_data))
+                        
+                        if tp not in timepoint_patient_positions:
+                            timepoint_patient_positions[tp] = {}
+                        timepoint_patient_positions[tp][pid] = offset
+                else:
+                    # Just one patient, no offset needed
+                    if tp not in timepoint_patient_positions:
+                        timepoint_patient_positions[tp] = {}
+                    timepoint_patient_positions[tp][patients_with_data[0]] = 0
+
+
+
+
     # Loop through patients
     for pid in patient_ids:
         patient_data = df[df['patient_id'] == pid].copy()
@@ -166,6 +249,13 @@ def plot_all_rings_combined(df, parameter='fa', save_path=None):
         
         # Get color for this patient
         patient_color = get_color(pid, patient_color_map)
+
+        # Calculate patient-specific offset within timepoint
+        if total_patients > 1:
+            # Scale to fit within the timepoint width
+            patient_offset = (patient_indices[pid] - (total_patients - 1) / 2) * (timepoint_width / total_patients)
+        else:
+            patient_offset = 0
         
         # Loop through all ring columns
         for col in ring_cols:
@@ -186,8 +276,8 @@ def plot_all_rings_combined(df, parameter='fa', save_path=None):
             ring_num = int(col.split('_')[-1])
             
             # Determine marker and line style
-            base_col = col.replace('baseline_', '')
-            marker = ring_markers[base_col]
+            ring_key = f"{region}_ring_{ring_num}"
+            marker = ring_markers[ring_key]
             line_style = line_styles[region]
             alpha = alpha_values['baseline' if is_baseline else 'current']
             
@@ -207,259 +297,54 @@ def plot_all_rings_combined(df, parameter='fa', save_path=None):
                 edgecolors='black' if not is_baseline else None,
                 linewidths=0.5 if not is_baseline else 0
             )
-            
-            # Add to legend (only add each patient and ring type once)
-            if pid not in patient_added_to_legend:
-                legend_handles.append(plt.Line2D([0], [0], color=patient_color, marker='o', linestyle='-', 
-                                           markersize=6, label=f'Patient {pid}'))
-                legend_labels.append(f'Patient {pid}')
-                patient_added_to_legend.add(pid)
-            
-            # Create a unique identifier for this ring type
-            ring_type_id = f"{region}_ring_{ring_num}"
-            if ring_type_id not in ring_type_added_to_legend:
-                legend_handles.append(Line2D([0], [0], color='black', marker=marker, linestyle=line_style, 
-                                           markersize=6))
-                legend_labels.append(f"{region.capitalize()} Ring {ring_num}")
-                ring_type_added_to_legend.add(ring_type_id)
-            
-            # If we have enough points (>=2), plot a smooth curve
-            if not is_baseline and len(valid_data) >= 3:
-                x_data = valid_data['Days_since_injury'].values
-                y_data = valid_data[col].values
+
+            # PLOT 2: Timepoints (discrete)
+            # Only plot if timepoint data is available
+
+            # PLOT 2: Timepoints (discrete) with improved patient-specific offset
+            if 'timepoint' in valid_data.columns:
+                for _, row in valid_data.iterrows():
+                    timepoint = row['timepoint']
+                    if pd.notna(timepoint) and timepoint in timepoint_positions:
+                        # Use the pre-calculated patient position for this timepoint if available
+                        if (timepoint in timepoint_patient_positions and 
+                            pid in timepoint_patient_positions[timepoint]):
+                            patient_offset = timepoint_patient_positions[timepoint][pid]
+                        else:
+                            patient_offset = 0  # Fallback if position not calculated
+                            
+                        # Base position + patient-specific offset
+                        x_pos = timepoint_positions[timepoint] + patient_offset
+                        
+                        ax2.scatter(
+                            x_pos,
+                            row[col],
+                            color=patient_color,
+                            marker=marker,
+                            s=30 if is_baseline else 50,
+                            alpha=alpha,
+                            edgecolors='black' if not is_baseline else None,
+                            linewidths=0.5 if not is_baseline else 0
+                        )
+            # if 'timepoint' in valid_data.columns:
+            #     # Convert timepoints to numeric positions
+            #     valid_data['timepoint_pos'] = valid_data['timepoint'].map(timepoint_positions)
                 
-                try:
-                    # Create smooth x values for the curve
-                    x_smooth = np.linspace(min(x_data), max(x_data), 100)
-                    
-                    # Use cubic spline for smoothing
-                    cs = CubicSpline(x_data, y_data, bc_type='natural')
-                    y_smooth = cs(x_smooth)
-                    
-                    # Plot the smooth curve
-                    ax.plot(x_smooth, y_smooth, color=patient_color, alpha=0.7, 
-                           linestyle=line_style, linewidth=1.0)
-                except Exception as e:
-                    print(f"Could not create smooth curve for patient {pid}, {col}: {e}")
-    
-    # Add baseline vs current markers to legend
-    legend_handles.append(plt.Line2D([0], [0], color='black', marker='o', linestyle='None', 
-                               markersize=6, alpha=alpha_values['current'], 
-                               markeredgecolor='black', markeredgewidth=0.5))
-    legend_labels.append('Current')
-    
-    legend_handles.append(plt.Line2D([0], [0], color='black', marker='o', linestyle='None', 
-                               markersize=6, alpha=alpha_values['baseline']))
-    legend_labels.append('Baseline')
-    
-    # Add anterior vs posterior line styles to legend
-    legend_handles.append(plt.Line2D([0], [0], color='black', linestyle=line_styles['anterior']))
-    legend_labels.append('Anterior')
-    
-    legend_handles.append(plt.Line2D([0], [0], color='black', linestyle=line_styles['posterior']))
-    legend_labels.append('Posterior')
-    
-    # Set labels and title
-    ax.set_xlabel('Days Since Injury')
-    ax.set_ylabel('Fractional Anisotropy (FA)')
-    ax.set_title('Fractional Anisotropy: All Rings Over Time')
-
-    import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from scipy.interpolate import CubicSpline
-from matplotlib.colors import LinearSegmentedColormap, rgb2hex
-import matplotlib as mpl
-from matplotlib.lines import Line2D
-
-def set_publication_style():
-    """Set matplotlib parameters for publication-quality figures."""
-    plt.rcParams.update({
-        'font.family': 'serif',
-        'font.serif': ['Times New Roman'],
-        'mathtext.fontset': 'stix',
-        'font.size': 12,
-        'axes.labelsize': 14,
-        'axes.titlesize': 16,
-        'axes.titleweight': 'bold', 
-        'xtick.labelsize': 12,
-        'ytick.labelsize': 12,
-        'legend.fontsize': 9,
-        'figure.dpi': 150,
-        'savefig.dpi': 300,
-        'savefig.format': 'png',
-        'savefig.bbox': 'tight',
-        'axes.grid': True,
-        'grid.alpha': 0.3,
-        'grid.linestyle': '-',
-        'axes.spines.top': False,
-        'axes.spines.right': False,
-    })
-
-def create_hex_color_map_from_cmap(cmap_name, n):
-    """Create a list of hex colors from a colormap."""
-    cmap = plt.get_cmap(cmap_name)
-    # Convert the colormap to a list of hex colors
-    colors = cmap(np.linspace(0, 1, n))
-    hex_colors = [rgb2hex(color) for color in colors]
-    return hex_colors
-
-def create_hex_color_map_custom(base_colors, n):
-    """Create a list of hex colors from a list of base colors."""
-    # Create a custom colormap with the base colors
-    cmap = LinearSegmentedColormap.from_list('custom', base_colors, N=n)
-    # Convert the colormap to a list of hex colors
-    colors = cmap(np.linspace(0, 1, n))
-    hex_colors = [rgb2hex(color) for color in colors]
-    return hex_colors
-
-def get_color(patient_id, color_map):
-    """
-    Get color for a patient ID from color_map. If patient ID is not in 
-    color_map, dynamically assign a new color and add it to color_map.
-    """
-    pid = str(patient_id)
-    
-    # First check if this pid is already in the color map (as string)
-    if pid in color_map:
-        return color_map[pid]
-    
-    # If we get here, this patient ID needs a new color
-    # Predefined colors for variety
-    predefined_colors = [
-        'red', 'blue', 'green', 'orange', 'purple', 
-        'brown', 'pink', 'olive', 'cyan', 'magenta',
-        'gold', 'limegreen', 'darkviolet', 'deepskyblue', 'crimson',
-        'darkgreen', 'darkblue', 'darkorange', 'hotpink', 'teal'
-    ]
-    
-    if len(color_map) < len(predefined_colors):
-        new_color = predefined_colors[len(color_map)]
-    else:
-        # Use tab10 colormap for additional colors
-        color_idx = len(color_map) % 10
-        new_color = plt.cm.tab10(color_idx)
-    
-    # Add the new color to the color_map for future use
-    color_map[pid] = new_color
-    
-    # Print for debugging
-    print(f"Assigned new color to patient {pid}: {new_color}")
-    
-    return new_color
-
-def plot_all_rings_combined(df, save_path=None):
-    """
-    Plot all rings data on a single figure with days since injury on x-axis.
-    Each patient has a unique color, and different ring types use different markers/line styles.
-    
-    Args:
-        df: DataFrame with the data
-        save_path: Path to save the figure (optional)
-    """
-    set_publication_style()
-    
-    # Get unique patient IDs
-    patient_ids = df['patient_id'].unique()
-    
-    # Create color map for patients
-    patient_color_map = {}
-    
-    # Create a figure
-    fig, ax = plt.subplots(figsize=(15, 10))
-    
-    # Define markers for different ring types to distinguish them
-    ring_markers = {
-        'anterior_ring_1': 'o',
-        'anterior_ring_2': 's',
-        'anterior_ring_3': '^',
-        'anterior_ring_4': 'D',
-        'anterior_ring_5': 'p',
-        'posterior_ring_1': 'o',
-        'posterior_ring_2': 's',
-        'posterior_ring_3': '^',
-        'posterior_ring_4': 'D',
-        'posterior_ring_5': 'p',
-    }
-    
-    # Define line styles for anterior vs posterior
-    line_styles = {
-        'anterior': '-',
-        'posterior': '--',
-    }
-    
-    # Define alpha values for baseline vs current
-    alpha_values = {
-        'baseline': 0.4,
-        'current': 0.9,
-    }
-    
-    # For legend
-    legend_handles = []
-    legend_labels = []
-    patient_added_to_legend = set()
-    ring_type_added_to_legend = set()
-    
-    # All possible column names for rings
-    ring_cols = []
-    for region in ['anterior', 'posterior']:
-        for ring_num in range(1, 6):
-            ring_cols.append(f'{region}_ring_{ring_num}')
-            ring_cols.append(f'baseline_{region}_ring_{ring_num}')
-    
-    # Loop through patients
-    for pid in patient_ids:
-        patient_data = df[df['patient_id'] == pid].copy()
-        # Skip patients with no data
-        if patient_data.empty:
-            continue
-            
-        # Sort by days since injury
-        patient_data = patient_data.sort_values('Days_since_injury')
-        
-        # Get color for this patient
-        patient_color = get_color(pid, patient_color_map)
-        
-        # Loop through all ring columns
-        for col in ring_cols:
-            if col not in patient_data.columns:
-                continue
+            #     # Only use data points with valid timepoints
+            #     timepoint_data = valid_data.dropna(subset=['timepoint_pos'])
                 
-            # Skip columns with all NaN values
-            if patient_data[col].isna().all():
-                continue
-                
-            # Determine if this is baseline or current data
-            is_baseline = 'baseline' in col
-            
-            # Determine region (anterior or posterior)
-            region = 'anterior' if 'anterior' in col else 'posterior'
-            
-            # Extract ring number
-            ring_num = int(col.split('_')[-1])
-            
-            # Determine marker and line style
-            base_col = col.replace('baseline_', '')
-            marker = ring_markers[base_col]
-            line_style = line_styles[region]
-            alpha = alpha_values['baseline' if is_baseline else 'current']
-            
-            # Filter out NaN values
-            valid_data = patient_data[~patient_data[col].isna()]
-            if len(valid_data) == 0:
-                continue
-                
-            # Plot scatter points
-            scatter = ax.scatter(
-                valid_data['Days_since_injury'], 
-                valid_data[col],
-                color=patient_color,
-                marker=marker,
-                s=30 if is_baseline else 50,
-                alpha=alpha,
-                edgecolors='black' if not is_baseline else None,
-                linewidths=0.5 if not is_baseline else 0
-            )
+            #     if not timepoint_data.empty:
+            #         ax2.scatter(
+            #             timepoint_data['timepoint_pos'],
+            #             timepoint_data[col],
+            #             color=patient_color,
+            #             marker=marker,
+            #             s=30 if is_baseline else 50,
+            #             alpha=alpha,
+            #             edgecolors='black' if not is_baseline else None,
+            #             linewidths=0.5 if not is_baseline else 0
+            #         )
+
             
             # Add to legend (only add each patient and ring type once)
             if pid not in patient_added_to_legend:
@@ -490,8 +375,8 @@ def plot_all_rings_combined(df, save_path=None):
                     y_smooth = cs(x_smooth)
                     
                     # Plot the smooth curve
-                    ax.plot(x_smooth, y_smooth, color=patient_color, alpha=0.7, 
-                           linestyle=line_style, linewidth=1.0)
+                    # ax.plot(x_smooth, y_smooth, color=patient_color, alpha=0.7, 
+                    #        linestyle=line_style, linewidth=1.0)
                 except Exception as e:
                     print(f"Could not create smooth curve for patient {pid}, {col}: {e}")
     
@@ -529,21 +414,49 @@ def plot_all_rings_combined(df, save_path=None):
     # Add a small margin on the right (5%)
     margin = 0.05 * max_days
     ax.set_xlim(0, max_days + margin)
+
+
+    # Set labels and title for Plot 2 (Timepoint category)
+    ax2.set_xlabel('Timepoint')
+    ax2.set_ylabel(f'{parameter.upper()}')
+    ax2.set_title(f'{parameter.upper()}: All Rings Over Time (Discrete Timepoints)')
     
-    # Add legend
-    ax.legend(handles=legend_handles, labels=legend_labels, loc='center left', 
-             bbox_to_anchor=(1.02, 0.5), fontsize=8, ncol=1)
+    # Set x-ticks for Plot 2 to be the timepoint names
+    ax2.set_xticks(spaced_positions)
+    ax2.set_xticklabels(timepoint_order, rotation=45)
+    # Set x-axis limits for Plot 2 to include some padding
+    # min_pos = min(timepoint_positions.values()) - 0.5 * timepoint_spacing
+    # max_pos = max(timepoint_positions.values()) + 0.5 * timepoint_spacing
+    ax2.set_xlim(-0.5, spaced_positions[-1] + 0.5)
+
+        # Add vertical lines at each timepoint to further separate them visually
+    for pos in spaced_positions:
+        ax2.axvline(x=pos - 0.4, color='lightgray', linestyle='-', alpha=0.3)
+        ax2.axvline(x=pos + 0.4, color='lightgray', linestyle='-', alpha=0.3)
     
-    # Adjust layout
-    plt.tight_layout()
-    plt.subplots_adjust(right=0.8)
+    # Add legend to both plots
+    for ax in [ax, ax2]:
+        ax.legend(handles=legend_handles, labels=legend_labels, loc='center left', 
+                 bbox_to_anchor=(1.02, 0.5), fontsize=8, ncol=1)
     
-    # Save figure if path is provided
+    # Adjust layout for both plots
+    for figure in [fig, fig2]:
+        figure.tight_layout()
+        plt.figure(figure.number)
+        plt.subplots_adjust(right=0.8)
+    
+    # Save figures if path is provided
     if save_path:
-        plt.savefig(save_path, bbox_inches='tight')
-        print(f"Figure saved to {save_path}")
+        # Create file paths by inserting a suffix before the extension
+        base, ext = os.path.splitext(save_path)
+        days_path = f"{base}_days{ext}"
+        timepoint_path = f"{base}_timepoint{ext}"
+        
+        fig.savefig(days_path, bbox_inches='tight')
+        fig2.savefig(timepoint_path, bbox_inches='tight')
+        print(f"Figures saved to {days_path} and {timepoint_path}")
     
-    return fig, ax
+    return (fig, ax), (fig2, ax2)
 
 # Set publication style for matplotlib
 set_publication_style()
@@ -604,11 +517,12 @@ if __name__ == '__main__':
     data_5x4vox = data_5x4vox.sort_values(by=['sort_key', 'timepoint_order'])
     data_5x4vox = data_5x4vox.drop(['sort_key', 'timepoint_order'], axis=1)  # remove sorting column
     
-    print(f"data_5x4vox columns:\n{data_5x4vox.columns}")
-    sys.exit()
+    #print(f"data_5x4vox columns:\n{data_5x4vox.columns}")
+    #sys.exit()
+    
     # Now data_5x4vox has been recategorized based on Days_since_injury, exactly the same as the deformation analysis
 
-    plot_all_rings_combined(data_5x4vox, parameter='fa', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox.png')
+    plot_all_rings_combined(df=data_5x4vox, parameter='fa', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox.png')
 
 
 
