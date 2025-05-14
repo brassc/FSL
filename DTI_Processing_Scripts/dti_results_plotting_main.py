@@ -498,72 +498,88 @@ def plot_all_rings_combined(df, parameter, num_bins=5, save_path=None):
     
     return (fig, ax), (fig2, ax2)
 
+
+def process_timepoint_data(input_file_location):
+    """
+    Process patient timepoint data by standardizing timepoint values and sorting results.
+    
+    Args:
+        df: Input pandas DataFrame containing patient data
+        
+    Returns:
+        Processed pandas DataFrame with standardized timepoints and proper sorting
+    """
+    # Check if harmonised data file supplied
+    if 'harmonised' in input_file_location:
+        print('Harmonised data file supplied')
+    else:
+        print('Harmonised data file not supplied, please check')
+        return None
+
+    df=pd.read_csv(input_file_location)
+    df['patient_id'] = df['patient_id'].astype(str)
+    timepoints = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
+    string_mask = df['timepoint'].isin(timepoints)
+    numeric_mask = ~string_mask & df['timepoint'].apply(lambda x: pd.notnull(pd.to_numeric(x, errors='coerce')))
+    # Convert numeric values to their appropriate string representations
+    for idx in df[numeric_mask].index:
+        try:
+            numeric_value = float(df.loc[idx, 'timepoint'])
+            df.loc[idx, 'timepoint'] = map_timepoint_to_string(numeric_value)
+        except (ValueError, TypeError):
+            continue
+    #df['timepoint'] = df['timepoint'].apply(map_timepoint_to_string) # convert to string category
+    #print(f"df:\n{df}")
+    # Save original timepoint values before recategorization (if needed for reference)
+    df['original_timepoint'] = df['timepoint']
+    # Now apply the timepoint recategorization based on Days_since_injury
+    # Define the ranges and labels for recategorization
+    ranges = [(0, 2), (2, 8), (8, 42), (42, 179), (179, 278), (278, 540), (540, 500000)]
+    labels = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
+    # Only recategorize rows where Days_since_injury is not null
+    mask = df['Days_since_injury'].notnull()
+    if mask.any():
+        df.loc[mask, 'timepoint'] = pd.cut(
+            df.loc[mask, 'Days_since_injury'],
+            bins=[0, 2, 8, 42, 179, 278, 540, 500000],
+            labels=labels
+        )
+    # sort data according to patient id then timepoint
+    def get_sort_key(patient_id):
+        try:
+            return (0, int(patient_id)) # Numeric IDs first, sorted numerically
+        except ValueError:
+            return (1, patient_id) # Alphanumeric IDs second, sorted alphabetically
+    # Create a sort key column
+    df['sort_key'] = df['patient_id'].apply(get_sort_key)
+    df['timepoint_order'] = df['timepoint'].apply(lambda x: timepoints.index(x) if x in timepoints else 999)
+    # Sort the dataframe by patient_id, then by the position of timepoint in our list
+    df = df.sort_values(by=['sort_key', 'timepoint_order'])
+    df = df.drop(['sort_key', 'timepoint_order'], axis=1) # remove sorting column
+    
+    return df
+
+
 # Set publication style for matplotlib
 set_publication_style()
 
 if __name__ == '__main__':
     print('running dti_results_plotting_main.py')
     
-    # Load the data 
-    data_5x4vox=pd.read_csv('DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered.csv')
-    data_5x4vox['patient_id'] = data_5x4vox['patient_id'].astype(str)
-    timepoints = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
-    string_mask = data_5x4vox['timepoint'].isin(timepoints)
-    numeric_mask = ~string_mask & data_5x4vox['timepoint'].apply(lambda x: pd.notnull(pd.to_numeric(x, errors='coerce')))
-
-    # Convert numeric values to their appropriate string representations
-    for idx in data_5x4vox[numeric_mask].index:
-        try:
-            numeric_value = float(data_5x4vox.loc[idx, 'timepoint'])
-            data_5x4vox.loc[idx, 'timepoint'] = map_timepoint_to_string(numeric_value)
-        except (ValueError, TypeError):
-            continue
-    
-    #data_5x4vox['timepoint'] = data_5x4vox['timepoint'].apply(map_timepoint_to_string) # convert to string category
-    #print(f"data_5x4vox:\n{data_5x4vox}")
-
-
-     
-    # Save original timepoint values before recategorization (if needed for reference)
-    data_5x4vox['original_timepoint'] = data_5x4vox['timepoint']
-    
-    # Now apply the timepoint recategorization based on Days_since_injury
-    # Define the ranges and labels for recategorization
-    ranges = [(0, 2), (2, 8), (8, 42), (42, 179), (179, 278), (278, 540), (540, 500000)]
-    labels = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
-    
-    # Only recategorize rows where Days_since_injury is not null
-    mask = data_5x4vox['Days_since_injury'].notnull()
-    if mask.any():
-        data_5x4vox.loc[mask, 'timepoint'] = pd.cut(
-            data_5x4vox.loc[mask, 'Days_since_injury'], 
-            bins=[0, 2, 8, 42, 179, 278, 540, 500000], 
-            labels=labels
-        )
-
-    # sort data according to patient id then timepoint
-
-    def get_sort_key(patient_id):
-        try:
-            return (0, int(patient_id))  # Numeric IDs first, sorted numerically
-        except ValueError:
-            return (1, patient_id)       # Alphanumeric IDs second, sorted alphabetically
-
-    # Create a sort key column
-    data_5x4vox['sort_key'] = data_5x4vox['patient_id'].apply(get_sort_key)
-    data_5x4vox['timepoint_order'] = data_5x4vox['timepoint'].apply(lambda x: timepoints.index(x) if x in timepoints else 999)
-    
-    # Sort the dataframe by patient_id, then by the position of timepoint in our list
-    data_5x4vox = data_5x4vox.sort_values(by=['sort_key', 'timepoint_order'])
-    data_5x4vox = data_5x4vox.drop(['sort_key', 'timepoint_order'], axis=1)  # remove sorting column
-    
-    #print(f"data_5x4vox columns:\n{data_5x4vox.columns}")
-    #sys.exit()
-    
+    # Load the (harmonised) data 
+    #data_5x4vox=pd.read_csv('DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_harmonised.csv')
+    data_5x4vox_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_harmonised.csv'
+    data_5x4vox=process_timepoint_data(input_file_location=data_5x4vox_filename)
     # Now data_5x4vox has been recategorized based on Days_since_injury, exactly the same as the deformation analysis
-
     plot_all_rings_combined(df=data_5x4vox, parameter='fa', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox_filtered.png')
+    #plot_all_rings_combined(df=data_5x4vox, parameter='md', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox_filtered_md.png')
 
+    # Load the (harmonised) data
+    #data_10x4vox=pd.read_csv('DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_harmonised.csv')
+    #data_10x4vox=process_timepoint_data(df=data_10x4vox)
+    # Now data_10x4vox has been recategorized based on Days_since_injury, exactly the same as the deformation analysis
+    #plot_all_rings_combined(df=data_10x4vox, parameter='fa', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_10x4vox_filtered.png')
+    #plot_all_rings_combined(df=data_10x4vox, parameter='md', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_10x4vox_filtered_md.png')
 
 
 
