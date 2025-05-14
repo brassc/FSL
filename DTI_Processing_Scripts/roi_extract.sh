@@ -10,7 +10,7 @@ fa_map=$6  # Path to FA map (not used in this script)
 md_map=$7  # Path to MD map (not used in this script)
 master_csv=$8 # Path to the master CSV file
 filter_fa_values=${9:-"false"} # New flag to enable/disable FA filtering, defaults to "false"
-
+get_all_values=${10:-"false"} # New flag to enable/disable getting all values, defaults to "false"
 
 # Set ROI dir
 # Create spherical ROIs for each point
@@ -56,9 +56,11 @@ fi
 output_csv="DTI_Processing_Scripts/results/${patient_id}_${timepoint}_metrics_${num_bins}x${bin_size}vox.csv"
 
 if [ $num_bins -eq 5 ] && [ $bin_size -eq 4 ]; then
-    output_csv="DTI_Processing_Scripts/results/${patient_id}_${timepoint}_metrics_${num_bins}x${bin_size}vox_NEW.csv"
+    #output_csv="DTI_Processing_Scripts/results/${patient_id}_${timepoint}_metrics_${num_bins}x${bin_size}vox_NEW.csv"
+    output_csv="${output_csv%.csv}_NEW.csv"
 elif [ $num_bins -eq 10 ] && [ $bin_size -eq 4 ]; then
-    output_csv="DTI_Processing_Scripts/results/${patient_id}_${timepoint}_metrics_${num_bins}x${bin_size}vox_NEW.csv"
+    #output_csv="DTI_Processing_Scripts/results/${patient_id}_${timepoint}_metrics_${num_bins}x${bin_size}vox_NEW.csv"
+    output_csv="${output_csv%.csv}_NEW.csv"
 fi
 
 # Modify output_csv name if filtering is enabled
@@ -70,6 +72,12 @@ if [ "$filter_fa_values" = "true" ]; then
     # echo "  - Individual CSV: $output_csv"
     # echo "  - Master CSV: $master_csv"
 fi
+
+if [ "$get_all_values" = "true" ]; then
+    # Append all_values to output_csv filename
+    output_csv="${output_csv%.csv}_all_values.csv"
+fi
+
 
 
 
@@ -105,148 +113,166 @@ extract_filtered_fa_value() {
     local fa_file=$1
     local mask_file=$2
     
-    # Create a temporary filtered FA file
-    local temp_fa_file="${fa_file%.nii.gz}_filtered_temp.nii.gz"
+    # Create a temporary mask that only includes voxels with values between 0.05 and 1
+    local valid_range_mask="${fa_file%.nii.gz}_valid_range_mask_temp.nii.gz"
     
-    # Create a mask of values > 1
-    local over_one_mask="${fa_file%.nii.gz}_over1_mask_temp.nii.gz"
-    fslmaths "$fa_file" -thr 1.00001 -bin "$over_one_mask"
+    # Create mask of valid values (between 0.05 and 1)
+    fslmaths "$fa_file" -thr 0.05 -uthr 1 -bin "$valid_range_mask"
     
-    # Create filtered FA map with values > 1 set to 0
-    fslmaths "$fa_file" -mul "$over_one_mask" -mul -1 -add "$fa_file" "$temp_fa_file"
+    # Combine with the input mask (logical AND)
+    local combined_mask="${fa_file%.nii.gz}_combined_mask_temp.nii.gz"
+    fslmaths "$valid_range_mask" -mul "$mask_file" "$combined_mask"
     
-    # Calculate mean using the filtered file
-    local result=$(fslmeants -i "$temp_fa_file" -m "$mask_file")
+    # Calculate mean using the original data but with the combined mask
+    local result=$(fslmeants -i "$fa_file" -m "$combined_mask")
     
     # Clean up temporary files
-    rm -f "$temp_fa_file" "$over_one_mask"
+    rm -f "$valid_range_mask" "$combined_mask"
     
     echo "$result"
 }
 
 
 
-
-
-echo "Extracting FA values..."
-
-# Extract FA values for anterior rings
-for ((i=1; i<=$num_bins; i++)); do
-  # fslmeants -i "$roi_dir/FA/ant_ring${i}_FA.nii.gz" -m "$roi_dir/FA/ant_ring${i}.nii.gz" -o DTI_Processing_Scripts/results/temp.csv --showall
-  # fa_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
-  # # Format as array by wrapping in quotes and brackets
-  # fa_array="\"[${fa_values}]\""
-  # data_line="${data_line},${fa_array}"
-
-  # Just gets the mean value without --showall
-  if [ "$filter_fa_values" = "true" ]; then
-      fa_mean=$(extract_filtered_fa_value "$roi_dir/FA/ant_ring${i}_FA.nii.gz" "$roi_dir/FA/ant_ring${i}.nii.gz")
-  else
-      fa_mean=$(fslmeants -i "$roi_dir/FA/ant_ring${i}_FA.nii.gz" -m "$roi_dir/FA/ant_ring${i}.nii.gz")
-  fi
-  data_line="${data_line},${fa_mean}"
+# Iterate through parameters (FA, MD)
+for parameter in FA MD; do
+  echo "Extracting $parameter values..."
+  
+  # Iterate through all labels
+  for label in ant post baseline_ant baseline_post; do
+    # Process all bins for this parameter/label combination
+    for ((i=1; i<=$num_bins; i++)); do
+      # Handle special case for FA with filtering
+      if [ "$parameter" = "FA" ] && [ "$filter_fa_values" = "true" ]; then
+        mean_value=$(extract_filtered_fa_value "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
+      else
+        mean_value=$(fslmeants -i "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" -m "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
+      fi
+      data_line="${data_line},${mean_value}"
+    done
+  done
 done
 
-# Extract FA values for posterior rings
-for ((i=1; i<=$num_bins; i++)); do
-  # fslmeants -i "$roi_dir/FA/post_ring${i}_FA.nii.gz" -m "$roi_dir/FA/post_ring${i}.nii.gz" -o DTI_Processing_Scripts/results/temp.csv --showall
-  # fa_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
-  # fa_array="\"[${fa_values}]\""
-  # data_line="${data_line},${fa_array}"
 
-  # Just gets the mean value without --showall
-  if [ "$filter_fa_values" = "true" ]; then
-      fa_mean=$(extract_filtered_fa_value "$roi_dir/FA/post_ring${i}_FA.nii.gz" "$roi_dir/FA/post_ring${i}.nii.gz")
-  else
-      fa_mean=$(fslmeants -i "$roi_dir/FA/post_ring${i}_FA.nii.gz" -m "$roi_dir/FA/post_ring${i}.nii.gz")
-  fi
-  #fa_mean=$(fslmeants -i "$roi_dir/FA/post_ring${i}_FA.nii.gz" -m "$roi_dir/FA/post_ring${i}.nii.gz")
-  data_line="${data_line},${fa_mean}"
-done
+# echo "Extracting FA values..."
 
-# Extract FA values for baseline anterior rings
-for ((i=1; i<=$num_bins; i++)); do
-  # fslmeants -i "$roi_dir/FA/baseline_ant_ring${i}_FA.nii.gz" -m "$roi_dir/FA/baseline_ant_ring${i}.nii.gz" -o DTI_Processing_Scripts/results/temp.csv --showall
-  # fa_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
-  # fa_array="\"[${fa_values}]\""
-  # data_line="${data_line},${fa_array}"
+# # Extract FA values for anterior rings
+# for ((i=1; i<=$num_bins; i++)); do
+#   # fslmeants -i "$roi_dir/FA/ant_ring${i}_FA.nii.gz" -m "$roi_dir/FA/ant_ring${i}.nii.gz" -o DTI_Processing_Scripts/results/temp.csv --showall
+#   # fa_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
+#   # # Format as array by wrapping in quotes and brackets
+#   # fa_array="\"[${fa_values}]\""
+#   # data_line="${data_line},${fa_array}"
 
-  # Just gets the mean value without --showall
+#   # Just gets the mean value without --showall
+#   if [ "$filter_fa_values" = "true" ]; then
+#       fa_mean=$(extract_filtered_fa_value "$roi_dir/FA/ant_ring${i}_FA.nii.gz" "$roi_dir/FA/ant_ring${i}.nii.gz")
+#   else
+#       fa_mean=$(fslmeants -i "$roi_dir/FA/ant_ring${i}_FA.nii.gz" -m "$roi_dir/FA/ant_ring${i}.nii.gz")
+#   fi
+#   data_line="${data_line},${fa_mean}"
+# done
 
-  if [ "$filter_fa_values" = "true" ]; then
-      fa_mean=$(extract_filtered_fa_value "$roi_dir/FA/baseline_ant_ring${i}_FA.nii.gz" "$roi_dir/FA/baseline_ant_ring${i}.nii.gz")
-  else
-      fa_mean=$(fslmeants -i "$roi_dir/FA/baseline_ant_ring${i}_FA.nii.gz" -m "$roi_dir/FA/baseline_ant_ring${i}.nii.gz")
-  fi
-  # fa_mean=$(fslmeants -i "$roi_dir/FA/baseline_ant_ring${i}_FA.nii.gz" -m "$roi_dir/FA/baseline_ant_ring${i}.nii.gz")
-  data_line="${data_line},${fa_mean}"
-done
-# Extract FA values for baseline posterior rings
-for ((i=1; i<=$num_bins; i++)); do
-  # fslmeants -i "$roi_dir/FA/baseline_post_ring${i}_FA.nii.gz" -m "$roi_dir/FA/baseline_post_ring${i}.nii.gz" -o DTI_Processing_Scripts/results/temp.csv --showall
-  # fa_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
-  # fa_array="\"[${fa_values}]\""
-  # data_line="${data_line},${fa_array}"
+# # Extract FA values for posterior rings
+# for ((i=1; i<=$num_bins; i++)); do
+#   # fslmeants -i "$roi_dir/FA/post_ring${i}_FA.nii.gz" -m "$roi_dir/FA/post_ring${i}.nii.gz" -o DTI_Processing_Scripts/results/temp.csv --showall
+#   # fa_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
+#   # fa_array="\"[${fa_values}]\""
+#   # data_line="${data_line},${fa_array}"
 
-  # Just gets the mean value without --showall
-  if [ "$filter_fa_values" = "true" ]; then
-      fa_mean=$(extract_filtered_fa_value "$roi_dir/FA/baseline_post_ring${i}_FA.nii.gz" "$roi_dir/FA/baseline_post_ring${i}.nii.gz")
-  else
-      fa_mean=$(fslmeants -i "$roi_dir/FA/baseline_post_ring${i}_FA.nii.gz" -m "$roi_dir/FA/baseline_post_ring${i}.nii.gz")
-  fi
-  # fa_mean=$(fslmeants -i "$roi_dir/FA/baseline_post_ring${i}_FA.nii.gz" -m "$roi_dir/FA/baseline_post_ring${i}.nii.gz")
-  data_line="${data_line},${fa_mean}"
-done
+#   # Just gets the mean value without --showall
+#   if [ "$filter_fa_values" = "true" ]; then
+#       fa_mean=$(extract_filtered_fa_value "$roi_dir/FA/post_ring${i}_FA.nii.gz" "$roi_dir/FA/post_ring${i}.nii.gz")
+#   else
+#       fa_mean=$(fslmeants -i "$roi_dir/FA/post_ring${i}_FA.nii.gz" -m "$roi_dir/FA/post_ring${i}.nii.gz")
+#   fi
+#   #fa_mean=$(fslmeants -i "$roi_dir/FA/post_ring${i}_FA.nii.gz" -m "$roi_dir/FA/post_ring${i}.nii.gz")
+#   data_line="${data_line},${fa_mean}"
+# done
 
-# Extract MD values
-echo "Extracting MD values..."
-# Extract MD values for anterior rings
-for ((i=1; i<=$num_bins; i++)); do
-  # fslmeants -i "$roi_dir/MD/ant_ring${i}_MD.nii.gz" -m "$roi_dir/MD/ant_ring${i}.nii.gz" -o DTI_Processing_Scripts/results/temp.csv --showall
-  # md_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
-  # md_array="\"[${md_values}]\""
-  # data_line="${data_line},${md_array}"
+# # Extract FA values for baseline anterior rings
+# for ((i=1; i<=$num_bins; i++)); do
+#   # fslmeants -i "$roi_dir/FA/baseline_ant_ring${i}_FA.nii.gz" -m "$roi_dir/FA/baseline_ant_ring${i}.nii.gz" -o DTI_Processing_Scripts/results/temp.csv --showall
+#   # fa_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
+#   # fa_array="\"[${fa_values}]\""
+#   # data_line="${data_line},${fa_array}"
 
-  # Just gets the mean value without --showall
-  md_mean=$(fslmeants -i "$roi_dir/MD/ant_ring${i}_MD.nii.gz" -m "$roi_dir/MD/ant_ring${i}.nii.gz")
-  data_line="${data_line},${md_mean}"
-done
+#   # Just gets the mean value without --showall
 
-# Extract MD values for posterior rings
-for ((i=1; i<=$num_bins; i++)); do
-  # fslmeants -i "$roi_dir/MD/post_ring${i}_MD.nii.gz" -m "$roi_dir/MD/post_ring${i}.nii.gz" -o DTI_Processing_Scripts/results/temp.csv --showall
-  # md_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
-  # md_array="\"[${md_values}]\""
-  # data_line="${data_line},${md_array}"
+#   if [ "$filter_fa_values" = "true" ]; then
+#       fa_mean=$(extract_filtered_fa_value "$roi_dir/FA/baseline_ant_ring${i}_FA.nii.gz" "$roi_dir/FA/baseline_ant_ring${i}.nii.gz")
+#   else
+#       fa_mean=$(fslmeants -i "$roi_dir/FA/baseline_ant_ring${i}_FA.nii.gz" -m "$roi_dir/FA/baseline_ant_ring${i}.nii.gz")
+#   fi
+#   # fa_mean=$(fslmeants -i "$roi_dir/FA/baseline_ant_ring${i}_FA.nii.gz" -m "$roi_dir/FA/baseline_ant_ring${i}.nii.gz")
+#   data_line="${data_line},${fa_mean}"
+# done
+# # Extract FA values for baseline posterior rings
+# for ((i=1; i<=$num_bins; i++)); do
+#   # fslmeants -i "$roi_dir/FA/baseline_post_ring${i}_FA.nii.gz" -m "$roi_dir/FA/baseline_post_ring${i}.nii.gz" -o DTI_Processing_Scripts/results/temp.csv --showall
+#   # fa_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
+#   # fa_array="\"[${fa_values}]\""
+#   # data_line="${data_line},${fa_array}"
 
-  # Just gets the mean value without --showall
-  md_mean=$(fslmeants -i "$roi_dir/MD/post_ring${i}_MD.nii.gz" -m "$roi_dir/MD/post_ring${i}.nii.gz")
-  data_line="${data_line},${md_mean}"
-done
+#   # Just gets the mean value without --showall
+#   if [ "$filter_fa_values" = "true" ]; then
+#       fa_mean=$(extract_filtered_fa_value "$roi_dir/FA/baseline_post_ring${i}_FA.nii.gz" "$roi_dir/FA/baseline_post_ring${i}.nii.gz")
+#   else
+#       fa_mean=$(fslmeants -i "$roi_dir/FA/baseline_post_ring${i}_FA.nii.gz" -m "$roi_dir/FA/baseline_post_ring${i}.nii.gz")
+#   fi
+#   # fa_mean=$(fslmeants -i "$roi_dir/FA/baseline_post_ring${i}_FA.nii.gz" -m "$roi_dir/FA/baseline_post_ring${i}.nii.gz")
+#   data_line="${data_line},${fa_mean}"
+# done
 
-# Extract MD values for baseline anterior rings
-for ((i=1; i<=$num_bins; i++)); do
-  # fslmeants -i "$roi_dir/MD/baseline_ant_ring${i}_MD.nii.gz" -m "$roi_dir/MD/baseline_ant_ring${i}.nii.gz" -o DTI_Processing_Scripts/results/temp.csv --showall
-  # md_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
-  # md_array="\"[${md_values}]\""
-  # data_line="${data_line},${md_array}"
+# # Extract MD values
+# echo "Extracting MD values..."
+# # Extract MD values for anterior rings
+# for ((i=1; i<=$num_bins; i++)); do
+#   # fslmeants -i "$roi_dir/MD/ant_ring${i}_MD.nii.gz" -m "$roi_dir/MD/ant_ring${i}.nii.gz" -o DTI_Processing_Scripts/results/temp.csv --showall
+#   # md_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
+#   # md_array="\"[${md_values}]\""
+#   # data_line="${data_line},${md_array}"
 
-  # Just gets the mean value without --showall
-  md_mean=$(fslmeants -i "$roi_dir/MD/baseline_ant_ring${i}_MD.nii.gz" -m "$roi_dir/MD/baseline_ant_ring${i}.nii.gz")
-  data_line="${data_line},${md_mean}"
-done
+#   # Just gets the mean value without --showall
+#   md_mean=$(fslmeants -i "$roi_dir/MD/ant_ring${i}_MD.nii.gz" -m "$roi_dir/MD/ant_ring${i}.nii.gz")
+#   data_line="${data_line},${md_mean}"
+# done
 
-# Extract MD values for baseline posterior rings
-for ((i=1; i<=$num_bins; i++)); do
-  # fslmeants -i "$roi_dir/MD/baseline_post_ring${i}_MD.nii.gz" -m "$roi_dir/MD/baseline_post_ring${i}.nii.gz" -o DTI_Processing_Scripts/results/temp.csv --showall
-  # md_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
-  # md_array="\"[${md_values}]\""
-  # data_line="${data_line},${md_array}"
+# # Extract MD values for posterior rings
+# for ((i=1; i<=$num_bins; i++)); do
+#   # fslmeants -i "$roi_dir/MD/post_ring${i}_MD.nii.gz" -m "$roi_dir/MD/post_ring${i}.nii.gz" -o DTI_Processing_Scripts/results/temp.csv --showall
+#   # md_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
+#   # md_array="\"[${md_values}]\""
+#   # data_line="${data_line},${md_array}"
 
-  # Just gets the mean value without --showall
-  md_mean=$(fslmeants -i "$roi_dir/MD/baseline_post_ring${i}_MD.nii.gz" -m "$roi_dir/MD/baseline_post_ring${i}.nii.gz")
-  data_line="${data_line},${md_mean}"
-done
+#   # Just gets the mean value without --showall
+#   md_mean=$(fslmeants -i "$roi_dir/MD/post_ring${i}_MD.nii.gz" -m "$roi_dir/MD/post_ring${i}.nii.gz")
+#   data_line="${data_line},${md_mean}"
+# done
+
+# # Extract MD values for baseline anterior rings
+# for ((i=1; i<=$num_bins; i++)); do
+#   # fslmeants -i "$roi_dir/MD/baseline_ant_ring${i}_MD.nii.gz" -m "$roi_dir/MD/baseline_ant_ring${i}.nii.gz" -o DTI_Processing_Scripts/results/temp.csv --showall
+#   # md_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
+#   # md_array="\"[${md_values}]\""
+#   # data_line="${data_line},${md_array}"
+
+#   # Just gets the mean value without --showall
+#   md_mean=$(fslmeants -i "$roi_dir/MD/baseline_ant_ring${i}_MD.nii.gz" -m "$roi_dir/MD/baseline_ant_ring${i}.nii.gz")
+#   data_line="${data_line},${md_mean}"
+# done
+
+# # Extract MD values for baseline posterior rings
+# for ((i=1; i<=$num_bins; i++)); do
+#   # fslmeants -i "$roi_dir/MD/baseline_post_ring${i}_MD.nii.gz" -m "$roi_dir/MD/baseline_post_ring${i}.nii.gz" -o DTI_Processing_Scripts/results/temp.csv --showall
+#   # md_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
+#   # md_array="\"[${md_values}]\""
+#   # data_line="${data_line},${md_array}"
+
+#   # Just gets the mean value without --showall
+#   md_mean=$(fslmeants -i "$roi_dir/MD/baseline_post_ring${i}_MD.nii.gz" -m "$roi_dir/MD/baseline_post_ring${i}.nii.gz")
+#   data_line="${data_line},${md_mean}"
+# done
 
 # Clean up temporary files
 rm -f DTI_Processing_Scripts/results/temp.csv
