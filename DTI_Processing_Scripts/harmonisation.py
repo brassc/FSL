@@ -348,13 +348,13 @@ def process_metrics_file(input_filename, harmonized_output_filename):
 # process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_5x4vox.csv', 
 #                      harmonized_output_filename='DTI_Processing_Scripts/merged_data_5x4vox_harmonised.csv')
 
-process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_5x4vox_NEW.csv',
-                     harmonized_output_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_harmonised.csv')
+# process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_5x4vox_NEW.csv',
+#                      harmonized_output_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_harmonised.csv')
 
 
 process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_5x4vox_NEW_filtered.csv',
                      harmonized_output_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_harmonised.csv')
 
-# process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_10x4vox_NEW_filtered.csv',
-#                         harmonized_output_filename='DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_harmonised.csv')
+process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_10x4vox_NEW_filtered.csv',
+                     harmonized_output_filename='DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_harmonised.csv')
 
