@@ -43,7 +43,7 @@ done
 # Check if required parameters are provided
 if [ -z "$num_bins" ] || [ -z "$bin_size" ] || [ -z "$filter_fa_values" ] || [ -z "$overwrite" ] || [ -z "$get_all_values" ]; then
     echo "Usage: $0 --num_bins=<value> --bin_size=<value> --filter_fa_values=<true/false (Default: false)> --overwrite=<true/false (Default: false)> --get_all_values=<true/false (Default: false)>"
-    echo "Example: $0 --num_bins=5 --bin_size=4 --filter_fa_values=true --overwrite=falsec --get_all_values=false"
+    echo "Example: $0 --num_bins=5 --bin_size=4 --filter_fa_values=true --overwrite=false --get_all_values=false"
     echo "Note: filter_fa_values, overwrite and get_all_values default to false if not specified"
     exit 1
 fi
