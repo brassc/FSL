@@ -142,13 +142,28 @@ for parameter in FA MD; do
   for label in ant post baseline_ant baseline_post; do
     # Process all bins for this parameter/label combination
     for ((i=1; i<=$num_bins; i++)); do
-      # Handle special case for FA with filtering
-      if [ "$parameter" = "FA" ] && [ "$filter_fa_values" = "true" ]; then
-        mean_value=$(extract_filtered_fa_value "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
-      else
-        mean_value=$(fslmeants -i "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" -m "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
-      fi
-      data_line="${data_line},${mean_value}"
+        # Handle special case for FA with filtering
+        if [ $get_all_values = 'false' ]; then
+            if [ "$parameter" = "FA" ] && [ "$filter_fa_values" = "true" ]; then
+                mean_value=$(extract_filtered_fa_value "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
+            else
+                mean_value=$(fslmeants -i "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" -m "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
+            fi
+            data_line="${data_line},${mean_value}"
+        else
+            # Get all values using showall option
+            fslmeants -i "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" \
+                    -m "$roi_dir/$parameter/${label}_ring${i}.nii.gz" \
+                    -o DTI_Processing_Scripts/results/temp.csv --showall
+        
+            # Extract values, removing empty lines
+            fa_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
+            
+            # Format as array by wrapping in quotes and brackets
+            fa_array="\"[${fa_values}]\""
+            
+            data_line="${data_line},${fa_array}"
+        fi
     done
   done
 done
@@ -293,6 +308,7 @@ echo "Writing data to master CSV..."
     sync
 ) 200>"${master_csv}.lock"
 
+rm -f "${master_csv}.lock"
 
 # echo "$patient_id,$timepoint,$fa_ant_r1,$fa_ant_r2,$fa_ant_r3,$fa_ant_r4,$fa_ant_r5,$fa_post_r1,$fa_post_r2,$fa_post_r3,$fa_post_r4,$fa_post_r5,$fa_base_ant_r1,$fa_base_ant_r2,$fa_base_ant_r3,$fa_base_ant_r4,$fa_base_ant_r5,$fa_base_post_r1,$fa_base_post_r2,$fa_base_post_r3,$fa_base_post_r4,$fa_base_post_r5,$md_ant_r1,$md_ant_r2,$md_ant_r3,$md_ant_r4,$md_ant_r5,$md_post_r1,$md_post_r2,$md_post_r3,$md_post_r4,$md_post_r5,$md_base_ant_r1,$md_base_ant_r2,$md_base_ant_r3,$md_base_ant_r4,$md_base_ant_r5,$md_base_post_r1,$md_base_post_r2,$md_base_post_r3,$md_base_post_r4,$md_base_post_r5" >> $output_csv
 echo "Extraction complete for patient $patient_id at timepoint $timepoint"
