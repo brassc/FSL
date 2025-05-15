@@ -162,3 +162,5 @@ grep -v "^1," $coord_csv | while IFS=, read excluded patient_id timepoint rest; 
 done
 
 echo "All processing complete. Results in $master_csv"
+exit 0
+# end script
