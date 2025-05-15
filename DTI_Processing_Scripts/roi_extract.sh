@@ -11,8 +11,7 @@ md_map=$7  # Path to MD map (not used in this script)
 master_csv=$8 # Path to the master CSV file
 filter_fa_values=${9:-"false"} # New flag to enable/disable FA filtering, defaults to "false"
 get_all_values=${10:-"false"} # New flag to enable/disable getting all values, defaults to "false"
-overwrite_all=${11:-"false"} # New flag to enable/disable overwriting all values, defaults to "false"
-md_extraction_overwrite=${12:-"false"} # New flag to enable/disable MD extraction overwrite, defaults to "false"
+md_extraction_overwrite=${11:-"false"} # New flag to enable/disable MD extraction overwrite, defaults to "false"
 
 # Set ROI dir
 # Create spherical ROIs for each point
@@ -84,7 +83,7 @@ fi
 
 
 
-
+if [ "$md_extraction_overwrite="false""]
 # if output_csv already exists, remove it
 if [ -f "$output_csv" ]; then
     rm -f "$output_csv"
