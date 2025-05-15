@@ -11,6 +11,7 @@ md_map=$7  # Path to MD map (not used in this script)
 master_csv=$8 # Path to the master CSV file
 filter_fa_values=${9:-"false"} # New flag to enable/disable FA filtering, defaults to "false"
 get_all_values=${10:-"false"} # New flag to enable/disable getting all values, defaults to "false"
+md_extraction_overwrite=${11:-"false"} # New flag to enable/disable MD extraction overwrite, defaults to "false"
 
 # Set ROI dir
 # Create spherical ROIs for each point
@@ -158,41 +159,130 @@ extract_filtered_md_value() {
 }
 
 
-# Iterate through parameters (FA, MD)
-for parameter in FA MD; do
-  echo "Extracting $parameter values..."
-  
-  # Iterate through all labels
-  for label in ant post baseline_ant baseline_post; do
-    # Process all bins for this parameter/label combination
-    for ((i=1; i<=$num_bins; i++)); do
-        # Handle special case for FA with filtering
-        if [ $get_all_values = 'false' ]; then
-            if [ "$parameter" = "FA" ] && [ "$filter_fa_values" = "true" ]; then
-                mean_value=$(extract_filtered_fa_value "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
-            elif [ "$parameter" = "MD" ] && [ "$filter_fa_values" = "true" ]; then
-                mean_value=$(extract_filtered_md_value "$roi_dir/FA/${label}_ring${i}_FA.nii.gz" "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
-            else 
-                mean_value=$(fslmeants -i "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" -m "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
+if [ "$md_extraction_overwrite" = "true" ]; then
+    # Remove the temp.csv file if it exists
+    echo "MD extraction overwrite enabled. Processing only MD values..."
+
+
+    # first, check if output csv file exists
+    if [ -f "$output_csv" ]; then
+        #read the existing data line for this patient/timepoint
+        existing_line=$(grep "$patient_id,$timepoint" "$output_csv")
+
+        if [ -n "$existing_line" ]; then
+            echo "Found existing data line for patient $patient_id at timepoint $timepoint"
+
+            # Calculate how many FA columns we need based on num_bins
+            if [ $num_bins -eq 10 ]; then
+                # For 10 bins: 2 columns (patient_id, timepoint) + 40 FA columns
+                fa_columns=42
+            elif [ $num_bins -eq 5 ]; then
+                # For 5 bins: 2 columns (patient_id, timepoint) + 20 FA columns
+                fa_columns=22
             fi
-            data_line="${data_line},${mean_value}"
+            # Extract just FA part (patient_id, timepoint, FA values)
+            fa_part=$(echo "$existing_line" | cut -d',' -f1-$fa_columns)
+            # Initialise data line with existing FA values
+            data_line="${fa_part}"
+
+            #Process only MD values
+            parameter="MD"
+            echo "Extracting $parameter values..."
+
+            # Iterate through all labels
+            for label in ant post baseline_ant baseline_post; do
+                # Process all bins for this parameter/label combination
+                for ((i=1; i<=$num_bins; i++)); do
+                # Handle special case for MD with filtering
+                    if [ $get_all_values = 'false' ]; then
+                        if [ "$filter_fa_values" = "true" ]; then
+                        mean_value=$(extract_filtered_md_value "$roi_dir/FA/${label}_ring${i}_FA.nii.gz" "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
+                        else
+                        mean_value=$(fslmeants -i "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" -m "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
+                        fi
+                        data_line="${data_line},${mean_value}"
+                    else
+                        # Get all values using showall option
+                        fslmeants -i "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" \
+                                -m "$roi_dir/$parameter/${label}_ring${i}.nii.gz" \
+                                -o DTI_Processing_Scripts/results/temp.csv --showall
+                        
+                        # Extract values, removing empty lines
+                        md_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
+                        
+                        # Format as array by wrapping in quotes and brackets
+                        md_array="\"[${md_values}]\""
+                        
+                        data_line="${data_line},${md_array}"
+                    fi
+                done
+            done
+
+            # Remove existing line from output CSV
+            grep -v "^$patient_id,$timepoint" "$output_csv" > "${output_csv}.tmp"
+            mv "${output_csv}.tmp" "$output_csv"
+
+            # Also update master CSV
+            grep -v "^$patient_id,$timepoint" "$master_csv" > "${master_csv}.tmp"
+            mv "${master_csv}.tmp" "$master_csv"
+
+            echo "Updated MD values for patient $patient_id at timepoint $timepoint"
         else
-            # Get all values using showall option
-            fslmeants -i "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" \
-                    -m "$roi_dir/$parameter/${label}_ring${i}.nii.gz" \
-                    -o DTI_Processing_Scripts/results/temp.csv --showall
-        
-            # Extract values, removing empty lines
-            fa_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
-            
-            # Format as array by wrapping in quotes and brackets
-            fa_array="\"[${fa_values}]\""
-            
-            data_line="${data_line},${fa_array}"
+            echo "Warning: No existing data line found for patient $patient_id at timepoint $timepoint"
+            echo "Falling back to normal processing for both FA and MD values"
+            # Fall back to normal processing (next code section)
+            md_extraction_overwrite="false"
         fi
+    else
+        echo "Warning: Output CSV does not exist for MD overwrite"
+        echo "Falling back to normal processing for both FA and MD values"
+        # Fall back to normal processing (next code section)
+        md_extraction_overwrite="false"
+    fi
+fi
+
+
+
+
+
+# Only do normal processing if not doing MD overwrite or fallback required
+if [ "$md_extraction_overwrite" = "false" ]; then
+    # Iterate through parameters (FA, MD)
+    for parameter in FA MD; do
+    echo "Extracting $parameter values..."
+        
+        # Iterate through all labels
+        for label in ant post baseline_ant baseline_post; do
+            # Process all bins for this parameter/label combination
+            for ((i=1; i<=$num_bins; i++)); do
+                # Handle special case for FA with filtering
+                if [ $get_all_values = 'false' ]; then
+                    if [ "$parameter" = "FA" ] && [ "$filter_fa_values" = "true" ]; then
+                        mean_value=$(extract_filtered_fa_value "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
+                    elif [ "$parameter" = "MD" ] && [ "$filter_fa_values" = "true" ]; then
+                        mean_value=$(extract_filtered_md_value "$roi_dir/FA/${label}_ring${i}_FA.nii.gz" "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
+                    else 
+                        mean_value=$(fslmeants -i "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" -m "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
+                    fi
+                    data_line="${data_line},${mean_value}"
+                else
+                    # Get all values using showall option
+                    fslmeants -i "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" \
+                            -m "$roi_dir/$parameter/${label}_ring${i}.nii.gz" \
+                            -o DTI_Processing_Scripts/results/temp.csv --showall
+                
+                    # Extract values, removing empty lines
+                    fa_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
+                    
+                    # Format as array by wrapping in quotes and brackets
+                    fa_array="\"[${fa_values}]\""
+                    
+                    data_line="${data_line},${fa_array}"
+                fi
+            done
+        done
     done
-  done
-done
+fi
 
 
 # echo "Extracting FA values..."

@@ -16,6 +16,8 @@ bin_size=""
 filter_fa_values="false"
 overwrite="false"
 get_all_values="false"
+md_extraction_overwrite="false"
+
 
 for arg in "$@"; do
     case $arg in
@@ -34,6 +36,9 @@ for arg in "$@"; do
         --get_all_values=*)
         get_all_values="${arg#*=}"
         ;;
+        --md_extraction_overwrite=*)
+        md_extraction_overwrite="${arg#*=}"
+        ;;
         *)
         # Unknown option
         ;;
@@ -41,9 +46,9 @@ for arg in "$@"; do
 done
 
 # Check if required parameters are provided
-if [ -z "$num_bins" ] || [ -z "$bin_size" ] || [ -z "$filter_fa_values" ] || [ -z "$overwrite" ] || [ -z "$get_all_values" ]; then
+if [ -z "$num_bins" ] || [ -z "$bin_size" ] || [ -z "$filter_fa_values" ] || [ -z "$overwrite" ] || [ -z "$get_all_values" ] || [ -z "$md_extraction_overwrite" ]; then
     echo "Usage: $0 --num_bins=<value> --bin_size=<value> --filter_fa_values=<true/false (Default: false)> --overwrite=<true/false (Default: false)> --get_all_values=<true/false (Default: false)>"
-    echo "Example: $0 --num_bins=5 --bin_size=4 --filter_fa_values=true --overwrite=false --get_all_values=false"
+    echo "Example: $0 --num_bins=5 --bin_size=4 --filter_fa_values=true --overwrite=false --get_all_values=false --md_extraction_overwrite=false"
     echo "Note: filter_fa_values, overwrite and get_all_values default to false if not specified"
     exit 1
 fi
@@ -152,7 +157,7 @@ grep -v "^1," $coord_csv | while IFS=, read excluded patient_id timepoint rest; 
             ./DTI_Processing_Scripts/roi_create.sh "$patient_id" "$timepoint" "$tp_base" "$mask_path" "$fa_path" "$md_path" "$bin_size" "$num_bins" "$coord_csv" "$filter_fa_values" "$overwrite"
             
             # Step 2: Extract metrics
-            ./DTI_Processing_Scripts/roi_extract.sh "$patient_id" "$timepoint" "$tp_base" "$bin_size" "$num_bins" "$fa_path" "$md_path" "$master_csv" "$filter_fa_values" "$get_all_values"
+            ./DTI_Processing_Scripts/roi_extract.sh "$patient_id" "$timepoint" "$tp_base" "$bin_size" "$num_bins" "$fa_path" "$md_path" "$master_csv" "$filter_fa_values" "$get_all_values" "$md_extraction_overwrite"
             
             # Append to master CSV
             #cat "DTI_Processing_Scripts/results/${patient_id}_${timepoint}_metrics_${num_bins}x${bin_size}vox.csv" | tail -n 1 >> $master_csv
