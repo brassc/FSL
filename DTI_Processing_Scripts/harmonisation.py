@@ -172,6 +172,18 @@ def process_metrics_file(input_filename, harmonized_output_filename):
 
     # # load the metrics data from input file
     all_metrics = pd.read_csv(input_filename)
+
+    # # Convert FA values of 0.0 to NaN
+    # fa_columns = [col for col in all_metrics.columns if 'fa' in col.lower()]
+    # for column in fa_columns:
+    #     # This will catch true zeros and values very close to zero
+    #     all_metrics.loc[all_metrics[column] < 0.0001, column] = np.nan
+        
+    #     # Optional: Print how many zeros were replaced in each column
+    #     num_replaced = all_metrics[column].isna().sum()
+    #     print(f"Replaced {num_replaced} values with NaN in column {column}")
+
+
     pre_harmonised_filename=harmonized_output_filename.replace('_harmonised.csv', '.csv')
     
 
@@ -336,6 +348,26 @@ def process_metrics_file(input_filename, harmonized_output_filename):
             if harmonized_col_name in md_harmonized_df.columns:
                 harmonized_data[col] = md_harmonized_df[harmonized_col_name].values
         print(f"Replaced {len(md_columns)} MD columns with their harmonized versions")
+
+
+    # Clean FA data - make vales < 0.0001 NaN
+    fa_columns = [col for col in harmonized_data.columns if 'fa' in col.lower()]
+    for column in fa_columns:
+        # This will catch true zeros and values very close to zero
+        harmonized_data.loc[harmonized_data[column] < 0.0001, column] = np.nan
+        # Optional: Print how many zeros were replaced in each column
+        num_replaced = harmonized_data[column].isna().sum()
+        print(f"Replaced {num_replaced} values with NaN in column {column}")
+
+    # Clean MD data - make vales < 0.0001 NaN
+    md_columns = [col for col in harmonized_data.columns if 'md' in col.lower()]
+    for column in md_columns:
+        # This will catch true zeros and values very close to zero
+        harmonized_data.loc[harmonized_data[column] < 0.0001, column] = np.nan
+        # Optional: Print how many zeros were replaced in each column
+        num_replaced = harmonized_data[column].isna().sum()
+        print(f"Replaced {num_replaced} values with NaN in column {column}")
+
 
     # Get the original file name from the input
     # original_file = merged_filename

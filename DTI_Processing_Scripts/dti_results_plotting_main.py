@@ -571,16 +571,17 @@ if __name__ == '__main__':
     # Load the (harmonised) data 
 
     # not harmonised data test
-    data_5x4vox_not_harmonised_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_notharmonised.csv'
-    data_5x4vox_not_harmonised=process_timepoint_data(input_file_location=data_5x4vox_not_harmonised_filename)
-    plot_all_rings_combined(df=data_5x4vox_not_harmonised, parameter='fa', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox_not_harmonised.png')
+    # data_5x4vox_not_harmonised_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_notharmonised.csv'
+    # data_5x4vox_not_harmonised=process_timepoint_data(input_file_location=data_5x4vox_not_harmonised_filename)
+    # plot_all_rings_combined(df=data_5x4vox_not_harmonised, parameter='fa', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox_not_harmonised.png')
+    # plot_all_rings_combined(df=data_5x4vox_not_harmonised, parameter='md', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox_not_harmonised_md.png')
 
-    sys.exit()
+    
     data_5x4vox_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_harmonised.csv'
     data_5x4vox=process_timepoint_data(input_file_location=data_5x4vox_filename)
     # Now data_5x4vox has been recategorized based on Days_since_injury, exactly the same as the deformation analysis
     plot_all_rings_combined(df=data_5x4vox, parameter='fa', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox_filtered.png')
-    #plot_all_rings_combined(df=data_5x4vox, parameter='md', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox_filtered_md.png')
+    plot_all_rings_combined(df=data_5x4vox, parameter='md', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox_filtered_md.png')
 
     # Load the (harmonised) data
     #data_10x4vox=pd.read_csv('DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_harmonised.csv')
