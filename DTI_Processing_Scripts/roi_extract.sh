@@ -11,6 +11,7 @@ md_map=$7  # Path to MD map (not used in this script)
 master_csv=$8 # Path to the master CSV file
 filter_fa_values=${9:-"false"} # New flag to enable/disable FA filtering, defaults to "false"
 get_all_values=${10:-"false"} # New flag to enable/disable getting all values, defaults to "false"
+md_extraction_overwrite=${11:-"false"} # New flag to enable/disable MD extraction overwrite, defaults to "false"
 
 # Set ROI dir
 # Create spherical ROIs for each point
@@ -82,26 +83,45 @@ fi
 
 
 
+if [ "$md_extraction_overwrite" = "false" ]; then
+    # if output_csv already exists, remove it
+    if [ -f "$output_csv" ]; then
+        rm -f "$output_csv"
+    fi
+    # create new
+    mkdir -p $(dirname $output_csv)
 
-# if output_csv already exists, remove it
-if [ -f "$output_csv" ]; then
-    rm -f "$output_csv"
-fi
-# create new
-mkdir -p $(dirname $output_csv)
 
-
-echo "Output CSV: $output_csv"
-
-# Initialize CSV header
-if [ $num_bins -eq 10 ]; then
-    echo "patient_id,timepoint,FA_anterior_ring_1,FA_anterior_ring_2,FA_anterior_ring_3,FA_anterior_ring_4,FA_anterior_ring_5,FA_anterior_ring_6,FA_anterior_ring_7,FA_anterior_ring_8,FA_anterior_ring_9,FA_anterior_ring_10,FA_posterior_ring_1,FA_posterior_ring_2,FA_posterior_ring_3,FA_posterior_ring_4,FA_posterior_ring_5,FA_posterior_ring_6,FA_posterior_ring_7,FA_posterior_ring_8,FA_posterior_ring_9,FA_posterior_ring_10,FA_baseline_anterior_ring_1,FA_baseline_anterior_ring_2,FA_baseline_anterior_ring_3,FA_baseline_anterior_ring_4,FA_baseline_anterior_ring_5,FA_baseline_anterior_ring_6,FA_baseline_anterior_ring_7,FA_baseline_anterior_ring_8,FA_baseline_anterior_ring_9,FA_baseline_anterior_ring_10,FA_baseline_posterior_ring_1,FA_baseline_posterior_ring_2,FA_baseline_posterior_ring_3,FA_baseline_posterior_ring_4,FA_baseline_posterior_ring_5,FA_baseline_posterior_ring_6,FA_baseline_posterior_ring_7,FA_baseline_posterior_ring_8,FA_baseline_posterior_ring_9,FA_baseline_posterior_ring_10,MD_anterior_ring_1,MD_anterior_ring_2,MD_anterior_ring_3,MD_anterior_ring_4,MD_anterior_ring_5,MD_anterior_ring_6,MD_anterior_ring_7,MD_anterior_ring_8,MD_anterior_ring_9,MD_anterior_ring_10,MD_posterior_ring_1,MD_posterior_ring_2,MD_posterior_ring_3,MD_posterior_ring_4,MD_posterior_ring_5,MD_posterior_ring_6,MD_posterior_ring_7,MD_posterior_ring_8,MD_posterior_ring_9,MD_posterior_ring_10,MD_baseline_anterior_ring_1,MD_baseline_anterior_ring_2,MD_baseline_anterior_ring_3,MD_baseline_anterior_ring_4,MD_baseline_anterior_ring_5,MD_baseline_anterior_ring_6,MD_baseline_anterior_ring_7,MD_baseline_anterior_ring_8,MD_baseline_anterior_ring_9,MD_baseline_anterior_ring_10,MD_baseline_posterior_ring_1,MD_baseline_posterior_ring_2,MD_baseline_posterior_ring_3,MD_baseline_posterior_ring_4,MD_baseline_posterior_ring_5,MD_baseline_posterior_ring_6,MD_baseline_posterior_ring_7,MD_baseline_posterior_ring_8,MD_baseline_posterior_ring_9,MD_baseline_posterior_ring_10" > $output_csv
-elif [ $num_bins -eq 5 ]; then
-    echo "patient_id,timepoint,FA_anterior_ring_1,FA_anterior_ring_2,FA_anterior_ring_3,FA_anterior_ring_4,FA_anterior_ring_5,FA_posterior_ring_1,FA_posterior_ring_2,FA_posterior_ring_3,FA_posterior_ring_4,FA_posterior_ring_5,FA_baseline_anterior_ring_1,FA_baseline_anterior_ring_2,FA_baseline_anterior_ring_3,FA_baseline_anterior_ring_4,FA_baseline_anterior_ring_5,FA_baseline_posterior_ring_1,FA_baseline_posterior_ring_2,FA_baseline_posterior_ring_3,FA_baseline_posterior_ring_4,FA_baseline_posterior_ring_5,MD_anterior_ring_1,MD_anterior_ring_2,MD_anterior_ring_3,MD_anterior_ring_4,MD_anterior_ring_5,MD_posterior_ring_1,MD_posterior_ring_2,MD_posterior_ring_3,MD_posterior_ring_4,MD_posterior_ring_5,MD_baseline_anterior_ring_1,MD_baseline_anterior_ring_2,MD_baseline_anterior_ring_3,MD_baseline_anterior_ring_4,MD_baseline_anterior_ring_5,MD_baseline_posterior_ring_1,MD_baseline_posterior_ring_2,MD_baseline_posterior_ring_3,MD_baseline_posterior_ring_4,MD_baseline_posterior_ring_5" > $output_csv
+    echo "Output CSV: $output_csv"
+    # Initialize CSV header
+    if [ $num_bins -eq 10 ]; then
+        echo "patient_id,timepoint,FA_anterior_ring_1,FA_anterior_ring_2,FA_anterior_ring_3,FA_anterior_ring_4,FA_anterior_ring_5,FA_anterior_ring_6,FA_anterior_ring_7,FA_anterior_ring_8,FA_anterior_ring_9,FA_anterior_ring_10,FA_posterior_ring_1,FA_posterior_ring_2,FA_posterior_ring_3,FA_posterior_ring_4,FA_posterior_ring_5,FA_posterior_ring_6,FA_posterior_ring_7,FA_posterior_ring_8,FA_posterior_ring_9,FA_posterior_ring_10,FA_baseline_anterior_ring_1,FA_baseline_anterior_ring_2,FA_baseline_anterior_ring_3,FA_baseline_anterior_ring_4,FA_baseline_anterior_ring_5,FA_baseline_anterior_ring_6,FA_baseline_anterior_ring_7,FA_baseline_anterior_ring_8,FA_baseline_anterior_ring_9,FA_baseline_anterior_ring_10,FA_baseline_posterior_ring_1,FA_baseline_posterior_ring_2,FA_baseline_posterior_ring_3,FA_baseline_posterior_ring_4,FA_baseline_posterior_ring_5,FA_baseline_posterior_ring_6,FA_baseline_posterior_ring_7,FA_baseline_posterior_ring_8,FA_baseline_posterior_ring_9,FA_baseline_posterior_ring_10,MD_anterior_ring_1,MD_anterior_ring_2,MD_anterior_ring_3,MD_anterior_ring_4,MD_anterior_ring_5,MD_anterior_ring_6,MD_anterior_ring_7,MD_anterior_ring_8,MD_anterior_ring_9,MD_anterior_ring_10,MD_posterior_ring_1,MD_posterior_ring_2,MD_posterior_ring_3,MD_posterior_ring_4,MD_posterior_ring_5,MD_posterior_ring_6,MD_posterior_ring_7,MD_posterior_ring_8,MD_posterior_ring_9,MD_posterior_ring_10,MD_baseline_anterior_ring_1,MD_baseline_anterior_ring_2,MD_baseline_anterior_ring_3,MD_baseline_anterior_ring_4,MD_baseline_anterior_ring_5,MD_baseline_anterior_ring_6,MD_baseline_anterior_ring_7,MD_baseline_anterior_ring_8,MD_baseline_anterior_ring_9,MD_baseline_anterior_ring_10,MD_baseline_posterior_ring_1,MD_baseline_posterior_ring_2,MD_baseline_posterior_ring_3,MD_baseline_posterior_ring_4,MD_baseline_posterior_ring_5,MD_baseline_posterior_ring_6,MD_baseline_posterior_ring_7,MD_baseline_posterior_ring_8,MD_baseline_posterior_ring_9,MD_baseline_posterior_ring_10" > $output_csv
+    elif [ $num_bins -eq 5 ]; then
+        echo "patient_id,timepoint,FA_anterior_ring_1,FA_anterior_ring_2,FA_anterior_ring_3,FA_anterior_ring_4,FA_anterior_ring_5,FA_posterior_ring_1,FA_posterior_ring_2,FA_posterior_ring_3,FA_posterior_ring_4,FA_posterior_ring_5,FA_baseline_anterior_ring_1,FA_baseline_anterior_ring_2,FA_baseline_anterior_ring_3,FA_baseline_anterior_ring_4,FA_baseline_anterior_ring_5,FA_baseline_posterior_ring_1,FA_baseline_posterior_ring_2,FA_baseline_posterior_ring_3,FA_baseline_posterior_ring_4,FA_baseline_posterior_ring_5,MD_anterior_ring_1,MD_anterior_ring_2,MD_anterior_ring_3,MD_anterior_ring_4,MD_anterior_ring_5,MD_posterior_ring_1,MD_posterior_ring_2,MD_posterior_ring_3,MD_posterior_ring_4,MD_posterior_ring_5,MD_baseline_anterior_ring_1,MD_baseline_anterior_ring_2,MD_baseline_anterior_ring_3,MD_baseline_anterior_ring_4,MD_baseline_anterior_ring_5,MD_baseline_posterior_ring_1,MD_baseline_posterior_ring_2,MD_baseline_posterior_ring_3,MD_baseline_posterior_ring_4,MD_baseline_posterior_ring_5" > $output_csv
+    else
+        echo "Invalid number of bins specified. Please set num_bins to either 5 or 10."
+        exit 1
+    fi
 else
-    echo "Invalid number of bins specified. Please set num_bins to either 5 or 10."
-    exit 1
+    # Check if file exists, create only if it doesn't
+    if [ ! -f "$output_csv" ]; then
+        # Create directory if needed
+        mkdir -p $(dirname $output_csv)
+        
+        # Initialize CSV header
+        if [ $num_bins -eq 10 ]; then
+            echo "patient_id,timepoint,FA_anterior_ring_1,FA_anterior_ring_2,FA_anterior_ring_3,FA_anterior_ring_4,FA_anterior_ring_5,FA_anterior_ring_6,FA_anterior_ring_7,FA_anterior_ring_8,FA_anterior_ring_9,FA_anterior_ring_10,FA_posterior_ring_1,FA_posterior_ring_2,FA_posterior_ring_3,FA_posterior_ring_4,FA_posterior_ring_5,FA_posterior_ring_6,FA_posterior_ring_7,FA_posterior_ring_8,FA_posterior_ring_9,FA_posterior_ring_10,FA_baseline_anterior_ring_1,FA_baseline_anterior_ring_2,FA_baseline_anterior_ring_3,FA_baseline_anterior_ring_4,FA_baseline_anterior_ring_5,FA_baseline_anterior_ring_6,FA_baseline_anterior_ring_7,FA_baseline_anterior_ring_8,FA_baseline_anterior_ring_9,FA_baseline_anterior_ring_10,FA_baseline_posterior_ring_1,FA_baseline_posterior_ring_2,FA_baseline_posterior_ring_3,FA_baseline_posterior_ring_4,FA_baseline_posterior_ring_5,FA_baseline_posterior_ring_6,FA_baseline_posterior_ring_7,FA_baseline_posterior_ring_8,FA_baseline_posterior_ring_9,FA_baseline_posterior_ring_10,MD_anterior_ring_1,MD_anterior_ring_2,MD_anterior_ring_3,MD_anterior_ring_4,MD_anterior_ring_5,MD_anterior_ring_6,MD_anterior_ring_7,MD_anterior_ring_8,MD_anterior_ring_9,MD_anterior_ring_10,MD_posterior_ring_1,MD_posterior_ring_2,MD_posterior_ring_3,MD_posterior_ring_4,MD_posterior_ring_5,MD_posterior_ring_6,MD_posterior_ring_7,MD_posterior_ring_8,MD_posterior_ring_9,MD_posterior_ring_10,MD_baseline_anterior_ring_1,MD_baseline_anterior_ring_2,MD_baseline_anterior_ring_3,MD_baseline_anterior_ring_4,MD_baseline_anterior_ring_5,MD_baseline_anterior_ring_6,MD_baseline_anterior_ring_7,MD_baseline_anterior_ring_8,MD_baseline_anterior_ring_9,MD_baseline_anterior_ring_10,MD_baseline_posterior_ring_1,MD_baseline_posterior_ring_2,MD_baseline_posterior_ring_3,MD_baseline_posterior_ring_4,MD_baseline_posterior_ring_5,MD_baseline_posterior_ring_6,MD_baseline_posterior_ring_7,MD_baseline_posterior_ring_8,MD_baseline_posterior_ring_9,MD_baseline_posterior_ring_10" > $output_csv
+        elif [ $num_bins -eq 5 ]; then
+            echo "patient_id,timepoint,FA_anterior_ring_1,FA_anterior_ring_2,FA_anterior_ring_3,FA_anterior_ring_4,FA_anterior_ring_5,FA_posterior_ring_1,FA_posterior_ring_2,FA_posterior_ring_3,FA_posterior_ring_4,FA_posterior_ring_5,FA_baseline_anterior_ring_1,FA_baseline_anterior_ring_2,FA_baseline_anterior_ring_3,FA_baseline_anterior_ring_4,FA_baseline_anterior_ring_5,FA_baseline_posterior_ring_1,FA_baseline_posterior_ring_2,FA_baseline_posterior_ring_3,FA_baseline_posterior_ring_4,FA_baseline_posterior_ring_5,MD_anterior_ring_1,MD_anterior_ring_2,MD_anterior_ring_3,MD_anterior_ring_4,MD_anterior_ring_5,MD_posterior_ring_1,MD_posterior_ring_2,MD_posterior_ring_3,MD_posterior_ring_4,MD_posterior_ring_5,MD_baseline_anterior_ring_1,MD_baseline_anterior_ring_2,MD_baseline_anterior_ring_3,MD_baseline_anterior_ring_4,MD_baseline_anterior_ring_5,MD_baseline_posterior_ring_1,MD_baseline_posterior_ring_2,MD_baseline_posterior_ring_3,MD_baseline_posterior_ring_4,MD_baseline_posterior_ring_5" > $output_csv
+        else
+            echo "Invalid number of bins specified. Please set num_bins to either 5 or 10."
+            exit 1
+        fi
+    fi
 fi
+
+
+
 #echo "patient_id,timepoint,FA_anterior_ring_1,FA_anterior_ring_2,FA_anterior_ring_3,FA_anterior_ring_4,FA_anterior_ring_5,FA_posterior_ring_1,FA_posterior_ring_2,FA_posterior_ring_3,FA_posterior_ring_4,FA_posterior_ring_5,FA_baseline_anterior_ring_1,FA_baseline_anterior_ring_2,FA_baseline_anterior_ring_3,FA_baseline_anterior_ring_4,FA_baseline_anterior_ring_5,FA_baseline_posterior_ring_1,FA_baseline_posterior_ring_2,FA_baseline_posterior_ring_3,FA_baseline_posterior_ring_4,FA_baseline_posterior_ring_5,MD_anterior_ring_1,MD_anterior_ring_2,MD_anterior_ring_3,MD_anterior_ring_4,MD_anterior_ring_5,MD_posterior_ring_1,MD_posterior_ring_2,MD_posterior_ring_3,MD_posterior_ring_4,MD_posterior_ring_5,MD_baseline_anterior_ring_1,MD_baseline_anterior_ring_2,MD_baseline_anterior_ring_3,MD_baseline_anterior_ring_4,MD_baseline_anterior_ring_5,MD_baseline_posterior_ring_1,MD_baseline_posterior_ring_2,MD_baseline_posterior_ring_3,MD_baseline_posterior_ring_4,MD_baseline_posterior_ring_5" > $output_csv
 
 # Initialize the data line with patient_id and timepoint
@@ -132,41 +152,167 @@ extract_filtered_fa_value() {
     echo "$result"
 }
 
+# Function to extract MD values with filtering based on FA values (used only if flag is true)
+extract_filtered_md_value() {
+    local fa_file=$1
+    local md_file=$2
+    local mask_file=$3
+    
+    # Create a temporary mask that only includes voxels with FA values between 0.05 and 1
+    local valid_range_mask="${fa_file%.nii.gz}_valid_range_mask_temp.nii.gz"
+    
+    # Create mask of valid values (between 0.05 and 1)
+    fslmaths "$fa_file" -thr 0.05 -uthr 1 -bin "$valid_range_mask"
+    
+    # Combine with the input mask (logical AND)
+    local combined_mask="${fa_file%.nii.gz}_combined_mask_temp.nii.gz"
+    fslmaths "$valid_range_mask" -mul "$mask_file" "$combined_mask"
+    
+    # Calculate mean using the MD data but with the combined mask
+    local result=$(fslmeants -i "$md_file" -m "$combined_mask")
+    
+    # Clean up temporary files
+    rm -f "$valid_range_mask" "$combined_mask"
+    
+    echo "$result"
+}
 
 
-# Iterate through parameters (FA, MD)
-for parameter in FA MD; do
-  echo "Extracting $parameter values..."
-  
-  # Iterate through all labels
-  for label in ant post baseline_ant baseline_post; do
-    # Process all bins for this parameter/label combination
-    for ((i=1; i<=$num_bins; i++)); do
-        # Handle special case for FA with filtering
-        if [ $get_all_values = 'false' ]; then
-            if [ "$parameter" = "FA" ] && [ "$filter_fa_values" = "true" ]; then
-                mean_value=$(extract_filtered_fa_value "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
-            else
-                mean_value=$(fslmeants -i "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" -m "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
-            fi
-            data_line="${data_line},${mean_value}"
-        else
-            # Get all values using showall option
-            fslmeants -i "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" \
-                    -m "$roi_dir/$parameter/${label}_ring${i}.nii.gz" \
-                    -o DTI_Processing_Scripts/results/temp.csv --showall
+if [ "$md_extraction_overwrite" = "true" ]; then
+    # Remove the temp.csv file if it exists
+    echo "MD extraction overwrite enabled. Processing only MD values..."
+
+
+    # first, check if output csv file exists
+    if [ -f "$output_csv" ]; then
+
+        # Force convert line endings first
+        # dos2unix "$output_csv" 2>/dev/null
+
+        # Use several methods and take the first non-empty result
+        existing_line=""
+
         
-            # Extract values, removing empty lines
-            fa_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
+        existing_line=$(tail -n +2 "$output_csv" | head -n 1)
+        # echo "Second line from tail: $existing_line"
+        
+
+        if [ -n "$existing_line" ]; then
+            echo "Found existing data line for patient $patient_id at timepoint $timepoint"
+
+            # Calculate how many FA columns we need based on num_bins
+            if [ $num_bins -eq 10 ]; then
+                # For 10 bins: 2 columns (patient_id, timepoint) + 40 FA columns
+                fa_columns=42
+            elif [ $num_bins -eq 5 ]; then
+                # For 5 bins: 2 columns (patient_id, timepoint) + 20 FA columns
+                fa_columns=22
+            fi
+            # Extract just FA part (patient_id, timepoint, FA values)
+            fa_part=$(echo "$existing_line" | cut -d',' -f1-$fa_columns)
+            # Initialise data line with existing FA values
+            data_line="${fa_part}"
+            # echo "data line: $data_line"
             
-            # Format as array by wrapping in quotes and brackets
-            fa_array="\"[${fa_values}]\""
-            
-            data_line="${data_line},${fa_array}"
+
+            #Process only MD values
+            parameter="MD"
+            echo "Extracting $parameter values..."
+
+            # Iterate through all labels
+            for label in ant post baseline_ant baseline_post; do
+                # Process all bins for this parameter/label combination
+                for ((i=1; i<=$num_bins; i++)); do
+                # Handle special case for MD with filtering
+                    if [ $get_all_values = 'false' ]; then
+                        if [ "$filter_fa_values" = "true" ]; then
+                        mean_value=$(extract_filtered_md_value "$roi_dir/FA/${label}_ring${i}_FA.nii.gz" "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
+                        else
+                        mean_value=$(fslmeants -i "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" -m "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
+                        fi
+                        data_line="${data_line},${mean_value}"
+                    else
+                        # Get all values using showall option
+                        fslmeants -i "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" \
+                                -m "$roi_dir/$parameter/${label}_ring${i}.nii.gz" \
+                                -o DTI_Processing_Scripts/results/temp.csv --showall
+                        
+                        # Extract values, removing empty lines
+                        md_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
+                        
+                        # Format as array by wrapping in quotes and brackets
+                        md_array="\"[${md_values}]\""
+                        
+                        data_line="${data_line},${md_array}"
+                    fi
+                done
+            done
+
+            # Remove existing line from output CSV
+            grep -v "^$patient_id,$timepoint" "$output_csv" > "${output_csv}.tmp"
+            mv "${output_csv}.tmp" "$output_csv"
+
+            # Also update master CSV
+            grep -v "^$patient_id,$timepoint" "$master_csv" > "${master_csv}.tmp"
+            mv "${master_csv}.tmp" "$master_csv"
+
+            echo "Updated MD values for patient $patient_id at timepoint $timepoint"
+        else
+            echo "Warning: No existing data line found for patient $patient_id at timepoint $timepoint"
+            echo "Falling back to normal processing for both FA and MD values"
+            # Fall back to normal processing (next code section)
+            md_extraction_overwrite="false"
         fi
+    else
+        echo "Warning: Output CSV does not exist for MD overwrite"
+        echo "Falling back to normal processing for both FA and MD values"
+        # Fall back to normal processing (next code section)
+        md_extraction_overwrite="false"
+    fi
+fi
+
+
+
+
+
+# Only do normal processing if not doing MD overwrite or fallback required
+if [ "$md_extraction_overwrite" = "false" ]; then
+    # Iterate through parameters (FA, MD)
+    for parameter in FA MD; do
+    echo "Extracting $parameter values..."
+        
+        # Iterate through all labels
+        for label in ant post baseline_ant baseline_post; do
+            # Process all bins for this parameter/label combination
+            for ((i=1; i<=$num_bins; i++)); do
+                # Handle special case for FA with filtering
+                if [ $get_all_values = 'false' ]; then
+                    if [ "$parameter" = "FA" ] && [ "$filter_fa_values" = "true" ]; then
+                        mean_value=$(extract_filtered_fa_value "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
+                    elif [ "$parameter" = "MD" ] && [ "$filter_fa_values" = "true" ]; then
+                        mean_value=$(extract_filtered_md_value "$roi_dir/FA/${label}_ring${i}_FA.nii.gz" "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
+                    else 
+                        mean_value=$(fslmeants -i "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" -m "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
+                    fi
+                    data_line="${data_line},${mean_value}"
+                else
+                    # Get all values using showall option
+                    fslmeants -i "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" \
+                            -m "$roi_dir/$parameter/${label}_ring${i}.nii.gz" \
+                            -o DTI_Processing_Scripts/results/temp.csv --showall
+                
+                    # Extract values, removing empty lines
+                    fa_values=$(cat DTI_Processing_Scripts/results/temp.csv | grep -v "^$" | tail -1)
+                    
+                    # Format as array by wrapping in quotes and brackets
+                    fa_array="\"[${fa_values}]\""
+                    
+                    data_line="${data_line},${fa_array}"
+                fi
+            done
+        done
     done
-  done
-done
+fi
 
 
 # echo "Extracting FA values..."
