@@ -11,7 +11,8 @@ md_map=$7  # Path to MD map (not used in this script)
 master_csv=$8 # Path to the master CSV file
 filter_fa_values=${9:-"false"} # New flag to enable/disable FA filtering, defaults to "false"
 get_all_values=${10:-"false"} # New flag to enable/disable getting all values, defaults to "false"
-md_extraction_overwrite=${11:-"false"} # New flag to enable/disable MD extraction overwrite, defaults to "false"
+overwrite_all=${11:-"false"} # New flag to enable/disable overwriting all values, defaults to "false"
+md_extraction_overwrite=${12:-"false"} # New flag to enable/disable MD extraction overwrite, defaults to "false"
 
 # Set ROI dir
 # Create spherical ROIs for each point
@@ -166,8 +167,97 @@ if [ "$md_extraction_overwrite" = "true" ]; then
 
     # first, check if output csv file exists
     if [ -f "$output_csv" ]; then
+
+        # Force convert line endings first
+        dos2unix "$output_csv" 2>/dev/null
+
+        # Use several methods and take the first non-empty result
+        second_line=""
+
+        # Method 1: Use tail to skip header
+        second_line=$(tail -n +2 "$output_csv" | head -n 1)
+
+
+
+
+
         #read the existing data line for this patient/timepoint
-        existing_line=$(grep "$patient_id,$timepoint" "$output_csv")
+
+        # Use '^' to anchor to start of line, and escape commas
+        # search_pattern="^${patient_id},${timepoint},*"
+        # echo "Looking for pattern: '$search_pattern' in $output_csv"
+
+        #existing_line=$(grep "$search_pattern" "$output_csv")
+        # existing_line=$(sed -n '2p' "$output_csv")
+        # Save entire file to a temporary file to ensure we have access
+
+        echo "File exists check:"
+        [ -f "$output_csv" ] && echo "File exists" || echo "File does not exist"
+
+        echo "File size check:"
+        wc -c "$output_csv"
+
+        echo "Number of lines check:"
+        wc -l "$output_csv"
+
+        # Let's see what's actually in the file - full contents
+        echo "Full file contents:"
+        cat "$output_csv"
+
+        # Display the extracted line
+        echo "Second line from $output_csv: $second_line"
+
+        echo "*******************************************"
+
+
+
+
+        # First, dump the entire file content and pipe it to grep to get non-header lines
+        echo "Step 1: Filtering out header line..."
+        grep -v "^patient_id" "$output_csv" > /tmp/data_only.csv
+        echo "Filter complete."
+
+        # Check if we got anything
+        echo "Step 2: Checking line count in filtered file..."
+        line_count=$(wc -l < /tmp/data_only.csv)
+        echo "Found $line_count lines in filtered file."
+
+        # Now get the first line from this filtered file (which should be your data line)
+        echo "Step 3: Extracting first line of filtered data..."
+        data_line=$(head -n 1 /tmp/data_only.csv)
+        echo "Data line: $data_line"
+
+        # Store this in a variable for later use
+        echo "Step 4: Storing in variable 'second_line'..."
+        second_line=$data_line
+        echo "Variable set. First 50 characters: ${second_line:0:50}..."
+
+
+
+        cp "$output_csv" /tmp/temp_csv_file.csv
+
+        line_2=$(awk 'NR==3 {print; exit}' "$output_csv")
+        echo "Actual line 2 data: $line_2"
+
+        dos2unix "$output_csv" 
+        line_2=$(awk 'NR==2 {print; exit}' "$output_csv")
+        echo "After dos2unix, line 2: $line_2"
+        exit
+
+        
+        
+        # Try several methods to get line 2
+        existing_line_sed=$(sed -n '2p' /tmp/temp_csv_file.csv)
+        echo "Existing line sed: $existing_line_sed"
+        existing_line_awk=$(awk 'NR==2 {print; exit}' /tmp/temp_csv_file.csv)
+        existing_line_head=$(head -n 2 /tmp/temp_csv_file.csv | tail -n 1)
+        existing_line_tail=$(tail -n +2 /tmp/temp_csv_file.csv | head -n 1)
+        
+        echo "Line 2 via sed: ${existing_line_sed:0:20}..."
+        echo "Line 2 via awk: ${existing_line_awk:0:20}..."
+        echo "Line 2 via head/tail: ${existing_line_head}..."
+        echo "Line 2 via tail: ${existing_line_tail}..."
+        exit 0
 
         if [ -n "$existing_line" ]; then
             echo "Found existing data line for patient $patient_id at timepoint $timepoint"
