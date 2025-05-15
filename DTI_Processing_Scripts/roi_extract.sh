@@ -194,7 +194,7 @@ if [ "$md_extraction_overwrite" = "true" ]; then
 
         
         existing_line=$(tail -n +2 "$output_csv" | head -n 1)
-        echo "Second line from tail: $existing_line"
+        # echo "Second line from tail: $existing_line"
         
 
         if [ -n "$existing_line" ]; then
@@ -212,7 +212,7 @@ if [ "$md_extraction_overwrite" = "true" ]; then
             fa_part=$(echo "$existing_line" | cut -d',' -f1-$fa_columns)
             # Initialise data line with existing FA values
             data_line="${fa_part}"
-            echo "data line: $data_line"
+            # echo "data line: $data_line"
             
 
             #Process only MD values
