@@ -132,6 +132,30 @@ extract_filtered_fa_value() {
     echo "$result"
 }
 
+# Function to extract MD values with filtering based on FA values (used only if flag is true)
+extract_filtered_md_value() {
+    local fa_file=$1
+    local md_file=$2
+    local mask_file=$3
+    
+    # Create a temporary mask that only includes voxels with FA values between 0.05 and 1
+    local valid_range_mask="${fa_file%.nii.gz}_valid_range_mask_temp.nii.gz"
+    
+    # Create mask of valid values (between 0.05 and 1)
+    fslmaths "$fa_file" -thr 0.05 -uthr 1 -bin "$valid_range_mask"
+    
+    # Combine with the input mask (logical AND)
+    local combined_mask="${fa_file%.nii.gz}_combined_mask_temp.nii.gz"
+    fslmaths "$valid_range_mask" -mul "$mask_file" "$combined_mask"
+    
+    # Calculate mean using the MD data but with the combined mask
+    local result=$(fslmeants -i "$md_file" -m "$combined_mask")
+    
+    # Clean up temporary files
+    rm -f "$valid_range_mask" "$combined_mask"
+    
+    echo "$result"
+}
 
 
 # Iterate through parameters (FA, MD)
@@ -146,7 +170,9 @@ for parameter in FA MD; do
         if [ $get_all_values = 'false' ]; then
             if [ "$parameter" = "FA" ] && [ "$filter_fa_values" = "true" ]; then
                 mean_value=$(extract_filtered_fa_value "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
-            else
+            elif [ "$parameter" = "MD" ] && [ "$filter_fa_values" = "true" ]; then
+                mean_value=$(extract_filtered_md_value "$roi_dir/FA/${label}_ring${i}_FA.nii.gz" "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
+            else 
                 mean_value=$(fslmeants -i "$roi_dir/$parameter/${label}_ring${i}_${parameter}.nii.gz" -m "$roi_dir/$parameter/${label}_ring${i}.nii.gz")
             fi
             data_line="${data_line},${mean_value}"
