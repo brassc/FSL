@@ -514,7 +514,9 @@ def process_timepoint_data(input_file_location):
         print('Harmonised data file supplied')
     else:
         print('Harmonised data file not supplied, please check')
-        return None
+        input('Press Enter to continue or Ctrl+C to exit')
+
+        #return None
 
     df=pd.read_csv(input_file_location)
     df['patient_id'] = df['patient_id'].astype(str)
@@ -567,7 +569,13 @@ if __name__ == '__main__':
     print('running dti_results_plotting_main.py')
     
     # Load the (harmonised) data 
-    #data_5x4vox=pd.read_csv('DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_harmonised.csv')
+
+    # not harmonised data test
+    data_5x4vox_not_harmonised_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_notharmonised.csv'
+    data_5x4vox_not_harmonised=process_timepoint_data(input_file_location=data_5x4vox_not_harmonised_filename)
+    plot_all_rings_combined(df=data_5x4vox_not_harmonised, parameter='fa', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox_not_harmonised.png')
+
+    sys.exit()
     data_5x4vox_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_harmonised.csv'
     data_5x4vox=process_timepoint_data(input_file_location=data_5x4vox_filename)
     # Now data_5x4vox has been recategorized based on Days_since_injury, exactly the same as the deformation analysis
