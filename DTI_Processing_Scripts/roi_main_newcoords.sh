@@ -116,6 +116,7 @@ grep -v "^1," $coord_csv | while IFS=, read excluded patient_id timepoint rest; 
             # echo "ANTS mask path: $mask_path"
             # echo "FA path: $fa_path"
             # echo "MD path: $md_path"
+            # exit 0
             
         else
             echo "Processing patient $patient_id at timepoint $timepoint"
