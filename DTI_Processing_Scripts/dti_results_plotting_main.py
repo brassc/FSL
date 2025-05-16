@@ -1191,13 +1191,13 @@ if __name__ == '__main__':
     # plot_metric_difference(df=data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_10x4vox_both_regions_comparison_scatter.png', plot_type='scatter')
 
     # group by timepoint
-    plot_metric_difference(df=data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_both_regions_comparison_box_by_timepoint.png', plot_type='box', group_by='timepoint')
+    # plot_metric_difference(df=data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_both_regions_comparison_box_by_timepoint.png', plot_type='box', group_by='timepoint')
     plot_metric_difference(df=data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_both_regions_comparison_strip_by_timepoint.png', plot_type='strip', group_by='timepoint')
-    plot_metric_difference(df=data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_both_regions_comparison_scatter_by_timepoint.png', plot_type='scatter', group_by='timepoint')
+    # plot_metric_difference(df=data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_both_regions_comparison_scatter_by_timepoint.png', plot_type='scatter', group_by='timepoint')
 
-    plot_metric_difference(df=data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_10x4vox_both_regions_comparison_box_by_timepoint.png', plot_type='box', group_by='timepoint')
+    # plot_metric_difference(df=data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_10x4vox_both_regions_comparison_box_by_timepoint.png', plot_type='box', group_by='timepoint')
     plot_metric_difference(df=data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_10x4vox_both_regions_comparison_strip_by_timepoint.png', plot_type='strip', group_by='timepoint')
-    plot_metric_difference(df=data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_10x4vox_both_regions_comparison_scatter_by_timepoint.png', plot_type='scatter', group_by='timepoint')
+    # plot_metric_difference(df=data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_10x4vox_both_regions_comparison_scatter_by_timepoint.png', plot_type='scatter', group_by='timepoint')
 
 
 
