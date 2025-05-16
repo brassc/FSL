@@ -653,7 +653,7 @@ def plot_metric_roi(df, parameter, region_type, save_path=None, plot_type='scatt
             edgecolor='black',
             linewidth=0.5,
             ax=ax,
-            legend=False  # Don't add a second legend
+            legend=True  # Don't add a second legend
         )
         
     elif plot_type == 'violin':
