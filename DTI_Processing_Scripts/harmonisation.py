@@ -64,6 +64,25 @@ def check_singularities(valid_data):
         
     return singularity_risk
 
+
+def get_clinical_info(patient_id, clinical_df):
+    """
+    Get sex and age_at_injury for a patient based on their ID format.
+    """
+    patient_id = str(patient_id)
+    
+    if len(patient_id) == 5:
+        matches = clinical_df[clinical_df['Master_subject_ID'] == patient_id]
+    elif len(patient_id) >= 7:
+        matches = clinical_df[clinical_df['GUPI'] == patient_id]
+    else:
+        return None, None
+    
+    if not matches.empty:
+        return matches['Sex'].iloc[0], matches['Age_at_injury'].iloc[0]
+    return None, None
+
+
 def merge_scanner_info_with_metrics(metrics_df, scanner_info_df, output_filename):
     """
     Merge scanner information (Cohort, Site, Model) with metrics data.
@@ -87,6 +106,8 @@ def merge_scanner_info_with_metrics(metrics_df, scanner_info_df, output_filename
     metrics_df['Site'] = None
     metrics_df['Model'] = None
     metrics_df['Days_since_injury'] = None
+    metrics_df['Sex'] = None
+    metrics_df['Age_at_injury'] = None
     
     # Create a mapping dictionary for 5-digit patient IDs
     mapping_dict = {}
@@ -98,7 +119,9 @@ def merge_scanner_info_with_metrics(metrics_df, scanner_info_df, output_filename
             'Cohort': row['Cohort'],
             'Site': row['Site'],
             'Model': row['Model'],
-            'Days_since_injury': row['Days_since_injury']
+            'Days_since_injury': row['Days_since_injury'],
+            'Sex': row['Sex'],
+            'Age_at_injury': row['Age_at_injury']
         }
     
     # Process 7-digit patient IDs directly
@@ -111,6 +134,8 @@ def merge_scanner_info_with_metrics(metrics_df, scanner_info_df, output_filename
             site = first_row['Site']
             model = first_row['Model']
             days_since_injury = first_row['Days_since_injury']
+            sex = first_row['Sex']
+            age_at_injury = first_row['Age_at_injury']
             
             # Update all rows for this patient
             for idx, row in metrics_df[metrics_df['patient_id'] == patient_id].iterrows():
@@ -118,6 +143,8 @@ def merge_scanner_info_with_metrics(metrics_df, scanner_info_df, output_filename
                 metrics_df.at[idx, 'Site'] = site
                 metrics_df.at[idx, 'Model'] = model
                 metrics_df.at[idx, 'Days_since_injury'] = days_since_injury
+                metrics_df.at[idx, 'Sex'] = sex
+                metrics_df.at[idx, 'Age_at_injury'] = age_at_injury
     
     # Update 5-digit patient IDs using the mapping dictionary
     for idx, row in metrics_df[metrics_df['patient_id'].astype(str).str.len() == 5].iterrows():
@@ -129,6 +156,8 @@ def merge_scanner_info_with_metrics(metrics_df, scanner_info_df, output_filename
             metrics_df.at[idx, 'Site'] = mapping_dict[key]['Site']
             metrics_df.at[idx, 'Model'] = mapping_dict[key]['Model']
             metrics_df.at[idx, 'Days_since_injury'] = mapping_dict[key]['Days_since_injury']
+            metrics_df.at[idx, 'Sex'] = mapping_dict[key]['Sex']
+            metrics_df.at[idx, 'Age_at_injury'] = mapping_dict[key]['Age_at_injury']
     
     # Report results
     updated_count = metrics_df[metrics_df['Cohort'].notnull()].shape[0]
@@ -167,7 +196,33 @@ def process_metrics_file(input_filename, harmonized_output_filename):
     patient_scanner_data = patient_scanner_data.drop_duplicates(subset=['patient_id', 'timepoint'])
     print(f"Unique patient_id and timepoint combinations: {len(patient_scanner_data)}")
 
+    # print(f"patient_scanner_data sample: \n{patient_scanner_data.head()}")
+    
+    # Also get age @ injury and sex data from Sophies clinical database
+    clinical_data= pd.read_csv('Sophie_Data/Sophies_clinical_database_20220822.csv')
+    # filter by patient_id
 
+
+    # Add Sex and Age_at_injury columns to patient_scanner_data
+    patient_scanner_data['Sex'] = None
+    patient_scanner_data['Age_at_injury'] = None
+
+    # Fill in the clinical data
+    for idx, row in patient_scanner_data.iterrows():
+        sex, age = get_clinical_info(row['patient_id'], clinical_data)
+        patient_scanner_data.at[idx, 'Sex'] = sex
+        patient_scanner_data.at[idx, 'Age_at_injury'] = age
+
+    # Print stats on matching
+    matched_count = patient_scanner_data['Sex'].notnull().sum()
+    total_count = len(patient_scanner_data)
+    print(f"Found clinical data for {matched_count} out of {total_count} patients ({matched_count/total_count:.1%})")
+
+    # print(f"patient scanner data example: \n{patient_scanner_data.head()}")
+    
+
+    
+    
 
 
     # # load the metrics data from input file
@@ -192,6 +247,12 @@ def process_metrics_file(input_filename, harmonized_output_filename):
         patient_scanner_data, 
         pre_harmonised_filename
     )
+    print(f"all_metrics_merged columns: {all_metrics_merged.columns}")
+    print(f"sample data: \n{all_metrics_merged.head()}")
+    # Check for missing values in the merged data
+    # print(f"\nMissing values in merged data: {all_metrics_merged.isna().sum()}")
+    # print(f"list the different categories in all_metrics_merged['Sex']: {all_metrics_merged['Sex'].unique()}")
+    # sys.exit()
     
     # return 
 
@@ -208,6 +269,8 @@ def process_metrics_file(input_filename, harmonized_output_filename):
     print(f"Missing values in timepoint: {all_metrics_merged['timepoint'].isna().sum()}")
     print(f"Missing values in Cohort: {all_metrics_merged['Cohort'].isna().sum()}")
     print(f"Missing values in days_since_injury: {all_metrics_merged['Days_since_injury'].isna().sum()}")
+    print(f"Missing values in Sex: {all_metrics_merged['Sex'].isna().sum()}")
+    print(f"Missing values in Age_at_injury: {all_metrics_merged['Age_at_injury'].isna().sum()}")
 
 
     # # Filter out rows with missing batch variable
@@ -243,7 +306,9 @@ def process_metrics_file(input_filename, harmonized_output_filename):
             'batch': valid_data['Site_Model'].values,
             'timepoint': valid_data['timepoint'].values,
             'Cohort': valid_data['Cohort'].values,
-            'Days_since_injury': valid_data['Days_since_injury'].values
+            'Days_since_injury': valid_data['Days_since_injury'].values,
+            'Sex': valid_data['Sex'].values,
+            'Age_at_injury': valid_data['Age_at_injury'].values
         }
 
         covars_df = pd.DataFrame(covars_dict)
@@ -257,14 +322,15 @@ def process_metrics_file(input_filename, harmonized_output_filename):
             covars=covars_df,
             batch_col='batch',
             #categorical_cols=categorical_cols,
-            categorical_cols=None,
+            categorical_cols=['Sex'],
             #continuous_cols=None,
-            continuous_cols=['Days_since_injury'],
+            continuous_cols=['Age_at_injury'],
             eb=True,
             parametric=True,
             mean_only=True,
             ref_batch=None
         )
+        # sys.exit()
         
         # Create FA harmonized dataframe
         fa_harmonized_df = pd.DataFrame(
@@ -294,7 +360,9 @@ def process_metrics_file(input_filename, harmonized_output_filename):
             'batch': valid_data['Site_Model'].values,
             'timepoint': valid_data['timepoint'].values,
             'Cohort': valid_data['Cohort'].values,
-            'Days_since_injury': valid_data['Days_since_injury'].values
+            'Days_since_injury': valid_data['Days_since_injury'].values,
+            'Sex': valid_data['Sex'].values,
+            'Age_at_injury': valid_data['Age_at_injury'].values
         }
 
         covars_df = pd.DataFrame(covars_dict)
@@ -306,7 +374,7 @@ def process_metrics_file(input_filename, harmonized_output_filename):
             covars=covars_df,
             batch_col='batch',
             categorical_cols=None,
-            continuous_cols=['Days_since_injury'],
+            continuous_cols=['Age_at_injury'],
             eb=True,
             parametric=True,
             mean_only=True,
@@ -392,3 +460,4 @@ process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_
 # process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_10x4vox_NEW_filtered.csv',
 #                      harmonized_output_filename='DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_harmonised.csv')
 
+print("\n\nHarmonization complete!")
