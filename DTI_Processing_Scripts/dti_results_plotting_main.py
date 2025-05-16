@@ -11,6 +11,7 @@ import statsmodels.formula.api as smf
 import seaborn as sns
 import sys
 import os
+import re
 import statsmodels.stats.multitest as smm
 from statsmodels.stats.multitest import multipletests
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
@@ -510,6 +511,168 @@ def plot_all_rings_combined(df, parameter, num_bins=5, save_path=None):
     return (fig, ax), (fig2, ax2)
 
 
+def plot_metric_roi(df, parameter, region_type, save_path=None, plot_type='scatter'):
+    """
+    Plot the metric for a specific region type across all patients.
+    
+    Args:
+        df: DataFrame with the data
+        parameter: The metric to plot (e.g., 'fa', 'md')
+        region_type: Type of region ('anterior', 'posterior', 'baseline_anterior', 'baseline_posterior')
+        save_path: Path to save the figure (optional)
+        plot_type: Type of plot ('scatter', 'box', or 'violin')
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
+    import re
+    import seaborn as sns
+    
+    # Set publication style
+    set_publication_style()
+    
+    # Create a figure
+    fig, ax = plt.subplots(figsize=(12, 8))
+    
+    # Get unique timepoints
+    timepoints = df['timepoint'].unique()
+    
+    # Create color map for timepoints
+    cmap = plt.cm.get_cmap('viridis', len(timepoints))
+    timepoint_colors = {tp: cmap(i) for i, tp in enumerate(timepoints)}
+    
+    # Find all columns matching the parameter and region type
+    parameter = parameter.lower()
+    pattern = f"{parameter}_{region_type}_ring_(\\d+)"
+    matching_cols = [col for col in df.columns if re.match(pattern, col.lower())]
+    
+    if not matching_cols:
+        ax.text(0.5, 0.5, f"No data found for {parameter.upper()} in {region_type} rings", 
+               ha='center', va='center', transform=ax.transAxes)
+        return fig, ax
+    
+    # Extract ring numbers and sort columns by ring number
+    ring_numbers = []
+    for col in matching_cols:
+        match = re.search(r'_ring_(\d+)$', col)
+        if match:
+            ring_numbers.append(int(match.group(1)))
+        else:
+            ring_numbers.append(0)
+            
+    # Sort columns by ring number
+    sorted_indices = np.argsort(ring_numbers)
+    sorted_cols = [matching_cols[i] for i in sorted_indices]
+    sorted_ring_numbers = [ring_numbers[i] for i in sorted_indices]
+    
+    # Prepare data for plotting
+    plot_df = pd.DataFrame()
+    
+    for i, col in enumerate(sorted_cols):
+        ring_num = sorted_ring_numbers[i]
+        
+        for tp in timepoints:
+            tp_data = df[df['timepoint'] == tp]
+            values = tp_data[col].dropna()
+            
+            if len(values) > 0:
+                # Create a temporary DataFrame for this ring/timepoint combination
+                temp_df = pd.DataFrame({
+                    'value': values,
+                    'ring': [f"Ring {ring_num}"] * len(values),
+                    'timepoint': [tp] * len(values)
+                })
+                
+                # Append to the main plotting DataFrame
+                plot_df = pd.concat([plot_df, temp_df])
+    
+    if len(plot_df) == 0:
+        ax.text(0.5, 0.5, f"No data found for {parameter.upper()} in {region_type} rings", 
+               ha='center', va='center', transform=ax.transAxes)
+        return fig, ax
+    
+    # Create appropriate plot based on plot_type
+    if plot_type == 'scatter':
+        # Create a scatter plot with jitter
+        for tp in timepoints:
+            tp_data = plot_df[plot_df['timepoint'] == tp]
+            
+            if len(tp_data) > 0:
+                # Add jitter to the categorical x positions
+                rings = tp_data['ring'].unique()
+                for i, ring in enumerate(sorted(rings)):
+                    ring_data = tp_data[tp_data['ring'] == ring]
+                    
+                    # Create jitter
+                    x = np.full(len(ring_data), i)
+                    x = x + np.random.normal(0, 0.05, size=len(x))
+                    
+                    # Plot with slight jitter on x-axis
+                    ax.scatter(
+                        x, ring_data['value'], 
+                        color=timepoint_colors[tp],
+                        s=50, alpha=0.7, edgecolors='black', linewidths=0.5,
+                        label=tp if i == 0 else ""  # Only add to legend once
+                    )
+        
+        # Set x-ticks
+        ax.set_xticks(range(len(sorted_ring_numbers)))
+        ax.set_xticklabels([f"Ring {ring}" for ring in sorted_ring_numbers])
+        
+    elif plot_type == 'box':
+        # Create a box plot
+        sns.boxplot(
+            data=plot_df,
+            x='ring', y='value', hue='timepoint',
+            palette=timepoint_colors,
+            ax=ax
+        )
+        
+    elif plot_type == 'violin':
+        # Create a violin plot
+        sns.violinplot(
+            data=plot_df,
+            x='ring', y='value', hue='timepoint',
+            palette=timepoint_colors,
+            split=True, inner='quartile',
+            ax=ax
+        )
+    
+    # Remove duplicate legend entries
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys(), title='Timepoint')
+    
+    # Set axis labels and title
+    ax.set_xlabel('Ring Number')
+    ax.set_ylabel(f'{parameter.upper()} Value')
+    if 'fa' in parameter:
+        ax.set_ylim(0, 0.5)
+    elif 'md' in parameter:
+        ax.set_ylim(0, 0.0035)
+    
+    # Format region type for title
+    region_title = region_type.replace('_', ' ').title()
+    if region_title.startswith('Baseline'):
+        region_title = region_title.replace('Baseline', 'Control Side')
+    elif region_title.startswith('Anterior'):
+        region_title = region_title.replace('Anterior', 'Craniectomy Side Anterior')
+    elif region_title.startswith('Posterior'):
+        region_title = region_title.replace('Posterior', 'Craniectomy Side Posterior')
+    ax.set_title(f'{parameter.upper()} Values for {region_title} Rings by Timepoint')
+    
+    # Adjust layout
+    plt.tight_layout()
+    
+    # Save figure if save_path is provided
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    
+    return fig, ax
+    
+    
+
+
 def process_timepoint_data(input_file_location):
     """
     Process patient timepoint data by standardizing timepoint values and sorting results.
@@ -591,8 +754,17 @@ if __name__ == '__main__':
     data_5x4vox_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_harmonised.csv'
     data_5x4vox=process_timepoint_data(input_file_location=data_5x4vox_filename)
     # Now data_5x4vox has been recategorized based on Days_since_injury, exactly the same as the deformation analysis
-    plot_all_rings_combined(df=data_5x4vox, parameter='fa', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox_filtered.png')
-    plot_all_rings_combined(df=data_5x4vox, parameter='md', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox_filtered_md.png')
+    # plot_all_rings_combined(df=data_5x4vox, parameter='fa', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox_filtered.png')
+    # plot_all_rings_combined(df=data_5x4vox, parameter='md', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox_filtered_md.png')
+
+
+
+    plot_metric_roi(df=data_5x4vox, parameter='fa', region_type='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_5x4vox_anterior.png')
+    plot_metric_roi(df=data_5x4vox, parameter='fa', region_type='baseline_anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_5x4vox_baseline_anterior.png')
+
+    # plot_metric_roi(df=data_5x4vox, parameter='md', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox.png')
+
+
 
     # Load the (harmonised) data
     #data_10x4vox=pd.read_csv('DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_harmonised.csv')
