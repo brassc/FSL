@@ -442,6 +442,7 @@ def plot_all_rings_combined(df, parameter, num_bins=5, save_path=None):
     ax.set_ylabel('Fractional Anisotropy (FA)')
     ax.set_title('Fractional Anisotropy: All Rings Over Time')
     
+    
     # Set x-axis to start at 0 and find the maximum value for upper limit
     max_days = 0
     for pid in patient_ids:
@@ -454,6 +455,11 @@ def plot_all_rings_combined(df, parameter, num_bins=5, save_path=None):
     # Add a small margin on the right (5%)
     margin = 0.05 * max_days
     ax.set_xlim(0, max_days + margin)
+    if 'fa' in parameter:
+        ax.set_ylim(0, 0.5)
+    else:
+        ax.set_ylim(0, 0.0035)
+    
 
 
     # Set labels and title for Plot 2 (Timepoint category)
@@ -468,6 +474,11 @@ def plot_all_rings_combined(df, parameter, num_bins=5, save_path=None):
     # min_pos = min(timepoint_positions.values()) - 0.5 * timepoint_spacing
     # max_pos = max(timepoint_positions.values()) + 0.5 * timepoint_spacing
     ax2.set_xlim(-0.5, spaced_positions[-1] + 0.5)
+    if 'fa' in parameter:
+        ax.set_ylim(0, 0.5)
+    else:
+        ax.set_ylim(0, 0.0035)
+    
 
         # Add vertical lines at each timepoint to further separate them visually
     for pos in spaced_positions:
