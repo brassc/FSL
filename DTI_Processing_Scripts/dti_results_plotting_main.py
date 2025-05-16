@@ -85,11 +85,17 @@ def plot_metric_difference(df, parameter, region, save_path=None, plot_type='box
     fig, ax = plt.subplots(figsize=(12, 8))
     
     # Get unique timepoints
-    timepoints = df['timepoint'].unique()
+    timepoints = df['timepoint'].unique()  
     
-    # Create color map for timepoints
-    cmap = plt.cm.get_cmap('viridis', len(timepoints))
-    timepoint_colors = {tp: cmap(i) for i, tp in enumerate(timepoints)}
+    # Define the desired order for timepoints
+    timepoint_order = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
+
+    # Filter to only include timepoints present in your data
+    present_timepoints = [tp for tp in timepoint_order if tp in timepoints]
+        
+    # Create color map for timepoints based on the ordered list
+    cmap = plt.cm.get_cmap('viridis', len(present_timepoints))
+    timepoint_colors = {tp: cmap(i) for i, tp in enumerate(present_timepoints)}
     
     # Determine regions to analyze
     regions_to_analyze = []
@@ -100,6 +106,8 @@ def plot_metric_difference(df, parameter, region, save_path=None, plot_type='box
     
     # Create an empty DataFrame to store the difference data
     diff_df = pd.DataFrame()
+
+
     
     # Process each region
     for curr_region in regions_to_analyze:
@@ -169,6 +177,13 @@ def plot_metric_difference(df, parameter, region, save_path=None, plot_type='box
         ax.text(0.5, 0.5, f"No matching data found for {parameter.upper()} in the specified region(s)", 
                 ha='center', va='center', transform=ax.transAxes)
         return fig, ax
+    
+    # After creating diff_df but before plotting
+    diff_df['timepoint'] = pd.Categorical(
+        diff_df['timepoint'], 
+        categories=present_timepoints,
+        ordered=True
+    )
     
     # Create the appropriate plot based on plot_type and group_by
     if plot_type == 'box':
@@ -310,12 +325,13 @@ def plot_metric_difference(df, parameter, region, save_path=None, plot_type='box
                 data=diff_df,
                 x='ring', y='difference',
                 color='lightgray',
-                ax=ax
+                ax=ax,
+                showfliers=False
             )
             sns.stripplot(
                 data=diff_df,
                 x='ring', y='difference', hue='timepoint',
-                palette=timepoint_colors,
+                palette={tp: timepoint_colors[tp] for tp in timepoint_order if tp in diff_df['timepoint'].unique()},
                 dodge=True,
                 alpha=0.7,
                 size=8,
@@ -856,13 +872,19 @@ def plot_metric_roi(df, parameter, region_type, save_path=None, plot_type='scatt
     
     # Create a figure
     fig, ax = plt.subplots(figsize=(12, 8))
-    
+
     # Get unique timepoints
-    timepoints = df['timepoint'].unique()
+    timepoints = df['timepoint'].unique()  
     
-    # Create color map for timepoints
-    cmap = plt.cm.get_cmap('viridis', len(timepoints))
-    timepoint_colors = {tp: cmap(i) for i, tp in enumerate(timepoints)}
+    # Define the desired order for timepoints
+    timepoint_order = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
+
+    # Filter to only include timepoints present in your data
+    present_timepoints = [tp for tp in timepoint_order if tp in timepoints]
+        
+    # Create color map for timepoints based on the ordered list
+    cmap = plt.cm.get_cmap('viridis', len(present_timepoints))
+    timepoint_colors = {tp: cmap(i) for i, tp in enumerate(present_timepoints)}
     
     # Find all columns matching the parameter and region type
     parameter = parameter.lower()
@@ -970,7 +992,8 @@ def plot_metric_roi(df, parameter, region_type, save_path=None, plot_type='scatt
             data=plot_df,
             x='ring', y='value',
             color='lightgray',  # Plain gray boxes
-            ax=ax
+            ax=ax,
+            showfliers=False
         )
         # Add strip plot on top (this automatically adds dots over the boxes)
         sns.stripplot(
