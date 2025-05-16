@@ -806,7 +806,15 @@ if __name__ == '__main__':
     plot_metric_roi(df=data_5x4vox, parameter='md', region_type='posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_posterior_box.png', plot_type='box')
     plot_metric_roi(df=data_5x4vox, parameter='md', region_type='baseline_posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_baseline_posterior_box.png', plot_type='box')
 
-
+    # Strip plots for 5x4 vox data
+    plot_metric_roi(df=data_5x4vox, parameter='fa', region_type='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_5x4vox_anterior_strip.png', plot_type='strip')
+    plot_metric_roi(df=data_5x4vox, parameter='fa', region_type='baseline_anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_5x4vox_baseline_anterior_strip.png', plot_type='strip')
+    plot_metric_roi(df=data_5x4vox, parameter='fa', region_type='posterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_5x4vox_posterior_strip.png', plot_type='strip')
+    plot_metric_roi(df=data_5x4vox, parameter='fa', region_type='baseline_posterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_5x4vox_baseline_posterior_strip.png', plot_type='strip')
+    plot_metric_roi(df=data_5x4vox, parameter='md', region_type='anterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_anterior_strip.png', plot_type='strip')
+    plot_metric_roi(df=data_5x4vox, parameter='md', region_type='baseline_anterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_baseline_anterior_strip.png', plot_type='strip')
+    plot_metric_roi(df=data_5x4vox, parameter='md', region_type='posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_posterior_strip.png', plot_type='strip')
+    plot_metric_roi(df=data_5x4vox, parameter='md', region_type='baseline_posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_baseline_posterior_strip.png', plot_type='strip')
 
 
 
