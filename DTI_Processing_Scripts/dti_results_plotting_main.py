@@ -627,6 +627,34 @@ def plot_metric_roi(df, parameter, region_type, save_path=None, plot_type='scatt
             palette=timepoint_colors,
             ax=ax
         )
+
+        # Add strip plot on top (this automatically adds dots over the boxes)
+        sns.stripplot(
+            data=plot_df,
+            x='ring', y='value', hue='timepoint',
+            palette=timepoint_colors,
+            dodge=True,  # This makes the points align with their respective boxes
+            alpha=0.7,
+            size=4,
+            edgecolor='black',
+            linewidth=0.5,
+            ax=ax,
+            legend=False  # Don't add a second legend
+        )
+    elif plot_type == 'strip':
+        # Add strip plot on top (this automatically adds dots over the boxes)
+        sns.stripplot(
+            data=plot_df,
+            x='ring', y='value', hue='timepoint',
+            palette=timepoint_colors,
+            dodge=True,  # This makes the points align with their respective boxes
+            alpha=0.7,
+            size=4,
+            edgecolor='black',
+            linewidth=0.5,
+            ax=ax,
+            legend=False  # Don't add a second legend
+        )
         
     elif plot_type == 'violin':
         # Create a violin plot
