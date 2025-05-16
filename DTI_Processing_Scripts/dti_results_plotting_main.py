@@ -306,6 +306,12 @@ def plot_metric_difference(df, parameter, region, save_path=None, plot_type='box
                 ax=ax
             )
         else:
+            sns.boxplot(
+                data=diff_df,
+                x='ring', y='difference',
+                color='lightgray',
+                ax=ax
+            )
             sns.stripplot(
                 data=diff_df,
                 x='ring', y='difference', hue='timepoint',
@@ -959,6 +965,13 @@ def plot_metric_roi(df, parameter, region_type, save_path=None, plot_type='scatt
             legend=False  # Don't add a second legend
         )
     elif plot_type == 'strip':
+        # one box plot per thingy
+        sns.boxplot(
+            data=plot_df,
+            x='ring', y='value',
+            color='lightgray',  # Plain gray boxes
+            ax=ax
+        )
         # Add strip plot on top (this automatically adds dots over the boxes)
         sns.stripplot(
             data=plot_df,
