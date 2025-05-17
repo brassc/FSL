@@ -11,6 +11,7 @@ import statsmodels.formula.api as smf
 import seaborn as sns
 import sys
 import os
+import re
 import statsmodels.stats.multitest as smm
 from statsmodels.stats.multitest import multipletests
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
@@ -46,6 +47,345 @@ base = importr('base')
 lme4 = importr('lme4')
 emmeans = importr('emmeans')
 
+
+def plot_metric_difference(df, parameter, region, save_path=None, plot_type='box', group_by='region'):
+    """
+    Plot the difference between baseline and current values for a specific parameter and region across ROIs.
+    
+    Args:
+        df: DataFrame with the data
+        parameter: The metric to plot (e.g., 'fa', 'md')
+        region: Region to analyze ('anterior', 'posterior', or 'both')
+        save_path: Path to save the figure (optional)
+        plot_type: Type of plot ('box', 'violin', 'scatter', or 'strip')
+        group_by: How to group the data ('region' or 'timepoint')
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
+    import re
+    import seaborn as sns
+    
+    # Set publication style (assuming this function exists in your environment)
+    try:
+        set_publication_style()
+    except NameError:
+        plt.style.use('seaborn-whitegrid')
+        plt.rcParams.update({
+            'font.size': 12,
+            'axes.titlesize': 14,
+            'axes.labelsize': 12,
+            'xtick.labelsize': 10,
+            'ytick.labelsize': 10,
+            'legend.fontsize': 10,
+            'figure.figsize': (12, 8)
+        })
+    
+    # Create a figure
+    fig, ax = plt.subplots(figsize=(12, 8))
+    
+    # Get unique timepoints
+    timepoints = df['timepoint'].unique()  
+    
+    # Define the desired order for timepoints
+    timepoint_order = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
+
+    # Filter to only include timepoints present in your data
+    present_timepoints = [tp for tp in timepoint_order if tp in timepoints]
+        
+    # Create color map for timepoints based on the ordered list
+    cmap = plt.cm.get_cmap('viridis', len(present_timepoints))
+    timepoint_colors = {tp: cmap(i) for i, tp in enumerate(present_timepoints)}
+    
+    # Determine regions to analyze
+    regions_to_analyze = []
+    if region == 'both':
+        regions_to_analyze = ['anterior', 'posterior']
+    else:
+        regions_to_analyze = [region]
+    
+    # Create an empty DataFrame to store the difference data
+    diff_df = pd.DataFrame()
+
+
+    
+    # Process each region
+    for curr_region in regions_to_analyze:
+        # Find all columns matching the parameter and current region
+        parameter = parameter.lower()
+        current_pattern = f"{parameter}_{curr_region}_ring_(\\d+)"
+        baseline_pattern = f"{parameter}_baseline_{curr_region}_ring_(\\d+)"
+        
+        current_cols = [col for col in df.columns if re.match(current_pattern, col.lower())]
+        baseline_cols = [col for col in df.columns if re.match(baseline_pattern, col.lower())]
+        
+        if not current_cols or not baseline_cols:
+            continue
+        
+        # Extract ring numbers and create mapping between current and baseline columns
+        ring_mapping = {}
+        ring_numbers = []
+        
+        for col in current_cols:
+            match = re.search(r'_ring_(\d+)$', col)
+            if match:
+                ring_num = int(match.group(1))
+                ring_numbers.append(ring_num)
+                baseline_col = f"{parameter}_baseline_{curr_region}_ring_{ring_num}"
+                if baseline_col in baseline_cols:
+                    ring_mapping[col] = baseline_col
+        
+        # Sort unique ring numbers
+        unique_ring_numbers = sorted(set(ring_numbers))
+        
+        # Calculate differences for each timepoint and ring
+        for tp in timepoints:
+            tp_data = df[df['timepoint'] == tp]
+            
+            for current_col, baseline_col in ring_mapping.items():
+                # Extract ring number
+                match = re.search(r'_ring_(\d+)$', current_col)
+                if not match:
+                    continue
+                    
+                ring_num = int(match.group(1))
+                
+                # Get the difference (baseline - current)
+                current_values = tp_data[current_col]
+                baseline_values = tp_data[baseline_col]
+                
+                # Filter for rows where both values are not NaN
+                valid_indices = current_values.notna() & baseline_values.notna()
+                
+                if valid_indices.sum() > 0:
+                    # Calculate difference
+                    diff_values = baseline_values[valid_indices] - current_values[valid_indices]
+                    
+                    # Create a temporary DataFrame for this difference
+                    temp_df = pd.DataFrame({
+                        'difference': diff_values,
+                        'ring': [f"Ring {ring_num}"] * len(diff_values),
+                        'timepoint': [tp] * len(diff_values),
+                        'region': [curr_region.capitalize()] * len(diff_values)
+                    })
+                    
+                    # Append to the main difference DataFrame
+                    diff_df = pd.concat([diff_df, temp_df])
+    
+    # Check if we have data to plot
+    if len(diff_df) == 0:
+        ax.text(0.5, 0.5, f"No matching data found for {parameter.upper()} in the specified region(s)", 
+                ha='center', va='center', transform=ax.transAxes)
+        return fig, ax
+    
+    # After creating diff_df but before plotting
+    diff_df['timepoint'] = pd.Categorical(
+        diff_df['timepoint'], 
+        categories=present_timepoints,
+        ordered=True
+    )
+    
+    # Create the appropriate plot based on plot_type and group_by
+    if plot_type == 'box':
+        # Create a box plot
+        if group_by == 'region' and len(regions_to_analyze) > 1:
+            # Group by region (anterior vs posterior)
+            sns.boxplot(
+                data=diff_df,
+                x='ring', y='difference', hue='region',
+                palette='Set1',
+                ax=ax
+            )
+            
+            # Add points on top of the boxes
+            sns.stripplot(
+                data=diff_df,
+                x='ring', y='difference', hue='region',
+                palette='Set1',
+                dodge=True,
+                alpha=0.7,
+                size=4,
+                edgecolor='black',
+                linewidth=0.5,
+                ax=ax,
+                legend=False
+            )
+        else:
+            # Group by timepoint
+            sns.boxplot(
+                data=diff_df,
+                x='ring', y='difference', hue='timepoint',
+                palette=timepoint_colors,
+                ax=ax
+            )
+            
+            # Add points on top of the boxes
+            sns.stripplot(
+                data=diff_df,
+                x='ring', y='difference', hue='timepoint',
+                palette=timepoint_colors,
+                dodge=True,
+                alpha=0.7,
+                size=4,
+                edgecolor='black',
+                linewidth=0.5,
+                ax=ax,
+                legend=False
+            )
+    
+    elif plot_type == 'violin':
+        # Create a violin plot
+        if group_by == 'region' and len(regions_to_analyze) > 1:
+            sns.violinplot(
+                data=diff_df,
+                x='ring', y='difference', hue='region',
+                palette='Set1',
+                split=True, inner='quartile',
+                ax=ax
+            )
+        else:
+            sns.violinplot(
+                data=diff_df,
+                x='ring', y='difference', hue='timepoint',
+                palette=timepoint_colors,
+                split=True, inner='quartile',
+                ax=ax
+            )
+    
+    elif plot_type == 'scatter':
+        # Create a scatter plot with jitter
+        if group_by == 'region' and len(regions_to_analyze) > 1:
+            # Use region for color
+            for region_name in diff_df['region'].unique():
+                region_data = diff_df[diff_df['region'] == region_name]
+                
+                # Get unique rings
+                rings = region_data['ring'].unique()
+                
+                for i, ring in enumerate(sorted(rings)):
+                    ring_data = region_data[region_data['ring'] == ring]
+                    
+                    # Create jitter
+                    x = np.full(len(ring_data), i)
+                    x = x + np.random.normal(0, 0.05, size=len(x))
+                    
+                    # Color based on region
+                    color = 'C0' if region_name == 'Anterior' else 'C1'
+                    
+                    # Plot with slight jitter on x-axis
+                    ax.scatter(
+                        x, ring_data['difference'], 
+                        color=color,
+                        s=50, alpha=0.7, edgecolors='black', linewidths=0.5,
+                        label=region_name if i == 0 else ""  # Only add to legend once
+                    )
+        else:
+            # Use timepoint for color
+            for tp in timepoints:
+                tp_data = diff_df[diff_df['timepoint'] == tp]
+                
+                if len(tp_data) > 0:
+                    # Add jitter to the categorical x positions
+                    rings = tp_data['ring'].unique()
+                    for i, ring in enumerate(sorted(rings)):
+                        ring_data = tp_data[tp_data['ring'] == ring]
+                        
+                        # Create jitter
+                        x = np.full(len(ring_data), i)
+                        x = x + np.random.normal(0, 0.05, size=len(x))
+                        
+                        # Plot with slight jitter on x-axis
+                        ax.scatter(
+                            x, ring_data['difference'], 
+                            color=timepoint_colors[tp],
+                            s=50, alpha=0.7, edgecolors='black', linewidths=0.5,
+                            label=tp if i == 0 else ""  # Only add to legend once
+                        )
+        
+        # Set x-ticks
+        ax.set_xticks(range(len(diff_df['ring'].unique())))
+        ax.set_xticklabels(sorted(diff_df['ring'].unique()))
+        
+    elif plot_type == 'strip':
+        # Create a strip plot
+        if group_by == 'region' and len(regions_to_analyze) > 1:
+            sns.stripplot(
+                data=diff_df,
+                x='ring', y='difference', hue='region',
+                palette='Set1',
+                dodge=True,
+                alpha=0.7,
+                size=8,
+                edgecolor='black',
+                linewidth=0.5,
+                ax=ax
+            )
+        else:
+            sns.boxplot(
+                data=diff_df,
+                x='ring', y='difference',
+                color='lightgray',
+                ax=ax,
+                showfliers=False
+            )
+            sns.stripplot(
+                data=diff_df,
+                x='ring', y='difference', hue='timepoint',
+                palette={tp: timepoint_colors[tp] for tp in timepoint_order if tp in diff_df['timepoint'].unique()},
+                dodge=True,
+                alpha=0.7,
+                size=8,
+                edgecolor='black',
+                linewidth=0.5,
+                ax=ax
+            )
+    
+    # Remove duplicate legend entries
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    
+    if group_by == 'region' and len(regions_to_analyze) > 1:
+        ax.legend(by_label.values(), by_label.keys(), title='Region')
+    else:
+        ax.legend(by_label.values(), by_label.keys(), title='Timepoint')
+    
+    # Add a horizontal line at y=0
+    ax.axhline(y=0, color='gray', linestyle='--', alpha=0.7)
+    
+    # Set axis labels and title
+    ax.set_xlabel('Ring Number')
+    ax.set_ylabel(f'{parameter.upper()} Difference (Control Side - Craniectomy Side)')
+    
+    # Set appropriate y-limits based on parameter
+    if parameter.lower() == 'fa':
+        # FA values typically range from 0 to 1, differences will be smaller
+        ax.set_ylim(-0.3, 0.3)
+    elif parameter.lower() == 'md':
+        # MD values are typically very small (e.g., 0.0001 to 0.003)
+        ax.set_ylim(-0.001, 0.001)
+    
+    # Format region name for title
+    if region == 'both':
+        region_title = "Anterior and Posterior Regions"
+    else:
+        region_title = f"{region.capitalize()} Region"
+    
+    # Format group name for title
+    if group_by == 'region' and len(regions_to_analyze) > 1:
+        group_title = "by Region"
+    else:
+        group_title = "by Timepoint"
+        
+    ax.set_title(f'{parameter.upper()} Differences (Control Side - Craniectomy Side) for {region_title} {group_title}')
+    
+    # Adjust layout
+    plt.tight_layout()
+    
+    # Save figure if save_path is provided
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    
+    return fig, ax
 
 def create_hex_color_map_from_cmap(cmap_name, n):
     """Create a list of hex colors from a colormap."""
@@ -510,6 +850,210 @@ def plot_all_rings_combined(df, parameter, num_bins=5, save_path=None):
     return (fig, ax), (fig2, ax2)
 
 
+def plot_metric_roi(df, parameter, region_type, save_path=None, plot_type='scatter'):
+    """
+    Plot the metric for a specific region type across all patients.
+    
+    Args:
+        df: DataFrame with the data
+        parameter: The metric to plot (e.g., 'fa', 'md')
+        region_type: Type of region ('anterior', 'posterior', 'baseline_anterior', 'baseline_posterior')
+        save_path: Path to save the figure (optional)
+        plot_type: Type of plot ('scatter', 'box', or 'violin')
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
+    import re
+    import seaborn as sns
+    
+    # Set publication style
+    set_publication_style()
+    
+    # Create a figure
+    fig, ax = plt.subplots(figsize=(12, 8))
+
+    # Get unique timepoints
+    timepoints = df['timepoint'].unique()  
+    
+    # Define the desired order for timepoints
+    timepoint_order = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
+
+    # Filter to only include timepoints present in your data
+    present_timepoints = [tp for tp in timepoint_order if tp in timepoints]
+        
+    # Create color map for timepoints based on the ordered list
+    cmap = plt.cm.get_cmap('viridis', len(present_timepoints))
+    timepoint_colors = {tp: cmap(i) for i, tp in enumerate(present_timepoints)}
+    
+    # Find all columns matching the parameter and region type
+    parameter = parameter.lower()
+    pattern = f"{parameter}_{region_type}_ring_(\\d+)"
+    matching_cols = [col for col in df.columns if re.match(pattern, col.lower())]
+    
+    if not matching_cols:
+        ax.text(0.5, 0.5, f"No data found for {parameter.upper()} in {region_type} rings", 
+               ha='center', va='center', transform=ax.transAxes)
+        return fig, ax
+    
+    # Extract ring numbers and sort columns by ring number
+    ring_numbers = []
+    for col in matching_cols:
+        match = re.search(r'_ring_(\d+)$', col)
+        if match:
+            ring_numbers.append(int(match.group(1)))
+        else:
+            ring_numbers.append(0)
+            
+    # Sort columns by ring number
+    sorted_indices = np.argsort(ring_numbers)
+    sorted_cols = [matching_cols[i] for i in sorted_indices]
+    sorted_ring_numbers = [ring_numbers[i] for i in sorted_indices]
+    
+    # Prepare data for plotting
+    plot_df = pd.DataFrame()
+    
+    for i, col in enumerate(sorted_cols):
+        ring_num = sorted_ring_numbers[i]
+        
+        for tp in timepoints:
+            tp_data = df[df['timepoint'] == tp]
+            values = tp_data[col].dropna()
+            
+            if len(values) > 0:
+                # Create a temporary DataFrame for this ring/timepoint combination
+                temp_df = pd.DataFrame({
+                    'value': values,
+                    'ring': [f"Ring {ring_num}"] * len(values),
+                    'timepoint': [tp] * len(values)
+                })
+                
+                # Append to the main plotting DataFrame
+                plot_df = pd.concat([plot_df, temp_df])
+    
+    if len(plot_df) == 0:
+        ax.text(0.5, 0.5, f"No data found for {parameter.upper()} in {region_type} rings", 
+               ha='center', va='center', transform=ax.transAxes)
+        return fig, ax
+    
+    # Create appropriate plot based on plot_type
+    if plot_type == 'scatter':
+        # Create a scatter plot with jitter
+        for tp in timepoints:
+            tp_data = plot_df[plot_df['timepoint'] == tp]
+            
+            if len(tp_data) > 0:
+                # Add jitter to the categorical x positions
+                rings = tp_data['ring'].unique()
+                for i, ring in enumerate(sorted(rings)):
+                    ring_data = tp_data[tp_data['ring'] == ring]
+                    
+                    # Create jitter
+                    x = np.full(len(ring_data), i)
+                    x = x + np.random.normal(0, 0.05, size=len(x))
+                    
+                    # Plot with slight jitter on x-axis
+                    ax.scatter(
+                        x, ring_data['value'], 
+                        color=timepoint_colors[tp],
+                        s=50, alpha=0.7, edgecolors='black', linewidths=0.5,
+                        label=tp if i == 0 else ""  # Only add to legend once
+                    )
+        
+        # Set x-ticks
+        ax.set_xticks(range(len(sorted_ring_numbers)))
+        ax.set_xticklabels([f"Ring {ring}" for ring in sorted_ring_numbers])
+        
+    elif plot_type == 'box':
+        # Create a box plot
+        sns.boxplot(
+            data=plot_df,
+            x='ring', y='value', hue='timepoint',
+            palette=timepoint_colors,
+            ax=ax
+        )
+
+        # Add strip plot on top (this automatically adds dots over the boxes)
+        sns.stripplot(
+            data=plot_df,
+            x='ring', y='value', hue='timepoint',
+            palette=timepoint_colors,
+            dodge=True,  # This makes the points align with their respective boxes
+            alpha=0.7,
+            size=4,
+            edgecolor='black',
+            linewidth=0.5,
+            ax=ax,
+            legend=False  # Don't add a second legend
+        )
+    elif plot_type == 'strip':
+        # one box plot per thingy
+        sns.boxplot(
+            data=plot_df,
+            x='ring', y='value',
+            color='lightgray',  # Plain gray boxes
+            ax=ax,
+            showfliers=False
+        )
+        # Add strip plot on top (this automatically adds dots over the boxes)
+        sns.stripplot(
+            data=plot_df,
+            x='ring', y='value', hue='timepoint',
+            palette=timepoint_colors,
+            dodge=True,  # This makes the points align with their respective boxes
+            alpha=0.7,
+            size=4,
+            edgecolor='black',
+            linewidth=0.5,
+            ax=ax,
+            legend=True  # Don't add a second legend
+        )
+        
+    elif plot_type == 'violin':
+        # Create a violin plot
+        sns.violinplot(
+            data=plot_df,
+            x='ring', y='value', hue='timepoint',
+            palette=timepoint_colors,
+            split=True, inner='quartile',
+            ax=ax
+        )
+    
+    # Remove duplicate legend entries
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys(), title='Timepoint')
+    
+    # Set axis labels and title
+    ax.set_xlabel('Ring Number')
+    ax.set_ylabel(f'{parameter.upper()} Value')
+    if 'fa' in parameter:
+        ax.set_ylim(0, 0.5)
+    elif 'md' in parameter:
+        ax.set_ylim(0, 0.0035)
+    
+    # Format region type for title
+    region_title = region_type.replace('_', ' ').title()
+    if region_title.startswith('Baseline'):
+        region_title = region_title.replace('Baseline', 'Control Side')
+    elif region_title.startswith('Anterior'):
+        region_title = region_title.replace('Anterior', 'Craniectomy Side Anterior')
+    elif region_title.startswith('Posterior'):
+        region_title = region_title.replace('Posterior', 'Craniectomy Side Posterior')
+    ax.set_title(f'{parameter.upper()} Values for {region_title} Rings by Timepoint')
+    
+    # Adjust layout
+    plt.tight_layout()
+    
+    # Save figure if save_path is provided
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    
+    return fig, ax
+    
+    
+
+
 def process_timepoint_data(input_file_location):
     """
     Process patient timepoint data by standardizing timepoint values and sorting results.
@@ -591,19 +1135,98 @@ if __name__ == '__main__':
     data_5x4vox_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_harmonised.csv'
     data_5x4vox=process_timepoint_data(input_file_location=data_5x4vox_filename)
     # Now data_5x4vox has been recategorized based on Days_since_injury, exactly the same as the deformation analysis
-    plot_all_rings_combined(df=data_5x4vox, parameter='fa', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox_filtered.png')
-    plot_all_rings_combined(df=data_5x4vox, parameter='md', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox_filtered_md.png')
+    # plot_all_rings_combined(df=data_5x4vox, parameter='fa', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox_filtered.png')
+    # plot_all_rings_combined(df=data_5x4vox, parameter='md', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox_filtered_md.png')
+
+
+    # # Scatter plots for 5x4 vox data
+    # plot_metric_roi(df=data_5x4vox, parameter='fa', region_type='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_5x4vox_anterior_scatter.png')
+    # plot_metric_roi(df=data_5x4vox, parameter='fa', region_type='baseline_anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_5x4vox_baseline_anterior_scatter.png')
+    # plot_metric_roi(df=data_5x4vox, parameter='fa', region_type='posterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_5x4vox_posterior_scatter.png')
+    # plot_metric_roi(df=data_5x4vox, parameter='fa', region_type='baseline_posterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_5x4vox_baseline_posterior_scatter.png')
+    # plot_metric_roi(df=data_5x4vox, parameter='md', region_type='anterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_anterior_scatter.png')
+    # plot_metric_roi(df=data_5x4vox, parameter='md', region_type='baseline_anterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_baseline_anterior_scatter.png')
+    # plot_metric_roi(df=data_5x4vox, parameter='md', region_type='posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_posterior_scatter.png')
+    # plot_metric_roi(df=data_5x4vox, parameter='md', region_type='baseline_posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_baseline_posterior_scatter.png')
+
+    # # Box plots for 5x4 vox data
+    # plot_metric_roi(df=data_5x4vox, parameter='fa', region_type='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_5x4vox_anterior_box.png', plot_type='box')
+    # plot_metric_roi(df=data_5x4vox, parameter='fa', region_type='baseline_anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_5x4vox_baseline_anterior_box.png', plot_type='box')
+    # plot_metric_roi(df=data_5x4vox, parameter='fa', region_type='posterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_5x4vox_posterior_box.png', plot_type='box')
+    # plot_metric_roi(df=data_5x4vox, parameter='fa', region_type='baseline_posterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_5x4vox_baseline_posterior_box.png', plot_type='box')
+    # plot_metric_roi(df=data_5x4vox, parameter='md', region_type='anterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_anterior_box.png', plot_type='box')
+    # plot_metric_roi(df=data_5x4vox, parameter='md', region_type='baseline_anterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_baseline_anterior_box.png', plot_type='box')
+    # plot_metric_roi(df=data_5x4vox, parameter='md', region_type='posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_posterior_box.png', plot_type='box')
+    # plot_metric_roi(df=data_5x4vox, parameter='md', region_type='baseline_posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_baseline_posterior_box.png', plot_type='box')
+
+    # # Strip plots for 5x4 vox data
+    # plot_metric_roi(df=data_5x4vox, parameter='fa', region_type='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_5x4vox_anterior_strip.png', plot_type='strip')
+    # plot_metric_roi(df=data_5x4vox, parameter='fa', region_type='baseline_anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_5x4vox_baseline_anterior_strip.png', plot_type='strip')
+    # plot_metric_roi(df=data_5x4vox, parameter='fa', region_type='posterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_5x4vox_posterior_strip.png', plot_type='strip')
+    # plot_metric_roi(df=data_5x4vox, parameter='fa', region_type='baseline_posterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_5x4vox_baseline_posterior_strip.png', plot_type='strip')
+    # plot_metric_roi(df=data_5x4vox, parameter='md', region_type='anterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_anterior_strip.png', plot_type='strip')
+    # plot_metric_roi(df=data_5x4vox, parameter='md', region_type='baseline_anterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_baseline_anterior_strip.png', plot_type='strip')
+    # plot_metric_roi(df=data_5x4vox, parameter='md', region_type='posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_posterior_strip.png', plot_type='strip')
+    # plot_metric_roi(df=data_5x4vox, parameter='md', region_type='baseline_posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_baseline_posterior_strip.png', plot_type='strip')
+
+    
+
+
+    # plot_metric_roi(df=data_5x4vox, parameter='md', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox.png')
+
+
 
     # Load the (harmonised) data
-    #data_10x4vox=pd.read_csv('DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_harmonised.csv')
-    #data_10x4vox=process_timepoint_data(df=data_10x4vox)
-    # Now data_10x4vox has been recategorized based on Days_since_injury, exactly the same as the deformation analysis
-    #plot_all_rings_combined(df=data_10x4vox, parameter='fa', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_10x4vox_filtered.png')
-    #plot_all_rings_combined(df=data_10x4vox, parameter='md', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_10x4vox_filtered_md.png')
+    data_10x4vox_filename='DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_harmonised.csv'
+    data_10x4vox=process_timepoint_data(input_file_location=data_10x4vox_filename)
+    
+    #Scatter plots for 10x4vox
+    # plot_metric_roi(df=data_10x4vox, parameter='fa', region_type='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_anterior_scatter.png')
+    # plot_metric_roi(df=data_10x4vox, parameter='fa', region_type='baseline_anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_baseline_anterior_scatter.png')
+    # plot_metric_roi(df=data_10x4vox, parameter='fa', region_type='posterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_posterior_scatter.png')
+    # plot_metric_roi(df=data_10x4vox, parameter='fa', region_type='baseline_posterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_baseline_posterior_scatter.png')
+    # plot_metric_roi(df=data_10x4vox, parameter='md', region_type='anterior', save_path='DTI_Processing_Scripts/test_results/roi_md_10x4vox_anterior_scatter.png')
+    # plot_metric_roi(df=data_10x4vox, parameter='md', region_type='baseline_anterior', save_path='DTI_Processing_Scripts/test_results/roi_md_10x4vox_baseline_anterior_scatter.png')
+    # plot_metric_roi(df=data_10x4vox, parameter='md', region_type='posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_10x4vox_posterior_scatter.png')
+    # plot_metric_roi(df=data_10x4vox, parameter='md', region_type='baseline_posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_10x4vox_baseline_posterior_scatter.png')
+
+    # Box plots for 10x4 vox
+    # plot_metric_roi(df=data_10x4vox, parameter='fa', region_type='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_anterior_box.png', plot_type='box')
+    # plot_metric_roi(df=data_10x4vox, parameter='fa', region_type='baseline_anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_baseline_anterior_box.png', plot_type='box')
+    # plot_metric_roi(df=data_10x4vox, parameter='fa', region_type='posterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_posterior_box.png', plot_type='box')
+    # plot_metric_roi(df=data_10x4vox, parameter='fa', region_type='baseline_posterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_baseline_posterior_box.png', plot_type='box')
+    # plot_metric_roi(df=data_10x4vox, parameter='md', region_type='anterior', save_path='DTI_Processing_Scripts/test_results/roi_md_10x4vox_anterior_box.png', plot_type='box')
+    # plot_metric_roi(df=data_10x4vox, parameter='md', region_type='baseline_anterior', save_path='DTI_Processing_Scripts/test_results/roi_md_10x4vox_baseline_anterior_box.png', plot_type='box')
+    # plot_metric_roi(df=data_10x4vox, parameter='md', region_type='posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_10x4vox_posterior_box.png', plot_type='box')
+    # plot_metric_roi(df=data_10x4vox, parameter='md', region_type='baseline_posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_10x4vox_baseline_posterior_box.png', plot_type='box')
+
+
+    # plot_metric_difference(df=data_10x4vox, parameter='fa', region='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_anterior_comparison_box.png', plot_type='box')
+    # plot_metric_difference(df=data_10x4vox, parameter='fa', region='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_anterior_comparison_strip.png', plot_type='strip')
+    # plot_metric_difference(df=data_10x4vox, parameter='fa', region='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_anterior_comparison_scatter.png', plot_type='scatter')
+
+    # plot_metric_difference(df=data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_both_regions_comparison_box.png', plot_type='box')
+    # plot_metric_difference(df=data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_both_regions_comparison_strip.png', plot_type='strip')
+    # plot_metric_difference(df=data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_both_regions_comparison_scatter.png', plot_type='scatter')
+
+    # plot_metric_difference(df=data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_10x4vox_both_regions_comparison_box.png', plot_type='box')
+    # plot_metric_difference(df=data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_10x4vox_both_regions_comparison_strip.png', plot_type='strip')
+    # plot_metric_difference(df=data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_10x4vox_both_regions_comparison_scatter.png', plot_type='scatter')
+
+    # group by timepoint
+    # plot_metric_difference(df=data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_both_regions_comparison_box_by_timepoint.png', plot_type='box', group_by='timepoint')
+    plot_metric_difference(df=data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_both_regions_comparison_strip_by_timepoint.png', plot_type='strip', group_by='timepoint')
+    # plot_metric_difference(df=data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_10x4vox_both_regions_comparison_scatter_by_timepoint.png', plot_type='scatter', group_by='timepoint')
+
+    # plot_metric_difference(df=data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_10x4vox_both_regions_comparison_box_by_timepoint.png', plot_type='box', group_by='timepoint')
+    plot_metric_difference(df=data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_10x4vox_both_regions_comparison_strip_by_timepoint.png', plot_type='strip', group_by='timepoint')
+    # plot_metric_difference(df=data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_10x4vox_both_regions_comparison_scatter_by_timepoint.png', plot_type='scatter', group_by='timepoint')
+
+
 
 
 
     ## Plot the FA data. anterior, posterior, baseline_anterior, baseline_posterior on patient by patient basis across time
-
+    print("\n\nScript complete!")
 
 
