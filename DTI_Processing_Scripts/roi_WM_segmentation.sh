@@ -82,7 +82,6 @@ if [ ! -f "$transform_path" ]; then
     exit 1
 fi
 
-exit 0
 
 # Apply transform to register WM mask to DTI space
 echo "Registering WM mask to DTI space..."
