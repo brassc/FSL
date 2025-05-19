@@ -171,8 +171,11 @@ grep -v "^1," $coord_csv | while IFS=, read excluded patient_id timepoint rest; 
                 ./DTI_Processing_Scripts/roi_extract.sh "$patient_id" "$timepoint" "$tp_base" "$bin_size" "$num_bins" "$fa_path" "$md_path" "$master_csv" "$filter_fa_values" "$get_all_values" "$md_extraction_overwrite"
             fi
             
-            # Step 3: White matter registration
+            # Step 3: White matter registration and roi multiplication (WM ROI creation)
             ./DTI_Processing_Scripts/roi_WM_segmentation.sh "$patient_id" "$timepoint" "$tp_base" "$bin_size" "$num_bins" "$filter_fa_values"
+
+            # Step 4: Extract metrics from WM-masked ROIs
+            ./DTI_Processing_Scripts/roi_extract_wm.sh "$patient_id" "$timepoint" "$tp_base" "$bin_size" "$num_bins" "$master_csv" "$filter_fa_values" "$get_all_values"
 
             # Append to master CSV
             #cat "DTI_Processing_Scripts/results/${patient_id}_${timepoint}_metrics_${num_bins}x${bin_size}vox.csv" | tail -n 1 >> $master_csv
