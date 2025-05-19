@@ -17,6 +17,7 @@ filter_fa_values="false"
 overwrite="false"
 get_all_values="false"
 md_extraction_overwrite="false"
+wm_seg_only="true"
 
 
 
@@ -40,6 +41,9 @@ for arg in "$@"; do
         --md_extraction_overwrite=*)
         md_extraction_overwrite="${arg#*=}"
         ;;
+        --wm_seg_only=*)
+        wm_seg_only="${arg#*=}"
+        ;;
         *)
         # Unknown option
         ;;
@@ -47,9 +51,9 @@ for arg in "$@"; do
 done
 
 # Check if required parameters are provided
-if [ -z "$num_bins" ] || [ -z "$bin_size" ] || [ -z "$filter_fa_values" ] || [ -z "$overwrite" ] || [ -z "$get_all_values" ] || [ -z "$md_extraction_overwrite" ]; then
+if [ -z "$num_bins" ] || [ -z "$bin_size" ] || [ -z "$filter_fa_values" ] || [ -z "$wm_seg_only" ] || [ -z "$overwrite" ] || [ -z "$get_all_values" ] || [ -z "$md_extraction_overwrite" ]; then
     echo "Usage: $0 --num_bins=<value> --bin_size=<value> --filter_fa_values=<true/false (Default: false)> --overwrite=<true/false (Default: false)> --get_all_values=<true/false (Default: false)>"
-    echo "Example: $0 --num_bins=5 --bin_size=4 --filter_fa_values=true --overwrite=false --get_all_values=false --md_extraction_overwrite=false"
+    echo "Example: $0 --num_bins=5 --bin_size=4 --filter_fa_values=true --wm_seg_only=true --overwrite=false --get_all_values=false --md_extraction_overwrite=false"
     echo "Note: filter_fa_values, overwrite and get_all_values default to false if not specified"
     exit 1
 fi
