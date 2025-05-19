@@ -378,13 +378,22 @@ def plot_metric_difference(df, parameter, region, save_path=None, plot_type='box
         
     ax.set_title(f'{parameter.upper()} Differences (Control Side - Craniectomy Side) for {region_title} {group_title}')
     
+    if 'wm' in save_path:
+        ax.set_title(f'{parameter.upper()} Differences (Control Side - Craniectomy Side) in White Matter for {region_title} {group_title}')
+
+
     # Adjust layout
     plt.tight_layout()
     
     # Save figure if save_path is provided
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    
+        # Get basename from e.g. DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_boxplot.png
+        # replace .png with .pdf and set dpi to 300
+        basename = os.path.basename(save_path)
+        basename = basename.replace('.png', '.pdf')
+        plt.savefig(f'../Thesis/phd-thesis-template-2.4/Chapter6/Figs/{basename}', dpi=300, bbox_inches='tight')
+        
     return fig, ax
 
 def create_hex_color_map_from_cmap(cmap_name, n):
@@ -1185,6 +1194,15 @@ if __name__ == '__main__':
     plot_metric_difference(df=wm_data_5x4vox, parameter='fa', region='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_anterior_comparison_box.png', plot_type='strip')
     plot_metric_difference(df=wm_data_5x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
     # plot_metric_difference
+
+    wm_data_10x4vox_filename='DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_wm_harmonised.csv'
+    wm_data_10x4vox=process_timepoint_data(input_file_location=wm_data_10x4vox_filename)
+    # plot_metric_difference(df=wm_data_5x4vox, parameter='fa', region='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_anterior_comparison_box.png', plot_type='strip')
+    plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
+    plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
+    plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
+    plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
+
 
     sys.exit()
 
