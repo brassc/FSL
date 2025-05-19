@@ -1169,7 +1169,21 @@ if __name__ == '__main__':
     # plot_metric_roi(df=data_5x4vox, parameter='md', region_type='posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_posterior_strip.png', plot_type='strip')
     # plot_metric_roi(df=data_5x4vox, parameter='md', region_type='baseline_posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_baseline_posterior_strip.png', plot_type='strip')
 
-    
+    wm_data_5x4vox_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_wm_harmonised.csv'
+    wm_data_5x4vox=process_timepoint_data(input_file_location=wm_data_5x4vox_filename)
+
+    # # Strip plots for 5x4 vox data
+    # plot_metric_roi(df=wm_data_5x4vox, parameter='fa', region_type='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_anterior_strip.png', plot_type='strip')
+    # plot_metric_roi(df=wm_data_5x4vox, parameter='fa', region_type='baseline_anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_baseline_anterior_strip.png', plot_type='strip')
+    # plot_metric_roi(df=wm_data_5x4vox, parameter='fa', region_type='posterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_posterior_strip.png', plot_type='strip')
+    # plot_metric_roi(df=wm_data_5x4vox, parameter='fa', region_type='baseline_posterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_baseline_posterior_strip.png', plot_type='strip')
+    # plot_metric_roi(df=wm_data_5x4vox, parameter='md', region_type='anterior', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_5x4vox_anterior_strip.png', plot_type='strip')
+    # plot_metric_roi(df=wm_data_5x4vox, parameter='md', region_type='baseline_anterior', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_5x4vox_baseline_anterior_strip.png', plot_type='strip')
+    # plot_metric_roi(df=wm_data_5x4vox, parameter='md', region_type='posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_5x4vox_posterior_strip.png', plot_type='strip')
+    # plot_metric_roi(df=wm_data_5x4vox, parameter='md', region_type='baseline_posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_5x4vox_baseline_posterior_strip.png', plot_type='strip')
+
+    sys.exit()
+
 
 
     # plot_metric_roi(df=data_5x4vox, parameter='md', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox.png')
