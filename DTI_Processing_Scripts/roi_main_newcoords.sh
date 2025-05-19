@@ -163,10 +163,13 @@ grep -v "^1," $coord_csv | while IFS=, read excluded patient_id timepoint rest; 
         if [ -f "$mask_path" ] && [ -f "$fa_path" ] && [ -f "$md_path" ]; then
             echo "All required files found for patient $patient_id at timepoint $timepoint"   
             # Step 1: Create spherical ROIs
-            # ./DTI_Processing_Scripts/roi_create.sh "$patient_id" "$timepoint" "$tp_base" "$mask_path" "$fa_path" "$md_path" "$bin_size" "$num_bins" "$coord_csv" "$filter_fa_values" "$overwrite"
-            
-            # Step 2: Extract metrics
-            # ./DTI_Processing_Scripts/roi_extract.sh "$patient_id" "$timepoint" "$tp_base" "$bin_size" "$num_bins" "$fa_path" "$md_path" "$master_csv" "$filter_fa_values" "$get_all_values" "$md_extraction_overwrite"
+            if [ $wm_seg_only == "false" ]; then
+                # Step 1: Create spherical ROIs
+                ./DTI_Processing_Scripts/roi_create.sh "$patient_id" "$timepoint" "$tp_base" "$mask_path" "$fa_path" "$md_path" "$bin_size" "$num_bins" "$coord_csv" "$filter_fa_values" "$overwrite"
+                
+                # Step 2: Extract metrics
+                ./DTI_Processing_Scripts/roi_extract.sh "$patient_id" "$timepoint" "$tp_base" "$bin_size" "$num_bins" "$fa_path" "$md_path" "$master_csv" "$filter_fa_values" "$get_all_values" "$md_extraction_overwrite"
+            fi
             
             # Step 3: White matter registration
             ./DTI_Processing_Scripts/roi_WM_segmentation.sh "$patient_id" "$timepoint" "$tp_base" "$bin_size" "$num_bins" "$filter_fa_values"
