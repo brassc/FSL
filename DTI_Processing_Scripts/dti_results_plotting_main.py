@@ -388,7 +388,12 @@ def plot_metric_difference(df, parameter, region, save_path=None, plot_type='box
     # Save figure if save_path is provided
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-    
+        # Get basename from e.g. DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_boxplot.png
+        # replace .png with .pdf and set dpi to 300
+        basename = os.path.basename(save_path)
+        basename = basename.replace('.png', '.pdf')
+        plt.savefig(f'../Thesis/phd-thesis-template-2.4/Chapter6/Figs/{basename}', dpi=300, bbox_inches='tight')
+        
     return fig, ax
 
 def create_hex_color_map_from_cmap(cmap_name, n):
