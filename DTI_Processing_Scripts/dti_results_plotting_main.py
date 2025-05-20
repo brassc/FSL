@@ -12,6 +12,8 @@ import seaborn as sns
 import sys
 import os
 import re
+import scipy.stats as stats
+from scikit_posthocs import posthoc_terpstra
 import statsmodels.stats.multitest as smm
 from statsmodels.stats.multitest import multipletests
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
@@ -46,6 +48,245 @@ if len(names_to_install) > 0:
 base = importr('base')
 lme4 = importr('lme4')
 emmeans = importr('emmeans')
+
+def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='increasing'):
+    """
+    Perform Jonckheere-Terpstra test on differences between baseline and current values
+    across specified rings, and visualize the results.
+    
+    Args:
+        df: DataFrame with the data
+        parameter: The metric to analyze (e.g., 'fa', 'md')
+        regions: Tuple specifying (start_ring, end_ring) to analyze
+        save_path: Path to save the figure (optional)
+        alternative: Direction of trend to test ('increasing', 'decreasing', or 'two-sided')
+        
+    Returns:
+        Dictionary with test results and figure object
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
+    import re
+    import scipy.stats as stats
+    import seaborn as sns
+    from collections import defaultdict
+    
+    # Set publication style
+    plt.style.use('seaborn-whitegrid')
+    plt.rcParams.update({
+        'font.size': 12,
+        'axes.titlesize': 14,
+        'axes.labelsize': 12,
+        'xtick.labelsize': 10,
+        'ytick.labelsize': 10,
+        'legend.fontsize': 10,
+        'figure.figsize': (12, 8)
+    })
+    
+    # Validate inputs
+    parameter = parameter.lower()
+    start_ring, end_ring = regions
+    if not (1 <= start_ring <= 10 and 1 <= end_ring <= 10 and start_ring <= end_ring):
+        raise ValueError("Ring range must be between 1-10 with start <= end")
+    
+    # Define the regions to analyze (always both anterior and posterior)
+    regions_to_analyze = ['anterior', 'posterior']
+    
+    # Dictionary to store results
+    results = {}
+    
+    # Create a figure for results
+    fig, axes = plt.subplots(1, 2, figsize=(18, 8))
+    
+    # Process each region (anterior/posterior)
+    for i, curr_region in enumerate(regions_to_analyze):
+        # Find columns matching the parameter and current region
+        current_pattern = f"{parameter}_{curr_region}_ring_"
+        baseline_pattern = f"{parameter}_baseline_{curr_region}_ring_"
+        
+        # Data structures to store FA differences by ring
+        ring_data = defaultdict(list)
+        ring_mean_diff = []
+        ring_numbers = list(range(start_ring, end_ring + 1))
+        
+        # Calculate difference for each ring within specified range
+        for ring_num in ring_numbers:
+            current_col = f"{parameter}_{curr_region}_ring_{ring_num}"
+            baseline_col = f"{parameter}_baseline_{curr_region}_ring_{ring_num}"
+            
+            if current_col in df.columns and baseline_col in df.columns:
+                # Get values
+                current_values = df[current_col]
+                baseline_values = df[baseline_col]
+                
+                # Filter for valid data
+                valid_indices = current_values.notna() & baseline_values.notna()
+                
+                if valid_indices.sum() > 0:
+                    # Calculate difference (baseline - current)
+                    diff_values = (baseline_values[valid_indices] - current_values[valid_indices]).tolist()
+                    ring_data[ring_num] = diff_values
+                    ring_mean_diff.append(np.mean(diff_values))
+                else:
+                    ring_mean_diff.append(np.nan)
+        
+        # Skip region if insufficient data
+        if len(ring_data) <= 1:
+            results[curr_region] = {
+                'status': 'insufficient_data',
+                'message': f"Insufficient data for {curr_region} region"
+            }
+            axes[i].text(0.5, 0.5, f"Insufficient data for {curr_region} region", 
+                        ha='center', va='center', transform=axes[i].transAxes)
+            continue
+            
+        # Prepare data for Jonckheere-Terpstra test
+        groups_for_jt = [ring_data[ring] for ring in ring_numbers if ring in ring_data]
+        ring_labels = [ring for ring in ring_numbers if ring in ring_data]
+        
+        # Implement Jonckheere-Terpstra test
+        def jonckheere_terpstra_test(data_groups, alternative='increasing'):
+            """
+            Proper implementation of the Jonckheere-Terpstra test for ordered alternatives.
+            
+            Args:
+                data_groups: List of arrays, each containing values for one group/ring
+                alternative: 'increasing', 'decreasing', or 'two-sided'
+                
+            Returns:
+                Dictionary with test statistic, standardized statistic, and p-value
+            """
+            # Count number of groups and total observations
+            k = len(data_groups)
+            n_i = [len(group) for group in data_groups]
+            n = sum(n_i)
+            
+            # Calculate J statistic (sum of Mann-Whitney counts)
+            j_stat = 0
+            for i in range(k):
+                for j in range(i+1, k):
+                    # Count how many values in group j are greater than values in group i
+                    for x in data_groups[i]:
+                        for y in data_groups[j]:
+                            if y > x:
+                                j_stat += 1
+                            elif y == x:
+                                j_stat += 0.5  # Count ties as 0.5
+            
+            # Calculate mean and variance under the null hypothesis
+            mean_j = sum([n_i[i] * sum(n_i[j] for j in range(i+1, k)) for i in range(k-1)]) / 2
+            
+            # Calculate variance
+            var_term1 = 0
+            for i in range(k):
+                for j in range(i+1, k):
+                    var_term1 += n_i[i] * n_i[j] * (n_i[i] + n_i[j] + 1)
+            var_j = var_term1 / 72
+            
+            # Calculate the standardized test statistic
+            z = (j_stat - mean_j) / np.sqrt(var_j) if var_j > 0 else 0
+            
+            # Calculate p-value based on alternative hypothesis
+            if alternative == 'increasing':
+                p_value = 1 - stats.norm.cdf(z)
+            elif alternative == 'decreasing':
+                p_value = stats.norm.cdf(z)
+            else:  # two-sided
+                p_value = 2 * min(stats.norm.cdf(z), 1 - stats.norm.cdf(z))
+            
+            return {
+                'statistic': j_stat,
+                'mean': mean_j,
+                'variance': var_j,
+                'z': z,
+                'p_value': p_value,
+                'alternative': alternative
+            }
+        
+        # Run the test
+        jt_result = jonckheere_terpstra_test(groups_for_jt, alternative=alternative)
+        
+        # Store results
+        results[curr_region] = {
+            'jt_test': jt_result,
+            'ring_data': dict(ring_data),
+            'ring_means': ring_mean_diff,
+            'ring_numbers': ring_numbers
+        }
+        
+        # Plot the results
+        ax = axes[i]
+        
+        # Plot mean differences
+        x_vals = [r for r in ring_numbers if r in ring_data]
+        y_vals = [np.mean(ring_data[r]) for r in x_vals]
+        
+        # Line plot of means
+        ax.plot(x_vals, y_vals, 'bo-', linewidth=2, markersize=8)
+        
+        # Add error bars (standard error)
+        y_err = [np.std(ring_data[r])/np.sqrt(len(ring_data[r])) for r in x_vals]
+        ax.errorbar(x_vals, y_vals, yerr=y_err, fmt='none', capsize=5, ecolor='gray')
+        
+        # Add individual data points with jitter
+        for idx, r in enumerate(x_vals):
+            # Add jitter to x-position
+            x_jitter = np.random.normal(idx+min(x_vals), 0.05, size=len(ring_data[r]))
+            ax.scatter(x_jitter, ring_data[r], alpha=0.4, s=20, c='lightblue')
+        
+        # Add trend line if significant
+        if jt_result['p_value'] < 0.05:
+            # Fit simple trend line for visualization
+            valid_x = [r for r, m in zip(ring_numbers, ring_mean_diff) if not np.isnan(m)]
+            valid_y = [m for m in ring_mean_diff if not np.isnan(m)]
+            if len(valid_x) >= 2:  # Need at least two points for regression
+                z = np.polyfit(valid_x, valid_y, 1)
+                p = np.poly1d(z)
+                ax.plot(valid_x, p(valid_x), "r--", alpha=0.7, 
+                        label=f"Linear trend (slope={z[0]:.4f})")
+        
+        # Add zero reference line
+        ax.axhline(y=0, color='gray', linestyle='--', alpha=0.5)
+        
+        # Highlight significant trend if present
+        if jt_result['p_value'] < 0.05:
+            # Add a subtle background highlight
+            ax.axvspan(min(x_vals)-0.5, max(x_vals)+0.5, color='green', alpha=0.1)
+            
+            # Annotate with significance
+            trend_dir = "increasing" if alternative == "increasing" else "decreasing"
+            ax.text(0.05, 0.95, 
+                   f"Significant {trend_dir} trend\np={jt_result['p_value']:.4f}\nz={jt_result['z']:.2f}", 
+                   transform=ax.transAxes, va='top', fontsize=12,
+                   bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.7))
+        else:
+            ax.text(0.05, 0.95, 
+                   f"No significant trend\np={jt_result['p_value']:.4f}", 
+                   transform=ax.transAxes, va='top', fontsize=12,
+                   bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.7))
+        
+        # Set titles and labels
+        ax.set_title(f"{curr_region.capitalize()} Region: {parameter.upper()} Differences", fontsize=14)
+        ax.set_xlabel("Ring Number", fontsize=12)
+        ax.set_ylabel(f"{parameter.upper()} Difference (Control - Craniectomy)", fontsize=12)
+        ax.set_xticks(ring_numbers)
+        ax.grid(True, alpha=0.3)
+        if jt_result['p_value'] < 0.05:
+            ax.legend(loc='lower right')
+    
+    # Set overall title
+    plt.suptitle(f"Jonckheere-Terpstra Test for {parameter.upper()} Differences Across Rings {start_ring}-{end_ring}", 
+                fontsize=16, y=0.98)
+    plt.tight_layout(rect=[0, 0, 1, 0.96])
+    
+    # Save figure if path provided
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        print(f"Figure saved to {save_path}")
+    
+    # Return results and figure
+    return {'results': results, 'figure': fig}
 
 
 def plot_metric_difference(df, parameter, region, save_path=None, plot_type='box', group_by='region'):
@@ -1141,8 +1382,9 @@ if __name__ == '__main__':
     # plot_all_rings_combined(df=data_5x4vox_not_harmonised, parameter='md', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox_not_harmonised_md.png')
 
     
-    data_5x4vox_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_harmonised.csv'
-    data_5x4vox=process_timepoint_data(input_file_location=data_5x4vox_filename)
+    # data_5x4vox_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_harmonised.csv'
+    # data_5x4vox=process_timepoint_data(input_file_location=data_5x4vox_filename)
+
     # Now data_5x4vox has been recategorized based on Days_since_injury, exactly the same as the deformation analysis
     # plot_all_rings_combined(df=data_5x4vox, parameter='fa', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox_filtered.png')
     # plot_all_rings_combined(df=data_5x4vox, parameter='md', save_path='DTI_Processing_Scripts/test_results/all_rings_combined_5x4vox_filtered_md.png')
@@ -1178,8 +1420,8 @@ if __name__ == '__main__':
     # plot_metric_roi(df=data_5x4vox, parameter='md', region_type='posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_posterior_strip.png', plot_type='strip')
     # plot_metric_roi(df=data_5x4vox, parameter='md', region_type='baseline_posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_5x4vox_baseline_posterior_strip.png', plot_type='strip')
 
-    wm_data_5x4vox_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_wm_harmonised.csv'
-    wm_data_5x4vox=process_timepoint_data(input_file_location=wm_data_5x4vox_filename)
+    # wm_data_5x4vox_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_wm_harmonised.csv'
+    # wm_data_5x4vox=process_timepoint_data(input_file_location=wm_data_5x4vox_filename)
 
     # # Strip plots for 5x4 vox data
     # plot_metric_roi(df=wm_data_5x4vox, parameter='fa', region_type='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_anterior_strip.png', plot_type='strip')
@@ -1191,17 +1433,35 @@ if __name__ == '__main__':
     # plot_metric_roi(df=wm_data_5x4vox, parameter='md', region_type='posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_5x4vox_posterior_strip.png', plot_type='strip')
     # plot_metric_roi(df=wm_data_5x4vox, parameter='md', region_type='baseline_posterior', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_5x4vox_baseline_posterior_strip.png', plot_type='strip')
 
-    plot_metric_difference(df=wm_data_5x4vox, parameter='fa', region='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_anterior_comparison_box.png', plot_type='strip')
-    plot_metric_difference(df=wm_data_5x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
-    # plot_metric_difference
+    # plot_metric_difference(df=wm_data_5x4vox, parameter='fa', region='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_anterior_comparison_box.png', plot_type='strip')
+    # plot_metric_difference(df=wm_data_5x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
+    # # plot_metric_difference
 
     wm_data_10x4vox_filename='DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_wm_harmonised.csv'
     wm_data_10x4vox=process_timepoint_data(input_file_location=wm_data_10x4vox_filename)
-    # plot_metric_difference(df=wm_data_5x4vox, parameter='fa', region='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_anterior_comparison_box.png', plot_type='strip')
-    plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
-    plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
-    plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
-    plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
+    # # plot_metric_difference(df=wm_data_5x4vox, parameter='fa', region='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_anterior_comparison_box.png', plot_type='strip')
+    # plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
+    # plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
+    # plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
+    # plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
+
+    # print(wm_data_10x4vox.columns)
+    # Run the test on rings 2-10 looking for an increasing trend
+    results = jt_test(df=wm_data_10x4vox, parameter='fa', regions=(2, 10), 
+                    save_path='jt_test_results-fa-rings-2to10.png', alternative='increasing')
+
+    # Print detailed results
+    for region, res in results['results'].items():
+        if 'jt_test' in res:
+            print(f"\n{region.upper()} REGION:")
+            print(f"JT test statistic: {res['jt_test']['statistic']:.2f}")
+            print(f"Z-score: {res['jt_test']['z']:.2f}")
+            print(f"P-value: {res['jt_test']['p_value']:.4f}")
+            if res['jt_test']['p_value'] < 0.05:
+                print("SIGNIFICANT TREND DETECTED")
+            else:
+                print("No significant trend")
+
 
 
     sys.exit()
