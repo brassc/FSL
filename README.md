@@ -250,15 +250,20 @@ The pipeline consists of three main scripts:
 1. `roi_main_new_coords.sh` - Main orchestration script that processes patients/timepoints and manages the overall workflow
 2. `roi_create.sh` - Creates spherical ROIs around anatomical points of interest
 3. `roi_extract.sh` - Extracts DTI metrics from the created ROIs
+4. `roi_WM_segmentation.sh` - Registers white matter mask to DTI space and creates white matter specific ROIs
+5. `roi_extract_wm.sh` - Extracts DTI metrics from the white matter specific ROIs
 
 ### Requirements
 
 - FSL (FMRIB Software Library)
+- ANTs (Advanced Normalization Tools)
 - Bash shell environment
 - Input DTI data including:
   - FA maps (dtifitWLS_FA.nii.gz)
   - MD maps (dtifitWLS_MD.nii.gz)
   - Brain masks (ANTS_T1_brain_mask.nii.gz)
+  - WM masks in T1 space (tissueMap_WM.nii.gz)
+  - ANTs transformation files (ants_rig_DTItoT1_InverseComposite.h5)
   - Coordinate CSV file with anatomical points of interest
 
 ### Usage
@@ -275,7 +280,7 @@ The scripts expect a specific directory structure:
 For numeric patient IDs: `/home/cmb247/rds/rds-uda-2-pXaBn8E6hyM/users/cmb247/cmb247_working/DECOMPRESSION_Legacy_CB/hemi/<patient_id>/<timepoint>/`
 For alphanumeric patient IDs: `/home/cmb247/rds/hpc-work/Feb2025_data/CT_Brass/Charlotte_brass_Feb2025/MRI/<patient_id>/`
 
-The coordinate CSV file should be located within the repo at `DTI_Processing_Scripts/LEGACY_DTI_coords_fully_manual.csv` and follow a specific format with anatomical coordinates.
+The coordinate CSV file should be located within the repo at `DTI_Processing_Scripts/LEGACY_DTI_coords_fully_manual.csv` and follow a specific format with anatomical and DTI space coordinates.
 
 ### Script Details 
 #### `roi_main_newcoords.sh`
@@ -306,6 +311,27 @@ This script:
 2. Optionally filters FA values > 1 (which are physically implausible)
 3. Outputs results to individual and master CSV files
 
+#### `roi_WM_segmentation.sh`
+This script:
+
+1. Loads anatomical white matter masks from T1 space
+2. Registers WM masks to DTI space using existing ANTs transformation (located at `T1space/ants_rig_DTItoT1_InverseComposite.h5` for LEGACY or `dwi/proc_set1_nobzero/nipype/DATASINK/T1space/ants_rig_DTItoT1_InverseComposite.h5` for CENTER subjects)
+3. Binarizes the WM mask (all non-zero values become 1)
+4. Creates WM-specific versions of existing ROIs by multiplying with the WM mask
+5. Processes both FA and MD ROIs for all anatomical points and ring sizes
+6. Stores results in a dedicated WM_mask_DTI_space subdirectory
+
+
+#### `roi_extract_wm.sh`
+This script:
+
+1. Calculates mean FA and MD values for each white matter-specific ROI
+2. Maintains the same filtering functionality as the original extraction script
+3. Handles missing WM ROIs by inserting "NA" values
+4. Outputs results to WM-specific individual and master CSV files
+5. By default filters FA values between 0.05 and 1 (physically plausible range)
+
+
 
 ### Special Features
 
@@ -314,12 +340,16 @@ This script:
 - Overwrite control: Option to skip ROI creation if directories already exist
 - Optimization: Intelligent reuse of existing ROIs when creating larger bins
 - Concurrency safety: File locking when writing to master CSV
+- White matter specificity: Option to isolate and analyse only white matter voxels within ROIs
 
 ### Output Files
 
 - Individual ROI files: `/home/cmb247/rds/hpc-work/April2025_DWI/<patient_id>/<timepoint>/roi_files_<num_bins>x<bin_size>vox/`
+- White matter ROI files: `/home/cmb247/rds/hpc-work/April2025_DWI/<patient_id>/<timepoint>/roi_files_<num_bins>x<bin_size>vox/WM_mask_DTI_space/`
 - Individual CSV results: `DTI_Processing_Scripts/results/<patient_id>_<timepoint>_metrics_<num_bins>x<bin_size>vox.csv`
+- White matter CSV results: `DTI_Processing_Scripts/results/<patient_id>_<timepoint>_metrics_<num_bins>x<bin_size>vox_wm.csv`
 - Master CSV results: `DTI_Processing_Scripts/results/all_metrics_<num_bins>x<bin_size>vox.csv`
+- White matter master CSV: `DTI_Processing_Scripts/results/all_metrics_<num_bins>x<bin_size>vox_wm.csv`
 
 Note: When using special parameters or filtering, appropriate suffixes are added to file and directory names. Most current is with suffix `NEW_filtered`. 
 
