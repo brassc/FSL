@@ -287,7 +287,171 @@ emmeans = importr('emmeans')
 #     # Return results and figure
 #     return {'results': results, 'figure': fig}
 
-def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='increasing'):
+# def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='increasing'):
+#     """
+#     Perform Jonckheere-Terpstra test on differences between baseline and current values
+#     across specified rings, and visualize the results.
+    
+#     Args:
+#         df: DataFrame with the data
+#         parameter: The metric to analyze (e.g., 'fa', 'md')
+#         regions: Tuple specifying (start_ring, end_ring) to analyze
+#         save_path: Path to save the figure (optional)
+#         alternative: Direction of trend to test ('increasing', 'decreasing', or 'two-sided')
+        
+#     Returns:
+#         Dictionary with test results and figure object
+#     """
+#     import matplotlib.pyplot as plt
+#     import numpy as np
+#     import pandas as pd
+#     import re
+#     import scipy.stats as stats
+#     from collections import defaultdict
+#     import rpy2.robjects as ro
+#     from rpy2.robjects import pandas2ri
+#     from rpy2.robjects.packages import importr
+    
+#     # Activate pandas to R conversion
+#     pandas2ri.activate()
+    
+#     # Import necessary R packages
+#     base = importr('base')
+#     utils = importr('utils')
+    
+#     # Check if PMCMRplus is installed, if not, install it
+#     try:
+#         pmcmr = importr('PMCMRplus')
+#     except:
+#         utils.chooseCRANmirror(ind=1)
+#         utils.install_packages('PMCMRplus')
+#         pmcmr = importr('PMCMRplus')
+    
+#     # Set publication style
+#     # plt.style.use('seaborn-whitegrid')
+
+#     set_publication_style()
+
+#     plt.rcParams.update({
+#         'font.size': 12,
+#         'axes.titlesize': 14,
+#         'axes.labelsize': 12,
+#         'xtick.labelsize': 10,
+#         'ytick.labelsize': 10,
+#         'legend.fontsize': 10,
+#         'figure.figsize': (12, 8)
+#     })
+    
+#     # Validate inputs
+#     parameter = parameter.lower()
+#     start_ring, end_ring = regions
+    
+#     # Create a single figure and axis
+#     fig, ax = plt.subplots(figsize=(12, 8))
+    
+#     # Regions to analyze
+#     regions_to_analyze = ['anterior', 'posterior']
+    
+#     # Dictionary to store results
+#     results = {}
+    
+#     # Color map for regions
+#     colors = {'anterior': 'blue', 'posterior': 'red'}
+    
+#     # Process each region
+#     for curr_region in regions_to_analyze:
+#         # Data structures to store differences by ring
+#         ring_data = defaultdict(list)
+#         ring_numbers = list(range(start_ring, end_ring + 1))
+        
+#         # Calculate difference for each ring
+#         for ring_num in ring_numbers:
+#             current_col = f"{parameter}_{curr_region}_ring_{ring_num}"
+#             baseline_col = f"{parameter}_baseline_{curr_region}_ring_{ring_num}"
+            
+#             if current_col in df.columns and baseline_col in df.columns:
+#                 # Get values
+#                 current_values = df[current_col]
+#                 baseline_values = df[baseline_col]
+                
+#                 # Filter for valid data
+#                 valid_indices = current_values.notna() & baseline_values.notna()
+                
+#                 if valid_indices.sum() > 0:
+#                     # Calculate difference (baseline - current)
+#                     diff_values = (baseline_values[valid_indices] - current_values[valid_indices]).tolist()
+#                     ring_data[ring_num] = diff_values
+        
+#         # Skip if insufficient data
+#         if len(ring_data) <= 1:
+#             print(f"Insufficient data for {curr_region} region")
+#             continue
+        
+#         # Prepare data for JT test
+#         groups_for_jt = [ring_data[ring] for ring in ring_numbers if ring in ring_data]
+#         ring_labels = [ring for ring in ring_numbers if ring in ring_data]
+        
+#         if len(groups_for_jt) <= 1:
+#             print(f"Need at least 2 groups for JT test in {curr_region} region")
+#             continue
+        
+#         # Convert to R format
+#         r_data = [ro.FloatVector(group) for group in groups_for_jt]
+#         r_list = ro.ListVector(dict(zip([str(ring) for ring in ring_labels], r_data)))
+        
+#         # Map alternative
+#         r_alternative = 'greater' if alternative == 'increasing' else 'less' if alternative == 'decreasing' else 'two.sided'
+        
+#         try:
+#             # Run JT test
+#             jt_result_r = pmcmr.jonckheereTest(r_list, alternative=r_alternative)
+#             p_value = jt_result_r.rx2('p.value')[0]
+#             statistic = jt_result_r.rx2('statistic')[0]
+            
+#             # Store results
+#             results[curr_region] = {
+#                 'p_value': p_value,
+#                 'statistic': statistic,
+#                 'alternative': alternative
+#             }
+            
+#             # Calculate mean values for plotting
+#             mean_values = [np.mean(ring_data[r]) if r in ring_data else np.nan for r in ring_numbers]
+            
+#             # Plot mean values by ring
+#             ax.plot(ring_numbers, mean_values, marker='o', linestyle='-', 
+#                    color=colors[curr_region], label=f"{curr_region.capitalize()} (p={p_value:.4f})")
+            
+#             # Add error bars
+#             error_values = [np.std(ring_data[r])/np.sqrt(len(ring_data[r])) if r in ring_data else np.nan 
+#                            for r in ring_numbers]
+#             ax.errorbar(ring_numbers, mean_values, yerr=error_values, fmt='none', 
+#                        ecolor=colors[curr_region], alpha=0.5)
+            
+#         except Exception as e:
+#             print(f"Error in JT test for {curr_region}: {str(e)}")
+    
+#     # Add plot elements
+#     ax.axhline(y=0, color='gray', linestyle='--', alpha=0.5)
+#     ax.set_xlabel("Ring Number", fontsize=14)
+#     ax.set_ylabel(f"{parameter.upper()} Difference (Control - Craniectomy)", fontsize=14)
+#     ax.set_xticks(ring_numbers)
+#     ax.grid(True, alpha=0.3)
+#     ax.legend(loc='best')
+    
+#     plt.title(f"Jonckheere-Terpstra Test for {parameter.upper()} Differences Across Rings {start_ring}-{end_ring}", 
+#              fontsize=16)
+#     plt.tight_layout()
+    
+#     # Save figure if path provided
+#     if save_path:
+#         plt.savefig(save_path, dpi=300, bbox_inches='tight')
+#         print(f"Figure saved to {save_path}")
+    
+#     return {'results': results, 'figure': fig}
+
+
+def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='increasing', combine_regions=False):
     """
     Perform Jonckheere-Terpstra test on differences between baseline and current values
     across specified rings, and visualize the results.
@@ -298,6 +462,7 @@ def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='inc
         regions: Tuple specifying (start_ring, end_ring) to analyze
         save_path: Path to save the figure (optional)
         alternative: Direction of trend to test ('increasing', 'decreasing', or 'two-sided')
+        combine_regions: Whether to combine anterior and posterior regions (True) or plot separately (False)
         
     Returns:
         Dictionary with test results and figure object
@@ -307,7 +472,10 @@ def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='inc
     import pandas as pd
     import re
     import scipy.stats as stats
+    import seaborn as sns
     from collections import defaultdict
+    
+    # Import rpy2 for R integration
     import rpy2.robjects as ro
     from rpy2.robjects import pandas2ri
     from rpy2.robjects.packages import importr
@@ -326,12 +494,16 @@ def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='inc
         utils.chooseCRANmirror(ind=1)
         utils.install_packages('PMCMRplus')
         pmcmr = importr('PMCMRplus')
-    
+        
     # Set publication style
-    # plt.style.use('seaborn-whitegrid')
-
-    set_publication_style()
-
+    try:
+        plt.style.use('seaborn-whitegrid')
+    except:
+        try:
+            plt.style.use('seaborn-v0_8-whitegrid')  # For newer matplotlib versions
+        except:
+            plt.style.use('default')  # Fallback if neither works
+            
     plt.rcParams.update({
         'font.size': 12,
         'axes.titlesize': 14,
@@ -345,55 +517,56 @@ def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='inc
     # Validate inputs
     parameter = parameter.lower()
     start_ring, end_ring = regions
+    if not (1 <= start_ring <= 10 and 1 <= end_ring <= 10 and start_ring <= end_ring):
+        raise ValueError("Ring range must be between 1-10 with start <= end")
     
-    # Create a single figure and axis
-    fig, ax = plt.subplots(figsize=(12, 8))
-    
-    # Regions to analyze
+    # Define the regions to analyze (always both anterior and posterior)
     regions_to_analyze = ['anterior', 'posterior']
     
     # Dictionary to store results
     results = {}
     
-    # Color map for regions
-    colors = {'anterior': 'blue', 'posterior': 'red'}
+    # Create a figure for results
+    fig, ax = plt.subplots(figsize=(12, 8))
     
-    # Process each region
-    for curr_region in regions_to_analyze:
-        # Data structures to store differences by ring
-        ring_data = defaultdict(list)
-        ring_numbers = list(range(start_ring, end_ring + 1))
+    # Colors for regions
+    colors = {'anterior': 'blue', 'posterior': 'red', 'combined': 'purple'}
+    
+    # Ring numbers to analyze
+    ring_numbers = list(range(start_ring, end_ring + 1))
+    
+    if combine_regions:
+        # Dictionary to store combined data for all rings
+        combined_ring_data = defaultdict(list)
         
-        # Calculate difference for each ring
-        for ring_num in ring_numbers:
-            current_col = f"{parameter}_{curr_region}_ring_{ring_num}"
-            baseline_col = f"{parameter}_baseline_{curr_region}_ring_{ring_num}"
-            
-            if current_col in df.columns and baseline_col in df.columns:
-                # Get values
-                current_values = df[current_col]
-                baseline_values = df[baseline_col]
+        # First, collect all data from both regions
+        for curr_region in regions_to_analyze:
+            for ring_num in ring_numbers:
+                current_col = f"{parameter}_{curr_region}_ring_{ring_num}"
+                baseline_col = f"{parameter}_baseline_{curr_region}_ring_{ring_num}"
                 
-                # Filter for valid data
-                valid_indices = current_values.notna() & baseline_values.notna()
-                
-                if valid_indices.sum() > 0:
-                    # Calculate difference (baseline - current)
-                    diff_values = (baseline_values[valid_indices] - current_values[valid_indices]).tolist()
-                    ring_data[ring_num] = diff_values
+                if current_col in df.columns and baseline_col in df.columns:
+                    # Get values
+                    current_values = df[current_col]
+                    baseline_values = df[baseline_col]
+                    
+                    # Filter for valid data
+                    valid_indices = current_values.notna() & baseline_values.notna()
+                    
+                    if valid_indices.sum() > 0:
+                        # Calculate difference (baseline - current)
+                        diff_values = (baseline_values[valid_indices] - current_values[valid_indices]).tolist()
+                        combined_ring_data[ring_num].extend(diff_values)
         
         # Skip if insufficient data
-        if len(ring_data) <= 1:
-            print(f"Insufficient data for {curr_region} region")
-            continue
+        if len(combined_ring_data) <= 1:
+            ax.text(0.5, 0.5, f"Insufficient data for combined regions", 
+                    ha='center', va='center', transform=ax.transAxes)
+            return {'results': {'status': 'insufficient_data'}, 'figure': fig}
         
         # Prepare data for JT test
-        groups_for_jt = [ring_data[ring] for ring in ring_numbers if ring in ring_data]
-        ring_labels = [ring for ring in ring_numbers if ring in ring_data]
-        
-        if len(groups_for_jt) <= 1:
-            print(f"Need at least 2 groups for JT test in {curr_region} region")
-            continue
+        groups_for_jt = [combined_ring_data[ring] for ring in ring_numbers if ring in combined_ring_data]
+        ring_labels = [ring for ring in ring_numbers if ring in combined_ring_data]
         
         # Convert to R format
         r_data = [ro.FloatVector(group) for group in groups_for_jt]
@@ -402,34 +575,103 @@ def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='inc
         # Map alternative
         r_alternative = 'greater' if alternative == 'increasing' else 'less' if alternative == 'decreasing' else 'two.sided'
         
-        try:
-            # Run JT test
+        # Run JT test
+        jt_result_r = pmcmr.jonckheereTest(r_list, alternative=r_alternative)
+        p_value = jt_result_r.rx2('p.value')[0]
+        statistic = jt_result_r.rx2('statistic')[0]
+        
+        # Store results
+        results['combined'] = {
+            'p_value': p_value,
+            'statistic': statistic,
+            'alternative': alternative
+        }
+        
+        # Plot mean values by ring
+        mean_values = [np.mean(combined_ring_data[r]) if r in combined_ring_data else np.nan for r in ring_numbers]
+        
+        # Line plot of means
+        ax.plot(ring_numbers, mean_values, marker='o', linestyle='-', 
+                color=colors['combined'], label=f"Combined (p={p_value:.4f})")
+        
+        # Add error bars
+        y_err = [np.std(combined_ring_data[r])/np.sqrt(len(combined_ring_data[r])) if r in combined_ring_data else np.nan 
+                for r in ring_numbers]
+        ax.errorbar(ring_numbers, mean_values, yerr=y_err, fmt='none', 
+                    ecolor=colors['combined'], alpha=0.5)
+        
+    else:
+        # Process each region separately
+        for curr_region in regions_to_analyze:
+            # Data structures to store FA differences by ring
+            ring_data = defaultdict(list)
+            
+            # Calculate difference for each ring within specified range
+            for ring_num in ring_numbers:
+                current_col = f"{parameter}_{curr_region}_ring_{ring_num}"
+                baseline_col = f"{parameter}_baseline_{curr_region}_ring_{ring_num}"
+                
+                if current_col in df.columns and baseline_col in df.columns:
+                    # Get values
+                    current_values = df[current_col]
+                    baseline_values = df[baseline_col]
+                    
+                    # Filter for valid data
+                    valid_indices = current_values.notna() & baseline_values.notna()
+                    
+                    if valid_indices.sum() > 0:
+                        # Calculate difference (baseline - current)
+                        diff_values = (baseline_values[valid_indices] - current_values[valid_indices]).tolist()
+                        ring_data[ring_num] = diff_values
+            
+            # Skip region if insufficient data
+            if len(ring_data) <= 1:
+                results[curr_region] = {
+                    'status': 'insufficient_data',
+                    'message': f"Insufficient data for {curr_region} region"
+                }
+                continue
+                
+            # Prepare data for Jonckheere-Terpstra test
+            groups_for_jt = [ring_data[ring] for ring in ring_numbers if ring in ring_data]
+            ring_labels = [ring for ring in ring_numbers if ring in ring_data]
+            
+            # Convert to R format
+            r_data = [ro.FloatVector(group) for group in groups_for_jt]
+            r_list = ro.ListVector(dict(zip([str(ring) for ring in ring_labels], r_data)))
+            
+            # Map Python alternative to R alternative
+            r_alternative = 'greater' if alternative == 'increasing' else 'less' if alternative == 'decreasing' else 'two.sided'
+            
+            # Run the Jonckheere-Terpstra test using R's PMCMRplus package
             jt_result_r = pmcmr.jonckheereTest(r_list, alternative=r_alternative)
+            
+            # Extract results from R output
             p_value = jt_result_r.rx2('p.value')[0]
             statistic = jt_result_r.rx2('statistic')[0]
             
-            # Store results
-            results[curr_region] = {
-                'p_value': p_value,
+            # Create dictionary with test results
+            jt_result = {
                 'statistic': statistic,
+                'p_value': p_value,
                 'alternative': alternative
             }
             
-            # Calculate mean values for plotting
-            mean_values = [np.mean(ring_data[r]) if r in ring_data else np.nan for r in ring_numbers]
+            # Store results
+            results[curr_region] = jt_result
             
             # Plot mean values by ring
+            mean_values = [np.mean(ring_data[r]) if r in ring_data else np.nan for r in ring_numbers]
+            
+            # Line plot of means
             ax.plot(ring_numbers, mean_values, marker='o', linestyle='-', 
                    color=colors[curr_region], label=f"{curr_region.capitalize()} (p={p_value:.4f})")
             
-            # Add error bars
-            error_values = [np.std(ring_data[r])/np.sqrt(len(ring_data[r])) if r in ring_data else np.nan 
-                           for r in ring_numbers]
-            ax.errorbar(ring_numbers, mean_values, yerr=error_values, fmt='none', 
+            # Add error bars (standard error)
+            y_err = [np.std(ring_data[r])/np.sqrt(len(ring_data[r])) if r in ring_data else np.nan 
+                    for r in ring_numbers]
+            ax.errorbar(ring_numbers, mean_values, yerr=y_err, fmt='none', 
                        ecolor=colors[curr_region], alpha=0.5)
-            
-        except Exception as e:
-            print(f"Error in JT test for {curr_region}: {str(e)}")
     
     # Add plot elements
     ax.axhline(y=0, color='gray', linestyle='--', alpha=0.5)
@@ -439,7 +681,8 @@ def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='inc
     ax.grid(True, alpha=0.3)
     ax.legend(loc='best')
     
-    plt.title(f"Jonckheere-Terpstra Test for {parameter.upper()} Differences Across Rings {start_ring}-{end_ring}", 
+    title_prefix = "Combined" if combine_regions else "Separate"
+    plt.title(f"{title_prefix} Regions: Jonckheere-Terpstra Test for {parameter.upper()} Differences Across Rings {start_ring}-{end_ring}", 
              fontsize=16)
     plt.tight_layout()
     
@@ -448,7 +691,10 @@ def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='inc
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         print(f"Figure saved to {save_path}")
     
+    # Return results and figure
     return {'results': results, 'figure': fig}
+
+
 
 
 def plot_metric_difference(df, parameter, region, save_path=None, plot_type='box', group_by='region'):
@@ -1612,18 +1858,11 @@ if __name__ == '__main__':
     results = jt_test(df=wm_data_10x4vox, parameter='fa', regions=(2, 10), 
                     save_path='DTI_Processing_Scripts/jt_test_results-fa-rings-2to10.png', alternative='increasing')
 
-    # Print detailed results
-    for region, res in results['results'].items():
-        if 'jt_test' in res:
-            print(f"\n{region.upper()} REGION:")
-            print(f"JT test statistic: {res['jt_test']['statistic']:.2f}")
-            print(f"Z-score: {res['jt_test']['z']:.2f}")
-            print(f"P-value: {res['jt_test']['p_value']:.4f}")
-            if res['jt_test']['p_value'] < 0.05:
-                print("SIGNIFICANT TREND DETECTED")
-            else:
-                print("No significant trend")
+    # print(results)
+    results = jt_test(df=wm_data_10x4vox, parameter='fa', regions=(2, 10), 
+                    save_path='DTI_Processing_Scripts/jt_test_results-fa-rings-combined-2to10.png', alternative='increasing', combine_regions=True)
 
+    print(results)
 
 
     sys.exit()
