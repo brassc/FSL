@@ -995,13 +995,13 @@ def mixed_effect_boxplot(df, result, timepoints=['ultra-fast', 'fast', 'acute', 
                ha='right', fontsize=8, style='italic')
         
 
-    # Add significance notations under the x-axis
-    for i, tp in enumerate(plot_timepoints):
-        if tp != reference_category and tp in sig_levels:
-            sig_marker = sig_levels.get(tp, "")
-            if sig_marker not in ["baseline", "n.s."]:
-                ax.text(i, -1500, sig_marker, 
-                       ha='center', va='top', fontsize=12, color='black')
+    # # Add significance notations under the x-axis
+    # for i, tp in enumerate(plot_timepoints):
+    #     if tp != reference_category and tp in sig_levels:
+    #         sig_marker = sig_levels.get(tp, "")
+    #         if sig_marker not in ["baseline", "n.s."]:
+    #             ax.text(i, -1500, sig_marker, 
+    #                    ha='center', va='top', fontsize=12, color='black')
     
     # Set labels and title
     ax.set_xlabel('Timepoint', fontsize=12)
@@ -1032,10 +1032,10 @@ def mixed_effect_boxplot(df, result, timepoints=['ultra-fast', 'fast', 'acute', 
     bracket_height = y_max * 0.05  # 5% of y-axis height
 
     # Add bracket between ultra-fast and acute
-    add_significance_bracket(ax, 0, 2, y_max * 0.9, bracket_height, "**")
+    add_significance_bracket(ax, 0, 2, y_max * 0.7, bracket_height, str(sig_levels.get("ultra-fast", "")))
 
     # Add bracket between acute and chronic 
-    add_significance_bracket(ax, 2, 3, y_max * 0.85, bracket_height, "***")
+    add_significance_bracket(ax, 2, 3, y_max * 0.45, bracket_height, sig_levels.get("chronic", ""))
 
     plt.tight_layout()
     plt.savefig('Image_Processing_Scripts/area_diff_mixed_effect_boxplot.png', dpi=300)
@@ -1736,20 +1736,26 @@ if __name__ == '__main__':
     # Raw data visualisations:
     ## create_timepoint_scatter(new_df)
     ## create_timepoint_violin(new_df)
-    create_timepoint_boxplot(new_df)
+
+    # THIS ONE
+    # create_timepoint_boxplot(new_df)
 
     # pairwise test visualisations:
-    data_availability_matrix(pivoted_data, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], filename='data_availability.png')
+    #THIS ONE ONLY:
+    # data_availability_matrix(pivoted_data, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], filename='data_availability.png')
+    
     #significance_matrix_ttest(valid_results, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], filename='significance_matrix.png')
     #significance_matrix_wilcoxon(valid_wilcoxon_results, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], filename='significance_matrix_wilcoxon.png')
     #create_forest_plot(valid_wilcoxon_results, 'mean_differences_summary.png')
 
     # Mixed effect model visualisations:
-    data_availability_matrix(binned_df_pivot, order, filename='data_availability_matrix_binned.png')
+    # THIS ONE:
+    # data_availability_matrix(binned_df_pivot, order, filename='data_availability_matrix_binned.png')
 
     # Plot the significance matrix
-    sig_df, mask = emmeans_significance_matrix(py_pairs)
-    plot_emmeans_sig_mat(sig_df, mask)  
+    # THIS ONE: (2 LINES)
+    # sig_df, mask = emmeans_significance_matrix(py_pairs)
+    # plot_emmeans_sig_mat(sig_df, mask)  
 
     mixed_effect_boxplot(new_df, result, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], chronic_timepoints=['3mo', '6mo', '12mo', '24mo'])
    
