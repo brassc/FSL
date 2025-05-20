@@ -1021,6 +1021,22 @@ def mixed_effect_boxplot(df, result, timepoints=['ultra-fast', 'fast', 'acute', 
     
     
     ax.xaxis.set_label_coords(0.5, -0.125)  # Move x-axis label down
+
+    def add_significance_bracket(ax, x1, x2, y, h, text):
+        """Add a bracket with significance markers between two points"""
+        ax.plot([x1, x1, x2, x2], [y, y+h, y+h, y], lw=1.5, c='black')
+        ax.text((x1+x2)*0.5, y+h, text, ha='center', va='bottom', fontsize=12)
+
+    # Define the bracket height and position based on the y-axis limits
+    y_max = ax.get_ylim()[1]
+    bracket_height = y_max * 0.05  # 5% of y-axis height
+
+    # Add bracket between ultra-fast and acute
+    add_significance_bracket(ax, 0, 2, y_max * 0.9, bracket_height, "**")
+
+    # Add bracket between acute and chronic 
+    add_significance_bracket(ax, 2, 3, y_max * 0.85, bracket_height, "***")
+
     plt.tight_layout()
     plt.savefig('Image_Processing_Scripts/area_diff_mixed_effect_boxplot.png', dpi=300)
     plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/area_diff_mixed_effect_boxplot.png', dpi=600)
