@@ -388,9 +388,55 @@ The script expects a CSV file containing scanner information with the following 
 - `Site`: Scanner site location
 - `Model`: Scanner model
 
+### Array Averaging Function
+
+The script now provides functionality to extract and average values from specific rings:
+
+```python
+average_rings(input_filename, output_filename, rings_to_average=[5, 6, 7])
+```
+
+This function averages DTI metrics across specified rings (e.g., rings 5, 6, and 7) for each metric-location combination, creating new columns with the format `{METRIC}_{LOCATION}_ring_{RINGS}_avg`.
+
+### Harmonization Options
+
+The `process_metrics_file()` function accepts a `mean_only` parameter:
+
+```python
+process_metrics_file(input_filename, harmonized_output_filename, mean_only=True)
+```
+
+- When `mean_only=True`: Standard processing for single-value metrics (default behavior).
+- When `mean_only=False`: Extracts numeric values from array strings, calculates their means, and then applies harmonization to these means.
+
+### Data Cleaning
+
+- FA values below 0.0001 are replaced with NaN.
+- MD values that are negative (physically impossible) are replaced with NaN.
+
+
 ### Usage
 
-Run `python DTI_Processing_Scripts/harmonisation.py` to harmonise data. Data is output in `DTI_Processing_Scripts/results_harmonised/` directory as CSV. 
+Run `python DTI_Processing_Scripts/harmonisation.py` to harmonise data. Data is output in `DTI_Processing_Scripts/` directory as CSV. 
+
+Example workflow for array-based metrics:
+```python
+# Step 1: Average values from rings 5, 6, and 7
+average_rings(
+    input_filename='DTI_Processing_Scripts/results/all_metrics_10x4vox_all_values.csv',
+    output_filename='DTI_Processing_Scripts/results/all_metrics_10x4vox_rings_5_6_7_mean.csv',
+    rings_to_average=[5, 6, 7]
+)
+
+# Step 2: Harmonize the averaged data
+process_metrics_file(
+    input_filename='DTI_Processing_Scripts/results/all_metrics_10x4vox_rings_5_6_7_mean.csv',
+    harmonized_output_filename='DTI_Processing_Scripts/merged_data_10x4vox_567_harmonised.csv'
+)
+```
+
+Mean based metrics can use the `process_metrics_file` function directly. 
+
 
 
 
