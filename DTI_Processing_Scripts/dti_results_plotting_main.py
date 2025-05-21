@@ -1863,24 +1863,31 @@ if __name__ == '__main__':
     # plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
 
     # print(wm_data_10x4vox.columns)
-    # Run the test on rings 2-10 looking for an increasing trend
-    results = jt_test(df=wm_data_10x4vox, parameter='fa', regions=(2, 10), 
-                    save_path='DTI_Processing_Scripts/jt_test_results-fa-rings-2to10.png', alternative='increasing')
+    ####################################
+    ######### JT TEST #################
+    #################################
 
-    print(results)
-    results = jt_test(df=wm_data_10x4vox, parameter='fa', regions=(2, 10), 
-                    save_path='DTI_Processing_Scripts/jt_test_results-fa-rings-combined-2to10.png', alternative='increasing', combine_regions=True)
+    # # Run the test on rings 2-10 looking for an increasing trend
+    # results = jt_test(df=wm_data_10x4vox, parameter='fa', regions=(2, 10), 
+    #                 save_path='DTI_Processing_Scripts/jt_test_results-fa-rings-2to10.png', alternative='increasing')
 
-    print(results)
+    # print(results)
+    # results = jt_test(df=wm_data_10x4vox, parameter='fa', regions=(2, 10), 
+    #                 save_path='DTI_Processing_Scripts/jt_test_results-fa-rings-combined-2to10.png', alternative='increasing', combine_regions=True)
 
-    results = jt_test(df=wm_data_10x4vox, parameter='md', regions=(2, 10), 
-                    save_path='DTI_Processing_Scripts/jt_test_results-md-rings-2to10.png', alternative='increasing')
+    # print(results)
 
-    print(results)
-    results = jt_test(df=wm_data_10x4vox, parameter='md', regions=(2, 10), 
-                    save_path='DTI_Processing_Scripts/jt_test_results-md-rings-combined-2to10.png', alternative='increasing', combine_regions=True)
+    # results = jt_test(df=wm_data_10x4vox, parameter='md', regions=(2, 10), 
+    #                 save_path='DTI_Processing_Scripts/jt_test_results-md-rings-2to10.png', alternative='increasing')
 
-    print(results)
+    # print(results)
+    # results = jt_test(df=wm_data_10x4vox, parameter='md', regions=(2, 10), 
+    #                 save_path='DTI_Processing_Scripts/jt_test_results-md-rings-combined-2to10.png', alternative='increasing', combine_regions=True)
+
+    # print(results)
+
+    ################################################
+    
 
 
     sys.exit()
