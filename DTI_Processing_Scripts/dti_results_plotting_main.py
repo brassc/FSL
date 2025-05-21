@@ -693,7 +693,12 @@ def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='inc
     # Save figure if path provided
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        print(f"Figure saved to {save_path}")
+        #get basename
+        basename=os.path.basename(save_path)
+        thesis_path=f"../Thesis/phd-thesis-template-2.4/Chapter6/Figs/{basename}"
+        # save to ../Thesis/phd-thesis-template-2.4/Chapter6/Figs/<basename>
+        plt.savefig(thesis_path, dpi=600, bbox_inches='tight')
+        print(f"Figure saved to {save_path} and {thesis_path}")
     
     # Return results and figure
     return {'results': results, 'figure': fig}
