@@ -299,11 +299,51 @@ def create_timepoint_boxplot_recategorised_dti(df, parameter, timepoints=['ultra
                     alpha=0.9, zorder=5)
     
     # Add scatter points, colored by region
-    sns.stripplot(x='timepoint', y='diff_value', data=melted_data,
-                hue='region', palette=['#3498db', '#e74c3c'],  # Blue for anterior, red for posterior
-                dodge=True, jitter=0.2, size=6, alpha=0.8, ax=ax,
-                markers=['o', 's'])  # Circles for anterior, squares for posterior
+    # # For anterior (using circles)
+    # sns.stripplot(x='timepoint', y='diff_value', 
+    #             data=melted_data[melted_data['region'] == 'Anterior'],
+    #             dodge=False, jitter=0.2, size=6, alpha=0.8, ax=ax,
+    #             marker='o') #color='#3498db'
+
+    # # For posterior (using squares)
+    # sns.stripplot(x='timepoint', y='diff_value', 
+    #             data=melted_data[melted_data['region'] == 'Posterior'],
+    #             dodge=False, jitter=0.2, size=6, alpha=0.8, ax=ax,
+    #             marker='s') # color='#e74c3c', 
+
+    # For anterior (using circles)
+    for i, tp in enumerate(timepoints):
+        # Filter data for this timepoint and region
+        tp_data = melted_data[(melted_data['timepoint'] == tp) & 
+                             (melted_data['region'] == 'Anterior')]
+        if not tp_data.empty:
+            # Use the same color from the viridis palette as the boxplot
+            sns.stripplot(x='timepoint', y='diff_value', 
+                        data=tp_data,
+                        dodge=False, jitter=0.2, size=6, alpha=0.8, ax=ax,
+                        marker='o', color=palette[i])
+    # For posterior (using squares)
+    for i, tp in enumerate(timepoints):
+        # Filter data for this timepoint and region
+        tp_data = melted_data[(melted_data['timepoint'] == tp) & 
+                             (melted_data['region'] == 'Posterior')]
+        if not tp_data.empty:
+            # Use the same color from the viridis palette as the boxplot
+            sns.stripplot(x='timepoint', y='diff_value', 
+                        data=tp_data,
+                        dodge=False, jitter=0.2, size=6, alpha=0.8, ax=ax,
+                        marker='s', color=palette[i])
     
+    # Create a clean legend with exactly one entry per category
+    from matplotlib.lines import Line2D
+    legend_elements = [
+        Line2D([0], [0], marker='o', color='w', markerfacecolor='gray', 
+            markersize=8, label='Anterior', alpha=0.8),
+        Line2D([0], [0], marker='s', color='w', markerfacecolor='gray', 
+            markersize=8, label='Posterior', alpha=0.8)
+    ]
+
+
     # Reduce opacity of box elements
     for patch in ax.patches:
         patch.set_alpha(0.5)
@@ -325,14 +365,18 @@ def create_timepoint_boxplot_recategorised_dti(df, parameter, timepoints=['ultra
     ax.grid(True, axis='y', linestyle='-', alpha=0.3)
     
     # Move the legend to a better position
-    ax.legend(title='Region', loc='upper right')
+    ax.legend(handles=legend_elements, title='Region', loc='upper right')
     
     # Show count of patients per timepoint
     for i, tp in enumerate(timepoints):
         count = len(df[df['timepoint'] == tp])
         if count > 0:
-            ax.text(i, ax.get_ylim()[0] * 1.05, f"n={count}",
-                  ha='center', va='bottom', fontsize=10)
+            if parameter == 'fa':
+                ax.text(i, ax.get_ylim()[0] * 1.35, f"n={count}",
+                    ha='center', va='bottom', fontsize=10)
+            else:
+                ax.text(i, ax.get_ylim()[0] * 1.125, f"n={count}",
+                    ha='center', va='bottom', fontsize=10)
     
     ax.xaxis.set_label_coords(0.5, -0.125)  # Move x-axis label down
     plt.tight_layout()
@@ -1935,6 +1979,9 @@ if __name__ == '__main__':
 
     
     create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='fa', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+    create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='md', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+    
+    
     # create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='fa', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
     # create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='md', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
 
