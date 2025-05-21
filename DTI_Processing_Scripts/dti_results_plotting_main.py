@@ -2044,15 +2044,11 @@ if __name__ == '__main__':
     matrix = data_availability_matrix(
         data=wm_data_roi_567, 
         timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'],
-        diff_column='fa_anterior_diff',  # or any other diff column you want to check
+        diff_column='fa_anterior_diff',  # or any other diff column
         filename='fa_diff_data_availability.png'
     )
 
-    
-    sys.exit()
-
-
-    
+   
     create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='fa', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
     create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='md', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
     
