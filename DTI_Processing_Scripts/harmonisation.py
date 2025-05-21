@@ -710,7 +710,7 @@ output_wm_rings_567_filename = 'DTI_Processing_Scripts/results/all_metrics_10x4v
 # output_wm_rings_567_filename_harmonised = 'DTI_Processing_Scripts/results/all_metrics_10x4vox_NEW_filtered_rings_5_6_7_mean_wm_harmonised.csv'
 
     
-average_rings(wm_all_values_filename, output_wm_rings_567_filename, rings= [5, 6, 7])
+average_rings(wm_all_values_filename, output_wm_rings_567_filename, rings_to_average=[5, 6, 7])
 
 process_metrics_file(input_filename=output_wm_rings_567_filename, 
                      harmonized_output_filename="DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_wm_567_harmonised.csv")
