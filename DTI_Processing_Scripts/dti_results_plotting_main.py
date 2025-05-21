@@ -430,7 +430,13 @@ def create_timepoint_boxplot_recategorised_dti(df, parameter, timepoints=['ultra
     
     # Show count of patients per timepoint
     for i, tp in enumerate(timepoints):
-        count = len(df[df['timepoint'] == tp])
+        # Get subset of df_filtered for this timepoint
+        df_tp = df_filtered[df_filtered['timepoint'] == tp]
+
+        # Count unique patients with at least one non-null anterior or posterior value
+        count = df_tp[(~df_tp[anterior_column].isna()) | (~df_tp[posterior_column].isna())]['patient_id'].nunique()
+
+        # count = melted_data[(melted_data['timepoint'] == tp) & (~melted_data['diff_value'].isna())].shape[0] // 2
         if count > 0:
             if parameter == 'fa':
                 ax.text(i, ax.get_ylim()[0] * 1.35, f"n={count}",
@@ -2040,13 +2046,13 @@ if __name__ == '__main__':
 
 
 
-    # Call the function with your data
-    matrix = data_availability_matrix(
-        data=wm_data_roi_567, 
-        timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'],
-        diff_column='fa_anterior_diff',  # or any other diff column
-        filename='fa_diff_data_availability.png'
-    )
+    # # Call the function with your data
+    # matrix = data_availability_matrix(
+    #     data=wm_data_roi_567, 
+    #     timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'],
+    #     diff_column='fa_anterior_diff',  # or any other diff column
+    #     filename='fa_diff_data_availability.png'
+    # )
 
    
     create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='fa', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
