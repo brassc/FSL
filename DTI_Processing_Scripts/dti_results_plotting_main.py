@@ -497,7 +497,11 @@ def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='inc
         
     # Set publication style
     try:
-        plt.style.use('seaborn-whitegrid')
+        # plt.style.use('seaborn-whitegrid')
+        set_publication_style()
+        plt.rcParams.update({
+            'font.size': 14
+        })
     except:
         try:
             plt.style.use('seaborn-v0_8-whitegrid')  # For newer matplotlib versions
@@ -679,10 +683,10 @@ def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='inc
     ax.set_ylabel(f"{parameter.upper()} Difference (Control - Craniectomy)", fontsize=14)
     ax.set_xticks(ring_numbers)
     ax.grid(True, alpha=0.3)
-    ax.legend(loc='best')
+    ax.legend(loc='upper right')
     
     title_prefix = "Combined" if combine_regions else "Separate"
-    plt.title(f"{title_prefix} Regions: Jonckheere-Terpstra Test for {parameter.upper()} Differences Across Rings {start_ring}-{end_ring}", 
+    plt.title(f"{title_prefix} Regions: Jonckheere-Terpstra Test for White Matter {parameter.upper()} Differences Across Rings {start_ring}-{end_ring}", 
              fontsize=16)
     plt.tight_layout()
     
@@ -1861,6 +1865,15 @@ if __name__ == '__main__':
     print(results)
     results = jt_test(df=wm_data_10x4vox, parameter='fa', regions=(2, 10), 
                     save_path='DTI_Processing_Scripts/jt_test_results-fa-rings-combined-2to10.png', alternative='increasing', combine_regions=True)
+
+    print(results)
+
+    results = jt_test(df=wm_data_10x4vox, parameter='md', regions=(2, 10), 
+                    save_path='DTI_Processing_Scripts/jt_test_results-md-rings-2to10.png', alternative='increasing')
+
+    print(results)
+    results = jt_test(df=wm_data_10x4vox, parameter='md', regions=(2, 10), 
+                    save_path='DTI_Processing_Scripts/jt_test_results-md-rings-combined-2to10.png', alternative='increasing', combine_regions=True)
 
     print(results)
 
