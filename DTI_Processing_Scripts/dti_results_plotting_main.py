@@ -48,407 +48,446 @@ base = importr('base')
 lme4 = importr('lme4')
 emmeans = importr('emmeans')
 
-# def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='increasing'):
-#     """
-#     Perform Jonckheere-Terpstra test on differences between baseline and current values
-#     across specified rings, and visualize the results.
+def parameter_differences(df):
+    """
+    Calculate differences between baseline and actual values for FA and MD parameters
+    in anterior and posterior regions.
     
-#     Args:
-#         df: DataFrame with the data
-#         parameter: The metric to analyze (e.g., 'fa', 'md')
-#         regions: Tuple specifying (start_ring, end_ring) to analyze
-#         save_path: Path to save the figure (optional)
-#         alternative: Direction of trend to test ('increasing', 'decreasing', or 'two-sided')
+    Parameters:
+    -----------
+    df : pandas.DataFrame
+        DataFrame containing DTI data with columns for FA and MD values
         
-#     Returns:
-#         Dictionary with test results and figure object
-#     """
-#     import matplotlib.pyplot as plt
-#     import numpy as np
-#     import pandas as pd
-#     import re
-#     import scipy.stats as stats
-#     import seaborn as sns
-#     from collections import defaultdict
+    Returns:
+    --------
+    pandas.DataFrame
+        DataFrame with added difference columns (fa_anterior_diff, fa_posterior_diff,
+        md_anterior_diff, md_posterior_diff)
+    """
+    # Create a copy of the dataframe to avoid modifying the original
+    result_df = df.copy()
     
-#     # Set publication style
-#     plt.style.use('seaborn-whitegrid')
-#     plt.rcParams.update({
-#         'font.size': 12,
-#         'axes.titlesize': 14,
-#         'axes.labelsize': 12,
-#         'xtick.labelsize': 10,
-#         'ytick.labelsize': 10,
-#         'legend.fontsize': 10,
-#         'figure.figsize': (12, 8)
-#     })
+    # Calculate FA differences (baseline - actual)
+    result_df['fa_anterior_diff'] = result_df['fa_baseline_anterior_ring_5_6_7_avg'] - result_df['fa_anterior_ring_5_6_7_avg']
+    result_df['fa_posterior_diff'] = result_df['fa_baseline_posterior_ring_5_6_7_avg'] - result_df['fa_posterior_ring_5_6_7_avg']
     
-#     # Validate inputs
-#     parameter = parameter.lower()
-#     start_ring, end_ring = regions
-#     if not (1 <= start_ring <= 10 and 1 <= end_ring <= 10 and start_ring <= end_ring):
-#         raise ValueError("Ring range must be between 1-10 with start <= end")
+    # Calculate MD differences (baseline - actual)
+    result_df['md_anterior_diff'] = result_df['md_baseline_anterior_ring_5_6_7_avg'] - result_df['md_anterior_ring_5_6_7_avg']
+    result_df['md_posterior_diff'] = result_df['md_baseline_posterior_ring_5_6_7_avg'] - result_df['md_posterior_ring_5_6_7_avg']
     
-#     # Define the regions to analyze (always both anterior and posterior)
-#     regions_to_analyze = ['anterior', 'posterior']
+    # Print summary of the calculated differences
+    print("Difference calculations:")
+    for col in ['fa_anterior_diff', 'fa_posterior_diff', 'md_anterior_diff', 'md_posterior_diff']:
+        valid_count = result_df[col].count()
+        mean_val = result_df[col].mean()
+        print(f"  {col}: {valid_count} valid values, mean = {mean_val:.6f}")
     
-#     # Dictionary to store results
-#     results = {}
-    
-#     # Create a figure for results
-#     fig, axes = plt.subplots(1, 2, figsize=(18, 8))
-    
-#     # Process each region (anterior/posterior)
-#     for i, curr_region in enumerate(regions_to_analyze):
-#         # Find columns matching the parameter and current region
-#         current_pattern = f"{parameter}_{curr_region}_ring_"
-#         baseline_pattern = f"{parameter}_baseline_{curr_region}_ring_"
-        
-#         # Data structures to store FA differences by ring
-#         ring_data = defaultdict(list)
-#         ring_mean_diff = []
-#         ring_numbers = list(range(start_ring, end_ring + 1))
-        
-#         # Calculate difference for each ring within specified range
-#         for ring_num in ring_numbers:
-#             current_col = f"{parameter}_{curr_region}_ring_{ring_num}"
-#             baseline_col = f"{parameter}_baseline_{curr_region}_ring_{ring_num}"
-            
-#             if current_col in df.columns and baseline_col in df.columns:
-#                 # Get values
-#                 current_values = df[current_col]
-#                 baseline_values = df[baseline_col]
-                
-#                 # Filter for valid data
-#                 valid_indices = current_values.notna() & baseline_values.notna()
-                
-#                 if valid_indices.sum() > 0:
-#                     # Calculate difference (baseline - current)
-#                     diff_values = (baseline_values[valid_indices] - current_values[valid_indices]).tolist()
-#                     ring_data[ring_num] = diff_values
-#                     ring_mean_diff.append(np.mean(diff_values))
-#                 else:
-#                     ring_mean_diff.append(np.nan)
-        
-#         # Skip region if insufficient data
-#         if len(ring_data) <= 1:
-#             results[curr_region] = {
-#                 'status': 'insufficient_data',
-#                 'message': f"Insufficient data for {curr_region} region"
-#             }
-#             axes[i].text(0.5, 0.5, f"Insufficient data for {curr_region} region", 
-#                         ha='center', va='center', transform=axes[i].transAxes)
-#             continue
-            
-#         # Prepare data for Jonckheere-Terpstra test
-#         groups_for_jt = [ring_data[ring] for ring in ring_numbers if ring in ring_data]
-#         ring_labels = [ring for ring in ring_numbers if ring in ring_data]
-        
-#         # Implement Jonckheere-Terpstra test
-#         def jonckheere_terpstra_test(data_groups, alternative='increasing'):
-#             """
-#             Proper implementation of the Jonckheere-Terpstra test for ordered alternatives.
-            
-#             Args:
-#                 data_groups: List of arrays, each containing values for one group/ring
-#                 alternative: 'increasing', 'decreasing', or 'two-sided'
-                
-#             Returns:
-#                 Dictionary with test statistic, standardized statistic, and p-value
-#             """
-#             # Count number of groups and total observations
-#             k = len(data_groups)
-#             n_i = [len(group) for group in data_groups]
-#             n = sum(n_i)
-            
-#             # Calculate J statistic (sum of Mann-Whitney counts)
-#             j_stat = 0
-#             for i in range(k):
-#                 for j in range(i+1, k):
-#                     # Count how many values in group j are greater than values in group i
-#                     for x in data_groups[i]:
-#                         for y in data_groups[j]:
-#                             if y > x:
-#                                 j_stat += 1
-#                             elif y == x:
-#                                 j_stat += 0.5  # Count ties as 0.5
-            
-#             # Calculate mean and variance under the null hypothesis
-#             mean_j = sum([n_i[i] * sum(n_i[j] for j in range(i+1, k)) for i in range(k-1)]) / 2
-            
-#             # Calculate variance
-#             var_term1 = 0
-#             for i in range(k):
-#                 for j in range(i+1, k):
-#                     var_term1 += n_i[i] * n_i[j] * (n_i[i] + n_i[j] + 1)
-#             var_j = var_term1 / 72
-            
-#             # Calculate the standardized test statistic
-#             z = (j_stat - mean_j) / np.sqrt(var_j) if var_j > 0 else 0
-            
-#             # Calculate p-value based on alternative hypothesis
-#             if alternative == 'increasing':
-#                 p_value = 1 - stats.norm.cdf(z)
-#             elif alternative == 'decreasing':
-#                 p_value = stats.norm.cdf(z)
-#             else:  # two-sided
-#                 p_value = 2 * min(stats.norm.cdf(z), 1 - stats.norm.cdf(z))
-            
-#             return {
-#                 'statistic': j_stat,
-#                 'mean': mean_j,
-#                 'variance': var_j,
-#                 'z': z,
-#                 'p_value': p_value,
-#                 'alternative': alternative
-#             }
-        
-#         # Run the test
-#         jt_result = jonckheere_terpstra_test(groups_for_jt, alternative=alternative)
-        
-#         # Store results
-#         results[curr_region] = {
-#             'jt_test': jt_result,
-#             'ring_data': dict(ring_data),
-#             'ring_means': ring_mean_diff,
-#             'ring_numbers': ring_numbers
-#         }
-        
-#         # Plot the results
-#         ax = axes[i]
-        
-#         # Plot mean differences
-#         x_vals = [r for r in ring_numbers if r in ring_data]
-#         y_vals = [np.mean(ring_data[r]) for r in x_vals]
-        
-#         # Line plot of means
-#         ax.plot(x_vals, y_vals, 'bo-', linewidth=2, markersize=8)
-        
-#         # Add error bars (standard error)
-#         y_err = [np.std(ring_data[r])/np.sqrt(len(ring_data[r])) for r in x_vals]
-#         ax.errorbar(x_vals, y_vals, yerr=y_err, fmt='none', capsize=5, ecolor='gray')
-        
-#         # Add individual data points with jitter
-#         for idx, r in enumerate(x_vals):
-#             # Add jitter to x-position
-#             x_jitter = np.random.normal(idx+min(x_vals), 0.05, size=len(ring_data[r]))
-#             ax.scatter(x_jitter, ring_data[r], alpha=0.4, s=20, c='lightblue')
-        
-#         # Add trend line if significant
-#         if jt_result['p_value'] < 0.05:
-#             # Fit simple trend line for visualization
-#             valid_x = [r for r, m in zip(ring_numbers, ring_mean_diff) if not np.isnan(m)]
-#             valid_y = [m for m in ring_mean_diff if not np.isnan(m)]
-#             if len(valid_x) >= 2:  # Need at least two points for regression
-#                 z = np.polyfit(valid_x, valid_y, 1)
-#                 p = np.poly1d(z)
-#                 ax.plot(valid_x, p(valid_x), "r--", alpha=0.7, 
-#                         label=f"Linear trend (slope={z[0]:.4f})")
-        
-#         # Add zero reference line
-#         ax.axhline(y=0, color='gray', linestyle='--', alpha=0.5)
-        
-#         # Highlight significant trend if present
-#         if jt_result['p_value'] < 0.05:
-#             # Add a subtle background highlight
-#             ax.axvspan(min(x_vals)-0.5, max(x_vals)+0.5, color='green', alpha=0.1)
-            
-#             # Annotate with significance
-#             trend_dir = "increasing" if alternative == "increasing" else "decreasing"
-#             ax.text(0.05, 0.95, 
-#                    f"Significant {trend_dir} trend\np={jt_result['p_value']:.4f}\nz={jt_result['z']:.2f}", 
-#                    transform=ax.transAxes, va='top', fontsize=12,
-#                    bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.7))
-#         else:
-#             ax.text(0.05, 0.95, 
-#                    f"No significant trend\np={jt_result['p_value']:.4f}", 
-#                    transform=ax.transAxes, va='top', fontsize=12,
-#                    bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.7))
-        
-#         # Set titles and labels
-#         ax.set_title(f"{curr_region.capitalize()} Region: {parameter.upper()} Differences", fontsize=14)
-#         ax.set_xlabel("Ring Number", fontsize=12)
-#         ax.set_ylabel(f"{parameter.upper()} Difference (Control - Craniectomy)", fontsize=12)
-#         ax.set_xticks(ring_numbers)
-#         ax.grid(True, alpha=0.3)
-#         if jt_result['p_value'] < 0.05:
-#             ax.legend(loc='lower right')
-    
-#     # Set overall title
-#     plt.suptitle(f"Jonckheere-Terpstra Test for {parameter.upper()} Differences Across Rings {start_ring}-{end_ring}", 
-#                 fontsize=16, y=0.98)
-#     plt.tight_layout(rect=[0, 0, 1, 0.96])
-    
-#     # Save figure if path provided
-#     if save_path:
-#         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-#         print(f"Figure saved to {save_path}")
-    
-#     # Return results and figure
-#     return {'results': results, 'figure': fig}
+    return result_df
 
-# def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='increasing'):
-#     """
-#     Perform Jonckheere-Terpstra test on differences between baseline and current values
-#     across specified rings, and visualize the results.
-    
-#     Args:
-#         df: DataFrame with the data
-#         parameter: The metric to analyze (e.g., 'fa', 'md')
-#         regions: Tuple specifying (start_ring, end_ring) to analyze
-#         save_path: Path to save the figure (optional)
-#         alternative: Direction of trend to test ('increasing', 'decreasing', or 'two-sided')
-        
-#     Returns:
-#         Dictionary with test results and figure object
-#     """
-#     import matplotlib.pyplot as plt
-#     import numpy as np
-#     import pandas as pd
-#     import re
-#     import scipy.stats as stats
-#     from collections import defaultdict
-#     import rpy2.robjects as ro
-#     from rpy2.robjects import pandas2ri
-#     from rpy2.robjects.packages import importr
-    
-#     # Activate pandas to R conversion
-#     pandas2ri.activate()
-    
-#     # Import necessary R packages
-#     base = importr('base')
-#     utils = importr('utils')
-    
-#     # Check if PMCMRplus is installed, if not, install it
-#     try:
-#         pmcmr = importr('PMCMRplus')
-#     except:
-#         utils.chooseCRANmirror(ind=1)
-#         utils.install_packages('PMCMRplus')
-#         pmcmr = importr('PMCMRplus')
-    
-#     # Set publication style
-#     # plt.style.use('seaborn-whitegrid')
 
-#     set_publication_style()
 
-#     plt.rcParams.update({
-#         'font.size': 12,
-#         'axes.titlesize': 14,
-#         'axes.labelsize': 12,
-#         'xtick.labelsize': 10,
-#         'ytick.labelsize': 10,
-#         'legend.fontsize': 10,
-#         'figure.figsize': (12, 8)
-#     })
+def create_timepoint_boxplot_recategorised_dti_old(df, parameter, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']):
+    """
+    Create a box plot of area_diff for each timepoint with overlaid scatter points.
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import seaborn as sns
+    import pandas as pd
+    import matplotlib.cm as cm
+
+    set_publication_style()
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    palette = sns.color_palette("viridis", len(timepoints))
+
+    # Column Names
+    anterior_column=f"{parameter}_anterior_diff"
+    posterior_column=f"{parameter}_posterior_diff"
+
+    # Filter the dataframe to include only timepoints in the specified list
+    df_filtered = df[df['timepoint'].isin(timepoints)].copy()
     
-#     # Validate inputs
-#     parameter = parameter.lower()
-#     start_ring, end_ring = regions
+    # Ensure timepoints are in the correct order
+    df_filtered['timepoint'] = pd.Categorical(df_filtered['timepoint'],
+                                             categories=timepoints,
+                                             ordered=True)
     
-#     # Create a single figure and axis
-#     fig, ax = plt.subplots(figsize=(12, 8))
-    
-#     # Regions to analyze
-#     regions_to_analyze = ['anterior', 'posterior']
-    
-#     # Dictionary to store results
-#     results = {}
-    
-#     # Color map for regions
-#     colors = {'anterior': 'blue', 'posterior': 'red'}
-    
-#     # Process each region
-#     for curr_region in regions_to_analyze:
-#         # Data structures to store differences by ring
-#         ring_data = defaultdict(list)
-#         ring_numbers = list(range(start_ring, end_ring + 1))
+    # Add horizontal line at y=0
+    ax.axhline(y=0, color='gray', linestyle='-', alpha=0.3)
+
+
+    # Plot for both anterior and posterior regions
+    for region, marker, offset in [('anterior', 'o', -0.15), ('posterior', 's', 0.15)]:
+        column_name = f"{parameter}_{region}_diff"
         
-#         # Calculate difference for each ring
-#         for ring_num in ring_numbers:
-#             current_col = f"{parameter}_{curr_region}_ring_{ring_num}"
-#             baseline_col = f"{parameter}_baseline_{curr_region}_ring_{ring_num}"
-            
-#             if current_col in df.columns and baseline_col in df.columns:
-#                 # Get values
-#                 current_values = df[current_col]
-#                 baseline_values = df[baseline_col]
+        # Create lists to track which timepoints have small sample sizes
+        small_sample_tps = []
+        regular_sample_tps = []
+        
+        for tp in timepoints:
+            tp_data = df[df['timepoint'] == tp]
+            if len(tp_data) < 5:
+                small_sample_tps.append(tp)
+            else:
+                regular_sample_tps.append(tp)
+        
+        # Create a copy for regular samples
+        df_regular = df_filtered[df_filtered['timepoint'].isin(regular_sample_tps)].copy()
+        
+        # Plot regular boxplots for n >= 5 WITHOUT positions
+        if not df_regular.empty:
+            sns.boxplot(x='timepoint', y=column_name, data=df_regular,
+                      palette=palette, width=0.4, ax=ax, saturation=0.7,
+                      showfliers=False)
+        
+        # For small sample sizes (n < 5), plot just the median as a line
+        for tp in small_sample_tps:
+            tp_data = df_filtered[df_filtered['timepoint'] == tp]
+            if not tp_data.empty and not tp_data[column_name].isna().all():
+                tp_index = timepoints.index(tp)
+                median_value = tp_data[column_name].median()
                 
-#                 # Filter for valid data
-#                 valid_indices = current_values.notna() & baseline_values.notna()
+                # Plot median as a horizontal line
+                ax.hlines(median_value, tp_index - 0.2, tp_index + 0.2,
+                         color='black', linewidth=1.0, linestyle='-',
+                         alpha=0.9, zorder=5)
                 
-#                 if valid_indices.sum() > 0:
-#                     # Calculate difference (baseline - current)
-#                     diff_values = (baseline_values[valid_indices] - current_values[valid_indices]).tolist()
-#                     ring_data[ring_num] = diff_values
+         # Add scatter points for all timepoints
+        sns.stripplot(x='timepoint', y=column_name, data=df_filtered,
+                    marker=marker, palette=palette, jitter=True, 
+                    size=6, alpha=0.8, ax=ax,
+                    label=f"{region.capitalize()}")
+                
         
-#         # Skip if insufficient data
-#         if len(ring_data) <= 1:
-#             print(f"Insufficient data for {curr_region} region")
-#             continue
-        
-#         # Prepare data for JT test
-#         groups_for_jt = [ring_data[ring] for ring in ring_numbers if ring in ring_data]
-#         ring_labels = [ring for ring in ring_numbers if ring in ring_data]
-        
-#         if len(groups_for_jt) <= 1:
-#             print(f"Need at least 2 groups for JT test in {curr_region} region")
-#             continue
-        
-#         # Convert to R format
-#         r_data = [ro.FloatVector(group) for group in groups_for_jt]
-#         r_list = ro.ListVector(dict(zip([str(ring) for ring in ring_labels], r_data)))
-        
-#         # Map alternative
-#         r_alternative = 'greater' if alternative == 'increasing' else 'less' if alternative == 'decreasing' else 'two.sided'
-        
-#         try:
-#             # Run JT test
-#             jt_result_r = pmcmr.jonckheereTest(r_list, alternative=r_alternative)
-#             p_value = jt_result_r.rx2('p.value')[0]
-#             statistic = jt_result_r.rx2('statistic')[0]
-            
-#             # Store results
-#             results[curr_region] = {
-#                 'p_value': p_value,
-#                 'statistic': statistic,
-#                 'alternative': alternative
-#             }
-            
-#             # Calculate mean values for plotting
-#             mean_values = [np.mean(ring_data[r]) if r in ring_data else np.nan for r in ring_numbers]
-            
-#             # Plot mean values by ring
-#             ax.plot(ring_numbers, mean_values, marker='o', linestyle='-', 
-#                    color=colors[curr_region], label=f"{curr_region.capitalize()} (p={p_value:.4f})")
-            
-#             # Add error bars
-#             error_values = [np.std(ring_data[r])/np.sqrt(len(ring_data[r])) if r in ring_data else np.nan 
-#                            for r in ring_numbers]
-#             ax.errorbar(ring_numbers, mean_values, yerr=error_values, fmt='none', 
-#                        ecolor=colors[curr_region], alpha=0.5)
-            
-#         except Exception as e:
-#             print(f"Error in JT test for {curr_region}: {str(e)}")
     
-#     # Add plot elements
-#     ax.axhline(y=0, color='gray', linestyle='--', alpha=0.5)
-#     ax.set_xlabel("Ring Number", fontsize=14)
-#     ax.set_ylabel(f"{parameter.upper()} Difference (Control - Craniectomy)", fontsize=14)
-#     ax.set_xticks(ring_numbers)
-#     ax.grid(True, alpha=0.3)
-#     ax.legend(loc='best')
+    # Reduce opacity of box elements after creation
+    for patch in ax.patches:
+        patch.set_alpha(0.5)
     
-#     plt.title(f"Jonckheere-Terpstra Test for {parameter.upper()} Differences Across Rings {start_ring}-{end_ring}", 
-#              fontsize=16)
-#     plt.tight_layout()
+    # Set parameter-specific labels and title
+    if parameter.lower() == "fa":
+        param_name = "Fractional Anisotropy"
+        unit = ""
+    elif parameter.lower() == "md":
+        param_name = "Mean Diffusivity"
+        unit = " [mm²/s]" 
+
+
+    # Set labels and title
+    ax.set_xlabel('Timepoint', fontsize=12)
+    ax.set_ylabel(f'{param_name} Difference (Control - Craniectomy){unit}', fontsize=12)
+    ax.set_title(f'{param_name} Difference by Timepoint', fontsize=14, fontweight='bold')
     
-#     # Save figure if path provided
-#     if save_path:
-#         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-#         print(f"Figure saved to {save_path}")
+    # Add grid for y-axis only
+    ax.grid(True, axis='y', linestyle='-', alpha=0.3)
     
-#     return {'results': results, 'figure': fig}
+    # Add legend
+    handles, labels = ax.get_legend_handles_labels()
+    # Remove duplicates from legend
+    by_label = dict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys(), title='Region')
+    
+    # Show count of patients per timepoint
+    for i, tp in enumerate(timepoints):
+        count = len(df[df['timepoint'] == tp])
+        if count > 0:
+            ax.text(i, ax.get_ylim()[0] * 1.05, f"n={count}",
+                   ha='center', va='bottom', fontsize=10)
+    
+    ax.xaxis.set_label_coords(0.5, -0.125) # Move x-axis label down
+    plt.tight_layout()
+
+    # Save figures to specified directories
+    output_dir = "DTI_Processing_Scripts/dti_plots"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        
+    thesis_dir = "../Thesis/phd-thesis-template-2.4/Chapter6/Figs"
+    if not os.path.exists(thesis_dir):
+        os.makedirs(thesis_dir)
+    
+    # Save figures
+    plt.savefig(f'{output_dir}/{parameter}_diff_boxplot.png')
+    plt.savefig(f'{thesis_dir}/{parameter}_diff_boxplot.png', dpi=600)
+    plt.close()
+    
+    return fig, ax
+
+def create_timepoint_boxplot_recategorised_dti(df, parameter, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']):
+    """
+    Create a box plot with anterior and posterior data represented as different colored points,
+    but with a single boxplot per timepoint combining both anterior and posterior data.
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import seaborn as sns
+    import pandas as pd
+    import matplotlib.cm as cm
+    import os
+
+    set_publication_style()  # Assuming this function exists in your environment
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    palette = sns.color_palette("viridis", len(timepoints))
+
+    # Column Names
+    anterior_column = f"{parameter}_anterior_diff"
+    posterior_column = f"{parameter}_posterior_diff"
+
+    # We need to reshape the data to have a single "value" column
+    # First, filter to only the timepoints we want
+    df_filtered = df[df['timepoint'].isin(timepoints)].copy()
+    
+    # Create a melted dataframe for plotting
+    # This reshapes the data to have a single value column with a region identifier
+    melted_data = pd.melt(
+        df_filtered,
+        id_vars=['timepoint'], 
+        value_vars=[anterior_column, posterior_column],
+        var_name='region_col',
+        value_name='diff_value'
+    )
+    
+    # Create a cleaner region column
+    melted_data['region'] = melted_data['region_col'].apply(
+        lambda x: 'Anterior' if 'anterior' in x else 'Posterior'
+    )
+    
+    # Ensure timepoints are in the correct order
+    melted_data['timepoint'] = pd.Categorical(melted_data['timepoint'],
+                                             categories=timepoints,
+                                             ordered=True)
+    
+    # Add horizontal line at y=0
+    ax.axhline(y=0, color='gray', linestyle='-', alpha=0.3)
+
+    # Create lists to track which timepoints have small sample sizes
+    small_sample_tps = []
+    regular_sample_tps = []
+    
+    for tp in timepoints:
+        # Count unique subjects in this timepoint (assuming one row per subject per timepoint)
+        tp_data = melted_data[melted_data['timepoint'] == tp]
+        tp_count = len(df[df['timepoint'] == tp])  # Original count from df
+        if tp_count < 5:
+            small_sample_tps.append(tp)
+        else:
+            regular_sample_tps.append(tp)
+    
+    # Create a copy for regular samples
+    melted_regular = melted_data[melted_data['timepoint'].isin(regular_sample_tps)].copy()
+    
+    # Plot regular boxplots for n >= 5
+    if not melted_regular.empty:
+        sns.boxplot(x='timepoint', y='diff_value', data=melted_regular,
+                  palette=palette, width=0.6, ax=ax, saturation=0.7,
+                  showfliers=False)
+    
+    # For small sample sizes (n < 5), plot just the median as a line
+    for tp in small_sample_tps:
+        tp_data = melted_data[melted_data['timepoint'] == tp]
+        if not tp_data.empty and not tp_data['diff_value'].isna().all():
+            tp_index = timepoints.index(tp)
+            median_value = tp_data['diff_value'].median()
+            
+            # Plot median as a horizontal line
+            ax.hlines(median_value, tp_index - 0.3, tp_index + 0.3,
+                    color='black', linewidth=1.5, linestyle='-',
+                    alpha=0.9, zorder=5)
+    
+    # Add scatter points, colored by region
+    sns.stripplot(x='timepoint', y='diff_value', data=melted_data,
+                hue='region', palette=['#3498db', '#e74c3c'],  # Blue for anterior, red for posterior
+                dodge=True, jitter=0.2, size=6, alpha=0.8, ax=ax,
+                markers=['o', 's'])  # Circles for anterior, squares for posterior
+    
+    # Reduce opacity of box elements
+    for patch in ax.patches:
+        patch.set_alpha(0.5)
+    
+    # Set parameter-specific labels and title
+    if parameter.lower() == "fa":
+        param_name = "Fractional Anisotropy"
+        unit = ""
+    elif parameter.lower() == "md":
+        param_name = "Mean Diffusivity"
+        unit = " [mm²/s]"
+    
+    # Set labels and title
+    ax.set_xlabel('Timepoint', fontsize=12)
+    ax.set_ylabel(f'{param_name} Difference (Control - Craniectomy){unit}', fontsize=12)
+    ax.set_title(f'{param_name} Difference by Timepoint', fontsize=14, fontweight='bold')
+    
+    # Add grid for y-axis only
+    ax.grid(True, axis='y', linestyle='-', alpha=0.3)
+    
+    # Move the legend to a better position
+    ax.legend(title='Region', loc='upper right')
+    
+    # Show count of patients per timepoint
+    for i, tp in enumerate(timepoints):
+        count = len(df[df['timepoint'] == tp])
+        if count > 0:
+            ax.text(i, ax.get_ylim()[0] * 1.05, f"n={count}",
+                  ha='center', va='bottom', fontsize=10)
+    
+    ax.xaxis.set_label_coords(0.5, -0.125)  # Move x-axis label down
+    plt.tight_layout()
+    
+    # Save figures to specified directories
+    output_dir = "DTI_Processing_Scripts/dti_plots"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        
+    thesis_dir = "../Thesis/phd-thesis-template-2.4/Chapter6/Figs"
+    if not os.path.exists(thesis_dir):
+        os.makedirs(thesis_dir)
+    
+    # Save figures
+    plt.savefig(f'{output_dir}/{parameter}_diff_boxplot_combined.png')
+    plt.savefig(f'{thesis_dir}/{parameter}_diff_boxplot_combined.png', dpi=600)
+    plt.close()
+    
+    return fig, ax
+
+def create_timepoint_boxplot_recategorised_dti_single_region(df, parameter, region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']):
+    """
+    Create a box plot for a single region (anterior or posterior) by timepoint.
+    
+    Parameters:
+    -----------
+    df : pandas.DataFrame
+        The input dataframe containing the data
+    parameter : str
+        The parameter to plot (e.g., 'fa', 'md')
+    region : str, optional
+        The region to plot ('anterior' or 'posterior'), by default 'anterior'
+    timepoints : list, optional
+        List of timepoints to include in the plot
+        
+    Returns:
+    --------
+    fig, ax : tuple
+        The figure and axis objects
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import seaborn as sns
+    import pandas as pd
+    import matplotlib.cm as cm
+    import os
+
+    set_publication_style()  # Assuming this function exists in your environment
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    palette = sns.color_palette("viridis", len(timepoints))
+
+    # Column name for the selected region
+    column_name = f"{parameter}_{region}_diff"
+
+    # Filter the dataframe to include only timepoints in the specified list
+    df_filtered = df[df['timepoint'].isin(timepoints)].copy()
+    
+    # Ensure timepoints are in the correct order
+    df_filtered['timepoint'] = pd.Categorical(df_filtered['timepoint'],
+                                             categories=timepoints,
+                                             ordered=True)
+    
+    # Add horizontal line at y=0
+    ax.axhline(y=0, color='gray', linestyle='-', alpha=0.3)
+
+    # Create lists to track which timepoints have small sample sizes
+    small_sample_tps = []
+    regular_sample_tps = []
+    
+    for tp in timepoints:
+        tp_data = df[df['timepoint'] == tp]
+        if len(tp_data) < 5:
+            small_sample_tps.append(tp)
+        else:
+            regular_sample_tps.append(tp)
+    
+    # Create a copy for regular samples
+    df_regular = df_filtered[df_filtered['timepoint'].isin(regular_sample_tps)].copy()
+    
+    # Plot regular boxplots for n >= 5
+    if not df_regular.empty:
+        sns.boxplot(x='timepoint', y=column_name, data=df_regular,
+                  palette=palette, width=0.6, ax=ax, saturation=0.7,
+                  showfliers=False)
+    
+    # For small sample sizes (n < 5), plot just the median as a line
+    for tp in small_sample_tps:
+        tp_data = df_filtered[df_filtered['timepoint'] == tp]
+        if not tp_data.empty and not tp_data[column_name].isna().all():
+            tp_index = timepoints.index(tp)
+            median_value = tp_data[column_name].median()
+            
+            # Plot median as a horizontal line
+            ax.hlines(median_value, tp_index - 0.3, tp_index + 0.3,
+                    color='black', linewidth=1.5, linestyle='-',
+                    alpha=0.9, zorder=5)
+    
+    # Add scatter points
+    sns.stripplot(x='timepoint', y=column_name, data=df_filtered,
+                marker='o', palette=palette, jitter=True, 
+                size=7, alpha=0.8, ax=ax)
+    
+    # Reduce opacity of box elements
+    for patch in ax.patches:
+        patch.set_alpha(0.5)
+    
+    # Set parameter-specific labels and title
+    if parameter.lower() == "fa":
+        param_name = "Fractional Anisotropy"
+        unit = ""
+    elif parameter.lower() == "md":
+        param_name = "Mean Diffusivity"
+        unit = " [mm²/s]"
+    
+    # Set labels and title
+    ax.set_xlabel('Timepoint', fontsize=12)
+    ax.set_ylabel(f'{param_name} Difference (Control - Craniectomy){unit}', fontsize=12)
+    ax.set_title(f'{param_name} Difference by Timepoint - {region.capitalize()} Region', 
+                fontsize=14, fontweight='bold')
+    
+    # Add grid for y-axis only
+    ax.grid(True, axis='y', linestyle='-', alpha=0.3)
+    
+    # Show count of patients per timepoint
+    for i, tp in enumerate(timepoints):
+        count = len(df[df['timepoint'] == tp])
+        if count > 0:
+            if parameter == 'fa':
+                ax.text(i, ax.get_ylim()[0] * 1.35, f"n={count}",
+                    ha='center', va='bottom', fontsize=10)
+            else:
+                ax.text(i, ax.get_ylim()[0] * 1.125, f"n={count}",
+                    ha='center', va='bottom', fontsize=10)
+    
+    ax.xaxis.set_label_coords(0.5, -0.125)  # Move x-axis label down
+    
+    plt.tight_layout()
+    
+    # Save figures to specified directories
+    output_dir = "DTI_Processing_Scripts/dti_plots"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        
+    thesis_dir = "../Thesis/phd-thesis-template-2.4/Chapter6/Figs"
+    if not os.path.exists(thesis_dir):
+        os.makedirs(thesis_dir)
+    
+    # Save figures
+    plt.savefig(f'{output_dir}/{parameter}_{region}_diff_boxplot.png')
+    plt.savefig(f'{thesis_dir}/{parameter}_{region}_diff_boxplot.png', dpi=600)
+    plt.close()
+    
+    return fig, ax
 
 
 def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='increasing', combine_regions=False):
@@ -702,8 +741,6 @@ def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='inc
     
     # Return results and figure
     return {'results': results, 'figure': fig}
-
-
 
 
 def plot_metric_difference(df, parameter, region, save_path=None, plot_type='box', group_by='region'):
@@ -1516,7 +1553,6 @@ def plot_all_rings_combined(df, parameter, num_bins=5, save_path=None):
     
     return (fig, ax), (fig2, ax2)
 
-
 def plot_metric_roi(df, parameter, region_type, save_path=None, plot_type='scatter'):
     """
     Plot the metric for a specific region type across all patients.
@@ -1718,8 +1754,6 @@ def plot_metric_roi(df, parameter, region_type, save_path=None, plot_type='scatt
     
     return fig, ax
     
-    
-
 
 def process_timepoint_data(input_file_location):
     """
@@ -1888,6 +1922,21 @@ if __name__ == '__main__':
 
     ################################################
     
+    #PLOTS FOR ROI - TIMEPOINT BASED
+    #################################################
+
+    #Import roi 567 harmonised data
+    wm_data_roi_567_filename='DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_wm_567_harmonised.csv'
+    wm_data_roi_567=process_timepoint_data(input_file_location=wm_data_roi_567_filename)
+    # Get differences in fa and md
+    wm_data_roi_567=parameter_differences(wm_data_roi_567)
+    print(wm_data_roi_567)
+
+
+    
+    create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='fa', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+    # create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='fa', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+    # create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='md', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
 
 
     sys.exit()
