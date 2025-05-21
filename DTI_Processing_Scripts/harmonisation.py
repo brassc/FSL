@@ -174,7 +174,7 @@ def merge_scanner_info_with_metrics(metrics_df, scanner_info_df, output_filename
     
     return metrics_df
 
-def process_metrics_file(input_filename, harmonized_output_filename):
+def process_metrics_file(input_filename, harmonized_output_filename, mean_only=True):
     """
     Process a metrics file through the entire pipeline.
     
@@ -295,7 +295,30 @@ def process_metrics_file(input_filename, harmonized_output_filename):
     fa_columns = [col for col in valid_data.columns if col.startswith('fa_')]
     if len(fa_columns) > 0:
         print(f"Found {len(fa_columns)} FA metrics")
-        fa_data = valid_data[fa_columns].values.T  # neuroCombat expects features in rows
+
+        if mean_only==True:
+            fa_data = valid_data[fa_columns].values.T  # neuroCombat expects features in rows
+        else:
+
+
+            # Create a new DataFrame to hold the extracted values
+            numeric_data = pd.DataFrame(index=valid_data.index)
+            # Sample one value to understand the format
+            sample_col = fa_columns[0]
+            print(sample_col)
+
+            # Now get some actual data from this column
+            if len(valid_data) > 0:  # Make sure the DataFrame isn't empty
+                sample_val = valid_data[sample_col].iloc[0]  # Get first value in this column
+                print(f"Sample value type: {type(sample_val)}")
+                print(f"Sample value at iloc[0]: {sample_val}")
+                sample_val_1=valid_data[sample_col].iloc[1]
+                print(f"Sample value at iloc[1]: {sample_val_1}")
+                sample_val_2=valid_data[sample_col].iloc[2]
+                print(f"Sample val at iloc[2]: {sample_val_2}")
+            sys.exit()
+
+        
         
         # Set up covariates following the exact function signature: 
         # neuroCombat(dat: Any, covars: Any, batch_col: Any, categorical_cols: Any | None = None, 
@@ -313,6 +336,10 @@ def process_metrics_file(input_filename, harmonized_output_filename):
 
         covars_df = pd.DataFrame(covars_dict)
 
+        # print(type(fa_data))
+
+        
+
         
         
         # Apply neuroCombat for FA metrics
@@ -327,7 +354,7 @@ def process_metrics_file(input_filename, harmonized_output_filename):
             continuous_cols=['Age_at_injury'],
             eb=True,
             parametric=True,
-            mean_only=True,
+            mean_only=mean_only,
             ref_batch=None
         )
         # sys.exit()
@@ -377,7 +404,7 @@ def process_metrics_file(input_filename, harmonized_output_filename):
             continuous_cols=['Age_at_injury'],
             eb=True,
             parametric=True,
-            mean_only=True,
+            mean_only=mean_only,
             ref_batch=None
         )
         
@@ -445,26 +472,165 @@ def process_metrics_file(input_filename, harmonized_output_filename):
     # Save harmonized data
     harmonized_data.to_csv(harmonized_output_filename, index=False)
 
+
+import pandas as pd
+import numpy as np
+import os
+import re
+
+def average_rings(input_filename, output_filename, rings_to_average):
+    """
+    Process DTI metrics data to average specified rings for each metric-location combination.
+    
+    Parameters:
+    -----------
+    input_filename : str
+        Path to the input CSV file
+    output_filename : str
+        Path where the output CSV will be saved
+    rings_to_average : list of int
+        List of ring numbers to average (e.g., [5, 6, 7])
+    
+    Returns:
+    --------
+    pd.DataFrame
+        The processed DataFrame with averaged ring values
+    """
+    # Validate inputs
+    if not isinstance(rings_to_average, list) or len(rings_to_average) == 0:
+        raise ValueError("rings_to_average must be a non-empty list of integers")
+    
+    # Read the CSV file
+    print(f"Reading input file: {input_filename}")
+    df = pd.read_csv(input_filename)
+    
+    # Create a new DataFrame for results
+    result_df = pd.DataFrame()
+    
+    # Copy patient_id and timepoint columns
+    result_df['patient_id'] = df['patient_id']
+    result_df['timepoint'] = df['timepoint']
+    
+    # Convert rings to strings for column naming
+    ring_str = '_'.join(str(ring) for ring in sorted(rings_to_average))
+    
+    # Identify all unique metric+location combinations
+    metric_location_patterns = set()
+    for col in df.columns:
+        match = re.match(r'^([A-Z]+)_([a-z_]+)_ring_\d+', col)
+        if match:
+            metric_location_patterns.add(f"{match.group(1)}_{match.group(2)}")
+    
+    print(f"Found {len(metric_location_patterns)} metric-location patterns")
+    
+    # Process each metric-location pattern
+    for pattern in sorted(metric_location_patterns):
+        print(f"Processing pattern: {pattern}")
+        
+        # Find the columns for specified rings
+        ring_cols = [f"{pattern}_ring_{ring}" for ring in rings_to_average]
+        
+        # New column name for the average
+        result_col_name = f"{pattern}_ring_{ring_str}_avg"
+        
+        # Process each row
+        result_column = []
+        for idx, row in df.iterrows():
+            # Initialize list to store all values from specified rings
+            all_values = []
+            
+            # Process each ring column if it exists
+            for ring_col in ring_cols:
+                if ring_col in df.columns:
+                    try:
+                        value = row[ring_col]
+                        if isinstance(value, str):
+                            # Extract all floating point numbers from the string
+                            floats_array = [float(x) for x in re.findall(r'[-+]?\d*\.\d+|\d+', value)]
+                        else:
+                            floats_array = [float(value)] if not pd.isna(value) else []
+                        
+                        # Apply filtering for FA columns only
+                        if pattern.startswith('FA_'):
+                            filtered_array = [x for x in floats_array if 0.05 <= x <= 0.8]
+                            # Use original if filtering removes all values
+                            if not filtered_array:
+                                filtered_array = floats_array
+                        else:  # For MD columns
+                            filtered_array = floats_array
+                        
+                        # Add values to the combined list
+                        all_values.extend(filtered_array)
+                    except (ValueError, SyntaxError, TypeError) as e:
+                        print(f"Error processing {ring_col} in row {idx}: {e}")
+                        # If there's an error, skip this ring
+                        continue
+            
+            # Calculate mean of combined values
+            if all_values:
+                mean_value = np.mean(all_values)
+            else:
+                mean_value = np.nan
+            
+            result_column.append(mean_value)
+        
+        # Add the result column to the result DataFrame
+        result_df[result_col_name] = result_column
+        print(f"Added column: {result_col_name}")
+    
+    # Save the result to CSV
+    result_df.to_csv(output_filename, index=False, float_format='%.10f')
+    print(f"Processing complete. Output saved to {output_filename}")
+    
+    return result_df
+
+
+
+
+################################
 # Usage
+####################################
 
-# process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_5x4vox.csv', 
-#                      harmonized_output_filename='DTI_Processing_Scripts/merged_data_5x4vox_harmonised.csv')
+# # process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_5x4vox.csv', 
+# #                      harmonized_output_filename='DTI_Processing_Scripts/merged_data_5x4vox_harmonised.csv')
 
-# process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_5x4vox_NEW.csv',
-#                      harmonized_output_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_harmonised.csv')
+# # process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_5x4vox_NEW.csv',
+# #                      harmonized_output_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_harmonised.csv')
 
 
-# process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_5x4vox_NEW_filtered.csv',
-                    #  harmonized_output_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_harmonised.csv')
+# # process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_5x4vox_NEW_filtered.csv',
+#                     #  harmonized_output_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_harmonised.csv')
 
-# process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_5x4vox_NEW_filtered_wm.csv',
-#                      harmonized_output_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_wm_harmonised.csv')
+# # process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_5x4vox_NEW_filtered_wm.csv',
+# #                      harmonized_output_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_wm_harmonised.csv')
 
-process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_10x4vox_NEW_filtered_wm.csv',
-                     harmonized_output_filename='DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_wm_harmonised.csv')
-                 
+# process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_10x4vox_NEW_filtered_wm.csv',
+#                      harmonized_output_filename='DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_wm_harmonised.csv')
+                
 
-# process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_10x4vox_NEW_filtered.csv',
-#                      harmonized_output_filename='DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_harmonised.csv')
+# # process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_10x4vox_NEW_filtered.csv',
+# #                      harmonized_output_filename='DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_harmonised.csv')
+
+
+
+#### MERGING AND AVERAGING OF SPECIFIED RINGS ####
+
+wm_all_values_filename='DTI_Processing_Scripts/results/all_metrics_10x4vox_NEW_filtered_all_values_wm.csv'
+# wm_all_df=pd.read_csv(wm_all_values_filename)
+output_wm_rings_567_filename = 'DTI_Processing_Scripts/results/all_metrics_10x4vox_NEW_filtered_rings_5_6_7_mean_wm.csv'
+rings = [5, 6, 7]
+    
+# average_rings(wm_all_values_filename, output_wm_rings_567_filename, rings)
+
+process_metrics_file(input_filename=wm_all_values_filename, 
+                     harmonized_output_filename="DTI_Processing_Scripts/merged_data_10x4vox_filtered_wm_rings567_harmonised.csv",
+                     mean_only=False)
+
+
+
+
+
+
 
 print("\n\nHarmonization complete!")
+
