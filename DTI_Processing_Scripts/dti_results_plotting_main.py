@@ -48,6 +48,69 @@ base = importr('base')
 lme4 = importr('lme4')
 emmeans = importr('emmeans')
 
+
+def data_availability_matrix(data, timepoints, diff_column='fa_anterior_diff', filename='data_availability.png'):
+    """
+    Create a data availability matrix for the given timepoints.
+    
+    Parameters:
+    -----------
+    data : pandas.DataFrame
+        Data in long format with patient_id and timepoint columns
+    timepoints : list
+        List of timepoints to include in the matrix
+    diff_column : str
+        Column to check for data availability
+    filename : str
+        Name of the output file
+        
+    Returns:
+    --------
+    availability_matrix : pandas.DataFrame
+        Matrix showing the number of patients with data for each pair of timepoints
+    """
+    # Create an empty matrix with timepoints as index and columns
+    availability_matrix = pd.DataFrame(index=timepoints, columns=timepoints, dtype=float)
+    
+    # Filter data to only include rows where diff_column is not null
+    valid_data = data[data[diff_column].notna()]
+    
+    # Fill the matrix with counts
+    for time1 in timepoints:
+        for time2 in timepoints:
+            if time1 == time2:
+                # Diagonal: number of patients with data for this timepoint
+                patients_at_time = valid_data[valid_data['timepoint'] == time1]['patient_id'].nunique()
+                availability_matrix.loc[time1, time2] = patients_at_time
+            else:
+                # Off-diagonal: number of patients with data for both timepoints
+                patients_at_time1 = set(valid_data[valid_data['timepoint'] == time1]['patient_id'])
+                patients_at_time2 = set(valid_data[valid_data['timepoint'] == time2]['patient_id'])
+                common_patients = patients_at_time1.intersection(patients_at_time2)
+                availability_matrix.loc[time1, time2] = len(common_patients)
+    
+    # Verify the data types before plotting
+    print("Data types in availability_matrix:")
+    print(availability_matrix.dtypes)
+    print("\nSample of availability_matrix:")
+    print(availability_matrix.head())
+    
+    # Explicitly convert matrix to float if needed
+    availability_matrix = availability_matrix.astype(float)
+    
+    # Visualize the data availability
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(availability_matrix, annot=True, cmap="YlGnBu", fmt='g')
+    plt.title('Data Availability Matrix (number of patients)')
+    plt.grid(False)
+    plt.tight_layout()
+    plt.savefig(f"DTI_Processing_Scripts/dti_plots/{filename}")
+    plt.savefig(f"../Thesis/phd-thesis-template-2.4/Chapter6/Figs/{filename}", dpi=600)
+    plt.close()
+    
+    return availability_matrix
+
+
 def parameter_differences(df):
     """
     Calculate differences between baseline and actual values for FA and MD parameters
@@ -83,8 +146,6 @@ def parameter_differences(df):
         print(f"  {col}: {valid_count} valid values, mean = {mean_val:.6f}")
     
     return result_df
-
-
 
 def create_timepoint_boxplot_recategorised_dti_old(df, parameter, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']):
     """
@@ -1974,7 +2035,21 @@ if __name__ == '__main__':
     wm_data_roi_567=process_timepoint_data(input_file_location=wm_data_roi_567_filename)
     # Get differences in fa and md
     wm_data_roi_567=parameter_differences(wm_data_roi_567)
-    print(wm_data_roi_567)
+    print(wm_data_roi_567.columns)
+
+
+
+
+    # Call the function with your data
+    matrix = data_availability_matrix(
+        data=wm_data_roi_567, 
+        timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'],
+        diff_column='fa_anterior_diff',  # or any other diff column you want to check
+        filename='fa_diff_data_availability.png'
+    )
+
+    
+    sys.exit()
 
 
     
@@ -1984,6 +2059,7 @@ if __name__ == '__main__':
     
     # create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='fa', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
     # create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='md', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+
 
 
     sys.exit()
