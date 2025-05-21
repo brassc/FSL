@@ -299,32 +299,70 @@ def process_metrics_file(input_filename, harmonized_output_filename, mean_only=T
         if mean_only==True:
             fa_data = valid_data[fa_columns].values.T  # neuroCombat expects features in rows
         else:
-
-
             # Create a new DataFrame to hold the extracted values
             numeric_data = pd.DataFrame(index=valid_data.index)
-            # Sample one value to understand the format
-            sample_col = fa_columns[0]
-            print(sample_col)
 
-            # Now get some actual data from this column
-            if len(valid_data) > 0:  # Make sure the DataFrame isn't empty
-                sample_val = valid_data[sample_col].iloc[0]  # Get first value in this column
-                print(f"Sample value type: {type(sample_val)}")
-                print(f"Sample value at iloc[0]: {sample_val}")
-                sample_val_1=valid_data[sample_col].iloc[1]
-                print(f"Sample value at iloc[1]: {sample_val_1}")
-                sample_val_2=valid_data[sample_col].iloc[2]
-                print(f"Sample val at iloc[2]: {sample_val_2}")
-            sys.exit()
+            # Function to extract average from string array
+            def extract_mean_from_array_string(val):
+                if not isinstance(val, str):
+                    return np.nan
+                
+                # Clean brackets and extract numbers
+                val = val.strip()
+                if val == '[]' or not val:
+                    return np.nan
+                    
+                # Extract all numbers using regex
+                try:
+                    numbers = [float(x) for x in re.findall(r'[-+]?\d*\.\d+|\d+', val)]
+                    if numbers:
+                        return np.mean(numbers)
+                    return np.nan
+                except:
+                    return np.nan
+                
+            # Process each column
+            for col in fa_columns:
+                print(f"Processing column {col}...")
+                numeric_data[col] = valid_data[col].apply(extract_mean_from_array_string)
+                
+                # Report stats
+                non_nan = numeric_data[col].notna().sum()
+                total = len(numeric_data)
+                print(f"  - Extracted means for {non_nan} out of {total} values ({non_nan/total:.1%})")
+                
+                if non_nan > 0:
+                    print(f"  - Mean value: {numeric_data[col].mean():.4f}")
+            
+            # Determine which columns have enough valid data
+            valid_fa_columns = []
+            for col in fa_columns:
+                valid_percent = numeric_data[col].notna().mean() * 100
+                percent_threshold=10
+                if valid_percent >= percent_threshold:  # Require at least 10% valid values
+                    valid_fa_columns.append(col)
+                else:
+                    print(f"Column {col} has only {valid_percent:.1f}% valid values - excluding (less than {percent_threshold})")
+            
+            print(f"Using {len(valid_fa_columns)} out of {len(fa_columns)} FA columns")
 
-        
-        
-        # Set up covariates following the exact function signature: 
-        # neuroCombat(dat: Any, covars: Any, batch_col: Any, categorical_cols: Any | None = None, 
-        #             continuous_cols: Any | None = None, eb: bool = True, parametric: bool = True, 
-        #             mean_only: bool = False, ref_batch: Any | None = None) -> dict[str, Any]
-        
+            if valid_fa_columns:
+                # Handle missing values in valid columns by setting NaN to 0
+                for col in valid_fa_columns:
+                    if numeric_data[col].isna().any():
+                        # median = numeric_data[col].median()
+                        numeric_data[col] = numeric_data[col].fillna(0.0)
+                        print(f"Filled NaN values in {col} with 0.0")
+                
+                # Extract as numpy array
+                fa_data = numeric_data[valid_fa_columns].values.T
+                print(f"Final FA data shape: {fa_data.shape}")
+                
+                # # Verify data is ready for neuroCombat
+                # print(f"Final data type: {fa_data.dtype}")
+                # print(f"Contains NaN: {np.isnan(fa_data).any()}")
+                # print(f"Contains Inf: {np.isinf(fa_data).any()}")
+     
         covars_dict = {
             'batch': valid_data['Site_Model'].values,
             'timepoint': valid_data['timepoint'].values,
@@ -336,12 +374,6 @@ def process_metrics_file(input_filename, harmonized_output_filename, mean_only=T
 
         covars_df = pd.DataFrame(covars_dict)
 
-        # print(type(fa_data))
-
-        
-
-        
-        
         # Apply neuroCombat for FA metrics
         print("Running neuroCombat on FA metrics...")
         fa_combat_data = neuroCombat(
@@ -357,7 +389,6 @@ def process_metrics_file(input_filename, harmonized_output_filename, mean_only=T
             mean_only=mean_only,
             ref_batch=None
         )
-        # sys.exit()
         
         # Create FA harmonized dataframe
         fa_harmonized_df = pd.DataFrame(
@@ -370,17 +401,74 @@ def process_metrics_file(input_filename, harmonized_output_filename, mean_only=T
         fa_harmonized_df = pd.DataFrame(index=valid_data.index)
 
 
-
-
-
-    # Add this code after the FA harmonization section in your script
-
     # Extract MD data for harmonisation
     print("\nHarmonizing MD metrics...")
     md_columns = [col for col in valid_data.columns if col.startswith('md_')]
     if len(md_columns) > 0:
         print(f"Found {len(md_columns)} MD metrics")
-        md_data = valid_data[md_columns].values.T  # neuroCombat expects features in rows
+        
+        if mean_only==True:
+            md_data = valid_data[md_columns].values.T  # neuroCombat expects features in rows
+        else:
+            # Create a new DataFrame to hold the extracted values
+            numeric_data_md = pd.DataFrame(index=valid_data.index)
+
+            # Function to extract average from string array
+            def extract_mean_from_array_string(val):
+                if not isinstance(val, str):
+                    return np.nan
+                
+                # Clean brackets and extract numbers
+                val = val.strip()
+                if val == '[]' or not val:
+                    return np.nan
+                    
+                # Extract all numbers using regex
+                try:
+                    numbers = [float(x) for x in re.findall(r'[-+]?\d*\.\d+|\d+', val)]
+                    if numbers:
+                        return np.mean(numbers)
+                    return np.nan
+                except:
+                    return np.nan
+                
+            # Process each column
+            for col in md_columns:
+                print(f"Processing column {col}...")
+                numeric_data_md[col] = valid_data[col].apply(extract_mean_from_array_string)
+                
+                # Report stats
+                non_nan = numeric_data_md[col].notna().sum()
+                total = len(numeric_data_md)
+                print(f"  - Extracted means for {non_nan} out of {total} values ({non_nan/total:.1%})")
+                
+                if non_nan > 0:
+                    print(f"  - Mean value: {numeric_data_md[col].mean():.4f}")
+
+            
+            # Determine which columns have enough valid data
+            valid_md_columns = []
+            for col in md_columns:
+                valid_percent = numeric_data_md[col].notna().mean() * 100
+                percent_threshold=10
+                if valid_percent >= percent_threshold:  # Require at least 10% valid values
+                    valid_md_columns.append(col)
+                else:
+                    print(f"Column {col} has only {valid_percent:.1f}% valid values - excluding (less than {percent_threshold})")
+            
+            print(f"Using {len(valid_md_columns)} out of {len(md_columns)} MD columns")
+
+            if valid_md_columns:
+                # Handle missing values in valid columns by setting NaN to 0
+                for col in valid_md_columns:
+                    if numeric_data_md[col].isna().any():
+                        numeric_data_md[col] = numeric_data_md[col].fillna(0.0)
+                        print(f"Filled NaN values in {col} with 0.0")
+                
+                # Extract as numpy array
+                md_data = numeric_data_md[valid_md_columns].values.T
+                print(f"Final MD data shape: {md_data.shape}")
+
         
         # Set up covariates following the exact function signature (same as FA harmonization)
         covars_dict = {
@@ -435,7 +523,7 @@ def process_metrics_file(input_filename, harmonized_output_filename, mean_only=T
         print(f"Replaced {len(fa_columns)} FA columns with their harmonized versions")
 
     # Replace MD values with harmonized versions
-    if len(md_columns) > 0:
+    if len(md_columns) > 0: 
         # Replace original MD columns with harmonized values
         for i, col in enumerate(md_columns):
             # The harmonized values are already in md_harmonized_df, we just need to extract them
@@ -445,7 +533,7 @@ def process_metrics_file(input_filename, harmonized_output_filename, mean_only=T
         print(f"Replaced {len(md_columns)} MD columns with their harmonized versions")
 
 
-    # Clean FA data - make vales < 0.0001 NaN
+    # Clean FA data - make values < 0.0001 NaN
     fa_columns = [col for col in harmonized_data.columns if 'fa' in col.lower()]
     for column in fa_columns:
         # This will catch true zeros and values very close to zero
@@ -454,11 +542,11 @@ def process_metrics_file(input_filename, harmonized_output_filename, mean_only=T
         num_replaced = harmonized_data[column].isna().sum()
         print(f"Replaced {num_replaced} values with NaN in column {column}")
 
-    # Clean MD data - make vales < 0.0001 NaN
+    # Clean MD data - make values < 0.0 NaN
     md_columns = [col for col in harmonized_data.columns if 'md' in col.lower()]
     for column in md_columns:
         # This will catch true zeros and values very close to zero
-        harmonized_data.loc[harmonized_data[column] < 0.0001, column] = np.nan
+        harmonized_data.loc[harmonized_data[column] < 0.0, column] = np.nan
         # Optional: Print how many zeros were replaced in each column
         num_replaced = harmonized_data[column].isna().sum()
         print(f"Replaced {num_replaced} values with NaN in column {column}")
@@ -616,19 +704,21 @@ def average_rings(input_filename, output_filename, rings_to_average):
 #### MERGING AND AVERAGING OF SPECIFIED RINGS ####
 
 wm_all_values_filename='DTI_Processing_Scripts/results/all_metrics_10x4vox_NEW_filtered_all_values_wm.csv'
-# wm_all_df=pd.read_csv(wm_all_values_filename)
 output_wm_rings_567_filename = 'DTI_Processing_Scripts/results/all_metrics_10x4vox_NEW_filtered_rings_5_6_7_mean_wm.csv'
-rings = [5, 6, 7]
+
+# processed_wm_rings_567_filename_harmonised = "DTI_Processing_Scripts/merged_data_10x4vox_filtered_wm_rings_567_harmonised.csv"
+# output_wm_rings_567_filename_harmonised = 'DTI_Processing_Scripts/results/all_metrics_10x4vox_NEW_filtered_rings_5_6_7_mean_wm_harmonised.csv'
+
     
-# average_rings(wm_all_values_filename, output_wm_rings_567_filename, rings)
+average_rings(wm_all_values_filename, output_wm_rings_567_filename, rings= [5, 6, 7])
 
-process_metrics_file(input_filename=wm_all_values_filename, 
-                     harmonized_output_filename="DTI_Processing_Scripts/merged_data_10x4vox_filtered_wm_rings567_harmonised.csv",
-                     mean_only=False)
+process_metrics_file(input_filename=output_wm_rings_567_filename, 
+                     harmonized_output_filename="DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_wm_567_harmonised.csv")
 
-
-
-
+# process_metrics_file(input_filename=wm_all_values_filename, 
+#                      harmonized_output_filename=processed_wm_rings_567_filename_harmonised,
+#                      mean_only=False)
+# # spits out average anyway - so just do average first.
 
 
 
