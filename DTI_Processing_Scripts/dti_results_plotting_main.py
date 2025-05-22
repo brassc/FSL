@@ -174,73 +174,67 @@ def create_timepoint_boxplot_LME_dti(df, parameter, result, timepoints=['ultra-f
     box_width = 0.6  # Should match your boxplot width
     x_extended = np.linspace(-box_width/2, len(timepoints)-1+box_width/2, 100)
 
-    # Interpolate the estimates and CIs to extended x range
-    from scipy.interpolate import interp1d
-    f_est = interp1d(x_positions, y_estimates, kind='linear', fill_value='extrapolate')
-    f_ci_lower = interp1d(x_positions, ci_lower, kind='linear', fill_value='extrapolate')
-    f_ci_upper = interp1d(x_positions, ci_upper, kind='linear', fill_value='extrapolate')
 
-    y_extended = f_est(x_extended)
-    ci_lower_extended = f_ci_lower(x_extended)
-    ci_upper_extended = f_ci_upper(x_extended)
+    # Create step function instead of linear interpolation
+    x_step = []
+    y_step = []
+    ci_lower_step = []
+    ci_upper_step = []
 
-    # Plot extended continuous confidence band and line
-    ax.fill_between(x_extended, ci_lower_extended, ci_upper_extended, 
-                    alpha=0.1, color='#440154', label='LME 95% CI')  # Dark viridis purple
-    ax.plot(x_extended, y_extended, '-', color='#440154', linewidth=2, 
-            label='LME Estimate', zorder=10)
-    # ax.plot(x_positions, y_estimates, 'o', color='#440154', 
-            # markersize=12, zorder=11)
+    box_width = 0.6
+    for i, (x, y, ci_l, ci_u) in enumerate(zip(x_positions, y_estimates, ci_lower, ci_upper)):
+        if i == 0:
+            # # First timepoint: start from left edge
+            # x_step.extend([x - box_width/2, x + box_width/2])
+            # y_step.extend([y, y])
+            # ci_lower_step.extend([ci_l, ci_l])
+            # ci_upper_step.extend([ci_u, ci_u])
+            
+            # First timepoint: calculate half the distance to next timepoint
+            half_dist_to_next = (x_positions[1] - x) / 2
+            x_step.extend([x - half_dist_to_next, x + half_dist_to_next])
+            y_step.extend([y, y])
+            ci_lower_step.extend([ci_l, ci_l])
+            ci_upper_step.extend([ci_u, ci_u])
+        else:
+            # # Add step up from previous timepoint
+            # x_step.extend([x - box_width/2, x + box_width/2])
+            # y_step.extend([y, y])
+            # ci_lower_step.extend([ci_l, ci_l])
+            # ci_upper_step.extend([ci_u, ci_u])
+            # Calculate midpoint between current and previous timepoint
+            midpoint = (x_positions[i-1] + x) / 2
+            
+            # Extend previous timepoint to midpoint
+            x_step.append(midpoint)
+            y_step.append(y_estimates[i-1])
+            ci_lower_step.append(ci_lower[i-1])
+            ci_upper_step.append(ci_upper[i-1])
+            
+            # Step up/down at midpoint
+            x_step.append(midpoint)
+            y_step.append(y)
+            ci_lower_step.append(ci_l)
+            ci_upper_step.append(ci_u)
+            
+            # Continue to next midpoint or end
+            if i == len(x_positions) - 1:
+                # Last timepoint: extend by half the distance from previous
+                half_dist_from_prev = (x - x_positions[i-1]) / 2
+                x_step.append(x + half_dist_from_prev)
+                y_step.append(y)
+                ci_lower_step.append(ci_l)
+                ci_upper_step.append(ci_u)
+
+
+    # Plot step function
+    ax.fill_between(x_step, ci_lower_step, ci_upper_step, 
+                    alpha=0.2, color='#440154', label='LME 95% CI', step='post')
+    ax.plot(x_step, y_step, '-', color='#440154', linewidth=2.5, 
+            label='LME Estimate', zorder=10, drawstyle='steps-post')
     ax.plot(x_positions, y_estimates, 'o', markerfacecolor='#6B5082', 
         markersize=10, markeredgecolor='#2D0845', markeredgewidth=1.5,
         zorder=11)
-    # x_positions = np.arange(len(timepoints))
-    # y_estimates = [est for _, est, _ in estimate_points]
-    # y_errors = [se for _, _, se in estimate_points]
-
-    # # Calculate confidence intervals
-    # ci_lower = np.array(y_estimates) - 1.96 * np.array(y_errors)
-    # ci_upper = np.array(y_estimates) + 1.96 * np.array(y_errors)
-
-    # # Plot as horizontal segments spanning each timepoint
-    # box_width = 0.6
-    # for i, (x, y, ci_l, ci_u) in enumerate(zip(x_positions, y_estimates, ci_lower, ci_upper)):
-    #     # Confidence interval band
-    #     ax.fill_between([x - box_width/2, x + box_width/2], [ci_l, ci_l], [ci_u, ci_u],
-    #                     alpha=0.15, color='gray', label='LME 95% CI' if i == 0 else "")
-    #     # Main estimate line
-    #     ax.hlines(y, x - box_width/2, x + box_width/2, colors='dimgray', 
-    #             linewidth=3, label='LME Estimate' if i == 0 else "", zorder=10)
-    #     # Point at center
-    #     ax.plot(x, y, 'o', color='dimgray', markersize=6, zorder=11)
-
-
-    # x_positions = np.arange(len(timepoints))
-    # y_estimates = [est for _, est, _ in estimate_points]
-    # y_errors = [se for _, _, se in estimate_points]
-
-    # # Calculate confidence intervals
-    # ci_lower = np.array(y_estimates) - 1.96 * np.array(y_errors)
-    # ci_upper = np.array(y_estimates) + 1.96 * np.array(y_errors)
-
-    # # Plot smooth line and confidence band
-    # ax.fill_between(x_positions, ci_lower, ci_upper, 
-    #                 alpha=0.15, color='gray', label='LME 95% CI')
-    # ax.plot(x_positions, y_estimates, 'o-', color='dimgray', linewidth=2.5, 
-    #         markersize=8, label='LME Estimate', zorder=10)
-    
-    # Add scatter points, colored by region
-    # # For anterior (using circles)
-    # sns.stripplot(x='timepoint', y='diff_value', 
-    #             data=melted_data[melted_data['region'] == 'Anterior'],
-    #             dodge=False, jitter=0.2, size=6, alpha=0.8, ax=ax,
-    #             marker='o') #color='#3498db'
-
-    # # For posterior (using squares)
-    # sns.stripplot(x='timepoint', y='diff_value', 
-    #             data=melted_data[melted_data['region'] == 'Posterior'],
-    #             dodge=False, jitter=0.2, size=6, alpha=0.8, ax=ax,
-    #             marker='s') # color='#e74c3c', 
 
     # For anterior (using circles)
     for i, tp in enumerate(timepoints):
