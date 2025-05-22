@@ -161,7 +161,6 @@ def create_timepoint_boxplot_LME_dti(df, parameter, result, timepoints=['ultra-f
 
     # Extract LME predictions
 
-    # Extract LME predictions
     
     x_positions = np.arange(len(timepoints))
     y_estimates = [est for _, est, _ in estimate_points]
@@ -187,11 +186,11 @@ def create_timepoint_boxplot_LME_dti(df, parameter, result, timepoints=['ultra-f
 
     # Plot extended continuous confidence band and line
     ax.fill_between(x_extended, ci_lower_extended, ci_upper_extended, 
-                    alpha=0.15, color='gray', label='LME 95% CI')
-    ax.plot(x_extended, y_extended, '-', color='dimgray', linewidth=2.5, 
+                    alpha=0.2, color='#440154', label='LME 95% CI')  # Dark viridis purple
+    ax.plot(x_extended, y_extended, '-', color='#440154', linewidth=2.5, 
             label='LME Estimate', zorder=10)
-    ax.plot(x_positions, y_estimates, 'o', color='dimgray', 
-            markersize=6, zorder=11)  # Show actual fitted points
+    ax.plot(x_positions, y_estimates, 'o', color='#440154', 
+            markersize=6, zorder=11)
     # x_positions = np.arange(len(timepoints))
     # y_estimates = [est for _, est, _ in estimate_points]
     # y_errors = [se for _, _, se in estimate_points]
