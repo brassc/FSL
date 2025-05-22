@@ -2047,12 +2047,12 @@ if __name__ == '__main__':
 
 
     # # Data availability matrix
-    matrix = data_availability_matrix(
-        data=wm_data_roi_567, 
-        timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'],
-        diff_column='fa_anterior_diff',  # or any other diff column
-        filename='fa_diff_data_availability.png'
-    )
+    # matrix = data_availability_matrix(
+    #     data=wm_data_roi_567, 
+    #     timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'],
+    #     diff_column='fa_anterior_diff',  # or any other diff column
+    #     filename='fa_diff_data_availability.png'
+    # )
 
     # create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='fa', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
     # create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='md', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
@@ -2082,6 +2082,48 @@ if __name__ == '__main__':
         diff_column='fa_anterior_diff',  # or any other diff column
         filename='fa_diff_data_availability_combi.png'
     )
+
+    #####################################################
+    # LINEAR MIXED EFFECTS MODEL WITH COMBI DATA
+    # H_0: There is no statistically significant difference between 
+    # FA in Control vs. Craniectomy for anterior and posterior ROIs. 
+    # i.e. H_0: FA_diff = FA_{control} - FA_{craniectomy} = 0
+
+    # LMER equation with Patient as random effect, Timepoint as fixed effect, 'Region' as a covariate. 
+    # Y_{ijk} = \beta_0 + \sum_{t=1}^{T-1} \beta_{1t} \cdot \text{Timepoint}_{jt} + \beta_2 \cdot \text{Region}_k + u_i + \varepsilon_{ijk}
+
+    # $Y_{ijk}$: FA difference (control - craniectomy) for subject $i$, at timepoint $j$, in region $k$  
+    # $\beta_0$: Intercept (mean FA difference at reference timepoint and region)  
+    # $\beta_{1t}$: Coefficient for timepoint $t$ (excluding the reference level)  
+    # $\text{Timepoint}_{jt}$: Indicator variable (1 if observation is at timepoint $t$, else 0)  
+    # $\beta_2$: Coefficient for region (e.g., anterior vs posterior)  
+    # $\text{Region}_k$: Indicator variable for brain region (e.g., 0 = anterior, 1 = posterior)  
+    # $u_i$: Random intercept for subject $i$, where $u_i \sim \mathcal{N}(0, \sigma_u^2)$  
+    # $\varepsilon_{ijk}$: Residual error, where $\varepsilon_{ijk} \sim \mathcal{N}(0, \sigma^2)$  
+
+    print(wm_data_roi_567_combi.columns)
+
+    fa_long_wm_data_roi_567_combi = pd.melt(wm_data_roi_567_combi,
+                  id_vars=['patient_id', 'timepoint'],
+                  value_vars=['fa_anterior_diff', 'fa_posterior_diff'],
+                  var_name='Region',
+                  value_name='FA_diff')
+    
+    print(fa_long_wm_data_roi_567_combi)
+
+    # rename regions to anterior and posterior
+    fa_long_wm_data_roi_567_combi['Region'] = fa_long_wm_data_roi_567_combi['Region'].map({
+        'fa_anterior_diff': 'anterior',
+        'fa_posterior_diff': 'posterior'
+    })
+
+
+
+
+
+
+
+
 
 
 
