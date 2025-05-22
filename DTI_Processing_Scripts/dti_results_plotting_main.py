@@ -2046,21 +2046,52 @@ if __name__ == '__main__':
 
 
 
-    # # Call the function with your data
-    # matrix = data_availability_matrix(
-    #     data=wm_data_roi_567, 
-    #     timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'],
-    #     diff_column='fa_anterior_diff',  # or any other diff column
-    #     filename='fa_diff_data_availability.png'
-    # )
+    # # Data availability matrix
+    matrix = data_availability_matrix(
+        data=wm_data_roi_567, 
+        timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'],
+        diff_column='fa_anterior_diff',  # or any other diff column
+        filename='fa_diff_data_availability.png'
+    )
 
-   
-    create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='fa', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
-    create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='md', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+    # create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='fa', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+    # create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='md', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
     
     
     # create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='fa', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
     # create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='md', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+
+    # # combine 3 and 6 month timepoints, and 12 and 24 mo timepoints.
+    wm_data_roi_567_combi=wm_data_roi_567.copy()
+    wm_data_roi_567_combi['timepoint']=wm_data_roi_567['timepoint'].replace({
+        '3mo': '3-6mo',
+        '6mo': '3-6mo',
+        '12mo': '12-24mo',
+        '24mo': '12-24mo'
+    })
+    # Remove duplicates, keeping first occurrence (3mo will be kept over 6mo due to original order)
+    wm_data_roi_567_combi = wm_data_roi_567_combi.drop_duplicates(subset=['patient_id', 'timepoint'], keep='first')
+
+    # print(f"Unique timepoints in combined wm data: {wm_data_roi_567_combi['timepoint'].unique()}")
+    # print(wm_data_roi_567_combi)
+
+    # Do new data availability matrix for combi data
+    matrix_combi = data_availability_matrix(
+        data=wm_data_roi_567_combi, 
+        timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'],
+        diff_column='fa_anterior_diff',  # or any other diff column
+        filename='fa_diff_data_availability_combi.png'
+    )
+
+
+
+    
+
+
+
+
+
+
 
 
 
