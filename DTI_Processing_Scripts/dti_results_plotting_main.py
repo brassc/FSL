@@ -49,6 +49,302 @@ lme4 = importr('lme4')
 emmeans = importr('emmeans')
 
 
+def create_timepoint_boxplot_LME_dti(df, parameter, result, timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo']):
+    """
+    Create a box plot with anterior and posterior data represented as different colored points,
+    but with a single boxplot per timepoint combining both anterior and posterior data.
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import seaborn as sns
+    import pandas as pd
+    import matplotlib.cm as cm
+    import os
+
+    set_publication_style()  # Assuming this function exists in your environment
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    palette = sns.color_palette("viridis", len(timepoints))
+
+    # Column Names
+    anterior_column = f"{parameter}_anterior_diff"
+    posterior_column = f"{parameter}_posterior_diff"
+
+    # We need to reshape the data to have a single "value" column
+    # First, filter to only the timepoints we want
+    df_filtered = df[df['timepoint'].isin(timepoints)].copy()
+    
+    # Create a melted dataframe for plotting
+    # This reshapes the data to have a single value column with a region identifier
+    melted_data = pd.melt(
+        df_filtered,
+        id_vars=['timepoint'], 
+        value_vars=[anterior_column, posterior_column],
+        var_name='region_col',
+        value_name='diff_value'
+    )
+    
+    # Create a cleaner region column
+    melted_data['region'] = melted_data['region_col'].apply(
+        lambda x: 'Anterior' if 'anterior' in x else 'Posterior'
+    )
+    
+    # Ensure timepoints are in the correct order
+    melted_data['timepoint'] = pd.Categorical(melted_data['timepoint'],
+                                             categories=timepoints,
+                                             ordered=True)
+    
+    # Add horizontal line at y=0
+    ax.axhline(y=0, color='gray', linestyle='-', alpha=0.3)
+
+    # Create lists to track which timepoints have small sample sizes
+    small_sample_tps = []
+    regular_sample_tps = []
+    
+    for tp in timepoints:
+        # Count unique subjects in this timepoint (assuming one row per subject per timepoint)
+        tp_data = melted_data[melted_data['timepoint'] == tp]
+        tp_count = len(df[df['timepoint'] == tp])  # Original count from df
+        if tp_count < 5:
+            small_sample_tps.append(tp)
+        else:
+            regular_sample_tps.append(tp)
+    
+    # Create a copy for regular samples
+    melted_regular = melted_data[melted_data['timepoint'].isin(regular_sample_tps)].copy()
+    
+    estimate_points = []
+
+    for tp in timepoints:
+        # Get the fixed effect estimate (relative to intercept)
+        if tp == "acute":
+            est = result.params["Intercept"]
+            se = result.bse["Intercept"]
+        else:
+            coef_name = f"timepoint[T.{tp}]"
+            est = result.params["Intercept"] + result.params.get(coef_name, 0)
+            se = (result.bse["Intercept"] ** 2 + result.bse.get(coef_name, 0) ** 2) ** 0.5
+        
+        estimate_points.append((tp, est, se))
+
+
+    ### PLOTTING
+    # Plot regular boxplots for n >= 5
+    if not melted_regular.empty:
+        sns.boxplot(x='timepoint', y='diff_value', data=melted_regular,
+                  palette=palette, width=0.6, ax=ax, saturation=0.7,
+                  showfliers=False)
+    
+    # For small sample sizes (n < 5), plot just the median as a line
+    for tp in small_sample_tps:
+        tp_data = melted_data[melted_data['timepoint'] == tp]
+        if not tp_data.empty and not tp_data['diff_value'].isna().all():
+            tp_index = timepoints.index(tp)
+            median_value = tp_data['diff_value'].median()
+            
+            # Plot median as a horizontal line
+            ax.hlines(median_value, tp_index - 0.3, tp_index + 0.3,
+                    color='black', linewidth=1.5, linestyle='-',
+                    alpha=0.9, zorder=5)
+            
+    # PLOT LME RESULTS OVER THE TOP
+    # for i, (tp, est, se) in enumerate(estimate_points):
+    #     ax.errorbar(
+    #         i, est, yerr=se, fmt='D', color='black', capsize=4, label='LME Estimate' if i == 0 else "",
+    #         markersize=6, zorder=6  # Appear above everything
+    #     )
+
+    # # Add LME intercept line
+    # intercept = result.params["Intercept"]
+    # ax.axhline(y=intercept, color='black', linestyle='--', linewidth=1.2, alpha=0.7, label="LME Intercept")
+
+    # Extract LME predictions
+
+    # Extract LME predictions
+    
+    x_positions = np.arange(len(timepoints))
+    y_estimates = [est for _, est, _ in estimate_points]
+    y_errors = [se for _, _, se in estimate_points]
+
+    # Calculate confidence intervals
+    ci_lower = np.array(y_estimates) - 1.96 * np.array(y_errors)
+    ci_upper = np.array(y_estimates) + 1.96 * np.array(y_errors)
+
+    # Extend to box edges (left edge of first box to right edge of last box)
+    box_width = 0.6  # Should match your boxplot width
+    x_extended = np.linspace(-box_width/2, len(timepoints)-1+box_width/2, 100)
+
+    # Interpolate the estimates and CIs to extended x range
+    from scipy.interpolate import interp1d
+    f_est = interp1d(x_positions, y_estimates, kind='linear', fill_value='extrapolate')
+    f_ci_lower = interp1d(x_positions, ci_lower, kind='linear', fill_value='extrapolate')
+    f_ci_upper = interp1d(x_positions, ci_upper, kind='linear', fill_value='extrapolate')
+
+    y_extended = f_est(x_extended)
+    ci_lower_extended = f_ci_lower(x_extended)
+    ci_upper_extended = f_ci_upper(x_extended)
+
+    # Plot extended continuous confidence band and line
+    ax.fill_between(x_extended, ci_lower_extended, ci_upper_extended, 
+                    alpha=0.15, color='gray', label='LME 95% CI')
+    ax.plot(x_extended, y_extended, '-', color='dimgray', linewidth=2.5, 
+            label='LME Estimate', zorder=10)
+    ax.plot(x_positions, y_estimates, 'o', color='dimgray', 
+            markersize=6, zorder=11)  # Show actual fitted points
+    # x_positions = np.arange(len(timepoints))
+    # y_estimates = [est for _, est, _ in estimate_points]
+    # y_errors = [se for _, _, se in estimate_points]
+
+    # # Calculate confidence intervals
+    # ci_lower = np.array(y_estimates) - 1.96 * np.array(y_errors)
+    # ci_upper = np.array(y_estimates) + 1.96 * np.array(y_errors)
+
+    # # Plot as horizontal segments spanning each timepoint
+    # box_width = 0.6
+    # for i, (x, y, ci_l, ci_u) in enumerate(zip(x_positions, y_estimates, ci_lower, ci_upper)):
+    #     # Confidence interval band
+    #     ax.fill_between([x - box_width/2, x + box_width/2], [ci_l, ci_l], [ci_u, ci_u],
+    #                     alpha=0.15, color='gray', label='LME 95% CI' if i == 0 else "")
+    #     # Main estimate line
+    #     ax.hlines(y, x - box_width/2, x + box_width/2, colors='dimgray', 
+    #             linewidth=3, label='LME Estimate' if i == 0 else "", zorder=10)
+    #     # Point at center
+    #     ax.plot(x, y, 'o', color='dimgray', markersize=6, zorder=11)
+
+
+    # x_positions = np.arange(len(timepoints))
+    # y_estimates = [est for _, est, _ in estimate_points]
+    # y_errors = [se for _, _, se in estimate_points]
+
+    # # Calculate confidence intervals
+    # ci_lower = np.array(y_estimates) - 1.96 * np.array(y_errors)
+    # ci_upper = np.array(y_estimates) + 1.96 * np.array(y_errors)
+
+    # # Plot smooth line and confidence band
+    # ax.fill_between(x_positions, ci_lower, ci_upper, 
+    #                 alpha=0.15, color='gray', label='LME 95% CI')
+    # ax.plot(x_positions, y_estimates, 'o-', color='dimgray', linewidth=2.5, 
+    #         markersize=8, label='LME Estimate', zorder=10)
+    
+    # Add scatter points, colored by region
+    # # For anterior (using circles)
+    # sns.stripplot(x='timepoint', y='diff_value', 
+    #             data=melted_data[melted_data['region'] == 'Anterior'],
+    #             dodge=False, jitter=0.2, size=6, alpha=0.8, ax=ax,
+    #             marker='o') #color='#3498db'
+
+    # # For posterior (using squares)
+    # sns.stripplot(x='timepoint', y='diff_value', 
+    #             data=melted_data[melted_data['region'] == 'Posterior'],
+    #             dodge=False, jitter=0.2, size=6, alpha=0.8, ax=ax,
+    #             marker='s') # color='#e74c3c', 
+
+    # For anterior (using circles)
+    for i, tp in enumerate(timepoints):
+        # Filter data for this timepoint and region
+        tp_data = melted_data[(melted_data['timepoint'] == tp) & 
+                             (melted_data['region'] == 'Anterior')]
+        if not tp_data.empty:
+            # Use the same color from the viridis palette as the boxplot
+            sns.stripplot(x='timepoint', y='diff_value', 
+                        data=tp_data,
+                        dodge=False, jitter=0.2, size=6, alpha=0.8, ax=ax,
+                        marker='o', color=palette[i])
+    # For posterior (using squares)
+    for i, tp in enumerate(timepoints):
+        # Filter data for this timepoint and region
+        tp_data = melted_data[(melted_data['timepoint'] == tp) & 
+                             (melted_data['region'] == 'Posterior')]
+        if not tp_data.empty:
+            # Use the same color from the viridis palette as the boxplot
+            sns.stripplot(x='timepoint', y='diff_value', 
+                        data=tp_data,
+                        dodge=False, jitter=0.2, size=6, alpha=0.8, ax=ax,
+                        marker='s', color=palette[i])
+    
+    # Create a clean legend with exactly one entry per category
+    from matplotlib.lines import Line2D
+    legend_elements = [
+        Line2D([0], [0], marker='o', color='w', markerfacecolor='gray', 
+            markersize=8, label='Anterior', alpha=0.8),
+        Line2D([0], [0], marker='s', color='w', markerfacecolor='gray', 
+            markersize=8, label='Posterior', alpha=0.8) 
+    ]
+
+    # ADD LME TO LEGEND
+    # ADD LME TO LEGEND
+    legend_elements += [
+        Line2D([0], [0], color='gray', linewidth=2.5, marker='o', markersize=8, label='LME Estimate'),
+        plt.Rectangle((0,0),1,1, facecolor='dimgray', alpha=0.3, label='LME 95% CI')
+    ]
+    # legend_elements += [
+    #     Line2D([0], [0], marker='D', color='black', label='LME Estimate',
+    #         markersize=6, linestyle='None'),
+    #     Line2D([0], [0], linestyle='--', color='black', label='LME Intercept')
+    # ]
+
+
+    # Reduce opacity of box elements
+    for patch in ax.patches:
+        patch.set_alpha(0.5)
+    
+    # Set parameter-specific labels and title
+    if parameter.lower() == "fa":
+        param_name = "Fractional Anisotropy"
+        unit = ""
+    elif parameter.lower() == "md":
+        param_name = "Mean Diffusivity"
+        unit = " [mm²/s]"
+    
+    # Set labels and title
+    ax.set_xlabel('Timepoint', fontsize=12)
+    ax.set_ylabel(f'{param_name} Difference (Control - Craniectomy){unit}', fontsize=12)
+    ax.set_title(f'{param_name} Difference by Timepoint', fontsize=14, fontweight='bold')
+    
+    # Add grid for y-axis only
+    ax.grid(True, axis='y', linestyle='-', alpha=0.3)
+    
+    # Move the legend to a better position
+    ax.legend(handles=legend_elements, title='Region', loc='upper right')
+    
+    # Show count of patients per timepoint
+    for i, tp in enumerate(timepoints):
+        # Get subset of df_filtered for this timepoint
+        df_tp = df_filtered[df_filtered['timepoint'] == tp]
+
+        # Count unique patients with at least one non-null anterior or posterior value
+        count = df_tp[(~df_tp[anterior_column].isna()) | (~df_tp[posterior_column].isna())]['patient_id'].nunique()
+
+        # count = melted_data[(melted_data['timepoint'] == tp) & (~melted_data['diff_value'].isna())].shape[0] // 2
+        if count > 0:
+            if parameter == 'fa':
+                ax.text(i, ax.get_ylim()[0] * 1.35, f"n={count}",
+                    ha='center', va='bottom', fontsize=10)
+            else:
+                ax.text(i, ax.get_ylim()[0] * 1.125, f"n={count}",
+                    ha='center', va='bottom', fontsize=10)
+    
+    ax.xaxis.set_label_coords(0.5, -0.125)  # Move x-axis label down
+    plt.tight_layout()
+    
+    # Save figures to specified directories
+    output_dir = "DTI_Processing_Scripts/dti_plots"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        
+    thesis_dir = "../Thesis/phd-thesis-template-2.4/Chapter6/Figs"
+    if not os.path.exists(thesis_dir):
+        os.makedirs(thesis_dir)
+    
+    # Save figures
+    plt.savefig(f'{output_dir}/{parameter}_diff_lme_boxplot_combined.png')
+    plt.savefig(f'{thesis_dir}/{parameter}_diff_lme_boxplot_combined.png', dpi=600)
+    plt.close()
+    
+    return fig, ax
+
+
 def data_availability_matrix(data, timepoints, diff_column='fa_anterior_diff', filename='data_availability.png'):
     """
     Create a data availability matrix for the given timepoints.
@@ -2160,6 +2456,14 @@ if __name__ == '__main__':
 
     print("\nRandom Effects Parameters:")
     print(result_post.cov_re)
+
+
+    ##############################
+    ######## PLOTTING LME
+
+    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'])
+
+
 
     
 
