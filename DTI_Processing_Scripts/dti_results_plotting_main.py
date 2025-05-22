@@ -229,7 +229,7 @@ def create_timepoint_boxplot_LME_dti(df, parameter, result, timepoints=['ultra-f
 
     # Plot step function
     ax.fill_between(x_step, ci_lower_step, ci_upper_step, 
-                    alpha=0.2, color='#440154', label='LME 95% CI', step='post')
+                    alpha=0.1, color='#440154', label='LME 95% CI', step='post')
     ax.plot(x_step, y_step, '-', color='#440154', linewidth=2.5, 
             label='LME Estimate', zorder=10, drawstyle='steps-post')
     ax.plot(x_positions, y_estimates, 'o', markerfacecolor='#6B5082', 
@@ -267,19 +267,14 @@ def create_timepoint_boxplot_LME_dti(df, parameter, result, timepoints=['ultra-f
         Line2D([0], [0], marker='s', color='w', markerfacecolor='gray', 
             markersize=8, label='Posterior', alpha=0.8) 
     ]
-
-    # ADD LME TO LEGEND
     # ADD LME TO LEGEND
     legend_elements += [
-        Line2D([0], [0], color='gray', linewidth=2.5, marker='o', markersize=8, label='LME Estimate'),
-        plt.Rectangle((0,0),1,1, facecolor='dimgray', alpha=0.3, label='LME 95% CI')
+        Line2D([0], [0], color='#440154', linewidth=2.5, marker='o', markerfacecolor='#6B5082', markeredgecolor='#2D0845', markersize=8, markeredgewidth=1.5, label='LME Estimate'),
+        # ax.plot(x_positions, y_estimates, 'o', markerfacecolor='#6B5082', 
+        # markersize=10, markeredgecolor='#2D0845', markeredgewidth=1.5,
+        # zorder=11)
+        plt.Rectangle((0,0),1,1, facecolor='#440154', alpha=0.1, label='LME 95% CI')
     ]
-    # legend_elements += [
-    #     Line2D([0], [0], marker='D', color='black', label='LME Estimate',
-    #         markersize=6, linestyle='None'),
-    #     Line2D([0], [0], linestyle='--', color='black', label='LME Intercept')
-    # ]
-
 
     # Reduce opacity of box elements
     for patch in ax.patches:
