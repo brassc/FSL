@@ -2317,6 +2317,8 @@ if __name__ == '__main__':
     # Get differences in fa and md
     wm_data_roi_567=parameter_differences(wm_data_roi_567)
     print(wm_data_roi_567.columns)
+    print(wm_data_roi_567)
+    # sys.exit()
 
 
 
@@ -2350,13 +2352,13 @@ if __name__ == '__main__':
     # print(f"Unique timepoints in combined wm data: {wm_data_roi_567_combi['timepoint'].unique()}")
     # print(wm_data_roi_567_combi)
 
-    # Do new data availability matrix for combi data
-    matrix_combi = data_availability_matrix(
-        data=wm_data_roi_567_combi, 
-        timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'],
-        diff_column='fa_anterior_diff',  # or any other diff column
-        filename='fa_diff_data_availability_combi.png'
-    )
+    # # Do new data availability matrix for combi data
+    # matrix_combi = data_availability_matrix(
+    #     data=wm_data_roi_567_combi, 
+    #     timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'],
+    #     diff_column='fa_anterior_diff',  # or any other diff column
+    #     filename='fa_diff_data_availability_combi.png'
+    # )
 
     #####################################################
     # LINEAR MIXED EFFECTS MODEL WITH COMBI DATA
@@ -2440,7 +2442,20 @@ if __name__ == '__main__':
     ##############################
     ######## PLOTTING LME
 
-    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'])
+    # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'])
+    ##################################
+
+
+
+    ### COMBINE RESULTS wm_data_roi_567 with area data
+    area_df=pd.read_csv('Image_Processing_Scripts/area_data.csv')
+    batch2_area_df=pd.read_csv('Image_Processing_Scripts/batch2_area_data.csv')
+    # add batch2_area_df to area_df
+    area_df = pd.concat([area_df, batch2_area_df], ignore_index=True)
+
+    print(area_df)
+
+    print(wm_data_roi_567)
 
 
 
