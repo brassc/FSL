@@ -184,12 +184,6 @@ def create_timepoint_boxplot_LME_dti(df, parameter, result, timepoints=['ultra-f
     box_width = 0.6
     for i, (x, y, ci_l, ci_u) in enumerate(zip(x_positions, y_estimates, ci_lower, ci_upper)):
         if i == 0:
-            # # First timepoint: start from left edge
-            # x_step.extend([x - box_width/2, x + box_width/2])
-            # y_step.extend([y, y])
-            # ci_lower_step.extend([ci_l, ci_l])
-            # ci_upper_step.extend([ci_u, ci_u])
-            
             # First timepoint: calculate half the distance to next timepoint
             half_dist_to_next = (x_positions[1] - x) / 2
             x_step.extend([x - half_dist_to_next, x + half_dist_to_next])
@@ -197,12 +191,6 @@ def create_timepoint_boxplot_LME_dti(df, parameter, result, timepoints=['ultra-f
             ci_lower_step.extend([ci_l, ci_l])
             ci_upper_step.extend([ci_u, ci_u])
         else:
-            # # Add step up from previous timepoint
-            # x_step.extend([x - box_width/2, x + box_width/2])
-            # y_step.extend([y, y])
-            # ci_lower_step.extend([ci_l, ci_l])
-            # ci_upper_step.extend([ci_u, ci_u])
-            # Calculate midpoint between current and previous timepoint
             midpoint = (x_positions[i-1] + x) / 2
             
             # Extend previous timepoint to midpoint
