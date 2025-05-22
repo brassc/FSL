@@ -83,7 +83,7 @@ def get_clinical_info(patient_id, clinical_df):
     return None, None
 
 
-def merge_scanner_info_with_metrics(metrics_df, scanner_info_df, output_filename):
+def merge_scanner_info_with_metrics_old(metrics_df, scanner_info_df, output_filename):
     """
     Merge scanner information (Cohort, Site, Model) with metrics data.
     
@@ -124,28 +124,47 @@ def merge_scanner_info_with_metrics(metrics_df, scanner_info_df, output_filename
             'Age_at_injury': row['Age_at_injury']
         }
     
-    # Process 7-digit patient IDs directly
-    seven_digit_patients = scanner_info_df[scanner_info_df['patient_id'].astype(str).str.len() == 7]['patient_id'].unique()
-    for patient_id in seven_digit_patients:
-        patient_rows = scanner_info_df[scanner_info_df['patient_id'] == patient_id]
-        if not patient_rows.empty:
-            first_row = patient_rows.iloc[0]
-            cohort = first_row['Cohort']
-            site = first_row['Site']
-            model = first_row['Model']
-            days_since_injury = first_row['Days_since_injury']
-            sex = first_row['Sex']
-            age_at_injury = first_row['Age_at_injury']
+    # # Process 7-digit patient IDs directly
+    # seven_digit_patients = scanner_info_df[scanner_info_df['patient_id'].astype(str).str.len() == 7]['patient_id'].unique()
+    # for patient_id in seven_digit_patients:
+    #     patient_rows = scanner_info_df[scanner_info_df['patient_id'] == patient_id]
+    #     if not patient_rows.empty:
+    #         first_row = patient_rows.iloc[0]
+    #         cohort = first_row['Cohort']
+    #         site = first_row['Site']
+    #         model = first_row['Model']
+    #         days_since_injury = first_row['Days_since_injury']
+    #         sex = first_row['Sex']
+    #         age_at_injury = first_row['Age_at_injury']
             
-            # Update all rows for this patient
-            for idx, row in metrics_df[metrics_df['patient_id'] == patient_id].iterrows():
-                metrics_df.at[idx, 'Cohort'] = cohort
-                metrics_df.at[idx, 'Site'] = site
-                metrics_df.at[idx, 'Model'] = model
-                metrics_df.at[idx, 'Days_since_injury'] = days_since_injury
-                metrics_df.at[idx, 'Sex'] = sex
-                metrics_df.at[idx, 'Age_at_injury'] = age_at_injury
-    
+    #         # Update all rows for this patient
+    #         for idx, row in metrics_df[metrics_df['patient_id'] == patient_id].iterrows():
+    #             metrics_df.at[idx, 'Cohort'] = cohort
+    #             metrics_df.at[idx, 'Site'] = site
+    #             metrics_df.at[idx, 'Model'] = model
+    #             metrics_df.at[idx, 'Days_since_injury'] = days_since_injury
+    #             metrics_df.at[idx, 'Sex'] = sex
+    #             metrics_df.at[idx, 'Age_at_injury'] = age_at_injury
+
+    # Process 7-digit patient IDs directly
+    for idx, row in metrics_df[metrics_df['patient_id'].astype(str).str.len() == 7].iterrows():
+        patient_id = str(row['patient_id'])
+        timepoint = str(row['timepoint'])
+        
+        # For 7-digit patients, the timepoint in metrics_df corresponds to Scan_date in scanner_info_df
+        # Find matching row in scanner_info_df for this patient AND Scan_date
+        matches = scanner_info_df[(scanner_info_df['patient_id'] == patient_id) & 
+                                  (scanner_info_df['Scan_date'] == timepoint)]
+        
+        if not matches.empty:
+            match_row = matches.iloc[0]
+            metrics_df.at[idx, 'Cohort'] = match_row['Cohort']
+            metrics_df.at[idx, 'Site'] = match_row['Site']
+            metrics_df.at[idx, 'Model'] = match_row['Model']
+            metrics_df.at[idx, 'Days_since_injury'] = match_row['Days_since_injury']
+            metrics_df.at[idx, 'Sex'] = match_row['Sex']
+            metrics_df.at[idx, 'Age_at_injury'] = match_row['Age_at_injury']
+
     # Update 5-digit patient IDs using the mapping dictionary
     for idx, row in metrics_df[metrics_df['patient_id'].astype(str).str.len() == 5].iterrows():
         patient_id = str(row['patient_id'])
@@ -171,6 +190,87 @@ def merge_scanner_info_with_metrics(metrics_df, scanner_info_df, output_filename
     # Save to file
     metrics_df.to_csv(output_filename, index=False)
     print(f"\nMerged data saved to {output_filename}")
+    print(metrics_df)
+    sys.exit()
+    return metrics_df
+
+def merge_scanner_info_with_metrics(metrics_df, scanner_info_df, output_filename):
+    """
+    Merge scanner information (Cohort, Site, Model) with metrics data.
+    
+    Args:
+        metrics_df: DataFrame containing metrics data
+        scanner_info_df: DataFrame containing scanner information
+        output_filename: Path to save the merged data
+        
+    Returns:
+        DataFrame: The merged data with scanner information added
+    """
+    # Clean data from spaces everywhere
+    metrics_df.columns = metrics_df.columns.str.strip().str.replace(' ', '_').str.replace('?', '').str.replace('(', '').str.replace(')', '').str.lower()
+    metrics_df = metrics_df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
+    metrics_df['patient_id'] = metrics_df['patient_id'].astype(str)
+    metrics_df['timepoint'] = metrics_df['timepoint'].astype(str)
+    
+    # Clean scanner_info_df - ensure patient_id is string and strip whitespace from string columns only
+    scanner_info_df['patient_id'] = scanner_info_df['patient_id'].astype(str)
+    # Only strip whitespace from string columns
+    for col in scanner_info_df.columns:
+        if scanner_info_df[col].dtype == 'object':
+            scanner_info_df[col] = scanner_info_df[col].astype(str).str.strip()
+    
+    # Add new columns for scanner information
+    metrics_df['Cohort'] = None
+    metrics_df['Site'] = None
+    metrics_df['Model'] = None
+    metrics_df['Days_since_injury'] = None
+    metrics_df['Sex'] = None
+    metrics_df['Age_at_injury'] = None
+    
+    # For 5-digit patients: match on patient_id + timepoint
+    # For 7-digit patients: match on patient_id + Scan_date (where Scan_date contains the timepoint)
+    
+    for idx, row in metrics_df.iterrows():
+        patient_id = str(row['patient_id'])
+        timepoint = str(row['timepoint'])
+        
+        if len(patient_id) == 5:
+            # 5-digit: match on timepoint column
+            matches = scanner_info_df[(scanner_info_df['patient_id'] == patient_id) & 
+                                    (scanner_info_df['timepoint'] == timepoint)]
+        else:
+            # 7-digit: match on Scan_date column
+            # Convert timepoint string to float to match Scan_date format
+            try:
+                timepoint_float = float(timepoint)
+                matches = scanner_info_df[(scanner_info_df['patient_id'] == patient_id) & 
+                                        (scanner_info_df['Scan_date'] == timepoint_float)]
+            except ValueError:
+                # If conversion fails, try string matching as fallback
+                matches = scanner_info_df[(scanner_info_df['patient_id'] == patient_id) & 
+                                        (scanner_info_df['Scan_date'] == timepoint)]
+        
+        if not matches.empty:
+            match_row = matches.iloc[0]
+            metrics_df.at[idx, 'Cohort'] = match_row['Cohort']
+            metrics_df.at[idx, 'Site'] = match_row['Site']
+            metrics_df.at[idx, 'Model'] = match_row['Model']
+            metrics_df.at[idx, 'Days_since_injury'] = match_row['Days_since_injury']
+            metrics_df.at[idx, 'Sex'] = match_row['Sex'] if 'Sex' in match_row else None
+            metrics_df.at[idx, 'Age_at_injury'] = match_row['Age_at_injury'] if 'Age_at_injury' in match_row else None
+    
+    # Report results
+    updated_count = metrics_df[metrics_df['Cohort'].notnull()].shape[0]
+    print(f"Updated {updated_count} out of {metrics_df.shape[0]} rows")
+
+    # Check Days_since_injury stats
+    days_count = metrics_df['Days_since_injury'].notnull().sum()
+    print(f"Days_since_injury data available for {days_count} out of {metrics_df.shape[0]} rows")
+    
+    # Save to file
+    metrics_df.to_csv(output_filename, index=False)
+    print(f"\nMerged data saved to {output_filename}")
+    
     
     return metrics_df
 
@@ -249,6 +349,8 @@ def process_metrics_file(input_filename, harmonized_output_filename, mean_only=T
     )
     print(f"all_metrics_merged columns: {all_metrics_merged.columns}")
     print(f"sample data: \n{all_metrics_merged.head()}")
+
+    # sys.exit()
     # Check for missing values in the merged data
     # print(f"\nMissing values in merged data: {all_metrics_merged.isna().sum()}")
     # print(f"list the different categories in all_metrics_merged['Sex']: {all_metrics_merged['Sex'].unique()}")
@@ -692,8 +794,8 @@ def average_rings(input_filename, output_filename, rings_to_average):
 # # process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_5x4vox_NEW_filtered_wm.csv',
 # #                      harmonized_output_filename='DTI_Processing_Scripts/merged_data_5x4vox_NEW_filtered_wm_harmonised.csv')
 
-# process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_10x4vox_NEW_filtered_wm.csv',
-#                      harmonized_output_filename='DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_wm_harmonised.csv')
+process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_10x4vox_NEW_filtered_wm.csv',
+                     harmonized_output_filename='DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_wm_harmonised.csv')
                 
 
 # # process_metrics_file(input_filename='DTI_Processing_Scripts/results/all_metrics_10x4vox_NEW_filtered.csv',
