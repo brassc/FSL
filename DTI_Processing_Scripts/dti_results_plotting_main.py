@@ -2117,6 +2117,56 @@ if __name__ == '__main__':
         'fa_posterior_diff': 'posterior'
     })
 
+    # Order timepoints, so that the first one is reference
+    # Ensure 'timepoint' is treated as a categorical variable
+    fa_long_wm_data_roi_567_combi['timepoint'] = pd.Categorical(
+        fa_long_wm_data_roi_567_combi['timepoint'],
+        categories=['acute', 'ultra-fast', 'fast', '3-6mo', '12-24mo'],  # adjust as needed
+        ordered=True
+    )
+
+    model = smf.mixedlm("FA_diff ~ timepoint + Region", 
+                        fa_long_wm_data_roi_567_combi, 
+                        groups=fa_long_wm_data_roi_567_combi["patient_id"])
+    
+    result = model.fit()
+
+    # Step 4: Output results
+    print("Mixed effects model summary:")
+    print(result.summary())
+
+    print("\nFixed Effects Parameters:")
+    print(result.fe_params)
+
+    print("\nRandom Effects Parameters:")
+    print(result.cov_re)
+
+    # with posterior as default region: 
+    fa_long_wm_data_roi_567_combi_post=fa_long_wm_data_roi_567_combi.copy()
+    fa_long_wm_data_roi_567_combi_post["Region"] = pd.Categorical(fa_long_wm_data_roi_567_combi["Region"], categories=["posterior", "anterior"])
+
+    model_posterior = smf.mixedlm("FA_diff ~ timepoint + Region", 
+                        fa_long_wm_data_roi_567_combi_post, 
+                        groups=fa_long_wm_data_roi_567_combi["patient_id"])
+    
+    result_post = model_posterior.fit()
+
+    # Step 4: Output results
+    print("Mixed effects model summary:")
+    print(result_post.summary())
+
+    print("\nFixed Effects Parameters:")
+    print(result_post.fe_params)
+
+    print("\nRandom Effects Parameters:")
+    print(result_post.cov_re)
+
+    
+
+
+
+
+
 
 
 
