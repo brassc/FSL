@@ -2276,35 +2276,35 @@ if __name__ == '__main__':
 
     wm_data_10x4vox_filename='DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_wm_harmonised.csv'
     wm_data_10x4vox=process_timepoint_data(input_file_location=wm_data_10x4vox_filename)
-    # # plot_metric_difference(df=wm_data_5x4vox, parameter='fa', region='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_anterior_comparison_box.png', plot_type='strip')
-    # plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
-    # plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
-    # plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
-    # plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
+    # plot_metric_difference(df=wm_data_5x4vox, parameter='fa', region='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_anterior_comparison_box.png', plot_type='strip')
+    plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
+    plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
+    plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
+    plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
 
     # print(wm_data_10x4vox.columns)
     ####################################
     ######### JT TEST #################
     #################################
 
-    # # Run the test on rings 2-10 looking for an increasing trend
-    # results = jt_test(df=wm_data_10x4vox, parameter='fa', regions=(2, 10), 
-    #                 save_path='DTI_Processing_Scripts/jt_test_results-fa-rings-2to10.png', alternative='increasing')
+    # Run the test on rings 2-10 looking for an increasing trend
+    results = jt_test(df=wm_data_10x4vox, parameter='fa', regions=(2, 10), 
+                    save_path='DTI_Processing_Scripts/jt_test_results-fa-rings-2to10.png', alternative='increasing')
 
-    # print(results)
-    # results = jt_test(df=wm_data_10x4vox, parameter='fa', regions=(2, 10), 
-    #                 save_path='DTI_Processing_Scripts/jt_test_results-fa-rings-combined-2to10.png', alternative='increasing', combine_regions=True)
+    print(results)
+    results = jt_test(df=wm_data_10x4vox, parameter='fa', regions=(2, 10), 
+                    save_path='DTI_Processing_Scripts/jt_test_results-fa-rings-combined-2to10.png', alternative='increasing', combine_regions=True)
 
-    # print(results)
+    print(results)
 
-    # results = jt_test(df=wm_data_10x4vox, parameter='md', regions=(2, 10), 
-    #                 save_path='DTI_Processing_Scripts/jt_test_results-md-rings-2to10.png', alternative='increasing')
+    results = jt_test(df=wm_data_10x4vox, parameter='md', regions=(2, 10), 
+                    save_path='DTI_Processing_Scripts/jt_test_results-md-rings-2to10.png', alternative='increasing')
 
-    # print(results)
-    # results = jt_test(df=wm_data_10x4vox, parameter='md', regions=(2, 10), 
-    #                 save_path='DTI_Processing_Scripts/jt_test_results-md-rings-combined-2to10.png', alternative='increasing', combine_regions=True)
+    print(results)
+    results = jt_test(df=wm_data_10x4vox, parameter='md', regions=(2, 10), 
+                    save_path='DTI_Processing_Scripts/jt_test_results-md-rings-combined-2to10.png', alternative='increasing', combine_regions=True)
 
-    # print(results)
+    print(results)
 
     ################################################
     
@@ -2317,26 +2317,26 @@ if __name__ == '__main__':
     # Get differences in fa and md
     wm_data_roi_567=parameter_differences(wm_data_roi_567)
     print(wm_data_roi_567.columns)
-    print(wm_data_roi_567)
-    # sys.exit()
+    
+    
 
 
 
 
     # # Data availability matrix
-    # matrix = data_availability_matrix(
-    #     data=wm_data_roi_567, 
-    #     timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'],
-    #     diff_column='fa_anterior_diff',  # or any other diff column
-    #     filename='fa_diff_data_availability.png'
-    # )
+    matrix = data_availability_matrix(
+        data=wm_data_roi_567, 
+        timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'],
+        diff_column='fa_anterior_diff',  # or any other diff column
+        filename='fa_diff_data_availability.png'
+    )
 
-    # create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='fa', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
-    # create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='md', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+    create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='fa', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+    create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='md', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
     
     
-    # create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='fa', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
-    # create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='md', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+    create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='fa', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+    create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='md', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
 
     # # combine 3 and 6 month timepoints, and 12 and 24 mo timepoints.
     wm_data_roi_567_combi=wm_data_roi_567.copy()
@@ -2353,12 +2353,12 @@ if __name__ == '__main__':
     # print(wm_data_roi_567_combi)
 
     # # Do new data availability matrix for combi data
-    # matrix_combi = data_availability_matrix(
-    #     data=wm_data_roi_567_combi, 
-    #     timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'],
-    #     diff_column='fa_anterior_diff',  # or any other diff column
-    #     filename='fa_diff_data_availability_combi.png'
-    # )
+    matrix_combi = data_availability_matrix(
+        data=wm_data_roi_567_combi, 
+        timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'],
+        diff_column='fa_anterior_diff',  # or any other diff column
+        filename='fa_diff_data_availability_combi.png'
+    )
 
     #####################################################
     # LINEAR MIXED EFFECTS MODEL WITH COMBI DATA
@@ -2442,20 +2442,20 @@ if __name__ == '__main__':
     ##############################
     ######## PLOTTING LME
 
-    # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'])
+    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'])
     ##################################
 
 
 
     ### COMBINE RESULTS wm_data_roi_567 with area data
-    area_df=pd.read_csv('Image_Processing_Scripts/area_data.csv')
-    batch2_area_df=pd.read_csv('Image_Processing_Scripts/batch2_area_data.csv')
-    # add batch2_area_df to area_df
-    area_df = pd.concat([area_df, batch2_area_df], ignore_index=True)
+    # area_df=pd.read_csv('Image_Processing_Scripts/area_data.csv')
+    # batch2_area_df=pd.read_csv('Image_Processing_Scripts/batch2_area_data.csv')
+    # # add batch2_area_df to area_df
+    # area_df = pd.concat([area_df, batch2_area_df], ignore_index=True)
 
-    print(area_df)
+    # print(area_df)
 
-    print(wm_data_roi_567)
+    # print(wm_data_roi_567)
 
 
 
