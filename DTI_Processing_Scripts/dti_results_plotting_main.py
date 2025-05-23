@@ -2970,7 +2970,11 @@ if __name__ == '__main__':
 
 
     wm_roi['area_diff'] = area_df_filtered['area_diff'].values
-    print(wm_roi)
+    # print(wm_roi)
+
+    wm_fa_hern=wm_roi.copy()
+    wm_fa_hern=wm_fa_hern[['patient_id', 'timepoint', 'fa_anterior_diff', 'fa_posterior_diff', 'area_diff']]
+    print(wm_fa_hern)
     sys.exit()
 
 
