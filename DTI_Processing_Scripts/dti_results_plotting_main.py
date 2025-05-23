@@ -2789,7 +2789,7 @@ if __name__ == '__main__':
     ##############################
     ######## PLOTTING LME
 
-    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'])
+    # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'])
     ##################################
 
     ###### WHY DO LME? 
@@ -2889,10 +2889,10 @@ if __name__ == '__main__':
     print(result_fixed_post.params)
 
 
-    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, fixed_effects_result=result_fixed)
-    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, fixed_effects_result=result_fixed, fixed_only=True)
+    # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, fixed_effects_result=result_fixed)
+    # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, fixed_effects_result=result_fixed, fixed_only=True)
 
-    sys.exit()
+    
 
     ##### PLOT FIXED EFFECT ON BOX PLOT
 
@@ -2905,9 +2905,122 @@ if __name__ == '__main__':
     # add batch2_area_df to area_df
     area_df = pd.concat([area_df, batch2_area_df], ignore_index=True)
 
-    print(area_df)
+    # print(area_df)
 
-    print(wm_data_roi_567)
+    # print(wm_data_roi_567)
+
+    # # Step 1: Compute max area_diff for each patient_id
+    # max_area_diff = area_df.groupby('patient_id')['area_diff'].max().reset_index()
+    # max_area_diff.rename(columns={'area_diff': 'peak_herniation'}, inplace=True)
+
+
+    
+    # # Step 2: Merge this information into wm_data_roi_567
+    # wm_data_roi_567 = wm_data_roi_567.merge(max_area_diff, on='patient_id', how='left')
+
+
+
+    # # Optional: Display or inspect the result
+    # print(wm_data_roi_567[['patient_id', 'peak_herniation']])
+
+    # Ensure patient_id is of the same type in both dataframes
+    area_df['patient_id'] = area_df['patient_id'].astype(str)
+    area_df['timepoint'] = area_df['timepoint'].astype(str)
+
+    wm_roi=wm_data_roi_567.copy()
+    wm_roi['patient_id'] = wm_roi['patient_id'].astype(str)
+
+    print(area_df['timepoint'])
+    print(wm_roi)
+
+    # timepoint_order = ["ultra-fast", "fast", "acute", "3mo", "6mo", "12mo", "24mo"]
+    timepoint_order = [
+        "ultra-fast", "fast", "acute", "3mo", "6mo", "12mo", "24mo",
+        "39", "41", "48", "96", "144", "336", "354", "376", "490", "588",
+        "4310", "4311", "4378", "4920", "8659", "8888", "9305", "9672",
+        "10079", "18046", "18728", "36840"
+    ]
+
+
+    # Convert timepoint column to categorical type with your custom order
+    area_df['timepoint'] = pd.Categorical(area_df['timepoint'], categories=timepoint_order, ordered=True)
+
+    # Sort by patient_id and the ordered timepoint
+    area_df = area_df.sort_values(by=['patient_id', 'timepoint']).reset_index()
+
+
+    # print(area_df)
+
+    # add area_df['area_diff'] column to wm_roi, maintaining this sorted order (same order in both df)
+    
+    area_df = area_df[~((area_df['patient_id'] == '20942') & (area_df['timepoint'] == '24mo'))]
+    # Remove patient_id 9GfT823 with timepoint 39 from area_df
+    area_df = area_df[~((area_df['patient_id'] == '9GfT823') & (area_df['timepoint'] == '39'))]
+
+    # Reset index
+    area_df = area_df.reset_index(drop=True)
+    # Remove the index column from area_df if it exists
+    if 'index' in area_df.columns:
+        area_df = area_df.drop('index', axis=1)
+    # Remove patient 20174 from area_df
+    area_df_filtered = area_df[area_df['patient_id'] != '20174'].reset_index(drop=True)
+    # print(area_df_filtered)
+    # print(wm_roi)
+    
+
+
+    wm_roi['area_diff'] = area_df_filtered['area_diff'].values
+    print(wm_roi)
+    sys.exit()
+
+
+    # Compute max area_diff per patient
+    max_area_diff = area_df.groupby('patient_id')['area_diff'].max().reset_index()
+
+    # Optional: Rename column for clarity
+    max_area_diff.rename(columns={'area_diff': 'peak_herniation'}, inplace=True)
+
+    # Merge into wm_data_roi_567
+    wm_roi = wm_roi.merge(max_area_diff, on='patient_id', how='left')
+
+    # Create a new column `peak_fa_diff` as the max of the two columns per row
+    wm_roi['peak_fa_diff'] = wm_roi[['fa_anterior_diff', 'fa_posterior_diff']].max(axis=1)
+
+    # Put patient_id, max_FA_diff and peak_herniation into new data frame (no timepoint data)
+    # Step 1: Group by patient and get max FA diff
+    max_fa_diff = wm_roi.groupby('patient_id')['peak_fa_diff'].max().reset_index()
+    max_fa_diff.rename(columns={'peak_fa_diff': 'max_FA_diff'}, inplace=True)
+
+    # Step 2: Get peak herniation (you've already done this, but just in case)
+    peak_herniation = wm_roi[['patient_id', 'peak_herniation']].drop_duplicates()
+
+    # Step 3: Merge both into one dataframe
+    summary_df = max_fa_diff.merge(peak_herniation, on='patient_id', how='left')
+
+
+
+    print(summary_df)
+
+    #### PLOTTING
+       
+    # Apply the publication style
+    set_publication_style()
+
+    # Create scatter plot
+    plt.figure(figsize=(10, 6))
+    plt.scatter(x=summary_df['peak_herniation'], y=summary_df['max_FA_diff'], color='blue')
+    # Labels and title
+    plt.xlabel('Peak Herniation')
+    plt.xlim(-500,1750)
+    plt.ylim(0,0.2)
+    plt.ylabel('Max FA Difference')
+    plt.title('Relationship between FA Difference and Peak Herniation')
+
+    # Show plot
+    plt.tight_layout()
+    plt.savefig('DTI_Processing_Scripts/fa_diff_vs_peak_herniation.png', dpi=300)
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter6/Figs/fa_diff_vs_peak_herniation.png', dpi=600)
+    plt.close()
 
 
 
