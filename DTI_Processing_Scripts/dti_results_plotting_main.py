@@ -2444,177 +2444,44 @@ if __name__ == '__main__':
     create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'])
     ##################################
 
-    
+    ###### WHY DO LME? 
+    # Check if linear mixed effect (patient as random effect) adds any value
+    print("\n=== Formal Test for Random Effects ===")
+    # Compare fixed vs mixed effects models using likelihood ratio test
+    from scipy import stats
 
-
-
-    # ########### MANUAL OPTIMISATION FOR LME TRIALS
-    # # Manual optimization approaches for mixed effects model
-
-    # # Method 1: Try different optimizers with custom settings
-    # print("=== Method 1: Different Optimizers ===")
-    # try:
-    #     model1 = smf.mixedlm("FA_diff ~ timepoint + Region",
-    #                         fa_long_wm_data_roi_567_combi,
-    #                         groups=fa_long_wm_data_roi_567_combi["patient_id"])
-    #     # Try with Powell optimizer
-    #     result1 = model1.fit(method='powell', maxiter=1000)
-    #     print("Powell optimizer - Converged:", result1.converged)
-    #     print("Random effects variance:", result1.cov_re.iloc[0,0])
-    # except:
-    #     print("Powell failed")
-
-    # # # Method 2: Adjust tolerance and iterations
-    # # print("\n=== Method 2: Adjust Tolerance ===")
-    # # try:
-    # #     model2 = smf.mixedlm("FA_diff ~ timepoint + Region",
-    # #                         fa_long_wm_data_roi_567_combi,
-    # #                         groups=fa_long_wm_data_roi_567_combi["patient_id"])
-    # #     result2 = model2.fit(gtol=1e-4, ftol=1e-4, maxiter=2000)
-    # #     print("Relaxed tolerance - Converged:", result2.converged)
-    # #     print("Random effects variance:", result2.cov_re.iloc[0,0])
-    # # except:
-    # #     print("Relaxed tolerance failed")
-
-    # # # Method 3: Start with different initial values
-    # # print("\n=== Method 3: Different Starting Values ===")
-    # # try:
-    # #     model3 = smf.mixedlm("FA_diff ~ timepoint + Region",
-    # #                         fa_long_wm_data_roi_567_combi,
-    # #                         groups=fa_long_wm_data_roi_567_combi["patient_id"])
-    # #     # Set larger starting value for random effects variance
-    # #     start_params = {'fe_params': None, 'cov_re': 0.01, 'scale': 0.001}
-    # #     result3 = model3.fit(start_params=start_params)
-    # #     print("Different start params - Converged:", result3.converged)
-    # #     print("Random effects variance:", result3.cov_re.iloc[0,0])
-    # # except:
-    # #     print("Different start params failed")
-
-    
-    # # Method 4: Scale your outcome variable
-    # print("\n=== Method 4: Scale Outcome Variable ===")
-    # try:
-    #     fa_long_scaled = fa_long_wm_data_roi_567_combi.copy()
-    #     fa_long_scaled['FA_diff_scaled'] = fa_long_scaled['FA_diff'] * 1000
+    try:
+        # Both models must use ML estimation for valid comparison
+        model_fixed = smf.ols("FA_diff ~ timepoint + Region", data=fa_long_wm_data_roi_567_combi)
+        result_fixed = model_fixed.fit()
+        ll_fixed = result_fixed.llf
         
-    #     model4 = smf.mixedlm("FA_diff_scaled ~ timepoint + Region",
-    #                         fa_long_scaled,
-    #                         groups=fa_long_scaled["patient_id"])
-    #     result4 = model4.fit(method='powell', maxiter=1000)
+        model_mixed = smf.mixedlm("FA_diff ~ timepoint + Region",
+                                fa_long_wm_data_roi_567_combi,
+                                groups=fa_long_wm_data_roi_567_combi["patient_id"])
+        result_mixed = model_mixed.fit(method='powell', reml=False)  # Use ML, not REML
+        ll_mixed = result_mixed.llf
         
-    #     print("Scaled outcome with Powell - Converged:", result4.converged)
-    #     print("Random effects variance (scaled):", result4.cov_re.iloc[0,0])
-    #     print("Random effects variance (original scale):", result4.cov_re.iloc[0,0] / (1000**2))
-
-    #     # Calculate rescaled values
-    #     scale_factor = 1000
-    #     params = result4.params / scale_factor
-    #     bse = result4.bse / scale_factor
-    #     tvalues = params / bse
-    #     group_var = result4.cov_re.iloc[0,0] / (scale_factor**2)
-
-    #     # # Hard-coded table (keeping your exact format)
-    #     # print("Mixed effects model summary:")
-    #     # print("                Mixed Linear Model Regression Results")
-    #     # print("=====================================================================")
-    #     # print("Model:               MixedLM    Dependent Variable:    FA_diff")
-    #     # print("No. Observations:    96         Method:                REML")
-    #     # print(f"No. Groups:          19         Scale:                 {result4.scale/(scale_factor**2):.4f}")
-    #     # print("Min. group size:     4          Log-Likelihood:        -458.6770")
-    #     # print("Max. group size:     6          Converged:             Yes")
-    #     # print("Mean group size:     5.1")
-    #     # print("---------------------------------------------------------------------")
-    #     # print("                         Coef.  Std.Err.   z    P>|z|  [0.025  0.975]")
-    #     # print("---------------------------------------------------------------------")
-
-    #     # # Calculate and print each row
-    #     # for i, param_name in enumerate(params.index):
-    #     #     coef = params.iloc[i]
-    #     #     se = bse.iloc[i]
-    #     #     z = tvalues.iloc[i]
-    #     #     p = 2 * (1 - 0.5 * (1 + np.sign(z) * (1 - np.exp(-abs(z)*np.sqrt(2/np.pi)))))
-    #     #     ci_low = coef - 1.96 * se
-    #     #     ci_high = coef + 1.96 * se
-    #     #     print(f"{param_name:<23} {coef:>7.6f} {se:>8.6f} {z:>6.3f} {p:>6.3f} {ci_low:>7.6f} {ci_high:>8.6f}")
-
-    #     # print(f"Group Var              {group_var:>8.6e} {np.sqrt(group_var):>8.6e}")
-    #     # print("=====================================================================")
-
-    #     print("\nMixed Effects Model Summary")
-    #     print(result4.summary())
-
-    #     print("\nFixed Effects Parameters:")
-    #     print(params)  # Changed from result4.fe_params to params
-
-    #     print("\nRandom Effects Parameters:")
-    #     print(result4.cov_re / (scale_factor**2))  # Rescaled
-
-    #     # POSTERIOR MODEL
-    #     model4_post = smf.mixedlm("FA_diff_scaled ~ timepoint + Region",
-    #                             fa_long_scaled,
-    #                             groups=fa_long_scaled["patient_id"])
-    #     result4_post = model4_post.fit(method='powell', maxiter=1000)
+        # Likelihood ratio test
+        lr_stat = 2 * (ll_mixed - ll_fixed)
+        p_value = 1 - stats.chi2.cdf(lr_stat, df=1)  # df=1 for one random effect
         
-    #     print("\nScaled outcome with Powell - Converged:", result4_post.converged)
-    #     print("Random effects variance (scaled):", result4_post.cov_re.iloc[0,0])
-    #     print("Random effects variance (original scale):", result4_post.cov_re.iloc[0,0] / (1000**2))
-
-    #     # Calculate rescaled values
-    #     params_post = result4_post.params / scale_factor
-    #     bse_post = result4_post.bse / scale_factor
-    #     tvalues_post = params_post / bse_post
-    #     group_var_post = result4_post.cov_re.iloc[0,0] / (scale_factor**2)
-
-    #     # # Hard-coded table
-    #     # print("Mixed effects model summary:")
-    #     # print("                Mixed Linear Model Regression Results")
-    #     # print("=====================================================================")
-    #     # print("Model:               MixedLM    Dependent Variable:    FA_diff")
-    #     # print("No. Observations:    96         Method:                REML")
-    #     # print(f"No. Groups:          19         Scale:                 {result4_post.scale/(scale_factor**2):.4f}")
-    #     # print("Min. group size:     4          Log-Likelihood:        -458.6770")
-    #     # print("Max. group size:     6          Converged:             Yes")
-    #     # print("Mean group size:     5.1")
-    #     # print("---------------------------------------------------------------------")
-    #     # print("                         Coef.  Std.Err.   z    P>|z|  [0.025  0.975]")
-    #     # print("---------------------------------------------------------------------")
-
-    #     # # Calculate and print each row
-    #     # for i, param_name in enumerate(params_post.index):
-    #     #     coef = params_post.iloc[i]
-    #     #     se = bse_post.iloc[i]
-    #     #     z = tvalues_post.iloc[i]
-    #     #     p = 2 * (1 - 0.5 * (1 + np.sign(z) * (1 - np.exp(-abs(z)*np.sqrt(2/np.pi)))))
-    #     #     ci_low = coef - 1.96 * se
-    #     #     ci_high = coef + 1.96 * se
-    #     #     print(f"{param_name:<23} {coef:>7.6f} {se:>8.6f} {z:>6.3f} {p:>6.3f} {ci_low:>7.6f} {ci_high:>8.6f}")
-
-    #     # print(f"Group Var              {group_var_post:>8.6e} {np.sqrt(group_var_post):>8.6e}")
-    #     # print("=====================================================================")
-
-    #     print("\nMixed Effects Summary:")
-    #     print(result4_post.summary())
-
-    #     print("\nFixed Effects Parameters:")
-    #     print(params_post)  # Changed from result4_post.fe_params to params_post
-
-    #     print("\nRandom Effects Parameters:")
-    #     print(result4_post.cov_re / (scale_factor**2))  # Rescaled
-
-    # except Exception as e:
-    #     print(f"Scaled outcome failed: {e}")
-
-
+        print(f"Fixed effects LL: {ll_fixed:.4f}")
+        print(f"Mixed effects LL: {ll_mixed:.4f}")
+        print(f"LR statistic: {lr_stat:.4f}")
+        print(f"p-value: {p_value:.4f}")
+        print("Random effects needed" if p_value < 0.05 else "Fixed effects sufficient")
+    except:
+        print("Could not perform likelihood ratio test")
 
 
 
     # ###########################
-    # ########## FIXED EFFECT ONLY (random effect with mixed effect model very small)
-    # Dont do this - fixed effect doesn't account for repeated measures. repeat mixed effects model
-    # with new parameters (wider convergence threshold). 
-
+    # ########## FIXED EFFECT WITH CLUSTERED STANDARD ERRORS (accounts for repeated measures by using clustering)
+    # Fixed effects model with robust standard errors clustered by patient_id
+    # to account for within-patient correlation across timepoints and regions
     # #####################################################
-    # # LINEAR FIXED EFFECTS MODEL WITH COMBI DATA
+    # # LINEAR FIXED EFFECTS MODEL WITH COMBI DATA AND CLUSTERED SEs
     # # H_0: There is no statistically significant difference between
     # # FA in Control vs. Craniectomy for anterior and posterior ROIs.
     # # i.e. H_0: FA_diff = FA_{control} - FA_{craniectomy} = 0
@@ -2627,56 +2494,51 @@ if __name__ == '__main__':
     # # $\beta_2$: Coefficient for region (e.g., anterior vs posterior)
     # # $\text{Region}_k$: Indicator variable for brain region (e.g., 0 = anterior, 1 = posterior)
     # # $\varepsilon_{jk}$: Residual error, where $\varepsilon_{jk} \sim \mathcal{N}(0, \sigma^2)$
-
     # # print(wm_data_roi_567_combi.columns)
-
     # # fa_long_wm_data_roi_567_combi = pd.melt(wm_data_roi_567_combi,
-    # #                                         id_vars=['patient_id', 'timepoint'],
-    # #                                         value_vars=['fa_anterior_diff', 'fa_posterior_diff'],
-    # #                                         var_name='Region',
-    # #                                         value_name='FA_diff')
+    # # id_vars=['patient_id', 'timepoint'],
+    # # value_vars=['fa_anterior_diff', 'fa_posterior_diff'],
+    # # var_name='Region',
+    # # value_name='FA_diff')
     # # print(fa_long_wm_data_roi_567_combi)
-
     # # # rename regions to anterior and posterior
     # # fa_long_wm_data_roi_567_combi['Region'] = fa_long_wm_data_roi_567_combi['Region'].map({
-    # #     'fa_anterior_diff': 'anterior',
-    # #     'fa_posterior_diff': 'posterior'
+    # # 'fa_anterior_diff': 'anterior',
+    # # 'fa_posterior_diff': 'posterior'
     # # })
-
     # # # Order timepoints, so that the first one is reference
     # # # Ensure 'timepoint' is treated as a categorical variable
     # # fa_long_wm_data_roi_567_combi['timepoint'] = pd.Categorical(
-    # #     fa_long_wm_data_roi_567_combi['timepoint'],
-    # #     categories=['acute', 'ultra-fast', 'fast', '3-6mo', '12-24mo'], # adjust as needed
-    # #     ordered=True
+    # # fa_long_wm_data_roi_567_combi['timepoint'],
+    # # categories=['acute', 'ultra-fast', 'fast', '3-6mo', '12-24mo'], # adjust as needed
+    # # ordered=True
     # # )
 
-    # # Fixed effects model with anterior as reference region
-    # import statsmodels.formula.api as smf
-    # model_fixed = smf.ols("FA_diff ~ timepoint + Region", data=fa_long_wm_data_roi_567_combi)
-    # result_fixed = model_fixed.fit()
+    # Fixed effects model with clustered standard errors (anterior as reference region)
+    import statsmodels.formula.api as smf
+    model_fixed = smf.ols("FA_diff ~ timepoint + Region", data=fa_long_wm_data_roi_567_combi)
+    result_fixed = model_fixed.fit(cov_type='cluster', cov_kwds={'groups': fa_long_wm_data_roi_567_combi['patient_id']})
 
-    # # Output fixed effects model results
-    # print("Fixed effects model summary:")
-    # print(result_fixed.summary())
-    # print("\nFixed Effects Parameters:")
-    # print(result_fixed.params)
+    # Output fixed effects model results with clustered SEs
+    print("Fixed effects model summary (clustered SEs by patient_id):")
+    print(result_fixed.summary())
+    print("\nFixed Effects Parameters:")
+    print(result_fixed.params)
 
-    # # Fixed effects model with posterior as reference region
-    # # fa_long_wm_data_roi_567_combi_post = fa_long_wm_data_roi_567_combi.copy()
-    # # fa_long_wm_data_roi_567_combi_post["Region"] = pd.Categorical(
-    # #     fa_long_wm_data_roi_567_combi["Region"], 
-    # #     categories=["posterior", "anterior"]
-    # # )
+    # Fixed effects model with posterior as reference region
+    # fa_long_wm_data_roi_567_combi_post = fa_long_wm_data_roi_567_combi.copy()
+    # fa_long_wm_data_roi_567_combi_post["Region"] = pd.Categorical(
+    # fa_long_wm_data_roi_567_combi["Region"],
+    # categories=["posterior", "anterior"]
+    # )
+    model_fixed_posterior = smf.ols("FA_diff ~ timepoint + Region", data=fa_long_wm_data_roi_567_combi_post)
+    result_fixed_post = model_fixed_posterior.fit(cov_type='cluster', cov_kwds={'groups': fa_long_wm_data_roi_567_combi_post['patient_id']})
 
-    # model_fixed_posterior = smf.ols("FA_diff ~ timepoint + Region", data=fa_long_wm_data_roi_567_combi_post)
-    # result_fixed_post = model_fixed_posterior.fit()
-
-    # # Output results with posterior as reference
-    # print("Fixed effects model summary (posterior reference):")
-    # print(result_fixed_post.summary())
-    # print("\nFixed Effects Parameters:")
-    # print(result_fixed_post.params)
+    # Output results with posterior as reference and clustered SEs
+    print("Fixed effects model summary (posterior reference, clustered SEs by patient_id):")
+    print(result_fixed_post.summary())
+    print("\nFixed Effects Parameters:")
+    print(result_fixed_post.params)
 
     sys.exit()
 
