@@ -2974,8 +2974,69 @@ if __name__ == '__main__':
 
     wm_fa_hern=wm_roi.copy()
     wm_fa_hern=wm_fa_hern[['patient_id', 'timepoint', 'fa_anterior_diff', 'fa_posterior_diff', 'area_diff']]
-    print(wm_fa_hern)
+    # print(wm_fa_hern)
+
+    wm_fa_hern_combi=wm_fa_hern.copy()
+    wm_fa_hern_combi['timepoint']=wm_fa_hern['timepoint'].replace({
+        '3mo' : '3-6mo',
+        '6mo' : '3-6mo',
+        '12mo' : '12-24mo',
+        '24mo' : '12-24mo'
+    })
+    wm_fa_hern_combi = wm_fa_hern_combi.drop_duplicates(subset=['patient_id', 'timepoint'], keep='first')
+
+    # print(wm_fa_hern_combi)
+    # wm_fa_hern_combi_matrix=data_availability_matrix(
+    #     data=wm_fa_hern_combi, 
+    #     timepoints=["ultra-fast", "fast", "acute", "3-6mo", "12-24mo"],
+    #     diff_column='fa_anterior_diff',
+    #     filename='data_availability_combi_area_diff_dti.png')
+
+    # Redo area diff model with FA_diff as covariate
+
+    # Model 1: FA only
+    model1 = smf.mixedlm("area_diff ~ fa_anterior_diff + fa_posterior_diff", 
+                        data=wm_fa_hern_combi, 
+                        groups=wm_fa_hern_combi['patient_id'])
+    result1 = model1.fit()
+
+    # Model 2: FA + timepoint
+    wm_fa_hern_combi['timepoint']=pd.Categorical(
+        wm_fa_hern_combi['timepoint'],
+        categories=['acute', 'ultra-fast', 'fast', '3-6mo', '12-24mo'], 
+        ordered=True
+    )
+    model2 = smf.mixedlm("area_diff ~ timepoint + fa_anterior_diff + fa_posterior_diff", 
+                        data=wm_fa_hern_combi, 
+                        groups=wm_fa_hern_combi['patient_id'])
+    result2 = model2.fit()
+
+    # Compare: Are FA effects consistent across both models?
+    print("\nLME with no timepoint:")
+    print(result1.summary())
+    print(result1.params)
+    print("\nLME summary with timepoint:")
+    print(result2.summary())
+    print(result2.params)
+
+
+
+    
+
     sys.exit()
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     # Compute max area_diff per patient
@@ -3000,6 +3061,10 @@ if __name__ == '__main__':
 
     # Step 3: Merge both into one dataframe
     summary_df = max_fa_diff.merge(peak_herniation, on='patient_id', how='left')
+
+
+
+    
 
 
 
