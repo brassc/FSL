@@ -1299,6 +1299,7 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
         ax.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
         ax.axvline(x=0, color='gray', linestyle='-', alpha=0.1)
         ax.set_xlim(df['area_diff'].min(), df['area_diff'].max() + 50)
+        ax.set_ylim(-0.3, 0.25)
 
         # Create legend for timepoints and regression lines
         from matplotlib.lines import Line2D
@@ -1369,6 +1370,7 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
         ax1.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
         ax1.axvline(x=0, color='gray', linestyle='-', alpha=0.1)
         ax1.set_xlim(df['area_diff'].min(), df['area_diff'].max() + 50)
+        ax1.set_ylim(-0.3, 0.25)
         
         # Create legend for timepoints and regression line
         from matplotlib.lines import Line2D
@@ -1435,6 +1437,7 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
         ax2.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
         ax2.axvline(x=0, color='gray', linestyle='-', alpha=0.1)
         ax2.set_xlim(df['area_diff'].min(), df['area_diff'].max() + 50)
+        ax2.set_ylim(-0.3, 0.25)
         
         # Create legend for timepoints and regression line
         legend_elements = [
