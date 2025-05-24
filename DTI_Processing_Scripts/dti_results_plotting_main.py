@@ -4150,7 +4150,44 @@ if __name__ == '__main__':
     print(result2.summary())
     print(result2.params)
 
+    ####################
+    # DOES HERNIATION CAUSE MD_DIFF? 
+    # Model 4: Area predicts MD anterior (primary)
+    print("****************************\nNEW_MODELS")
+    model4 = smf.mixedlm("md_anterior_diff ~ area_diff", 
+                        data=wm_md_hern_combi, 
+                        groups=wm_md_hern_combi['patient_id'])
+
+    # Model 5: Area predicts MD posterior (comparison) 
+    model5 = smf.mixedlm("md_posterior_diff ~ area_diff", 
+                        data=wm_md_hern_combi, 
+                        groups=wm_md_hern_combi['patient_id'])
+
+    # Model 6: Area predicts MD anterior (with timepoint control)
+    model6 = smf.mixedlm("md_anterior_diff ~ area_diff + timepoint", 
+                        data=wm_md_hern_combi, 
+                        groups=wm_md_hern_combi['patient_id'])
     
+
+    result4=model4.fit()
+    result5=model5.fit()
+    result6=model6.fit()
+
+    print("\nArea Predicts MD Anterior LME Summary:")
+    print(result4.summary())
+    print(result4.params)
+    print("\nArea Predicts MD Posterior LME Summary:")
+    print(result5.summary())
+    print(result5.params)
+    print("\nArea Predicts MD Anterior with Timepoint Control LME Summary:")
+    print(result6.summary())
+    print(result6.params)
+
+    # Usage example:
+    create_area_predicts_md_plot(wm_md_hern_combi, result4, result5, show_combined=True)
+    create_area_predicts_md_plot(wm_md_hern_combi, result4, result5, show_combined=False)
+
+
 
 
 
