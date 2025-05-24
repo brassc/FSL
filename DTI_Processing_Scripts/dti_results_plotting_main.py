@@ -4001,14 +4001,156 @@ if __name__ == '__main__':
     print(result_fixed_post.params)
 
 
-    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, fixed_effects_result=result_fixed)
-    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, fixed_effects_result=result_fixed, fixed_only=True)
-
-    
-
+    # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, fixed_effects_result=result_fixed)
+    # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, fixed_effects_result=result_fixed, fixed_only=True)
     ##### PLOT FIXED EFFECT ON BOX PLOT
 
+    ### COMBINE RESULTS wm_data_roi_567 with area data
+    area_df=pd.read_csv('Image_Processing_Scripts/area_data.csv')
+    batch2_area_df=pd.read_csv('Image_Processing_Scripts/batch2_area_data.csv')
+    # add batch2_area_df to area_df
+    area_df = pd.concat([area_df, batch2_area_df], ignore_index=True)
 
+    # print(area_df)
+
+    # print(wm_data_roi_567)
+
+    # # Step 1: Compute max area_diff for each patient_id
+    # max_area_diff = area_df.groupby('patient_id')['area_diff'].max().reset_index()
+    # max_area_diff.rename(columns={'area_diff': 'peak_herniation'}, inplace=True)
+
+
+    
+    # # Step 2: Merge this information into wm_data_roi_567
+    # wm_data_roi_567 = wm_data_roi_567.merge(max_area_diff, on='patient_id', how='left')
+
+
+
+    # # Optional: Display or inspect the result
+    # print(wm_data_roi_567[['patient_id', 'peak_herniation']])
+
+    # Ensure patient_id is of the same type in both dataframes
+    area_df['patient_id'] = area_df['patient_id'].astype(str)
+    area_df['timepoint'] = area_df['timepoint'].astype(str)
+
+    wm_roi=wm_data_roi_567.copy()
+    wm_roi['patient_id'] = wm_roi['patient_id'].astype(str)
+
+    print(area_df['timepoint'])
+    print(wm_roi)
+
+    # timepoint_order = ["ultra-fast", "fast", "acute", "3mo", "6mo", "12mo", "24mo"]
+    timepoint_order = [
+        "ultra-fast", "fast", "acute", "3mo", "6mo", "12mo", "24mo",
+        "39", "41", "48", "96", "144", "336", "354", "376", "490", "588",
+        "4310", "4311", "4378", "4920", "8659", "8888", "9305", "9672",
+        "10079", "18046", "18728", "36840"
+    ]
+
+
+    # Convert timepoint column to categorical type with your custom order
+    area_df['timepoint'] = pd.Categorical(area_df['timepoint'], categories=timepoint_order, ordered=True)
+
+    # Sort by patient_id and the ordered timepoint
+    area_df = area_df.sort_values(by=['patient_id', 'timepoint']).reset_index()
+
+
+    # print(area_df)
+
+    # add area_df['area_diff'] column to wm_roi, maintaining this sorted order (same order in both df)
+    
+    area_df = area_df[~((area_df['patient_id'] == '20942') & (area_df['timepoint'] == '24mo'))]
+    # Remove patient_id 9GfT823 with timepoint 39 from area_df
+    area_df = area_df[~((area_df['patient_id'] == '9GfT823') & (area_df['timepoint'] == '39'))]
+
+    # Reset index
+    area_df = area_df.reset_index(drop=True)
+    # Remove the index column from area_df if it exists
+    if 'index' in area_df.columns:
+        area_df = area_df.drop('index', axis=1)
+
+    # Identify which rows in wm_roi have missing MD data that need to be removed
+    md_rows_to_remove = []
+    for _, missing_row in md_missing_rows.iterrows():
+        mask = None  # Initialize mask
+        if missing_row['Region'] == 'anterior':
+            mask = (wm_roi['patient_id'] == missing_row['patient_id']) & \
+                   (wm_roi['timepoint'] == missing_row['timepoint']) & \
+                   (wm_roi['md_anterior_diff'].isna())
+        elif missing_row['Region'] == 'posterior':
+            mask = (wm_roi['patient_id'] == missing_row['patient_id']) & \
+                   (wm_roi['timepoint'] == missing_row['timepoint']) & \
+                   (wm_roi['md_posterior_diff'].isna())
+        
+        if mask is not None:
+            md_rows_to_remove.extend(wm_roi[mask].index.tolist())
+
+    # Remove patient 20174 from area_df
+    area_df_filtered = area_df[area_df['patient_id'] != '20174'].reset_index(drop=True)
+    
+    # Remove the same rows from both dataframes that have missing MD data
+    if md_rows_to_remove:
+        area_df_filtered = area_df_filtered.drop(md_rows_to_remove, errors='ignore').reset_index(drop=True)
+        wm_roi = wm_roi.drop(md_rows_to_remove).reset_index(drop=True)
+
+    wm_roi['area_diff'] = area_df_filtered['area_diff'].values
+    # print(wm_roi)
+
+    wm_md_hern=wm_roi.copy()
+    wm_md_hern=wm_md_hern[['patient_id', 'timepoint', 'md_anterior_diff', 'md_posterior_diff', 'area_diff']]
+    
+    print(f"wm_md_hern shape: {wm_md_hern.shape}")
+    # print(wm_md_hern)
+
+    wm_md_hern_combi=wm_md_hern.copy()
+    wm_md_hern_combi['timepoint']=wm_md_hern['timepoint'].replace({
+        '3mo' : '3-6mo',
+        '6mo' : '3-6mo',
+        '12mo' : '12-24mo',
+        '24mo' : '12-24mo'
+    })
+    wm_md_hern_combi = wm_md_hern_combi.drop_duplicates(subset=['patient_id', 'timepoint'], keep='first')
+    
+    # Additional safety check - remove any remaining NaNs
+    wm_md_hern_combi = wm_md_hern_combi.dropna(subset=['md_anterior_diff', 'md_posterior_diff', 'area_diff'])
+    
+    print(f"wm_md_hern_combi final shape: {wm_md_hern_combi.shape}")
+    print(wm_md_hern_combi)
+    # sys.exit()
+    # wm_md_hern_combi_matrix=data_availability_matrix(
+    #     data=wm_md_hern_combi, 
+    #     timepoints=["ultra-fast", "fast", "acute", "3-6mo", "12-24mo"],
+    #     diff_column='md_anterior_diff',
+    #     filename='data_availability_combi_area_diff_dti.png')
+
+    # Redo area diff model with MD_diff as covariate
+
+    # Model 1: MD only
+    model1 = smf.mixedlm("area_diff ~ md_anterior_diff + md_posterior_diff", 
+                        data=wm_md_hern_combi, 
+                        groups=wm_md_hern_combi['patient_id'])
+    result1 = model1.fit()
+
+    # Model 2: MD + timepoint
+    wm_md_hern_combi['timepoint']=pd.Categorical(
+        wm_md_hern_combi['timepoint'],
+        categories=['acute', 'ultra-fast', 'fast', '3-6mo', '12-24mo'], 
+        ordered=True
+    )
+    model2 = smf.mixedlm("area_diff ~ timepoint + md_anterior_diff + md_posterior_diff", 
+                        data=wm_md_hern_combi, 
+                        groups=wm_md_hern_combi['patient_id'])
+    result2 = model2.fit()
+
+    # Compare: Are MD effects consistent across both models?
+    print("\nLME with no timepoint:")
+    print(result1.summary())
+    print(result1.params)
+    print("\nLME summary with timepoint:")
+    print(result2.summary())
+    print(result2.params)
+
+    
 
 
 
