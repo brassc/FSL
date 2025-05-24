@@ -3902,10 +3902,38 @@ if __name__ == '__main__':
     ##############################
     ######## PLOTTING LME
 
-    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'])
+    # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'])
     ##################################
 
+    ###### WHY DO LME? 
+    # Check if linear mixed effect (patient as random effect) adds any value
+    print("\n=== Formal Test for Random Effects ===")
+    # Compare fixed vs mixed effects models using likelihood ratio test
+    from scipy import stats
 
+    try:
+        # Both models must use ML estimation for valid comparison
+        model_fixed = smf.ols("MD_diff ~ timepoint + Region", data=md_long_wm_data_roi_567_combi)
+        result_fixed = model_fixed.fit()
+        ll_fixed = result_fixed.llf
+        
+        model_mixed = smf.mixedlm("MD_diff ~ timepoint + Region",
+                                md_long_wm_data_roi_567_combi,
+                                groups=md_long_wm_data_roi_567_combi["patient_id"])
+        result_mixed = model_mixed.fit(method='powell', reml=False)  # Use ML, not REML
+        ll_mixed = result_mixed.llf
+        
+        # Likelihood ratio test
+        lr_stat = 2 * (ll_mixed - ll_fixed)
+        p_value = 1 - stats.chi2.cdf(lr_stat, df=1)  # df=1 for one random effect
+        
+        print(f"Fixed effects LL: {ll_fixed:.4f}")
+        print(f"Mixed effects LL: {ll_mixed:.4f}")
+        print(f"LR statistic: {lr_stat:.4f}")
+        print(f"p-value: {p_value:.4f}")
+        print("Random effects needed" if p_value < 0.05 else "Fixed effects sufficient")
+    except:
+        print("Could not perform likelihood ratio test")
 
 
 
