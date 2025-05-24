@@ -4170,11 +4170,17 @@ if __name__ == '__main__':
     model6 = smf.mixedlm("md_anterior_diff ~ area_diff + timepoint", 
                         data=wm_md_hern_combi, 
                         groups=wm_md_hern_combi['patient_id'])
+
+    # Model 7: Area predicts MD posterior (with timepoint control)
+    model7 = smf.mixedlm("md_posterior_diff ~ area_diff + timepoint", 
+                        data=wm_md_hern_combi, 
+                        groups=wm_md_hern_combi['patient_id'])
     
 
     result4=model4.fit()
     result5=model5.fit()
     result6=model6.fit()
+    result7=model7.fit()
 
     print("\nArea Predicts MD Anterior LME Summary:")
     print(result4.summary())
@@ -4185,6 +4191,10 @@ if __name__ == '__main__':
     print("\nArea Predicts MD Anterior with Timepoint Control LME Summary:")
     print(result6.summary())
     print(result6.params)
+    print("\nArea Predicts MD Posterior with Timepoint Control LME Summary:")
+    print(result7.summary())
+    print(result7.params)
+
 
     # Usage example:
     create_area_predicts_md_plot(wm_md_hern_combi, result4, result5, show_combined=True)
