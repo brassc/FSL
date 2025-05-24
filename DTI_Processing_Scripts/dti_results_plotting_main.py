@@ -733,6 +733,450 @@ def data_availability_matrix(data, timepoints, diff_column='fa_anterior_diff', f
     
     return availability_matrix
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+import numpy as np
+from scipy import stats
+import matplotlib.patches as mpatches
+
+def create_fa_area_correlation_plot(df, show_timepoints=True):
+    """
+    Create correlation plots between FA differences and herniation area.
+    
+    Parameters:
+    df: DataFrame with columns ['fa_anterior_diff', 'fa_posterior_diff', 'area_diff', 'timepoint', 'patient_id']
+    show_timepoints: Boolean, whether to color by timepoint
+    """
+    
+    # Set publication style (assuming this function exists)
+    # set_publication_style()
+    
+    # Create figure with subplots
+    fig, axes = plt.subplots(1, 2, figsize=(15, 6))
+    
+    # Color palette
+    if show_timepoints:
+        timepoints = df['timepoint'].unique()
+        palette = sns.color_palette("viridis", len(timepoints))
+        color_mapping = dict(zip(timepoints, palette))
+    else:
+        color = '#2E86AB'  # Single color if not showing timepoints
+    
+    # Plot 1: FA Anterior vs Area
+    ax1 = axes[0]
+    
+    if show_timepoints:
+        for tp in timepoints:
+            tp_data = df[df['timepoint'] == tp]
+            ax1.scatter(tp_data['fa_anterior_diff'], tp_data['area_diff'], 
+                       color=color_mapping[tp], alpha=0.7, s=60, 
+                       label=tp, edgecolors='white', linewidth=0.5)
+    else:
+        ax1.scatter(df['fa_anterior_diff'], df['area_diff'], 
+                   color=color, alpha=0.7, s=60, 
+                   edgecolors='white', linewidth=0.5)
+    
+    # Add regression line and statistics
+    x_ant = df['fa_anterior_diff'].dropna()
+    y_ant = df.loc[x_ant.index, 'area_diff'].dropna()
+    if len(x_ant) > 2:
+        slope_ant, intercept_ant, r_ant, p_ant, se_ant = stats.linregress(x_ant, y_ant)
+        line_x = np.linspace(x_ant.min(), x_ant.max(), 100)
+        line_y = slope_ant * line_x + intercept_ant
+        ax1.plot(line_x, line_y, 'r--', alpha=0.8, linewidth=2)
+        
+        # Add correlation info
+        ax1.text(0.05, 0.95, f'r = {r_ant:.3f}\np = {p_ant:.3f}', 
+                transform=ax1.transAxes, verticalalignment='top',
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+    
+    ax1.set_xlabel('FA Anterior Difference\n(Control - Craniectomy)', fontsize=12)
+    ax1.set_ylabel('Herniation Area Difference [mm²]', fontsize=12)
+    ax1.set_title('FA Anterior vs Herniation Area', fontsize=14, fontweight='bold')
+    ax1.grid(True, alpha=0.3)
+    ax1.axhline(y=0, color='gray', linestyle='-', alpha=0.5)
+    ax1.axvline(x=0, color='gray', linestyle='-', alpha=0.5)
+    
+    # Plot 2: FA Posterior vs Area
+    ax2 = axes[1]
+    
+    if show_timepoints:
+        for tp in timepoints:
+            tp_data = df[df['timepoint'] == tp]
+            ax2.scatter(tp_data['fa_posterior_diff'], tp_data['area_diff'], 
+                       color=color_mapping[tp], alpha=0.7, s=60, 
+                       label=tp, edgecolors='white', linewidth=0.5)
+    else:
+        ax2.scatter(df['fa_posterior_diff'], df['area_diff'], 
+                   color=color, alpha=0.7, s=60, 
+                   edgecolors='white', linewidth=0.5)
+    
+    # Add regression line and statistics
+    x_post = df['fa_posterior_diff'].dropna()
+    y_post = df.loc[x_post.index, 'area_diff'].dropna()
+    if len(x_post) > 2:
+        slope_post, intercept_post, r_post, p_post, se_post = stats.linregress(x_post, y_post)
+        line_x = np.linspace(x_post.min(), x_post.max(), 100)
+        line_y = slope_post * line_x + intercept_post
+        ax2.plot(line_x, line_y, 'r--', alpha=0.8, linewidth=2)
+        
+        # Add correlation info
+        ax2.text(0.05, 0.95, f'r = {r_post:.3f}\np = {p_post:.3f}', 
+                transform=ax2.transAxes, verticalalignment='top',
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+    
+    ax2.set_xlabel('FA Posterior Difference\n(Control - Craniectomy)', fontsize=12)
+    ax2.set_ylabel('Herniation Area Difference [mm²]', fontsize=12)
+    ax2.set_title('FA Posterior vs Herniation Area', fontsize=14, fontweight='bold')
+    ax2.grid(True, alpha=0.3)
+    ax2.axhline(y=0, color='gray', linestyle='-', alpha=0.5)
+    ax2.axvline(x=0, color='gray', linestyle='-', alpha=0.5)
+    
+    # Add legend if showing timepoints
+    if show_timepoints:
+        handles, labels = ax1.get_legend_handles_labels()
+        fig.legend(handles, labels, title='Timepoint', 
+                  bbox_to_anchor=(1.05, 0.5), loc='center left')
+    
+    plt.tight_layout()
+    
+    # Save figures
+    output_dir = "DTI_Processing_Scripts/dti_plots"
+    thesis_dir = "../Thesis/phd-thesis-template-2.4/Chapter6/Figs"
+    
+    timepoint_suffix = "_by_timepoint" if show_timepoints else ""
+    plt.savefig(f'{output_dir}/fa_area_correlation{timepoint_suffix}.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'{thesis_dir}/fa_area_correlation{timepoint_suffix}.png', dpi=600, bbox_inches='tight')
+    
+    return fig, axes
+
+# Alternative: Combined plot showing model predictions
+def create_fa_area_model_visualization(df, model_results):
+    """
+    Create a visualization showing model predictions alongside data
+    """
+    fig, ax = plt.subplots(figsize=(10, 8))
+    
+    # Create combined FA measure (you might want to adjust this)
+    df['fa_combined'] = df['fa_anterior_diff']  # Focus on anterior since it's significant
+    
+    # Scatter plot
+    scatter = ax.scatter(df['fa_combined'], df['area_diff'], 
+                        c=df['timepoint'].astype('category').cat.codes,
+                        cmap='viridis', alpha=0.7, s=60, 
+                        edgecolors='white', linewidth=0.5)
+    
+    # Add model prediction line
+    x_range = np.linspace(df['fa_combined'].min(), df['fa_combined'].max(), 100)
+    # Using coefficient from Model 1 (4747.88)
+    y_pred = model_results['intercept'] + model_results['fa_anterior_coef'] * x_range
+    ax.plot(x_range, y_pred, 'r-', linewidth=3, alpha=0.8, 
+            label=f'LME Model: β = {model_results["fa_anterior_coef"]:.0f}')
+    
+    # Add confidence interval if available
+    # y_pred_ci = ... (calculate from model if needed)
+    
+    ax.set_xlabel('FA Anterior Difference (Control - Craniectomy)', fontsize=12)
+    ax.set_ylabel('Herniation Area Difference [mm²]', fontsize=12)
+    ax.set_title('Linear Mixed Effects Model: FA-Area Correlation', fontsize=14, fontweight='bold')
+    ax.grid(True, alpha=0.3)
+    ax.axhline(y=0, color='gray', linestyle='-', alpha=0.5)
+    ax.axvline(x=0, color='gray', linestyle='-', alpha=0.5)
+    ax.legend()
+    
+    # Add colorbar for timepoints
+    cbar = plt.colorbar(scatter)
+    cbar.set_label('Timepoint', rotation=270, labelpad=15)
+    
+    plt.tight_layout()
+    return fig, ax
+
+def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timepoints=["ultra-fast", "fast", "acute", "3-6mo", "12-24mo"]):
+    """
+    Create scatter plot showing how herniation area predicts FA differences.
+    Based on mixed effects models: area_diff predicts fa_anterior_diff and fa_posterior_diff
+    
+    Parameters:
+    df: DataFrame with columns ['fa_anterior_diff', 'fa_posterior_diff', 'area_diff', 'timepoint', 'patient_id']
+    result4: Fitted model result for fa_anterior_diff ~ area_diff  
+    result5: Fitted model result for fa_posterior_diff ~ area_diff
+    show_combined: Boolean, whether to show combined plot (True) or separate subplots (False)
+    """
+    
+    # Set publication style 
+    set_publication_style()
+
+    # set up timepoint colours
+    palette = sns.color_palette("viridis", len(timepoints))
+    color_mapping = dict(zip(timepoints, palette))
+
+    # Save figures
+    output_dir = "DTI_Processing_Scripts/dti_plots"
+    thesis_dir = "../Thesis/phd-thesis-template-2.4/Chapter6/Figs"
+    
+    if show_combined:
+        # Single plot with both regions
+        fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+        
+        # Plot anterior data (circles)
+        # anterior_data = df.dropna(subset=['fa_anterior_diff', 'area_diff'])
+        # ax.scatter(anterior_data['area_diff'], anterior_data['fa_anterior_diff'], 
+        #           marker='o', s=80, alpha=0.7, color='#1f77b4', 
+        #           edgecolors='white', linewidth=1, label='Anterior')
+        # Plot anterior data (circles) - colored by timepoint
+        anterior_data = df.dropna(subset=['fa_anterior_diff', 'area_diff'])
+        for tp in timepoints:
+            tp_data = anterior_data[anterior_data['timepoint'] == tp]
+            if not tp_data.empty:
+                ax.scatter(tp_data['area_diff'], tp_data['fa_anterior_diff'], 
+                        marker='o', s=40, alpha=0.4, color=color_mapping[tp], 
+                        edgecolors='white', linewidth=0.5)
+        
+        # Plot posterior data (squares)  
+        # Plot posterior data (squares) - colored by timepoint
+        posterior_data = df.dropna(subset=['fa_posterior_diff', 'area_diff'])
+        for tp in timepoints:
+            tp_data = posterior_data[posterior_data['timepoint'] == tp]
+            if not tp_data.empty:
+                ax.scatter(tp_data['area_diff'], tp_data['fa_posterior_diff'],
+                        marker='s', s=40, alpha=0.4, color=color_mapping[tp],
+                        edgecolors='white', linewidth=0.5)
+        
+        # Get area range for regression lines
+        area_range = np.linspace(df['area_diff'].min(), df['area_diff'].max(), 100)
+        
+        # Add anterior regression line with CI
+        if result4 is not None:
+            # Get model coefficients
+            intercept_ant = result4.params['Intercept']
+            slope_ant = result4.params['area_diff']
+            
+            # Predict values
+            predicted_ant = intercept_ant + slope_ant * area_range
+            
+            # Extract confidence intervals (following boxplot code pattern)
+            anterior_se = result4.bse['Intercept']  # Standard error of intercept
+            
+            # Calculate confidence intervals for the regression line
+            ci_lower_ant = predicted_ant - 1.96 * anterior_se
+            ci_upper_ant = predicted_ant + 1.96 * anterior_se
+            
+            # Plot regression line and confidence interval
+            ax.fill_between(area_range, ci_lower_ant, ci_upper_ant, 
+                            color='#440154', alpha=0.1, label='Anterior 95% CI')
+            ax.plot(area_range, predicted_ant, '-', color='#440154', linewidth=1.5, 
+                    alpha=0.8, label='Anterior Regression', zorder=10)
+        # Add posterior regression line with CI
+        # Add posterior regression line with CI
+        if result5 is not None:
+            # Get model coefficients
+            intercept_post = result5.params['Intercept']
+            slope_post = result5.params['area_diff']
+            
+            # Predict values
+            predicted_post = intercept_post + slope_post * area_range
+            
+            # Extract confidence intervals (following boxplot code pattern)
+            posterior_se = result5.bse['Intercept']  # Standard error of intercept
+            
+            # Calculate confidence intervals for the regression line
+            ci_lower_post = predicted_post - 1.96 * posterior_se
+            ci_upper_post = predicted_post + 1.96 * posterior_se
+            
+            # Plot regression line and confidence interval
+            ax.fill_between(area_range, ci_lower_post, ci_upper_post, 
+                            color='#73D055', alpha=0.1, label='Posterior 95% CI')
+            ax.plot(area_range, predicted_post, '-', color='#73D055', linewidth=1.5, 
+                    alpha=0.8, label='Posterior Regression', zorder=10)
+        
+        # Add statistics text box
+        if result4 is not None and result5 is not None:
+            stats_text = f'Anterior: β = {result4.params["area_diff"]:.2e}, p = {result4.pvalues["area_diff"]:.3f}\n'
+            stats_text += f'Posterior: β = {result5.params["area_diff"]:.2e}, p = {result5.pvalues["area_diff"]:.3f}'
+            
+            ax.text(0.95, 0.05, stats_text, transform=ax.transAxes, 
+                verticalalignment='bottom', horizontalalignment='right', fontsize=10,
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+        
+        # Formatting
+        ax.set_xlabel('Herniation Area [mm²]', fontsize=14)
+        ax.set_ylabel('FA Difference\n(Control - Craniectomy)', fontsize=14)
+        ax.set_title('Herniation Area Predicts FA Changes', fontsize=16, fontweight='bold')
+        ax.grid(False) #alpha=0.3
+        ax.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
+        ax.axvline(x=0, color='gray', linestyle='-', alpha=0.1)
+        ax.set_xlim(df['area_diff'].min(), df['area_diff'].max() + 50)
+
+        # ax.legend(fontsize=12)
+
+        # Create legend for timepoints and regression lines
+        from matplotlib.lines import Line2D
+        legend_elements = [
+            # Timepoint legend entries
+            Line2D([0], [0], marker='o', color='w', markerfacecolor=color_mapping[tp], 
+                markersize=6, alpha=0.6, label=tp) for tp in timepoints
+        ] + [
+            # Regression line legend entries
+            Line2D([0], [0], color='#440154', linewidth=1.5, label='Anterior Regression'),
+            plt.Rectangle((0,0),1,1, facecolor='#440154', alpha=0.1, label='Anterior 95% CI'),
+            Line2D([0], [0], color='#73D055', linewidth=1.5, label='Posterior Regression'),
+            plt.Rectangle((0,0),1,1, facecolor='#73D055', alpha=0.1, label='Posterior 95% CI')
+        ]
+
+        ax.legend(handles=legend_elements, fontsize=10, loc='upper left')
+        
+    else:
+        # Separate subplots - create two separate figures
+        
+        # Figure 1: Anterior
+        fig1, ax1 = plt.subplots(1, 1, figsize=(8, 6))
+        anterior_data = df.dropna(subset=['fa_anterior_diff', 'area_diff'])
+        
+        # Plot anterior data (circles) - colored by timepoint
+        for tp in timepoints:
+            tp_data = anterior_data[anterior_data['timepoint'] == tp]
+            if not tp_data.empty:
+                ax1.scatter(tp_data['area_diff'], tp_data['fa_anterior_diff'], 
+                        marker='o', s=40, alpha=0.4, color=color_mapping[tp], 
+                        edgecolors='white', linewidth=0.5)
+        
+        # Get area range for regression lines
+        area_range = np.linspace(df['area_diff'].min(), df['area_diff'].max(), 100)
+        
+        if result4 is not None:
+            # Get model coefficients
+            intercept_ant = result4.params['Intercept']
+            slope_ant = result4.params['area_diff']
+            
+            # Predict values
+            predicted_ant = intercept_ant + slope_ant * area_range
+            
+            # Extract confidence intervals (following boxplot code pattern)
+            anterior_se = result4.bse['Intercept']  # Standard error of intercept
+            
+            # Calculate confidence intervals for the regression line
+            ci_lower_ant = predicted_ant - 1.96 * anterior_se
+            ci_upper_ant = predicted_ant + 1.96 * anterior_se
+            
+            # Plot regression line and confidence interval
+            ax1.fill_between(area_range, ci_lower_ant, ci_upper_ant, 
+                            color='#440154', alpha=0.2, label='Anterior 95% CI')
+            ax1.plot(area_range, predicted_ant, '-', color='#440154', linewidth=2, 
+                    alpha=0.8, label='Anterior Regression', zorder=10)
+            
+            # Add statistics
+            stats_text = f'β = {slope_ant:.2e}\np = {result4.pvalues["area_diff"]:.3f}'
+            ax1.text(0.05, 0.95, stats_text, transform=ax1.transAxes,
+                    verticalalignment='top', fontsize=10,
+                    bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+        
+        ax1.set_xlabel('Herniation Area [mm²]', fontsize=12)
+        ax1.set_ylabel('FA Anterior Difference\n(Control - Craniectomy)', fontsize=12)
+        ax1.set_title('Anterior FA vs Herniation Area', fontsize=14, fontweight='bold')
+        ax1.grid(False)
+        ax1.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
+        ax1.axvline(x=0, color='gray', linestyle='-', alpha=0.1)
+        ax1.set_xlim(df['area_diff'].min(), df['area_diff'].max() + 50)
+        
+        # Create legend for timepoints and regression line
+        from matplotlib.lines import Line2D
+        legend_elements = [
+            Line2D([0], [0], marker='o', color='w', markerfacecolor=color_mapping[tp], 
+                markersize=6, alpha=0.6, label=tp) for tp in timepoints
+        ] + [
+            Line2D([0], [0], color='#440154', linewidth=2, label='Anterior Regression'),
+            plt.Rectangle((0,0),1,1, facecolor='#440154', alpha=0.2, label='Anterior 95% CI')
+        ]
+        ax1.legend(handles=legend_elements, fontsize=10, loc='upper left')
+        
+        plt.tight_layout()
+        
+        # Save anterior figure
+        plt.savefig(f'{output_dir}/area_predicts_fa_anterior.png', dpi=300, bbox_inches='tight')
+        plt.savefig(f'{thesis_dir}/area_predicts_fa_anterior.png', dpi=600, bbox_inches='tight')
+        plt.close()
+        
+        # Figure 2: Posterior
+        fig2, ax2 = plt.subplots(1, 1, figsize=(8, 6))
+        posterior_data = df.dropna(subset=['fa_posterior_diff', 'area_diff'])
+        
+        # Plot posterior data (squares) - colored by timepoint
+        for tp in timepoints:
+            tp_data = posterior_data[posterior_data['timepoint'] == tp]
+            if not tp_data.empty:
+                ax2.scatter(tp_data['area_diff'], tp_data['fa_posterior_diff'],
+                        marker='s', s=40, alpha=0.4, color=color_mapping[tp],
+                        edgecolors='white', linewidth=0.5)
+        
+        if result5 is not None:
+            # Get model coefficients
+            intercept_post = result5.params['Intercept']
+            slope_post = result5.params['area_diff']
+            
+            # Predict values
+            predicted_post = intercept_post + slope_post * area_range
+            
+            # Extract confidence intervals (following boxplot code pattern)
+            posterior_se = result5.bse['Intercept']  # Standard error of intercept
+            
+            # Calculate confidence intervals for the regression line
+            ci_lower_post = predicted_post - 1.96 * posterior_se
+            ci_upper_post = predicted_post + 1.96 * posterior_se
+            
+            # Plot regression line and confidence interval
+            ax2.fill_between(area_range, ci_lower_post, ci_upper_post, 
+                            color='#73D055', alpha=0.2, label='Posterior 95% CI')
+            ax2.plot(area_range, predicted_post, '-', color='#73D055', linewidth=2, 
+                    alpha=0.8, label='Posterior Regression', zorder=10)
+            
+            # Add statistics
+            stats_text = f'β = {slope_post:.2e}\np = {result5.pvalues["area_diff"]:.3f}'
+            ax2.text(0.05, 0.95, stats_text, transform=ax2.transAxes,
+                    verticalalignment='top', fontsize=10,
+                    bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+        
+        ax2.set_xlabel('Herniation Area [mm²]', fontsize=12)
+        ax2.set_ylabel('FA Posterior Difference\n(Control - Craniectomy)', fontsize=12)
+        ax2.set_title('Posterior FA vs Herniation Area', fontsize=14, fontweight='bold')
+        ax2.grid(False)
+        ax2.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
+        ax2.axvline(x=0, color='gray', linestyle='-', alpha=0.1)
+        ax2.set_xlim(df['area_diff'].min(), df['area_diff'].max() + 50)
+        
+        # Create legend for timepoints and regression line
+        legend_elements = [
+            Line2D([0], [0], marker='s', color='w', markerfacecolor=color_mapping[tp], 
+                markersize=6, alpha=0.6, label=tp) for tp in timepoints
+        ] + [
+            Line2D([0], [0], color='#73D055', linewidth=2, label='Posterior Regression'),
+            plt.Rectangle((0,0),1,1, facecolor='#73D055', alpha=0.2, label='Posterior 95% CI')
+        ]
+        ax2.legend(handles=legend_elements, fontsize=10, loc='upper left')
+        
+        plt.tight_layout()
+        
+        # Save posterior figure
+        plt.savefig(f'{output_dir}/area_predicts_fa_posterior.png', dpi=300, bbox_inches='tight')
+        plt.savefig(f'{thesis_dir}/area_predicts_fa_posterior.png', dpi=600, bbox_inches='tight')
+        plt.close()
+        
+        return  # Exit early since we created separate figures
+
+    
+    plt.tight_layout()
+    
+    # Save figures
+    # output_dir = "DTI_Processing_Scripts/dti_plots"
+    # thesis_dir = "../Thesis/phd-thesis-template-2.4/Chapter6/Figs"
+    
+    plot_type = "combined" if show_combined else "separate"
+    plt.savefig(f'{output_dir}/area_predicts_fa_{plot_type}.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'{thesis_dir}/area_predicts_fa_{plot_type}.png', dpi=600, bbox_inches='tight')
+    
+    plt.close()
+
+
 
 def parameter_differences(df):
     """
@@ -3022,8 +3466,92 @@ if __name__ == '__main__':
 
 
     
+    # fig1, axes1 = create_fa_area_correlation_plot(wm_fa_hern_combi, show_timepoints=True)
+    # fig2, axes2 = create_fa_area_correlation_plot(wm_fa_hern_combi, show_timepoints=False)
+
+    # # Model results for prediction plot
+    # model_results = {
+    #     'intercept': 217.92,
+    #     'fa_anterior_coef': 4747.88
+    # }
+    # fig3, ax3 = create_fa_area_model_visualization(wm_fa_hern_combi, model_results)
+
+
+    ####################
+    # DOES HERNIATION CAUSE FA_DIFF? 
+    # Model 4: Area predicts FA anterior (primary)
+    print("****************************\nNEW_MODELS")
+    model4 = smf.mixedlm("fa_anterior_diff ~ area_diff", 
+                        data=wm_fa_hern_combi, 
+                        groups=wm_fa_hern_combi['patient_id'])
+
+    # Model 5: Area predicts FA posterior (comparison) 
+    model5 = smf.mixedlm("fa_posterior_diff ~ area_diff", 
+                        data=wm_fa_hern_combi, 
+                        groups=wm_fa_hern_combi['patient_id'])
+
+    # Model 6: Area predicts FA anterior (with timepoint control)
+    model6 = smf.mixedlm("fa_anterior_diff ~ area_diff + timepoint", 
+                        data=wm_fa_hern_combi, 
+                        groups=wm_fa_hern_combi['patient_id'])
+    
+
+    result4=model4.fit()
+    result5=model5.fit()
+    result6=model6.fit()
+
+    print("\nArea Predicts FA Anterior LME Summary:")
+    print(result4.summary())
+    print(result4.params)
+    print("\nArea Predicts FA Posterior LME Summary:")
+    print(result5.summary())
+    print(result5.params)
+    print("\nArea Predicts FA Anterior with Timepoint Control LME Summary:")
+    print(result6.summary())
+    print(result6.params)
+
+    # Usage example:
+    create_area_predicts_fa_plot(wm_fa_hern_combi, result4, result5, show_combined=True)
+    create_area_predicts_fa_plot(wm_fa_hern_combi, result4, result5, show_combined=False)
+
+
+
+
+
+
+
+
+
+    
 
     sys.exit()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
