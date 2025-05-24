@@ -995,8 +995,12 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
             stats_text = f'Anterior: β = {result4.params["area_diff"]:.2e}, p = {result4.pvalues["area_diff"]:.3f}\n'
             stats_text += f'Posterior: β = {result5.params["area_diff"]:.2e}, p = {result5.pvalues["area_diff"]:.3f}'
             
-            ax.text(0.95, 0.05, stats_text, transform=ax.transAxes, 
-                verticalalignment='bottom', horizontalalignment='right', fontsize=10,
+            # ax.text(0.95, 0.05, stats_text, transform=ax.transAxes, 
+            #     verticalalignment='bottom', horizontalalignment='right', fontsize=10,
+            #     bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+
+            ax.text(0.0125, 0.995, stats_text, transform=ax.transAxes, 
+                verticalalignment='top', horizontalalignment='left', fontsize=10,
                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
         
         # Formatting
@@ -1024,13 +1028,14 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
             plt.Rectangle((0,0),1,1, facecolor='#73D055', alpha=0.1, label='Posterior 95% CI')
         ]
 
-        ax.legend(handles=legend_elements, fontsize=10, loc='upper left')
+        ax.legend(handles=legend_elements, fontsize=10, loc='upper left', 
+                  bbox_to_anchor=(0, 0.95))
         
     else:
         # Separate subplots - create two separate figures
         
         # Figure 1: Anterior
-        fig1, ax1 = plt.subplots(1, 1, figsize=(8, 6))
+        fig1, ax1 = plt.subplots(1, 1, figsize=(10, 8))
         anterior_data = df.dropna(subset=['fa_anterior_diff', 'area_diff'])
         
         # Plot anterior data (circles) - colored by timepoint
@@ -1067,12 +1072,14 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
             
             # Add statistics
             stats_text = f'β = {slope_ant:.2e}\np = {result4.pvalues["area_diff"]:.3f}'
-            ax1.text(0.05, 0.95, stats_text, transform=ax1.transAxes,
-                    verticalalignment='top', fontsize=10,
-                    bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+            ax1.text(0.0125, 0.995, stats_text, transform=ax1.transAxes, 
+                verticalalignment='top', horizontalalignment='left', fontsize=10,
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+
+                    
         
         ax1.set_xlabel('Herniation Area [mm²]', fontsize=12)
-        ax1.set_ylabel('FA Anterior Difference\n(Control - Craniectomy)', fontsize=12)
+        ax1.set_ylabel('Anterior FA Difference\n(Control - Craniectomy)', fontsize=12)
         ax1.set_title('Anterior FA vs Herniation Area', fontsize=14, fontweight='bold')
         ax1.grid(False)
         ax1.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
@@ -1088,7 +1095,8 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
             Line2D([0], [0], color='#440154', linewidth=2, label='Anterior Regression'),
             plt.Rectangle((0,0),1,1, facecolor='#440154', alpha=0.2, label='Anterior 95% CI')
         ]
-        ax1.legend(handles=legend_elements, fontsize=10, loc='upper left')
+        ax1.legend(handles=legend_elements, fontsize=10, loc='upper left', 
+                  bbox_to_anchor=(0, 0.95))
         
         plt.tight_layout()
         
@@ -1098,7 +1106,7 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
         plt.close()
         
         # Figure 2: Posterior
-        fig2, ax2 = plt.subplots(1, 1, figsize=(8, 6))
+        fig2, ax2 = plt.subplots(1, 1, figsize=(10, 8))
         posterior_data = df.dropna(subset=['fa_posterior_diff', 'area_diff'])
         
         # Plot posterior data (squares) - colored by timepoint
@@ -1132,12 +1140,12 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
             
             # Add statistics
             stats_text = f'β = {slope_post:.2e}\np = {result5.pvalues["area_diff"]:.3f}'
-            ax2.text(0.05, 0.95, stats_text, transform=ax2.transAxes,
-                    verticalalignment='top', fontsize=10,
-                    bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+            ax2.text(0.0125, 0.995, stats_text, transform=ax2.transAxes, 
+                verticalalignment='top', horizontalalignment='left', fontsize=10,
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
         
         ax2.set_xlabel('Herniation Area [mm²]', fontsize=12)
-        ax2.set_ylabel('FA Posterior Difference\n(Control - Craniectomy)', fontsize=12)
+        ax2.set_ylabel('Posterior FA Difference\n(Control - Craniectomy)', fontsize=12)
         ax2.set_title('Posterior FA vs Herniation Area', fontsize=14, fontweight='bold')
         ax2.grid(False)
         ax2.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
@@ -1152,7 +1160,8 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
             Line2D([0], [0], color='#73D055', linewidth=2, label='Posterior Regression'),
             plt.Rectangle((0,0),1,1, facecolor='#73D055', alpha=0.2, label='Posterior 95% CI')
         ]
-        ax2.legend(handles=legend_elements, fontsize=10, loc='upper left')
+        ax2.legend(handles=legend_elements, fontsize=10, loc='upper left', 
+                  bbox_to_anchor=(0, 0.95))
         
         plt.tight_layout()
         
