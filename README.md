@@ -438,7 +438,145 @@ process_metrics_file(
 Mean based metrics can use the `process_metrics_file` function directly. 
 
 
+## DTI Plotting and Statistical Analysis
 
+This module provides comprehensive plotting and statistical analysis functions for DTI (Diffusion Tensor Imaging) metrics, including visualization of fractional anisotropy (FA) and mean diffusivity (MD) across different brain regions and timepoints.
+
+### Overview
+
+The DTI plotting pipeline:
+1. Processes timepoint data and standardizes categories
+2. Calculates differences between control and craniectomy sides
+3. Performs linear mixed effects (LME) modeling
+4. Creates publication-ready visualizations
+5. Conducts statistical tests including Jonckheere-Terpstra trend analysis
+
+### Requirements
+
+- Python 3.6+
+- Required packages:
+  - numpy, pandas, matplotlib, seaborn
+  - scipy, statsmodels
+  - rpy2 (for R integration)
+  - R packages: lme4, emmeans, pbkrtest, lmerTest, PMCMRplus
+
+### Key Functions
+
+#### Data Processing
+```python
+process_timepoint_data(input_file_location)
+```
+Standardizes timepoint categories and sorts data by patient ID and timepoint order.
+
+#### Difference Calculations
+```python
+parameter_differences(df)
+```
+Calculates differences between baseline (control) and actual (craniectomy) values for FA and MD parameters in anterior and posterior regions.
+
+#### Visualization Functions
+
+**Boxplot with LME Results:**
+```python
+create_timepoint_boxplot_LME_dti(df, parameter, result, timepoints, 
+                                 fixed_effects_result=None, fixed_only=False)
+```
+Creates boxplots showing DTI differences across timepoints with overlaid LME model predictions and confidence intervals.
+
+**Ring Analysis Plots:**
+```python
+plot_all_rings_combined(df, parameter, num_bins=5, save_path=None)
+```
+Visualizes all ring data over time with patient-specific colors and region-specific markers.
+
+**Correlation Analysis:**
+```python
+create_area_predicts_fa_plot(df, result4, result5, show_combined=True)
+create_area_predicts_md_plot(df, result4, result5, show_combined=True)
+```
+Creates scatter plots showing relationships between herniation area and DTI changes.
+
+#### Statistical Testing
+
+**Jonckheere-Terpstra Test:**
+```python
+jt_test(df, parameter='fa', regions=(2,10), alternative='increasing', 
+        combine_regions=False)
+```
+Performs trend analysis across ring regions to detect systematic changes from craniectomy site.
+
+**Data Availability Matrix:**
+```python
+data_availability_matrix(data, timepoints, diff_column='fa_anterior_diff')
+```
+Creates heatmap showing patient overlap across different timepoints.
+
+### Timepoint Categories
+
+The script automatically recategorizes timepoints based on days since injury:
+- `ultra-fast`: 0-2 days
+- `fast`: 2-8 days  
+- `acute`: 8-42 days
+- `3-6mo`: 42-278 days (combines 3mo and 6mo)
+- `12-24mo`: 278+ days (combines 12mo and 24mo)
+
+### Statistical Models
+
+**Linear Mixed Effects Model:**
+
+$Y_{ijk} = \beta_0 + \sum_{t=1}^{T-1} \beta_{1t} \cdot \text{Timepoint}_{jt} + \beta_2 \cdot \text{Region}_k + u_i + \varepsilon_{ijk}$
+
+Where:
+- $Y_{ijk}$: DTI difference (control - craniectomy) for subject $i$, timepoint $j$, region $k$
+- $\beta_0$: Intercept (mean DTI difference at reference timepoint and region)
+- $\beta_{1t}$: Fixed effect coefficient for timepoint $t$ (relative to reference)
+- $\text{Timepoint}_{jt}$: Indicator variable (1 if timepoint $t$, 0 otherwise)
+- $\beta_2$: Fixed effect coefficient for brain region
+- $\text{Region}_k$: Indicator variable (0 = anterior, 1 = posterior)
+- $u_i$: Random intercept for subject $i$, where $u_i \sim \mathcal{N}(0, \sigma_u^2)$
+- $\varepsilon_{ijk}$: Residual error, where $\varepsilon_{ijk} \sim \mathcal{N}(0, \sigma^2)$
+
+**Area Prediction Models:**
+
+*Model 1 (Simple):*
+$Y_{ij} = \alpha_0 + \alpha_1 \cdot \text{Area}_{ij} + v_i + \eta_{ij}$
+
+*Model 2 (With timepoint control):*
+$Y_{ij} = \alpha_0 + \alpha_1 \cdot \text{Area}_{ij} + \sum_{t=1}^{T-1} \alpha_{2t} \cdot \text{Timepoint}_{jt} + v_i + \eta_{ij}$
+
+Where:
+- $Y_{ij}$: DTI difference for subject $i$ at timepoint $j$
+- $\alpha_0$: Intercept
+- $\alpha_1$: Effect of herniation area on DTI changes (primary parameter of interest)
+- $\text{Area}_{ij}$: Herniation area measurement
+- $\alpha_{2t}$: Timepoint effects (Model 2 only)
+- $v_i$: Random intercept for subject $i$, where $v_i \sim \mathcal{N}(0, \sigma_v^2)$
+- $\eta_{ij}$: Residual error, where $\eta_{ij} \sim \mathcal{N}(0, \sigma^2)$
+
+### Usage
+
+```python
+# Process harmonized data
+data = process_timepoint_data('DTI_Processing_Scripts/merged_data_harmonised.csv')
+
+# Calculate differences
+data = parameter_differences(data)
+
+# Create visualizations
+create_timepoint_boxplot_LME_dti(data, 'fa', lme_result, 
+                                timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'])
+
+# Perform trend analysis
+jt_results = jt_test(data, parameter='fa', regions=(2,10), alternative='increasing')
+```
+
+### Output
+
+All plots are saved in:
+- `DTI_Processing_Scripts/dti_plots/` (PNG format)
+- `../Thesis/phd-thesis-template-2.4/Chapter6/Figs/` (high-resolution for publication)
+
+The module generates publication-ready figures with proper statistical annotations, confidence intervals, and standardized formatting using the `set_publication_style()` function.
 
 
 
