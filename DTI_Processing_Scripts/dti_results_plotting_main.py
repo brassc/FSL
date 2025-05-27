@@ -3789,25 +3789,48 @@ if __name__ == '__main__':
                         groups=wm_fa_hern_combi['patient_id'])
     
 
-    result4=model4.fit()
-    result5=model5.fit()
-    result6=model6.fit()
+    result4=model4.fit(method='powell')
+    # result5=model5.fit()
+    # result6=model6.fit()
 
     print("\nArea Predicts FA Anterior LME Summary:")
     print(result4.summary())
     print(result4.params)
-    print("\nArea Predicts FA Posterior LME Summary:")
-    print(result5.summary())
-    print(result5.params)
-    print("\nArea Predicts FA Anterior with Timepoint Control LME Summary:")
-    print(result6.summary())
-    print(result6.params)
+    print(result4.cov_re)
+
+    # Get exact p-values
+    print("Exact p-values:")
+    print(f"Intercept p-value: {result4.pvalues['Intercept']}")
+    print(f"area_diff p-value: {result4.pvalues['area_diff']}")
+
+    # Get exact coefficients with more precision
+    print("\nExact coefficients:")
+    print(f"Intercept coefficient: {result4.params['Intercept']}")
+    print(f"area_diff coefficient: {result4.params['area_diff']}")
+
+    # # Extract the actual random intercept estimates (û_i values)
+    # random_intercepts = result4.random_effects
+    # print("Random intercept estimates:")
+    # for patient_id, effects in random_intercepts.items():
+    #     print(f"Patient {patient_id}: {effects['Group']:.6f}")
+
+    # # Calculate variance manually
+    # intercept_values = [effects['Group'] for effects in random_intercepts.values()]
+    # manual_var = np.var(intercept_values, ddof=1)
+    # print(f"\nManual calculation of group variance: {manual_var:.6f}")
+    # print(f"Model estimate: {result4.cov_re}")
+    # print("\nArea Predicts FA Posterior LME Summary:")
+    # print(result5.summary())
+    # print(result5.params)
+    # print("\nArea Predicts FA Anterior with Timepoint Control LME Summary:")
+    # print(result6.summary())
+    # print(result6.params)
 
     # Usage example:
-    create_area_predicts_fa_plot(wm_fa_hern_combi, result4, result5, show_combined=True)
-    create_area_predicts_fa_plot(wm_fa_hern_combi, result4, result5, show_combined=False)
+    # create_area_predicts_fa_plot(wm_fa_hern_combi, result4, result5, show_combined=True)
+    # create_area_predicts_fa_plot(wm_fa_hern_combi, result4, result5, show_combined=False)
 
-
+    sys.exit()
 
     ##########################
     ##########################
