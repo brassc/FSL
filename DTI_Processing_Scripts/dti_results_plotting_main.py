@@ -4237,9 +4237,10 @@ if __name__ == '__main__':
     print_fixed_effects_summary_precise(result_fixed_post,precision=6)
     # sys.exit()
 
-    # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, fixed_effects_result=result_fixed)
-    # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, fixed_effects_result=result_fixed, fixed_only=True)
-    ##### PLOT FIXED EFFECT ON BOX PLOT
+    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, fixed_effects_result=result_fixed)
+    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, fixed_effects_result=result_fixed, fixed_only=True)
+    sys.exit()
+    #### PLOT FIXED EFFECT ON BOX PLOT
 
     ### COMBINE RESULTS wm_data_roi_567 with area data
     area_df=pd.read_csv('Image_Processing_Scripts/area_data.csv')
