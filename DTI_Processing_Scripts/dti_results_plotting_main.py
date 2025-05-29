@@ -49,6 +49,57 @@ lme4 = importr('lme4')
 emmeans = importr('emmeans')
 
 
+def print_fixed_effects_summary_precise(result, precision=6):
+    """
+    Print Fixed Effects (OLS) model summary with specified precision
+    Parameters:
+    result: OLS regression results from statsmodels
+    precision: number of decimal places (default=6)
+    """
+    print("                            OLS Regression Results                            ")
+    print("==============================================================================")
+    print(f"Dep. Variable:                FA_diff   R-squared:                       {result.rsquared:.{precision}f}")
+    print(f"Model:                            OLS   Adj. R-squared:                  {result.rsquared_adj:.{precision}f}")
+    print("Method:                 Least Squares   F-statistic:                     {:.{precision}f}".format(result.fvalue, precision=precision))
+    print("Date:                Thu, 29 May 2025   Prob (F-statistic):             {:.{precision}f}".format(result.f_pvalue, precision=precision))
+    print("Time:                        17:55:47   Log-Likelihood:                 {:.{precision}f}".format(result.llf, precision=precision))
+    print(f"No. Observations:                  {result.nobs:<2.0f}   AIC:                            {result.aic:.{precision}f}")
+    print(f"Df Residuals:                      {result.df_resid:<2.0f}   BIC:                            {result.bic:.{precision}f}")
+    print(f"Df Model:                           {result.df_model:<2.0f}                                         ")
+    print("Covariance Type:              cluster                                         ")
+    print("===========================================================================================")
+    print("                              coef    std err          z      P>|z|      [0.025      0.975]")
+    print("-------------------------------------------------------------------------------------------")
+    
+    # Format each parameter row
+    for param_name in result.params.index:
+        coef = result.params[param_name]
+        std_err = result.bse[param_name] 
+        z_val = result.tvalues[param_name]
+        p_val = result.pvalues[param_name]
+        conf_int = result.conf_int().loc[param_name]
+        
+        print(f"{param_name:<26} {coef:>10.{precision}f}      {std_err:.{precision}f}     {z_val:>6.{precision}f}      {p_val:.{precision}f}       {conf_int[0]:.{precision}f}       {conf_int[1]:.{precision}f}")
+    
+    print("==============================================================================")
+    
+    # Additional statistics (using default precision since these may not be available)
+    try:
+        print(f"Omnibus:                       {result.omnibus[0]:.{precision}f}   Durbin-Watson:                   {result.durbin_watson:.{precision}f}")
+        print(f"Prob(Omnibus):                  {result.omnibus[1]:.{precision}f}   Jarque-Bera (JB):               {result.jarque_bera[0]:.{precision}f}")
+        print(f"Skew:                           {result.skew:.{precision}f}   Prob(JB):                     {result.jarque_bera[1]:.2e}")
+        print(f"Kurtosis:                       {result.kurtosis:.{precision}f}   Cond. No.                         {result.condition_number:.2f}")
+    except:
+        pass
+    
+    print("==============================================================================")
+    print("Notes:")
+    print("[1] Standard Errors are robust to cluster correlation (cluster)")
+    print("Fixed Effects Parameters:")
+    print(result.params.round(precision))
+
+
+
 def print_lme_summary_precise(result, precision=5):
     """
     Print Mixed Linear Model summary with specified precision
@@ -3541,15 +3592,18 @@ if __name__ == '__main__':
     
     result = model.fit(method='powell')
 
-    # Output mixed effect model results
-    print("Mixed effects model summary:")
-    print(result.summary())
+    # # Output mixed effect model results
+    # print("Mixed effects model summary:")
+    # print(result.summary())
 
-    print("\nFixed Effects Parameters:")
-    print(result.fe_params)
+    # print("\nFixed Effects Parameters:")
+    # print(result.fe_params)
 
-    print("\nRandom Effects Parameters:")
-    print(result.cov_re)
+    # print("\nRandom Effects Parameters:")
+    # print(result.cov_re)
+
+    print_lme_summary_precise(result, precision=6)
+    # sys.exit()
 
     # with posterior as default region: 
     fa_long_wm_data_roi_567_combi_post=fa_long_wm_data_roi_567_combi.copy()
@@ -3562,14 +3616,16 @@ if __name__ == '__main__':
     result_post = model_posterior.fit(method='powell')
 
     # Step 4: Output results
-    print("Mixed effects model summary:")
-    print(result_post.summary())
+    print("Mixed effects model summary for posterior region as baseline:")
+    print_lme_summary_precise(result_post, precision=6)
+    # sys.exit()
+    # print(result_post.summary())
 
-    print("\nFixed Effects Parameters:")
-    print(result_post.fe_params)
+    # print("\nFixed Effects Parameters:")
+    # print(result_post.fe_params)
 
-    print("\nRandom Effects Parameters:")
-    print(result_post.cov_re)
+    # print("\nRandom Effects Parameters:")
+    # print(result_post.cov_re)
 
     ##############################
     ######## PLOTTING LME
@@ -3657,6 +3713,16 @@ if __name__ == '__main__':
     print(result_fixed.summary())
     print("\nFixed Effects Parameters:")
     print(result_fixed.params)
+    print("Fixed effects model summary (clustered SEs by patient_id):")
+    # print_lme_summary_precise(result_fixed, precision=6)
+    print_fixed_effects_summary_precise(result_fixed, precision=8)
+    # Check the actual p-values with high precision
+    print("Actual p-values:")
+    for param_name in result_fixed.params.index:
+        p_val = result_fixed.pvalues[param_name]
+        print(f"{param_name}: {p_val:.10e}")  # Scientific notation with 10 decimal places
+
+    
 
     # Fixed effects model with posterior as reference region
     # fa_long_wm_data_roi_567_combi_post = fa_long_wm_data_roi_567_combi.copy()
@@ -3669,10 +3735,11 @@ if __name__ == '__main__':
 
     # Output results with posterior as reference and clustered SEs
     print("Fixed effects model summary (posterior reference, clustered SEs by patient_id):")
-    print(result_fixed_post.summary())
-    print("\nFixed Effects Parameters:")
-    print(result_fixed_post.params)
-
+    # print(result_fixed_post.summary())
+    # print("\nFixed Effects Parameters:")
+    # print(result_fixed_post.params)
+    print_fixed_effects_summary_precise(result_fixed_post, precision=8)
+    
 
     # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, fixed_effects_result=result_fixed)
     # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, fixed_effects_result=result_fixed, fixed_only=True)
@@ -3852,7 +3919,7 @@ if __name__ == '__main__':
     print_lme_summary_precise(result6, precision=6)
 
 
-    sys.exit()
+    # sys.exit()
 
 
 
@@ -3880,7 +3947,7 @@ if __name__ == '__main__':
     # create_area_predicts_fa_plot(wm_fa_hern_combi, result4, result5, show_combined=True)
     # create_area_predicts_fa_plot(wm_fa_hern_combi, result4, result5, show_combined=False)
 
-    sys.exit()
+    # sys.exit()
 
     ##########################
     ##########################
@@ -3947,13 +4014,16 @@ if __name__ == '__main__':
 
     # Output mixed effect model results
     print("Mixed effects model summary:")
-    print(result.summary())
+    
+    # print(result.summary())
+    print_lme_summary_precise(result,precision=6)
+    # sys.exit()
 
-    print("\nFixed Effects Parameters:")
-    print(result.fe_params)
+    # print("\nFixed Effects Parameters:")
+    # print(result.fe_params)
 
-    print("\nRandom Effects Parameters:")
-    print(result.cov_re)
+    # print("\nRandom Effects Parameters:")
+    # print(result.cov_re)
 
     # with posterior as default region: 
     md_long_wm_data_roi_567_combi_post=md_long_wm_data_roi_567_combi.copy()
@@ -3966,14 +4036,16 @@ if __name__ == '__main__':
     result_post = model_posterior.fit(method='powell')
 
     # Step 4: Output results
-    print("Mixed effects model summary:")
-    print(result_post.summary())
+    print("Mixed effects model summary (posterior as ref):")
+    # print(result_post.summary())
+    print_lme_summary_precise(result_post,precision=6)
+    # sys.exit()
 
-    print("\nFixed Effects Parameters:")
-    print(result_post.fe_params)
+    # print("\nFixed Effects Parameters:")
+    # print(result_post.fe_params)
 
-    print("\nRandom Effects Parameters:")
-    print(result_post.cov_re)
+    # print("\nRandom Effects Parameters:")
+    # print(result_post.cov_re)
 
     ##############################
     ######## PLOTTING LME
@@ -4057,9 +4129,11 @@ if __name__ == '__main__':
 
     # Output fixed effects model results with clustered SEs
     print("Fixed effects model summary (clustered SEs by patient_id):")
-    print(result_fixed.summary())
-    print("\nFixed Effects Parameters:")
-    print(result_fixed.params)
+    # print(result_fixed.summary())
+    # print("\nFixed Effects Parameters:")
+    # print(result_fixed.params)
+    print_fixed_effects_summary_precise(result_fixed, precision=6)
+    # sys.exit()
 
     # Fixed effects model with posterior as reference region
     # md_long_wm_data_roi_567_combi_post = md_long_wm_data_roi_567_combi.copy()
@@ -4072,10 +4146,11 @@ if __name__ == '__main__':
 
     # Output results with posterior as reference and clustered SEs
     print("Fixed effects model summary (posterior reference, clustered SEs by patient_id):")
-    print(result_fixed_post.summary())
-    print("\nFixed Effects Parameters:")
-    print(result_fixed_post.params)
-
+    # print(result_fixed_post.summary())
+    # print("\nFixed Effects Parameters:")
+    # print(result_fixed_post.params)
+    print_fixed_effects_summary_precise(result_fixed_post,precision=6)
+    # sys.exit()
 
     # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, fixed_effects_result=result_fixed)
     # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, fixed_effects_result=result_fixed, fixed_only=True)
@@ -4220,11 +4295,16 @@ if __name__ == '__main__':
 
     # Compare: Are MD effects consistent across both models?
     print("\nLME with no timepoint:")
-    print(result1.summary())
-    print(result1.params)
+    # print(result1.summary())
+    # print(result1.params)
+    print_lme_summary_precise(result1,precision=6)
+    # sys.exit()
+
     print("\nLME summary with timepoint:")
-    print(result2.summary())
-    print(result2.params)
+    # print(result2.summary())
+    # print(result2.params)
+    print_lme_summary_precise(result2,precision=6)
+    # sys.exit()
 
     ####################
     # DOES HERNIATION CAUSE MD_DIFF? 
@@ -4256,17 +4336,22 @@ if __name__ == '__main__':
     result7=model7.fit()
 
     print("\nArea Predicts MD Anterior LME Summary:")
-    print(result4.summary())
-    print(result4.params)
+    print_lme_summary_precise(result4,precision=8)
+    # sys.exit()
     print("\nArea Predicts MD Posterior LME Summary:")
-    print(result5.summary())
-    print(result5.params)
+    # print(result5.summary())
+    # print(result5.params)
+    print_lme_summary_precise(result5,precision=8)
+    # sys.exit()
+
     print("\nArea Predicts MD Anterior with Timepoint Control LME Summary:")
-    print(result6.summary())
-    print(result6.params)
+    print_lme_summary_precise(result6,precision=8)
+    # sys.exit()
     print("\nArea Predicts MD Posterior with Timepoint Control LME Summary:")
-    print(result7.summary())
-    print(result7.params)
+    # print(result7.summary())
+    # print(result7.params)
+    print_lme_summary_precise(result7,precision=8)
+    sys.exit()
 
 
     # Usage example:
