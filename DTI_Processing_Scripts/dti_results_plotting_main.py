@@ -1973,10 +1973,10 @@ def create_timepoint_boxplot_recategorised_dti(df, parameter, timepoints=['ultra
         # count = melted_data[(melted_data['timepoint'] == tp) & (~melted_data['diff_value'].isna())].shape[0] // 2
         if count > 0:
             if parameter == 'fa':
-                ax.text(i, ax.get_ylim()[0] * 1.35, f"n={count}",
+                ax.text(i, ax.get_ylim()[0] * 1.15, f"n={count}",
                     ha='center', va='bottom', fontsize=10)
             else:
-                ax.text(i, ax.get_ylim()[0] * 1.125, f"n={count}",
+                ax.text(i, ax.get_ylim()[0] * 1.35, f"n={count}",
                     ha='center', va='bottom', fontsize=10)
     
     ax.xaxis.set_label_coords(0.5, -0.125)  # Move x-axis label down
@@ -2108,10 +2108,10 @@ def create_timepoint_boxplot_recategorised_dti_single_region(df, parameter, regi
         count = len(df[df['timepoint'] == tp])
         if count > 0:
             if parameter == 'fa':
-                ax.text(i, ax.get_ylim()[0] * 1.35, f"n={count}",
+                ax.text(i, ax.get_ylim()[0] * 1.15, f"n={count}",
                     ha='center', va='bottom', fontsize=10)
             else:
-                ax.text(i, ax.get_ylim()[0] * 1.125, f"n={count}",
+                ax.text(i, ax.get_ylim()[0] * 1.35, f"n={count}",
                     ha='center', va='bottom', fontsize=10)
     
     ax.xaxis.set_label_coords(0.5, -0.125)  # Move x-axis label down
@@ -3569,7 +3569,7 @@ if __name__ == '__main__':
 
     # print(results)
 
-    sys.exit()
+    # sys.exit()
 
     ################################################
     
