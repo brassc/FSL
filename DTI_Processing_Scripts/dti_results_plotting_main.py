@@ -1878,7 +1878,7 @@ def create_timepoint_boxplot_recategorised_dti(df, parameter, timepoints=['ultra
     
     # Set labels and title
     ax.set_xlabel('Timepoint', fontsize=12)
-    ax.set_ylabel(f'{param_name} Difference (Control - Craniectomy){unit}', fontsize=12)
+    ax.set_ylabel(f'{param_name} Difference (Craniectomy - Control){unit}', fontsize=12)
     ax.set_title(f'{param_name} Difference by Timepoint', fontsize=14, fontweight='bold')
     
     # Add grid for y-axis only
@@ -2021,7 +2021,7 @@ def create_timepoint_boxplot_recategorised_dti_single_region(df, parameter, regi
     
     # Set labels and title
     ax.set_xlabel('Timepoint', fontsize=12)
-    ax.set_ylabel(f'{param_name} Difference (Control - Craniectomy){unit}', fontsize=12)
+    ax.set_ylabel(f'{param_name} Difference (Craniectomy - Control){unit}', fontsize=12)
     ax.set_title(f'{param_name} Difference by Timepoint - {region.capitalize()} Region', 
                 fontsize=14, fontweight='bold')
     
@@ -3501,8 +3501,8 @@ if __name__ == '__main__':
     # Get differences in fa and md
     wm_data_roi_567=parameter_differences(wm_data_roi_567)
     print(wm_data_roi_567.columns)
-    print(wm_data_roi_567.head(1))
-    sys.exit()
+    # print(wm_data_roi_567.head(1))
+    # sys.exit()
     
     
 
@@ -3517,13 +3517,13 @@ if __name__ == '__main__':
     #     filename='fa_diff_data_availability.png'
     # )
 
-    # create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='fa', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
-    # create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='md', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+    create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='fa', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+    create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='md', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
     
     
-    # create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='fa', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
-    # create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='md', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
-
+    create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='fa', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+    create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='md', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+    sys.exit()
     # # combine 3 and 6 month timepoints, and 12 and 24 mo timepoints.
     wm_data_roi_567_combi=wm_data_roi_567.copy()
     wm_data_roi_567_combi['timepoint']=wm_data_roi_567['timepoint'].replace({
