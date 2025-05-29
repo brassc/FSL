@@ -438,7 +438,7 @@ def create_timepoint_boxplot_LME_dti(df, parameter, result, timepoints=['ultra-f
 
     set_publication_style()  # Assuming this function exists in your environment
 
-    fig, ax = plt.subplots(figsize=(12, 6))
+    fig, ax = plt.subplots(figsize=(14, 6))
 
     palette = sns.color_palette("viridis", len(timepoints))
 
@@ -695,15 +695,15 @@ def create_timepoint_boxplot_LME_dti(df, parameter, result, timepoints=['ultra-f
     if fixed_only is False:
         # ADD LME TO LEGEND
         legend_elements += [
-            Line2D([0], [0], color='#440154', linewidth=2.5, marker='o', markerfacecolor='#6B5082', markeredgecolor='#2D0845', markersize=8, markeredgewidth=1.5, label='LME Estimate'),
-            plt.Rectangle((0,0),1,1, facecolor='#440154', alpha=0.1, label='LME 95% CI')
+            Line2D([0], [0], color='#440154', linewidth=2.5, marker='o', markerfacecolor='#6B5082', markeredgecolor='#2D0845', markersize=8, markeredgewidth=1.5, label='Linear Mixed\nEffects Estimate'),
+            plt.Rectangle((0,0),1,1, facecolor='#440154', alpha=0.1, label='Linear Mixed\nEffects 95% CI')
         ]
     
     # ADD FIXED EFFECTS TO LEGEND IF PROVIDED
     if fixed_effects_result is not None:
         legend_elements += [
-            Line2D([0], [0], color='#DE3163', linewidth=2.5, linestyle='--', marker='s', markerfacecolor='#DE3163', markeredgecolor='white', markersize=8, markeredgewidth=1.5, label='Fixed Effects Estimate'),
-            plt.Rectangle((0,0),1,1, facecolor='#DE3163', alpha=0.1, label='Fixed Effects 95% CI')
+            Line2D([0], [0], color='#DE3163', linewidth=2.5, linestyle='--', marker='s', markerfacecolor='#DE3163', markeredgecolor='white', markersize=8, markeredgewidth=1.5, label='Fixed Effects \nEstimate'),
+            plt.Rectangle((0,0),1,1, facecolor='#DE3163', alpha=0.1, label='Fixed Effects\n95% CI')
         ]
 
     # Reduce opacity of box elements
@@ -719,17 +719,19 @@ def create_timepoint_boxplot_LME_dti(df, parameter, result, timepoints=['ultra-f
         unit = " [mm²/s]"
     
     # Set labels and title
-    ax.set_xlabel('Timepoint', fontsize=12)
+    ax.set_xlabel('Timepoint')#, fontsize=12)
     if parameter.lower() == 'md':
-        ax.set_ylim(-0.3,0.15)
-    ax.set_ylabel(f'{param_name} Difference (Craniectomy - Control){unit}', fontsize=12)
-    ax.set_title(f'{param_name} Difference by Timepoint', fontsize=14, fontweight='bold')
+        ax.set_ylim(-0.15,0.3)
+    elif parameter.lower() == 'fa':
+        ax.set_ylim(-0.2, 0.1)
+    ax.set_ylabel(f'{param_name} Difference (Craniectomy - Control){unit}')#, fontsize=12)
+    ax.set_title(f'{param_name} Difference by Timepoint', fontweight='bold') #, fontsize=14
     
     # Add grid for y-axis only
     ax.grid(True, axis='y', linestyle='-', alpha=0.3)
     
     # Move the legend to a better position
-    ax.legend(handles=legend_elements, title='Region', loc='upper right')
+    ax.legend(handles=legend_elements, title='Region', bbox_to_anchor=(1.15, 1),loc='upper right')
     
     # Show count of patients per timepoint
     for i, tp in enumerate(timepoints):
@@ -742,11 +744,11 @@ def create_timepoint_boxplot_LME_dti(df, parameter, result, timepoints=['ultra-f
         # count = melted_data[(melted_data['timepoint'] == tp) & (~melted_data['diff_value'].isna())].shape[0] // 2
         if count > 0:
             if parameter == 'fa':
-                ax.text(i, ax.get_ylim()[0] * 1.35, f"n={count}",
-                    ha='center', va='bottom', fontsize=10)
+                ax.text(i, ax.get_ylim()[0] * 1.15, f"n={count}",
+                    ha='center', va='bottom') #, fontsize=10
             else:
-                ax.text(i, ax.get_ylim()[0] * 1.125, f"n={count}",
-                    ha='center', va='bottom', fontsize=10)
+                ax.text(i, ax.get_ylim()[0] * 1.35, f"n={count}",
+                    ha='center', va='bottom') #, fontsize=10
     
     ax.xaxis.set_label_coords(0.5, -0.125)  # Move x-axis label down
     plt.tight_layout()
@@ -3713,7 +3715,7 @@ if __name__ == '__main__':
     ##############################
     ######## PLOTTING LME
 
-    # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'])
+    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'])
     ##################################
 
     ###### WHY DO LME? 
@@ -3824,8 +3826,8 @@ if __name__ == '__main__':
     print_fixed_effects_summary_precise(result_fixed_post, precision=8)
     
 
-    # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, fixed_effects_result=result_fixed)
-    # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, fixed_effects_result=result_fixed, fixed_only=True)
+    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, fixed_effects_result=result_fixed)
+    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, fixed_effects_result=result_fixed, fixed_only=True)
 
     
 
