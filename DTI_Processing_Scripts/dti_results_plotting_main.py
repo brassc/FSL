@@ -1055,7 +1055,7 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
         # Plot posterior data (squares) - colored by timepoint
         posterior_data = df.dropna(subset=['fa_posterior_diff', 'area_diff'])
         for tp in timepoints:
-            tp_data = anterior_data[anterior_data['timepoint'] == tp]
+            tp_data = posterior_data[posterior_data['timepoint'] == tp]
             if not tp_data.empty:
                 # Direct color assignment based on position in timepoint list
                 if tp in timepoints[:3]:  # First 3 timepoints
@@ -1063,7 +1063,7 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
                 else:  # Last 2 timepoints
                     plot_color = palette[-1]  # Green (12-24mo color)
                     
-                ax.scatter(tp_data['area_diff'], tp_data['fa_anterior_diff'],
+                ax.scatter(tp_data['area_diff'], tp_data['fa_posterior_diff'],
                         marker='s', s=40, alpha=0.4, color=plot_color,
                         edgecolors='white', linewidth=0.5)
         
@@ -1371,14 +1371,14 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
         # Plot anterior data (circles) - colored by timepoint
         anterior_data = df.dropna(subset=['md_anterior_diff', 'area_diff'])
         for tp in timepoints:
-            tp_data = posterior_data[posterior_data['timepoint'] == tp]
+            tp_data = anterior_data[anterior_data['timepoint'] == tp]
             if not tp_data.empty:
                 if tp in timepoints[:3]:
                     plot_color = palette[0]
                 else:
                     plot_color = palette[-1]
                     
-                ax2.scatter(tp_data['area_diff'], tp_data['fa_posterior_diff'],
+                ax.scatter(tp_data['area_diff'], tp_data['md_anterior_diff'],
                         marker='o', s=40, alpha=0.4, color=plot_color,
                         edgecolors='white', linewidth=0.5)
         
@@ -1392,7 +1392,7 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
                 else:
                     plot_color = palette[-1]
                     
-                ax2.scatter(tp_data['area_diff'], tp_data['fa_posterior_diff'],
+                ax.scatter(tp_data['area_diff'], tp_data['md_posterior_diff'],
                         marker='s', s=40, alpha=0.4, color=plot_color,
                         edgecolors='white', linewidth=0.5)
         
@@ -1489,14 +1489,14 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
         
         # Plot anterior data (circles) - colored by timepoint
         for tp in timepoints:
-            tp_data = posterior_data[posterior_data['timepoint'] == tp]
+            tp_data = anterior_data[anterior_data['timepoint'] == tp]
             if not tp_data.empty:
                 if tp in timepoints[:3]:
                     plot_color = palette[0]
                 else:
                     plot_color = palette[-1]
                     
-                ax2.scatter(tp_data['area_diff'], tp_data['fa_posterior_diff'],
+                ax1.scatter(tp_data['area_diff'], tp_data['md_anterior_diff'],
                         marker='o', s=40, alpha=0.4, color=plot_color,
                         edgecolors='white', linewidth=0.5)
         
@@ -1573,7 +1573,7 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
                 else:
                     plot_color = palette[-1]
                     
-                ax2.scatter(tp_data['area_diff'], tp_data['fa_posterior_diff'],
+                ax2.scatter(tp_data['area_diff'], tp_data['md_posterior_diff'],
                         marker='s', s=40, alpha=0.4, color=plot_color,
                         edgecolors='white', linewidth=0.5)
         
@@ -4237,9 +4237,9 @@ if __name__ == '__main__':
     print_fixed_effects_summary_precise(result_fixed_post,precision=6)
     # sys.exit()
 
-    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, fixed_effects_result=result_fixed)
-    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, fixed_effects_result=result_fixed, fixed_only=True)
-    sys.exit()
+    # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, fixed_effects_result=result_fixed)
+    # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, fixed_effects_result=result_fixed, fixed_only=True)
+    # sys.exit()
     #### PLOT FIXED EFFECT ON BOX PLOT
 
     ### COMBINE RESULTS wm_data_roi_567 with area data
@@ -4437,10 +4437,10 @@ if __name__ == '__main__':
     # print(result7.summary())
     # print(result7.params)
     print_lme_summary_precise(result7,precision=8)
-    sys.exit()
+    # sys.exit()
 
 
-    # Usage example:
+    
     create_area_predicts_md_plot(wm_md_hern_combi, result4, result5, show_combined=True)
     create_area_predicts_md_plot(wm_md_hern_combi, result4, result5, show_combined=False)
 
