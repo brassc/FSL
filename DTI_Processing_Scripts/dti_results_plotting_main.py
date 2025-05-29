@@ -3517,13 +3517,13 @@ if __name__ == '__main__':
     #     filename='fa_diff_data_availability.png'
     # )
 
-    create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='fa', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
-    create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='md', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+    # create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='fa', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+    # create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='md', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
     
     
-    create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='fa', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
-    create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='md', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
-    sys.exit()
+    # create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='fa', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+    # create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='md', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+    # sys.exit()
     # # combine 3 and 6 month timepoints, and 12 and 24 mo timepoints.
     wm_data_roi_567_combi=wm_data_roi_567.copy()
     wm_data_roi_567_combi['timepoint']=wm_data_roi_567['timepoint'].replace({
@@ -3876,9 +3876,9 @@ if __name__ == '__main__':
 
 
     
-    # fig1, axes1 = create_fa_area_correlation_plot(wm_fa_hern_combi, show_timepoints=True)
-    # fig2, axes2 = create_fa_area_correlation_plot(wm_fa_hern_combi, show_timepoints=False)
-
+    fig1, axes1 = create_fa_area_correlation_plot(wm_fa_hern_combi, show_timepoints=True)
+    fig2, axes2 = create_fa_area_correlation_plot(wm_fa_hern_combi, show_timepoints=False)
+    sys.exit()
     # # Model results for prediction plot
     # model_results = {
     #     'intercept': 217.92,
