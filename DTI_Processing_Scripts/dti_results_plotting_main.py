@@ -4029,8 +4029,8 @@ if __name__ == '__main__':
     # print(result6.params)
 
     # Usage example:
-    create_area_predicts_fa_plot(wm_fa_hern_combi, result4, result5, show_combined=True)
-    create_area_predicts_fa_plot(wm_fa_hern_combi, result4, result5, show_combined=False)
+    # create_area_predicts_fa_plot(wm_fa_hern_combi, result4, result5, show_combined=True)
+    # create_area_predicts_fa_plot(wm_fa_hern_combi, result4, result5, show_combined=False)
 
     # sys.exit()
 
@@ -4447,123 +4447,4 @@ if __name__ == '__main__':
 
 
 
-
-
-    
-
-    sys.exit()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # Compute max area_diff per patient
-    max_area_diff = area_df.groupby('patient_id')['area_diff'].max().reset_index()
-
-    # Optional: Rename column for clarity
-    max_area_diff.rename(columns={'area_diff': 'peak_herniation'}, inplace=True)
-
-    # Merge into wm_data_roi_567
-    wm_roi = wm_roi.merge(max_area_diff, on='patient_id', how='left')
-
-    # Create a new column `peak_fa_diff` as the max of the two columns per row
-    wm_roi['peak_fa_diff'] = wm_roi[['fa_anterior_diff', 'fa_posterior_diff']].max(axis=1)
-
-    # Put patient_id, max_FA_diff and peak_herniation into new data frame (no timepoint data)
-    # Step 1: Group by patient and get max FA diff
-    max_fa_diff = wm_roi.groupby('patient_id')['peak_fa_diff'].max().reset_index()
-    max_fa_diff.rename(columns={'peak_fa_diff': 'max_FA_diff'}, inplace=True)
-
-    # Step 2: Get peak herniation (you've already done this, but just in case)
-    peak_herniation = wm_roi[['patient_id', 'peak_herniation']].drop_duplicates()
-
-    # Step 3: Merge both into one dataframe
-    summary_df = max_fa_diff.merge(peak_herniation, on='patient_id', how='left')
-
-
-
-    
-
-
-
-    print(summary_df)
-
-    #### PLOTTING
-       
-    # Apply the publication style
-    set_publication_style()
-
-    # Create scatter plot
-    plt.figure(figsize=(10, 6))
-    plt.scatter(x=summary_df['peak_herniation'], y=summary_df['max_FA_diff'], color='blue')
-    # Labels and title
-    plt.xlabel('Peak Herniation')
-    plt.xlim(-500,1750)
-    plt.ylim(0,0.2)
-    plt.ylabel('Max FA Difference')
-    plt.title('Relationship between FA Difference and Peak Herniation')
-
-    # Show plot
-    plt.tight_layout()
-    plt.savefig('DTI_Processing_Scripts/fa_diff_vs_peak_herniation.png', dpi=300)
-    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter6/Figs/fa_diff_vs_peak_herniation.png', dpi=600)
-    plt.close()
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    print("\n\nScript complete!")
-
-
+    print("End of Script!")
