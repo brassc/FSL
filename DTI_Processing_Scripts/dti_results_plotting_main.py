@@ -49,6 +49,54 @@ lme4 = importr('lme4')
 emmeans = importr('emmeans')
 
 
+def print_lme_summary_precise(result, precision=5):
+    """
+    Print Mixed Linear Model summary with specified precision
+    Parameters:
+    result: MixedLMResults object from statsmodels
+    precision: number of decimal places (default=8)
+    """
+    print("            Mixed Linear Model Regression Results")
+    print("==============================================================")
+    print(f"Model:            MixedLM Dependent Variable: {result.model.endog_names}")
+    
+    # Calculate n_groups from group_labels
+    n_groups = len(result.model.group_labels)
+    group_sizes = [len(group) for group in result.model.group_labels]
+    
+    print(f"No. Observations: {result.nobs:<8.0f}  Method:             REML            ")
+    print(f"No. Groups:       {n_groups:<8.0f}  Scale:              {result.scale:.{precision}f}      ")
+    print(f"Min. group size:  {min(group_sizes):<8.0f}   Log-Likelihood:     {result.llf:.{precision}f}     ")
+    print(f"Max. group size:  {max(group_sizes):<8.0f}   Converged:          Yes             ")
+    print(f"Mean group size:  {result.nobs/n_groups:.1f}                                         ")
+    print("----------------------------------------------------------------")
+    print("              Coef.      Std.Err.        z        P>|z|      [0.025      0.975]")
+    print("----------------------------------------------------------------")
+    
+    # Format each parameter row (excluding Group Var)
+    for param_name in result.params.index:
+        if param_name != 'Group Var':
+            coef = result.params[param_name]
+            std_err = result.bse[param_name]
+            z_val = result.tvalues[param_name]
+            p_val = result.pvalues[param_name]
+            conf_int = result.conf_int().loc[param_name]
+            
+            print(f"{param_name:<12} {coef:>10.{precision}f} {std_err:>10.{precision}f} {z_val:>8.{precision}f} {p_val:>8.{precision}f} {conf_int[0]:>10.{precision}f} {conf_int[1]:>10.{precision}f}")
+
+    # Group variance
+    print(f"Group Var    {result.cov_re.iloc[0,0]:.{precision}f}      {result.bse_re.iloc[0]:.{precision}f}                                  ")
+    print("==============================================================")
+    
+    # Parameters with more precision
+    print(result.params.round(precision))
+    
+    # Covariance matrix with more precision  
+    print(result.cov_re.round(precision))
+
+
+
+
 def create_timepoint_boxplot_LME_dti_old(df, parameter, result, timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo']):
     """
     Create a box plot with anterior and posterior data represented as different colored points,
@@ -3789,24 +3837,26 @@ if __name__ == '__main__':
                         groups=wm_fa_hern_combi['patient_id'])
     
 
-    result4=model4.fit(method='powell')
-    # result5=model5.fit()
-    # result6=model6.fit()
+    result4=model4.fit()
+    result5=model5.fit()
+    result6=model6.fit()
 
     print("\nArea Predicts FA Anterior LME Summary:")
-    print(result4.summary())
-    print(result4.params)
-    print(result4.cov_re)
+    print_lme_summary_precise(result4, precision=6)
 
-    # Get exact p-values
-    print("Exact p-values:")
-    print(f"Intercept p-value: {result4.pvalues['Intercept']}")
-    print(f"area_diff p-value: {result4.pvalues['area_diff']}")
+    
+    print("\nArea Predicts FA Posterior LME Summary:")
+    print_lme_summary_precise(result5, precision=6)
 
-    # Get exact coefficients with more precision
-    print("\nExact coefficients:")
-    print(f"Intercept coefficient: {result4.params['Intercept']}")
-    print(f"area_diff coefficient: {result4.params['area_diff']}")
+    print("\nArea Predicts FA Anterior with Timepoint Control LME Summary:")
+    print_lme_summary_precise(result6, precision=6)
+
+
+    sys.exit()
+
+
+
+
 
     # # Extract the actual random intercept estimates (û_i values)
     # random_intercepts = result4.random_effects
