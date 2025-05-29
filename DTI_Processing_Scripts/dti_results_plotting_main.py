@@ -377,7 +377,7 @@ def create_timepoint_boxplot_LME_dti_old(df, parameter, result, timepoints=['ult
     
     # Set labels and title
     ax.set_xlabel('Timepoint', fontsize=12)
-    ax.set_ylabel(f'{param_name} Difference (Control - Craniectomy){unit}', fontsize=12)
+    ax.set_ylabel(f'{param_name} Difference (Craniectomy - Control){unit}', fontsize=12)
     ax.set_title(f'{param_name} Difference by Timepoint', fontsize=14, fontweight='bold')
     
     # Add grid for y-axis only
@@ -722,7 +722,7 @@ def create_timepoint_boxplot_LME_dti(df, parameter, result, timepoints=['ultra-f
     ax.set_xlabel('Timepoint', fontsize=12)
     if parameter.lower() == 'md':
         ax.set_ylim(-0.3,0.15)
-    ax.set_ylabel(f'{param_name} Difference (Control - Craniectomy){unit}', fontsize=12)
+    ax.set_ylabel(f'{param_name} Difference (Craniectomy - Control){unit}', fontsize=12)
     ax.set_title(f'{param_name} Difference by Timepoint', fontsize=14, fontweight='bold')
     
     # Add grid for y-axis only
@@ -892,7 +892,7 @@ def create_fa_area_correlation_plot(df, show_timepoints=True):
                 transform=ax1.transAxes, verticalalignment='top',
                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
     
-    ax1.set_xlabel('FA Anterior Difference\n(Control - Craniectomy)', fontsize=12)
+    ax1.set_xlabel('FA Anterior Difference\n(Craniectomy - Control)', fontsize=12)
     ax1.set_ylabel('Herniation Area Difference [mm²]', fontsize=12)
     ax1.set_title('FA Anterior vs Herniation Area', fontsize=14, fontweight='bold')
     ax1.grid(True, alpha=0.3)
@@ -927,7 +927,7 @@ def create_fa_area_correlation_plot(df, show_timepoints=True):
                 transform=ax2.transAxes, verticalalignment='top',
                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
     
-    ax2.set_xlabel('FA Posterior Difference\n(Control - Craniectomy)', fontsize=12)
+    ax2.set_xlabel('FA Posterior Difference\n(Craniectomy - Control)', fontsize=12)
     ax2.set_ylabel('Herniation Area Difference [mm²]', fontsize=12)
     ax2.set_title('FA Posterior vs Herniation Area', fontsize=14, fontweight='bold')
     ax2.grid(True, alpha=0.3)
@@ -978,7 +978,7 @@ def create_fa_area_model_visualization(df, model_results):
     # Add confidence interval if available
     # y_pred_ci = ... (calculate from model if needed)
     
-    ax.set_xlabel('FA Anterior Difference (Control - Craniectomy)', fontsize=12)
+    ax.set_xlabel('FA Anterior Difference (Craniectomy - Control)', fontsize=12)
     ax.set_ylabel('Herniation Area Difference [mm²]', fontsize=12)
     ax.set_title('Linear Mixed Effects Model: FA-Area Correlation', fontsize=14, fontweight='bold')
     ax.grid(True, alpha=0.3)
@@ -1007,6 +1007,15 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
     
     # Set publication style 
     set_publication_style()
+
+    plt.rcParams.update({
+        'font.size': 14,           # Base font size
+        'axes.titlesize': 18,      # Title font size
+        'axes.labelsize': 16,      # Axis label font size
+        'xtick.labelsize': 14,     # X-axis tick label size
+        'ytick.labelsize': 14,     # Y-axis tick label size
+        'legend.fontsize': 14      # Legend font size
+    })
 
     # set up timepoint colours
     palette = sns.color_palette("viridis", len(timepoints))
@@ -1112,18 +1121,19 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
             #     verticalalignment='bottom', horizontalalignment='right', fontsize=10,
             #     bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
 
-            ax.text(0.0125, 0.995, stats_text, transform=ax.transAxes, 
-                verticalalignment='top', horizontalalignment='left', fontsize=10,
-                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+            ax.text(0.015, 0.985, stats_text, transform=ax.transAxes, 
+                verticalalignment='top', horizontalalignment='left', 
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))#fontsize=10,
         
         # Formatting
-        ax.set_xlabel('Herniation Area [mm²]', fontsize=14)
-        ax.set_ylabel('FA Difference\n(Control - Craniectomy)', fontsize=14)
-        ax.set_title('Herniation Area Predicts FA Changes', fontsize=16, fontweight='bold')
+        ax.set_xlabel('Herniation Area [mm²]') #, fontsize=14
+        ax.set_ylabel('FA Difference\n(Craniectomy - Control)')#, fontsize=14
+        ax.set_title('FA Difference vs. Herniation', fontweight='bold')#, fontsize=16
         ax.grid(False) #alpha=0.3
         ax.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
         ax.axvline(x=0, color='gray', linestyle='-', alpha=0.1)
         ax.set_xlim(df['area_diff'].min(), df['area_diff'].max() + 50)
+        ax.set_ylim(-0.2,0.1)
 
         # ax.legend(fontsize=12)
 
@@ -1142,8 +1152,8 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
             plt.Rectangle((0,0),1,1, facecolor='#73D055', alpha=0.1, label='Posterior 95% CI')
         ]
 
-        ax.legend(handles=legend_elements, fontsize=10, loc='upper left', 
-                  bbox_to_anchor=(0, 0.95))
+        ax.legend(handles=legend_elements,  loc='upper right', 
+                  )#fontsize=10,bbox_to_anchor=(0, 0.95)
         
     else:
         # Separate subplots - create two separate figures
@@ -1192,19 +1202,20 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
             
             # Add statistics
             stats_text = f'β = {slope_ant:.2e}\np = {result4.pvalues["area_diff"]:.3f}'
-            ax1.text(0.0125, 0.995, stats_text, transform=ax1.transAxes, 
-                verticalalignment='top', horizontalalignment='left', fontsize=10,
-                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+            ax1.text(0.015, 0.985, stats_text, transform=ax1.transAxes, 
+                verticalalignment='top', horizontalalignment='left',
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8)) #, fontsize=10,
 
                     
         
-        ax1.set_xlabel('Herniation Area [mm²]', fontsize=12)
-        ax1.set_ylabel('Anterior FA Difference\n(Control - Craniectomy)', fontsize=12)
-        ax1.set_title('Anterior FA vs Herniation Area', fontsize=14, fontweight='bold')
+        ax1.set_xlabel('Herniation Area [mm²]')#, fontsize=12
+        ax1.set_ylabel('Anterior FA Difference\n(Craniectomy - Control)')#, fontsize=12
+        ax1.set_title('Anterior FA Difference vs Herniation Area', fontweight='bold') #, fontsize=14
         ax1.grid(False)
         ax1.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
         ax1.axvline(x=0, color='gray', linestyle='-', alpha=0.1)
         ax1.set_xlim(df['area_diff'].min(), df['area_diff'].max() + 50)
+        ax1.set_ylim(-0.2,0.1)
         
         # Create legend for timepoints and regression line
         from matplotlib.lines import Line2D
@@ -1217,8 +1228,8 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
             Line2D([0], [0], color='#440154', linewidth=2, label='Anterior Regression'),
             plt.Rectangle((0,0),1,1, facecolor='#440154', alpha=0.2, label='Anterior 95% CI')
         ]
-        ax1.legend(handles=legend_elements, fontsize=10, loc='upper left', 
-                  bbox_to_anchor=(0, 0.95))
+        ax1.legend(handles=legend_elements, loc='upper right', # fontsize=10,
+                  ) #bbox_to_anchor=(0, 0.95)
         
         plt.tight_layout()
         
@@ -1267,17 +1278,18 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
             
             # Add statistics
             stats_text = f'β = {slope_post:.2e}\np = {result5.pvalues["area_diff"]:.3f}'
-            ax2.text(0.0125, 0.995, stats_text, transform=ax2.transAxes, 
-                verticalalignment='top', horizontalalignment='left', fontsize=10,
+            ax2.text(0.015, 0.985, stats_text, transform=ax2.transAxes, 
+                verticalalignment='top', horizontalalignment='left', # fontsize=10,
                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
         
-        ax2.set_xlabel('Herniation Area [mm²]', fontsize=12)
-        ax2.set_ylabel('Posterior FA Difference\n(Control - Craniectomy)', fontsize=12)
-        ax2.set_title('Posterior FA vs Herniation Area', fontsize=14, fontweight='bold')
+        ax2.set_xlabel('Herniation Area [mm²]') #, fontsize=12
+        ax2.set_ylabel('Posterior FA Difference\n(Craniectomy - Control)') #, fontsize=12
+        ax2.set_title('Posterior FA Difference vs Herniation Area', fontweight='bold') # fontsize=14,
         ax2.grid(False)
         ax2.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
         ax2.axvline(x=0, color='gray', linestyle='-', alpha=0.1)
         ax2.set_xlim(df['area_diff'].min(), df['area_diff'].max() + 50)
+        ax2.set_ylim(-0.2,0.1)
         
         # Create legend for timepoints and regression line
         legend_elements = [
@@ -1289,8 +1301,8 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
             Line2D([0], [0], color='#73D055', linewidth=2, label='Posterior Regression'),
             plt.Rectangle((0,0),1,1, facecolor='#73D055', alpha=0.2, label='Posterior 95% CI')
         ]
-        ax2.legend(handles=legend_elements, fontsize=10, loc='upper left', 
-                  bbox_to_anchor=(0, 0.95))
+        ax2.legend(handles=legend_elements, loc='upper right', #fontsize=10,
+                  ) #bbox_to_anchor=(0, 0.925)
         
         plt.tight_layout()
         
@@ -1332,6 +1344,16 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
     # Set publication style 
     set_publication_style()
 
+    plt.rcParams.update({
+        'font.size': 14,           # Base font size
+        'axes.titlesize': 18,      # Title font size
+        'axes.labelsize': 16,      # Axis label font size
+        'xtick.labelsize': 14,     # X-axis tick label size
+        'ytick.labelsize': 14,     # Y-axis tick label size
+        'legend.fontsize': 12      # Legend font size
+    })
+
+
     # set up timepoint colours
     palette = sns.color_palette("viridis", len(timepoints))
     color_mapping = dict(zip(timepoints, palette))
@@ -1347,10 +1369,15 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
         # Plot anterior data (circles) - colored by timepoint
         anterior_data = df.dropna(subset=['md_anterior_diff', 'area_diff'])
         for tp in timepoints:
-            tp_data = anterior_data[anterior_data['timepoint'] == tp]
+            tp_data = posterior_data[posterior_data['timepoint'] == tp]
             if not tp_data.empty:
-                ax.scatter(tp_data['area_diff'], tp_data['md_anterior_diff'], 
-                        marker='o', s=40, alpha=0.4, color=color_mapping[tp], 
+                if tp in timepoints[:3]:
+                    plot_color = palette[0]
+                else:
+                    plot_color = palette[-1]
+                    
+                ax2.scatter(tp_data['area_diff'], tp_data['fa_posterior_diff'],
+                        marker='o', s=40, alpha=0.4, color=plot_color,
                         edgecolors='white', linewidth=0.5)
         
         # Plot posterior data (squares) - colored by timepoint
@@ -1358,8 +1385,13 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
         for tp in timepoints:
             tp_data = posterior_data[posterior_data['timepoint'] == tp]
             if not tp_data.empty:
-                ax.scatter(tp_data['area_diff'], tp_data['md_posterior_diff'],
-                        marker='s', s=40, alpha=0.4, color=color_mapping[tp],
+                if tp in timepoints[:3]:
+                    plot_color = palette[0]
+                else:
+                    plot_color = palette[-1]
+                    
+                ax2.scatter(tp_data['area_diff'], tp_data['fa_posterior_diff'],
+                        marker='s', s=40, alpha=0.4, color=plot_color,
                         edgecolors='white', linewidth=0.5)
         
         # Get area range for regression lines
@@ -1420,8 +1452,8 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
         
         # Formatting
         ax.set_xlabel('Herniation Area [mm²]', fontsize=14)
-        ax.set_ylabel('MD Difference\n(Control - Craniectomy) [mm²/s]', fontsize=14)
-        ax.set_title('Herniation Area Predicts MD Changes', fontsize=16, fontweight='bold')
+        ax.set_ylabel('MD Difference\n(Craniectomy - Control) [mm²/s]')
+        ax.set_title('Herniation Area Predicts MD Changes', fontweight='bold')
         ax.grid(False)
         ax.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
         ax.axvline(x=0, color='gray', linestyle='-', alpha=0.1)
@@ -1431,9 +1463,10 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
         # Create legend for timepoints and regression lines
         from matplotlib.lines import Line2D
         legend_elements = [
-            # Timepoint legend entries
-            Line2D([0], [0], marker='o', color='w', markerfacecolor=color_mapping[tp], 
-                markersize=6, alpha=0.6, label=tp) for tp in timepoints
+            Line2D([0], [0], marker='s', color='w', markerfacecolor=palette[0], 
+                markersize=6, alpha=0.6, label='ultra-fast, fast, acute'),
+            Line2D([0], [0], marker='s', color='w', markerfacecolor=palette[-1], 
+                markersize=6, alpha=0.6, label='3-6mo, 12-24mo')
         ] + [
             # Regression line legend entries
             Line2D([0], [0], color='#31688E', linewidth=1.5, label='Anterior Regression'),
@@ -1454,10 +1487,15 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
         
         # Plot anterior data (circles) - colored by timepoint
         for tp in timepoints:
-            tp_data = anterior_data[anterior_data['timepoint'] == tp]
+            tp_data = posterior_data[posterior_data['timepoint'] == tp]
             if not tp_data.empty:
-                ax1.scatter(tp_data['area_diff'], tp_data['md_anterior_diff'], 
-                        marker='o', s=40, alpha=0.4, color=color_mapping[tp], 
+                if tp in timepoints[:3]:
+                    plot_color = palette[0]
+                else:
+                    plot_color = palette[-1]
+                    
+                ax2.scatter(tp_data['area_diff'], tp_data['fa_posterior_diff'],
+                        marker='o', s=40, alpha=0.4, color=plot_color,
                         edgecolors='white', linewidth=0.5)
         
         # Get area range for regression lines
@@ -1487,11 +1525,11 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
             # Add statistics
             stats_text = f'β = {slope_ant:.2e}\np = {result4.pvalues["area_diff"]:.3f}'
             ax1.text(0.0125, 0.995, stats_text, transform=ax1.transAxes, 
-                verticalalignment='top', horizontalalignment='left', fontsize=10,
-                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+                verticalalignment='top', horizontalalignment='left', 
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.8)) #fontsize=14
         
         ax1.set_xlabel('Herniation Area [mm²]', fontsize=12)
-        ax1.set_ylabel('Anterior MD Difference\n(Control - Craniectomy) [mm²/s]', fontsize=12)
+        ax1.set_ylabel('Anterior MD Difference\n(Craniectomy - Control) [mm²/s]', fontsize=12)
         ax1.set_title('Anterior MD vs Herniation Area', fontsize=14, fontweight='bold')
         ax1.grid(False)
         ax1.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
@@ -1502,8 +1540,10 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
         # Create legend for timepoints and regression line
         from matplotlib.lines import Line2D
         legend_elements = [
-            Line2D([0], [0], marker='o', color='w', markerfacecolor=color_mapping[tp], 
-                markersize=6, alpha=0.6, label=tp) for tp in timepoints
+            Line2D([0], [0], marker='s', color='w', markerfacecolor=palette[0], 
+                markersize=6, alpha=0.6, label='ultra-fast, fast, acute'),
+            Line2D([0], [0], marker='s', color='w', markerfacecolor=palette[-1], 
+                markersize=6, alpha=0.6, label='3-6mo, 12-24mo')
         ] + [
             Line2D([0], [0], color='#31688E', linewidth=2, label='Anterior Regression'),
             plt.Rectangle((0,0),1,1, facecolor='#31688E', alpha=0.2, label='Anterior 95% CI')
@@ -1526,8 +1566,13 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
         for tp in timepoints:
             tp_data = posterior_data[posterior_data['timepoint'] == tp]
             if not tp_data.empty:
-                ax2.scatter(tp_data['area_diff'], tp_data['md_posterior_diff'],
-                        marker='s', s=40, alpha=0.4, color=color_mapping[tp],
+                if tp in timepoints[:3]:
+                    plot_color = palette[0]
+                else:
+                    plot_color = palette[-1]
+                    
+                ax2.scatter(tp_data['area_diff'], tp_data['fa_posterior_diff'],
+                        marker='s', s=40, alpha=0.4, color=plot_color,
                         edgecolors='white', linewidth=0.5)
         
         if result5 is not None:
@@ -1558,7 +1603,7 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
         
         ax2.set_xlabel('Herniation Area [mm²]', fontsize=12)
-        ax2.set_ylabel('Posterior MD Difference\n(Control - Craniectomy) [mm²/s]', fontsize=12)
+        ax2.set_ylabel('Posterior MD Difference\n(Craniectomy - Control) [mm²/s]', fontsize=12)
         ax2.set_title('Posterior MD vs Herniation Area', fontsize=14, fontweight='bold')
         ax2.grid(False)
         ax2.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
@@ -1568,8 +1613,10 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
         
         # Create legend for timepoints and regression line
         legend_elements = [
-            Line2D([0], [0], marker='s', color='w', markerfacecolor=color_mapping[tp], 
-                markersize=6, alpha=0.6, label=tp) for tp in timepoints
+            Line2D([0], [0], marker='s', color='w', markerfacecolor=palette[0], 
+                markersize=6, alpha=0.6, label='ultra-fast, fast, acute'),
+            Line2D([0], [0], marker='s', color='w', markerfacecolor=palette[-1], 
+                markersize=6, alpha=0.6, label='3-6mo, 12-24mo')
         ] + [
             Line2D([0], [0], color='#FDE725', linewidth=2, label='Posterior Regression'),
             plt.Rectangle((0,0),1,1, facecolor='#FDE725', alpha=0.2, label='Posterior 95% CI')
@@ -1725,7 +1772,7 @@ def create_timepoint_boxplot_recategorised_dti_old(df, parameter, timepoints=['u
 
     # Set labels and title
     ax.set_xlabel('Timepoint', fontsize=12)
-    ax.set_ylabel(f'{param_name} Difference (Control - Craniectomy){unit}', fontsize=12)
+    ax.set_ylabel(f'{param_name} Difference (Craniectomy - Control){unit}', fontsize=12)
     ax.set_title(f'{param_name} Difference by Timepoint', fontsize=14, fontweight='bold')
     
     # Add grid for y-axis only
@@ -2317,7 +2364,7 @@ def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='inc
     # Add plot elements
     ax.axhline(y=0, color='gray', linestyle='--', alpha=0.5)
     ax.set_xlabel("Ring Number", fontsize=14)
-    ax.set_ylabel(f"{parameter.upper()} Difference (Control - Craniectomy)", fontsize=14)
+    ax.set_ylabel(f"{parameter.upper()} Difference (Craniectomy - Control)", fontsize=14)
     ax.set_xticks(ring_numbers)
     ax.grid(True, alpha=0.3)
     ax.legend(loc='upper right')
@@ -3583,7 +3630,7 @@ if __name__ == '__main__':
     # LMER equation with Patient as random effect, Timepoint as fixed effect, 'Region' as a covariate. 
     # Y_{ijk} = \beta_0 + \sum_{t=1}^{T-1} \beta_{1t} \cdot \text{Timepoint}_{jt} + \beta_2 \cdot \text{Region}_k + u_i + \varepsilon_{ijk}
 
-    # $Y_{ijk}$: FA difference (control - craniectomy) for subject $i$, at timepoint $j$, in region $k$  
+    # $Y_{ijk}$: FA difference (Craniectomy - Control) for subject $i$, at timepoint $j$, in region $k$  
     # $\beta_0$: Intercept (mean FA difference at reference timepoint and region)  
     # $\beta_{1t}$: Coefficient for timepoint $t$ (excluding the reference level)  
     # $\text{Timepoint}_{jt}$: Indicator variable (1 if observation is at timepoint $t$, else 0)  
@@ -3703,10 +3750,10 @@ if __name__ == '__main__':
     # # LINEAR FIXED EFFECTS MODEL WITH COMBI DATA AND CLUSTERED SEs
     # # H_0: There is no statistically significant difference between
     # # FA in Control vs. Craniectomy for anterior and posterior ROIs.
-    # # i.e. H_0: FA_diff = FA_{control} - FA_{craniectomy} = 0
+    # # i.e. H_0: FA_diff = FA_{craniectomy} - FA_{control} = 0
     # # Fixed effects equation with Timepoint and Region as covariates.
     # # Y_{jk} = \beta_0 + \sum_{t=1}^{T-1} \beta_{1t} \cdot \text{Timepoint}_{jt} + \beta_2 \cdot \text{Region}_k + \varepsilon_{jk}
-    # # $Y_{jk}$: FA difference (control - craniectomy) at timepoint $j$, in region $k$
+    # # $Y_{jk}$: FA difference (Craniectomy - Control) at timepoint $j$, in region $k$
     # # $\beta_0$: Intercept (mean FA difference at reference timepoint and region)
     # # $\beta_{1t}$: Coefficient for timepoint $t$ (excluding the reference level)
     # # $\text{Timepoint}_{jt}$: Indicator variable (1 if observation is at timepoint $t$, else 0)
@@ -4122,10 +4169,10 @@ if __name__ == '__main__':
     # # LINEAR FIXED EFFECTS MODEL WITH COMBI DATA AND CLUSTERED SEs
     # # H_0: There is no statistically significant difference between
     # # MD in Control vs. Craniectomy for anterior and posterior ROIs.
-    # # i.e. H_0: MD_diff = MD_{control} - MD_{craniectomy} = 0
+    # # i.e. H_0: MD_diff = MD_{craniectomy} - MD_{control} = 0
     # # Fixed effects equation with Timepoint and Region as covariates.
     # # Y_{jk} = \beta_0 + \sum_{t=1}^{T-1} \beta_{1t} \cdot \text{Timepoint}_{jt} + \beta_2 \cdot \text{Region}_k + \varepsilon_{jk}
-    # # $Y_{jk}$: MD difference (control - craniectomy) at timepoint $j$, in region $k$
+    # # $Y_{jk}$: MD difference (craniectomy - control) at timepoint $j$, in region $k$
     # # $\beta_0$: Intercept (mean MD difference at reference timepoint and region)
     # # $\beta_{1t}$: Coefficient for timepoint $t$ (excluding the reference level)
     # # $\text{Timepoint}_{jt}$: Indicator variable (1 if observation is at timepoint $t$, else 0)
