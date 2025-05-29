@@ -1589,13 +1589,13 @@ def parameter_differences(df):
     # Create a copy of the dataframe to avoid modifying the original
     result_df = df.copy()
     
-    # Calculate FA differences (baseline - actual)
-    result_df['fa_anterior_diff'] = result_df['fa_baseline_anterior_ring_5_6_7_avg'] - result_df['fa_anterior_ring_5_6_7_avg']
-    result_df['fa_posterior_diff'] = result_df['fa_baseline_posterior_ring_5_6_7_avg'] - result_df['fa_posterior_ring_5_6_7_avg']
+    # Calculate FA differences (craniectomy - control)
+    result_df['fa_anterior_diff'] = result_df['fa_anterior_ring_5_6_7_avg']-result_df['fa_baseline_anterior_ring_5_6_7_avg']
+    result_df['fa_posterior_diff'] = result_df['fa_posterior_ring_5_6_7_avg'] - result_df['fa_baseline_posterior_ring_5_6_7_avg']
     
-    # Calculate MD differences (baseline - actual)
-    result_df['md_anterior_diff'] = result_df['md_baseline_anterior_ring_5_6_7_avg'] - result_df['md_anterior_ring_5_6_7_avg']
-    result_df['md_posterior_diff'] = result_df['md_baseline_posterior_ring_5_6_7_avg'] - result_df['md_posterior_ring_5_6_7_avg']
+    # Calculate MD differences (craniectomy - control)
+    result_df['md_anterior_diff'] = result_df['md_anterior_ring_5_6_7_avg'] - result_df['md_baseline_anterior_ring_5_6_7_avg']
+    result_df['md_posterior_diff'] = result_df['md_posterior_ring_5_6_7_avg'] - result_df['md_baseline_posterior_ring_5_6_7_avg'] 
     
     # Print summary of the calculated differences
     print("Difference calculations:")
@@ -3501,6 +3501,8 @@ if __name__ == '__main__':
     # Get differences in fa and md
     wm_data_roi_567=parameter_differences(wm_data_roi_567)
     print(wm_data_roi_567.columns)
+    print(wm_data_roi_567.head(1))
+    sys.exit()
     
     
 
