@@ -2242,8 +2242,8 @@ def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='inc
                     valid_indices = current_values.notna() & baseline_values.notna()
                     
                     if valid_indices.sum() > 0:
-                        # Calculate difference (baseline - current)
-                        diff_values = (baseline_values[valid_indices] - current_values[valid_indices]).tolist()
+                        # Calculate difference (craniectomy - control)
+                        diff_values = (current_values[valid_indices] - baseline_values[valid_indices]).tolist()
                         combined_ring_data[ring_num].extend(diff_values)
         
         # Skip if insufficient data
@@ -2308,8 +2308,8 @@ def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='inc
                     valid_indices = current_values.notna() & baseline_values.notna()
                     
                     if valid_indices.sum() > 0:
-                        # Calculate difference (baseline - current)
-                        diff_values = (baseline_values[valid_indices] - current_values[valid_indices]).tolist()
+                        # Calculate difference (craniectomy - control)
+                        diff_values = (current_values[valid_indices] - baseline_values[valid_indices]).tolist()
                         ring_data[ring_num] = diff_values
             
             # Skip region if insufficient data
@@ -2361,6 +2361,8 @@ def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='inc
             ax.errorbar(ring_numbers, mean_values, yerr=y_err, fmt='none', 
                        ecolor=colors[curr_region], alpha=0.5)
     
+    # Add translucent orange box spanning rings 4.7 to 7.3 (with padding)
+    ax.axvspan(4.7, 7.3, alpha=0.2, color='orange', zorder=0)
     # Add plot elements
     ax.axhline(y=0, color='gray', linestyle='--', alpha=0.5)
     ax.set_xlabel("Ring Number", fontsize=14)
@@ -3535,15 +3537,15 @@ if __name__ == '__main__':
 
     wm_data_10x4vox_filename='DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_wm_harmonised.csv'
     wm_data_10x4vox=process_timepoint_data(input_file_location=wm_data_10x4vox_filename)
-    # plot_metric_difference(df=wm_data_5x4vox, parameter='fa', region='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_anterior_comparison_box.png', plot_type='strip')
-    plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
-    plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
-    plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
-    plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
+    # # plot_metric_difference(df=wm_data_5x4vox, parameter='fa', region='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_anterior_comparison_box.png', plot_type='strip')
+    # plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
+    # plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
+    # plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
+    # plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
 
-    print(wm_data_10x4vox.columns)
+    # print(wm_data_10x4vox.columns)
 
-    sys.exit()
+    
     ####################################
     ######### JT TEST #################
     #################################
@@ -3566,6 +3568,8 @@ if __name__ == '__main__':
     #                 save_path='DTI_Processing_Scripts/jt_test_results-md-rings-combined-2to10.png', alternative='increasing', combine_regions=True)
 
     # print(results)
+
+    sys.exit()
 
     ################################################
     
