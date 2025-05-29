@@ -1446,19 +1446,19 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
             stats_text = f'Anterior: β = {result4.params["area_diff"]:.2e}, p = {result4.pvalues["area_diff"]:.3f}\n'
             stats_text += f'Posterior: β = {result5.params["area_diff"]:.2e}, p = {result5.pvalues["area_diff"]:.3f}'
             
-            ax.text(0.0125, 0.995, stats_text, transform=ax.transAxes, 
-                verticalalignment='top', horizontalalignment='left', fontsize=10,
+            ax.text(0.015, 0.985, stats_text, transform=ax.transAxes, 
+                verticalalignment='top', horizontalalignment='left', # fontsize=10
                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
         
         # Formatting
-        ax.set_xlabel('Herniation Area [mm²]', fontsize=14)
+        ax.set_xlabel('Herniation Area [mm²]')#, fontsize=14)
         ax.set_ylabel('MD Difference\n(Craniectomy - Control) [mm²/s]')
         ax.set_title('Herniation Area Predicts MD Changes', fontweight='bold')
         ax.grid(False)
         ax.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
         ax.axvline(x=0, color='gray', linestyle='-', alpha=0.1)
         ax.set_xlim(df['area_diff'].min(), df['area_diff'].max() + 50)
-        ax.set_ylim(-0.3, 0.25)
+        ax.set_ylim(-0.25, 0.3)
 
         # Create legend for timepoints and regression lines
         from matplotlib.lines import Line2D
@@ -1475,8 +1475,8 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
             plt.Rectangle((0,0),1,1, facecolor='#FDE725', alpha=0.1, label='Posterior 95% CI')
         ]
 
-        ax.legend(handles=legend_elements, fontsize=10, loc='upper left', 
-                  bbox_to_anchor=(0, 0.95))
+        ax.legend(handles=legend_elements, loc='upper right', # fontsize=10,
+                  ) #bbox_to_anchor=(0, 0.95)
         
     else:
         # Separate subplots - create two separate figures
@@ -1524,7 +1524,7 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
             
             # Add statistics
             stats_text = f'β = {slope_ant:.2e}\np = {result4.pvalues["area_diff"]:.3f}'
-            ax1.text(0.0125, 0.995, stats_text, transform=ax1.transAxes, 
+            ax1.text(0.015, 0.985, stats_text, transform=ax1.transAxes, 
                 verticalalignment='top', horizontalalignment='left', 
                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.8)) #fontsize=14
         
@@ -1535,7 +1535,7 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
         ax1.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
         ax1.axvline(x=0, color='gray', linestyle='-', alpha=0.1)
         ax1.set_xlim(df['area_diff'].min(), df['area_diff'].max() + 50)
-        ax1.set_ylim(-0.3, 0.25)
+        ax1.set_ylim(-0.25, 0.3)
         
         # Create legend for timepoints and regression line
         from matplotlib.lines import Line2D
@@ -1548,8 +1548,8 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
             Line2D([0], [0], color='#31688E', linewidth=2, label='Anterior Regression'),
             plt.Rectangle((0,0),1,1, facecolor='#31688E', alpha=0.2, label='Anterior 95% CI')
         ]
-        ax1.legend(handles=legend_elements, fontsize=10, loc='upper left', 
-                  bbox_to_anchor=(0, 0.95))
+        ax1.legend(handles=legend_elements,  loc='upper right', 
+                  ) #bbox_to_anchor=(0, 0.95)fontsize=10,
         
         plt.tight_layout()
         
@@ -1598,13 +1598,13 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
             
             # Add statistics
             stats_text = f'β = {slope_post:.2e}\np = {result5.pvalues["area_diff"]:.3f}'
-            ax2.text(0.0125, 0.995, stats_text, transform=ax2.transAxes, 
-                verticalalignment='top', horizontalalignment='left', fontsize=10,
+            ax2.text(0.015, 0.985, stats_text, transform=ax2.transAxes, 
+                verticalalignment='top', horizontalalignment='left',# fontsize=10,
                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
         
-        ax2.set_xlabel('Herniation Area [mm²]', fontsize=12)
-        ax2.set_ylabel('Posterior MD Difference\n(Craniectomy - Control) [mm²/s]', fontsize=12)
-        ax2.set_title('Posterior MD vs Herniation Area', fontsize=14, fontweight='bold')
+        ax2.set_xlabel('Herniation Area [mm²]')#, fontsize=12)
+        ax2.set_ylabel('Posterior MD Difference\n(Craniectomy - Control) [mm²/s]')#, fontsize=12)
+        ax2.set_title('Posterior MD vs Herniation Area', fontweight='bold')# fontsize=14,
         ax2.grid(False)
         ax2.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
         ax2.axvline(x=0, color='gray', linestyle='-', alpha=0.1)
@@ -1621,8 +1621,8 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
             Line2D([0], [0], color='#FDE725', linewidth=2, label='Posterior Regression'),
             plt.Rectangle((0,0),1,1, facecolor='#FDE725', alpha=0.2, label='Posterior 95% CI')
         ]
-        ax2.legend(handles=legend_elements, fontsize=10, loc='upper left', 
-                  bbox_to_anchor=(0, 0.95))
+        ax2.legend(handles=legend_elements,loc='upper right', # fontsize=10, 
+                  ) #bbox_to_anchor=(0, 0.95)
         
         plt.tight_layout()
         
@@ -2504,7 +2504,7 @@ def plot_metric_difference(df, parameter, region, save_path=None, plot_type='box
                     # Create a temporary DataFrame for this difference
                     temp_df = pd.DataFrame({
                         'difference': diff_values,
-                        'ring': [f"Ring {ring_num}"] * len(diff_values),
+                        'ring': [f"{ring_num}"] * len(diff_values),
                         'timepoint': [tp] * len(diff_values),
                         'region': [curr_region.capitalize()] * len(diff_values)
                     })
@@ -2654,10 +2654,10 @@ def plot_metric_difference(df, parameter, region, save_path=None, plot_type='box
                 x='ring', y='difference', hue='region',
                 palette='Set1',
                 dodge=True,
-                alpha=0.7,
-                size=8,
+                alpha=0.3,
+                size=4,
                 edgecolor='black',
-                linewidth=0.5,
+                linewidth=0.2,
                 ax=ax
             )
         else:
@@ -2673,10 +2673,10 @@ def plot_metric_difference(df, parameter, region, save_path=None, plot_type='box
                 x='ring', y='difference', hue='timepoint',
                 palette={tp: timepoint_colors[tp] for tp in timepoint_order if tp in diff_df['timepoint'].unique()},
                 dodge=True,
-                alpha=0.7,
-                size=8,
+                alpha=0.3,
+                size=4,
                 edgecolor='black',
-                linewidth=0.5,
+                linewidth=0.2,
                 ax=ax
             )
     
@@ -2694,7 +2694,7 @@ def plot_metric_difference(df, parameter, region, save_path=None, plot_type='box
     
     # Set axis labels and title
     ax.set_xlabel('Ring Number')
-    ax.set_ylabel(f'{parameter.upper()} Difference (Control Side - Craniectomy Side)')
+    ax.set_ylabel(f'{parameter.upper()} Difference (Craniectomy Side - Control Side)')
     
     # Set appropriate y-limits based on parameter
     if parameter.lower() == 'fa':
@@ -2716,10 +2716,10 @@ def plot_metric_difference(df, parameter, region, save_path=None, plot_type='box
     else:
         group_title = "by Timepoint"
         
-    ax.set_title(f'{parameter.upper()} Differences (Control Side - Craniectomy Side) for {region_title} {group_title}')
+    ax.set_title(f'{parameter.upper()} Differences (Craniectomy Side - Control Side) for {region_title} {group_title}')
     
     if 'wm' in save_path:
-        ax.set_title(f'{parameter.upper()} Differences (Control Side - Craniectomy Side) in White Matter for {region_title} {group_title}')
+        ax.set_title(f'{parameter.upper()} Differences (Craniectomy Side - Control Side) in White Matter for {region_title} {group_title}')
 
 
     # Adjust layout
@@ -3349,10 +3349,10 @@ def plot_metric_roi(df, parameter, region_type, save_path=None, plot_type='scatt
             x='ring', y='value', hue='timepoint',
             palette=timepoint_colors,
             dodge=True,  # This makes the points align with their respective boxes
-            alpha=0.7,
-            size=4,
+            alpha=0.3,
+            size=2,
             edgecolor='black',
-            linewidth=0.5,
+            linewidth=0.2,
             ax=ax,
             legend=True  # Don't add a second legend
         )
@@ -3376,9 +3376,9 @@ def plot_metric_roi(df, parameter, region_type, save_path=None, plot_type='scatt
     ax.set_xlabel('Ring Number')
     ax.set_ylabel(f'{parameter.upper()} Value')
     if 'fa' in parameter:
-        ax.set_ylim(0, 0.5)
+        ax.set_ylim(-0.5, 0)
     elif 'md' in parameter:
-        ax.set_ylim(0, 0.0035)
+        ax.set_ylim(-0.0035,0)
     
     # Format region type for title
     region_title = region_type.replace('_', ' ').title()
@@ -3533,15 +3533,17 @@ if __name__ == '__main__':
     # plot_metric_difference(df=wm_data_5x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
     # # plot_metric_difference
 
-    # wm_data_10x4vox_filename='DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_wm_harmonised.csv'
-    # wm_data_10x4vox=process_timepoint_data(input_file_location=wm_data_10x4vox_filename)
-    # # plot_metric_difference(df=wm_data_5x4vox, parameter='fa', region='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_anterior_comparison_box.png', plot_type='strip')
-    # plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
-    # plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
-    # plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
-    # plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
+    wm_data_10x4vox_filename='DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_wm_harmonised.csv'
+    wm_data_10x4vox=process_timepoint_data(input_file_location=wm_data_10x4vox_filename)
+    # plot_metric_difference(df=wm_data_5x4vox, parameter='fa', region='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_anterior_comparison_box.png', plot_type='strip')
+    plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
+    plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
+    plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
+    plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
 
-    # print(wm_data_10x4vox.columns)
+    print(wm_data_10x4vox.columns)
+
+    sys.exit()
     ####################################
     ######### JT TEST #################
     #################################
