@@ -1030,18 +1030,30 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
         for tp in timepoints:
             tp_data = anterior_data[anterior_data['timepoint'] == tp]
             if not tp_data.empty:
-                ax.scatter(tp_data['area_diff'], tp_data['fa_anterior_diff'], 
-                        marker='o', s=40, alpha=0.4, color=color_mapping[tp], 
+                # Direct color assignment based on position in timepoint list
+                if tp in timepoints[:3]:  # First 3 timepoints
+                    plot_color = palette[0]  # Purple (ultra-fast color)
+                else:  # Last 2 timepoints
+                    plot_color = palette[-1]  # Green (12-24mo color)
+                    
+                ax.scatter(tp_data['area_diff'], tp_data['fa_anterior_diff'],
+                        marker='o', s=40, alpha=0.4, color=plot_color,
                         edgecolors='white', linewidth=0.5)
         
         # Plot posterior data (squares)  
         # Plot posterior data (squares) - colored by timepoint
         posterior_data = df.dropna(subset=['fa_posterior_diff', 'area_diff'])
         for tp in timepoints:
-            tp_data = posterior_data[posterior_data['timepoint'] == tp]
+            tp_data = anterior_data[anterior_data['timepoint'] == tp]
             if not tp_data.empty:
-                ax.scatter(tp_data['area_diff'], tp_data['fa_posterior_diff'],
-                        marker='s', s=40, alpha=0.4, color=color_mapping[tp],
+                # Direct color assignment based on position in timepoint list
+                if tp in timepoints[:3]:  # First 3 timepoints
+                    plot_color = palette[0]  # Purple (ultra-fast color)
+                else:  # Last 2 timepoints
+                    plot_color = palette[-1]  # Green (12-24mo color)
+                    
+                ax.scatter(tp_data['area_diff'], tp_data['fa_anterior_diff'],
+                        marker='s', s=40, alpha=0.4, color=plot_color,
                         edgecolors='white', linewidth=0.5)
         
         # Get area range for regression lines
@@ -1118,9 +1130,10 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
         # Create legend for timepoints and regression lines
         from matplotlib.lines import Line2D
         legend_elements = [
-            # Timepoint legend entries
-            Line2D([0], [0], marker='o', color='w', markerfacecolor=color_mapping[tp], 
-                markersize=6, alpha=0.6, label=tp) for tp in timepoints
+            Line2D([0], [0], marker='s', color='w', markerfacecolor=palette[0], 
+                markersize=6, alpha=0.6, label='ultra-fast, fast, acute'),
+            Line2D([0], [0], marker='s', color='w', markerfacecolor=palette[-1], 
+                markersize=6, alpha=0.6, label='3-6mo, 12-24mo')
         ] + [
             # Regression line legend entries
             Line2D([0], [0], color='#440154', linewidth=1.5, label='Anterior Regression'),
@@ -1143,8 +1156,14 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
         for tp in timepoints:
             tp_data = anterior_data[anterior_data['timepoint'] == tp]
             if not tp_data.empty:
-                ax1.scatter(tp_data['area_diff'], tp_data['fa_anterior_diff'], 
-                        marker='o', s=40, alpha=0.4, color=color_mapping[tp], 
+                # Direct color assignment based on position in timepoint list
+                if tp in timepoints[:3]:  # First 3 timepoints
+                    plot_color = palette[0]  # Purple (ultra-fast color)
+                else:  # Last 2 timepoints
+                    plot_color = palette[-1]  # Green (12-24mo color)
+                    
+                ax1.scatter(tp_data['area_diff'], tp_data['fa_anterior_diff'],
+                        marker='o', s=40, alpha=0.4, color=plot_color,
                         edgecolors='white', linewidth=0.5)
         
         # Get area range for regression lines
@@ -1190,8 +1209,10 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
         # Create legend for timepoints and regression line
         from matplotlib.lines import Line2D
         legend_elements = [
-            Line2D([0], [0], marker='o', color='w', markerfacecolor=color_mapping[tp], 
-                markersize=6, alpha=0.6, label=tp) for tp in timepoints
+            Line2D([0], [0], marker='o', color='w', markerfacecolor=palette[0], 
+                markersize=6, alpha=0.6, label='ultra-fast, fast, acute'),
+            Line2D([0], [0], marker='o', color='w', markerfacecolor=palette[-1], 
+                markersize=6, alpha=0.6, label='3-6mo, 12-24mo')
         ] + [
             Line2D([0], [0], color='#440154', linewidth=2, label='Anterior Regression'),
             plt.Rectangle((0,0),1,1, facecolor='#440154', alpha=0.2, label='Anterior 95% CI')
@@ -1214,8 +1235,13 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
         for tp in timepoints:
             tp_data = posterior_data[posterior_data['timepoint'] == tp]
             if not tp_data.empty:
+                if tp in timepoints[:3]:
+                    plot_color = palette[0]
+                else:
+                    plot_color = palette[-1]
+                    
                 ax2.scatter(tp_data['area_diff'], tp_data['fa_posterior_diff'],
-                        marker='s', s=40, alpha=0.4, color=color_mapping[tp],
+                        marker='s', s=40, alpha=0.4, color=plot_color,
                         edgecolors='white', linewidth=0.5)
         
         if result5 is not None:
@@ -1255,8 +1281,10 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
         
         # Create legend for timepoints and regression line
         legend_elements = [
-            Line2D([0], [0], marker='s', color='w', markerfacecolor=color_mapping[tp], 
-                markersize=6, alpha=0.6, label=tp) for tp in timepoints
+            Line2D([0], [0], marker='s', color='w', markerfacecolor=palette[0], 
+                markersize=6, alpha=0.6, label='ultra-fast, fast, acute'),
+            Line2D([0], [0], marker='s', color='w', markerfacecolor=palette[-1], 
+                markersize=6, alpha=0.6, label='3-6mo, 12-24mo')
         ] + [
             Line2D([0], [0], color='#73D055', linewidth=2, label='Posterior Regression'),
             plt.Rectangle((0,0),1,1, facecolor='#73D055', alpha=0.2, label='Posterior 95% CI')
@@ -3876,17 +3904,17 @@ if __name__ == '__main__':
 
 
     
-    fig1, axes1 = create_fa_area_correlation_plot(wm_fa_hern_combi, show_timepoints=True)
-    fig2, axes2 = create_fa_area_correlation_plot(wm_fa_hern_combi, show_timepoints=False)
-    sys.exit()
-    # # Model results for prediction plot
-    # model_results = {
-    #     'intercept': 217.92,
-    #     'fa_anterior_coef': 4747.88
-    # }
+    # fig1, axes1 = create_fa_area_correlation_plot(wm_fa_hern_combi, show_timepoints=True)
+    # fig2, axes2 = create_fa_area_correlation_plot(wm_fa_hern_combi, show_timepoints=False)
+    # sys.exit()
+    # Model results for prediction plot
+    model_results = {
+        'intercept': 217.92,
+        'fa_anterior_coef': 4747.88
+    }
     # fig3, ax3 = create_fa_area_model_visualization(wm_fa_hern_combi, model_results)
 
-
+    # sys.exit()
     ####################
     # DOES HERNIATION CAUSE FA_DIFF? 
     # Model 4: Area predicts FA anterior (primary)
@@ -3946,8 +3974,8 @@ if __name__ == '__main__':
     # print(result6.params)
 
     # Usage example:
-    # create_area_predicts_fa_plot(wm_fa_hern_combi, result4, result5, show_combined=True)
-    # create_area_predicts_fa_plot(wm_fa_hern_combi, result4, result5, show_combined=False)
+    create_area_predicts_fa_plot(wm_fa_hern_combi, result4, result5, show_combined=True)
+    create_area_predicts_fa_plot(wm_fa_hern_combi, result4, result5, show_combined=False)
 
     # sys.exit()
 
