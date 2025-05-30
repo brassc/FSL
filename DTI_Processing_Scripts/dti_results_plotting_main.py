@@ -30,23 +30,25 @@ from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import StrVector
 from rpy2.robjects.packages import PackageNotInstalledError
 
-# Activate pandas to R conversion
-pandas2ri.activate()
+### R IMPORTS - UNCOMMENT FOR JT TEST
 
-# First, install required R packages if not already installed
-utils = importr('utils')
-utils.chooseCRANmirror(ind=1)  # Choose the first CRAN mirror
+# # Activate pandas to R conversion
+# pandas2ri.activate()
 
-# Check and install required packages
-packnames = ('lme4', 'emmeans', 'pbkrtest', 'lmerTest')
-names_to_install = [x for x in packnames if not rpy2.robjects.packages.isinstalled(x)]
-if len(names_to_install) > 0:
-    utils.install_packages(StrVector(names_to_install))
+# # First, install required R packages if not already installed
+# utils = importr('utils')
+# utils.chooseCRANmirror(ind=1)  # Choose the first CRAN mirror
 
-# Import necessary R packages
-base = importr('base')
-lme4 = importr('lme4')
-emmeans = importr('emmeans')
+# # Check and install required packages
+# packnames = ('lme4', 'emmeans', 'pbkrtest', 'lmerTest')
+# names_to_install = [x for x in packnames if not rpy2.robjects.packages.isinstalled(x)]
+# if len(names_to_install) > 0:
+#     utils.install_packages(StrVector(names_to_install))
+
+# # Import necessary R packages
+# base = importr('base')
+# lme4 = importr('lme4')
+# emmeans = importr('emmeans')
 
 
 def print_fixed_effects_summary_precise(result, precision=6):
@@ -4352,7 +4354,7 @@ if __name__ == '__main__':
     wm_md_hern_combi = wm_md_hern_combi.dropna(subset=['md_anterior_diff', 'md_posterior_diff', 'area_diff'])
     
     print(f"wm_md_hern_combi final shape: {wm_md_hern_combi.shape}")
-    print(wm_md_hern_combi)
+    # print(wm_md_hern_combi)
     # # sys.exit()
     # # wm_md_hern_combi_matrix=data_availability_matrix(
     # #     data=wm_md_hern_combi, 
@@ -4444,9 +4446,98 @@ if __name__ == '__main__':
     # create_area_predicts_md_plot(wm_md_hern_combi, result4, result5, show_combined=True)
     # create_area_predicts_md_plot(wm_md_hern_combi, result4, result5, show_combined=False)
 
+
+
     ###################
     ### IMPORT OUTCOME DATA
+    ###################
+    outcome_df=pd.read_csv('Sophie_data/Sophies_outcome_database_20220822.csv')
+    # for col in outcome_df.columns:
+    #     print(col)
+    # Keep only columns that contain 'GOSE', 'WBIC_ID', or 'GUPI', 'COHORT'
+    columns_to_keep = [col for col in outcome_df.columns if any(keyword in col for keyword in ['GOSE', 'WBIC_ID', 'GUPI','Cohort'])]
+    outcome_df = outcome_df[columns_to_keep]
+    print(outcome_df.columns)
+    # make WBIC_ID int
+    print("make wbic int then str")
+    outcome_df['WBIC_ID'] = outcome_df['WBIC_ID'].astype('Int64').replace('nan', '')
+    outcome_df['WBIC_ID'] = outcome_df['WBIC_ID'].astype('str').replace('nan', '')
+
+    print(outcome_df.head())
+    # for i in range(len(outcome_df)):
+    #     if outcome_df.loc[i]['Cohort'] == 'LEGACY':
+    #         outcome_df.loc[i]['patient_id']=outcome_df.loc[i]['WBIC_ID']
+    #     elif outcome_df.loc[i]['Cohort'] == 'CENTER':
+    #         outcome_df.loc[i]['patient_id']=outcome_df.loc[i]['GUPI']
+
+    # print(outcome_df.head())
+
+    outcome_df = outcome_df.copy()  # This ensures you have a proper DataFrame
+
+    # Create patient_id column using vectorized operations (much cleaner and faster)
+    outcome_df['patient_id'] = outcome_df.apply(
+        lambda row: str(int(row['WBIC_ID'])) if row['Cohort'] == 'LEGACY' and pd.notna(row['WBIC_ID'])
+        else str(row['GUPI']) if row['Cohort'] == 'CENTER' and pd.notna(row['GUPI'])
+        else None, 
+        axis=1
+    )
+    print(outcome_df.head())
+    # Drop rows where patient_id is None or NaN
+    outcome_df = outcome_df[outcome_df['patient_id'].notna()]
+    outcome_df = outcome_df.drop(columns=['GUPI', 'Cohort', 'WBIC_ID'])
+
+    # pd.set_option('display.max_rows', None)
+    # pd.set_option('display.max_columns', None)
+    # pd.set_option('display.width', None)
+    cols = ['patient_id'] + [col for col in outcome_df.columns if col != 'patient_id']
+    outcome_df = outcome_df[cols]
+
+    # Keep only rows in outcome_df where patient_id is in wm_fa_hern_combi
+    outcome_df = outcome_df[outcome_df['patient_id'].isin(wm_fa_hern_combi['patient_id'])]
     
+    # pd.set_option('display.max_rows', None)
+    # pd.set_option('display.max_columns', None)
+    # pd.set_option('display.width', None)
+    # print(outcome_df)
+
+    # Sort the DataFrame to ensure consistent 'first' row selection
+    outcome_df = outcome_df.sort_values('patient_id')
+
+    # Drop duplicates, keeping the first occurrence
+    outcome_df = outcome_df.drop_duplicates(subset='patient_id', keep='first')
+
+    # print(outcome_df)
+
+    # Create a new column OUTCOME_GOSE_COMBI that prioritizes GOSE_6months_partiallyimputed
+    # Then fill in from GOSE_6months, GOSE_3months, GOSE_12months, and OUTCOME_GOSE
+    outcome_df['GOSE_COMBI'] = (
+        outcome_df['GOSE_6months_partiallyimputed']
+        .fillna(outcome_df['GOSE_6months'])
+        .fillna(outcome_df['GOSE_3months'])
+        .fillna(outcome_df['GOSE_12months'])
+        .fillna(outcome_df['OUTCOME_GOSE'])
+        .fillna(outcome_df['GOSE_time_unknown'])
+    )
+    outcome_df['GOSE_COMBI']=outcome_df['GOSE_COMBI'].astype('int')
+    # print(outcome_df)
+    # Optional: Drop intermediate columns if no longer needed
+    outcome_df = outcome_df.drop(columns=['GOSE_3months', 'GOSE_6months', 'GOSE_time_unknown','GOSE_6months_partiallyimputed', 'GOSE_12months', 'OUTCOME_GOSE'])
+    outcome_df=outcome_df.reset_index(drop=True)
+    print(outcome_df)
+
+
+
+    print(wm_data_roi_567_combi['patient_id'].unique())
+
+
+
+
+    # print(wm_fa_hern_combi.columns)
+
+
+    # for patient in wm_fa_hern_combi['patient_id']:
+
+
 
 
     print("End of Script!")
