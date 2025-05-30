@@ -4527,7 +4527,11 @@ if __name__ == '__main__':
 
 
 
-    print(wm_data_roi_567_combi['patient_id'].unique())
+    # print(wm_fa_hern_combi)#['patient_id'].unique())
+
+    fa_outcome_merged=wm_fa_hern_combi.merge(outcome_df, on='patient_id')
+    md_outcome_merged=wm_md_hern_combi.merge(outcome_df, on='patient_id')
+    print(fa_outcome_merged)
 
 
 
