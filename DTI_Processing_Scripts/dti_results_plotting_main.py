@@ -4531,7 +4531,39 @@ if __name__ == '__main__':
 
     fa_outcome_merged=wm_fa_hern_combi.merge(outcome_df, on='patient_id')
     md_outcome_merged=wm_md_hern_combi.merge(outcome_df, on='patient_id')
-    print(fa_outcome_merged)
+    
+
+    # Model 1: FA anterior diff predicting GOSE outcome
+    model1 = smf.mixedlm("GOSE_COMBI ~ fa_anterior_diff", 
+                        data=fa_outcome_merged, 
+                        groups=fa_outcome_merged["patient_id"])
+    result1 = model1.fit()
+    print("Model 1: FA anterior -> GOSE")
+    # print(result1.summary())
+    print_lme_summary_precise(result1,precision=8)
+   
+
+    # sys.exit()
+
+    # Model 2: Area diff predicting GOSE outcome  
+    model2 = smf.mixedlm("GOSE_COMBI ~ area_diff", 
+                        data=fa_outcome_merged, 
+                        groups=fa_outcome_merged["patient_id"])
+    result2 = model2.fit()
+    print("Model 2: Area diff -> GOSE")
+    # print(result2.summary())
+    print_lme_summary_precise(result2,precision=8)
+    sys.exit()
+
+    # print("\n" + "="*50 + "\n")
+
+    # Model 3: Combined model (optional - to compare)
+    model3 = smf.mixedlm("GOSE_COMBI ~ fa_anterior_diff + area_diff", 
+                        data=fa_outcome_merged, 
+                        groups=fa_outcome_merged["patient_id"])
+    result3 = model3.fit()
+    print("Model 3: Combined model")
+    print_lme_summary_precise(result3,precision=8)
 
 
 
