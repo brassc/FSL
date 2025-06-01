@@ -1176,6 +1176,244 @@ def create_summary_visualisations(metrics_df, output_dir):
     plt.savefig(os.path.join(output_dir, 'scatter_mae_dice.png'))
     plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/scatter_mae_dice.pdf', dpi=300)
     plt.close()
+
+
+    ## VIOLIN PLOTS - NEW
+    # RMSE Violin Plot
+    fig_violin = plt.figure(figsize=(8, 7))
+    ax_violin = fig_violin.add_subplot(111)
+    
+    # Prepare data for violin plot
+    rmse_violin_data = [deformed_rmse, reference_rmse]
+    
+    # Create violin plot
+    parts = ax_violin.violinplot(rmse_violin_data, positions=[0, 1], showmeans=False, showmedians=False, showextrema=False)
+    
+    # Customize violin colors
+    parts['bodies'][0].set_facecolor(def_color)
+    parts['bodies'][0].set_alpha(0.3)  # More transparent for better point visibility
+    parts['bodies'][1].set_facecolor(ref_color)
+    parts['bodies'][1].set_alpha(0.3)
+
+    # Clip ONLY the deformed (left) violin to y=10
+    deformed_violin = parts['bodies'][0]
+    vertices = deformed_violin.get_paths()[0].vertices
+    vertices[:, 1] = np.clip(vertices[:, 1], 0, 8.55)  # Clip to your axis range
+
+    # Customize violin colors (continue with your existing code...)
+    parts['bodies'][0].set_facecolor(def_color)
+    # Customize median lines (your existing code continues...)
+    # parts['cmedians'].set_colors([def_dark, ref_dark])
+
+
+    
+    # Customize median lines
+    # parts['cmedians'].set_colors([def_dark, ref_dark])
+    # parts['cmedians'].set_linewidth(2)
+
+    # Add quartile lines for RMSE
+    deformed_q1_rmse = np.percentile(deformed_rmse, 25)
+    deformed_q3_rmse = np.percentile(deformed_rmse, 75)
+    reference_q1_rmse = np.percentile(reference_rmse, 25)
+    reference_q3_rmse = np.percentile(reference_rmse, 75)
+    # ax_violin.hlines([deformed_q1_rmse, deformed_q3_rmse], -0.1, 0.1, colors=def_dark, linestyles='--', alpha=0.8, linewidth=1)
+    # ax_violin.hlines([reference_q1_rmse, reference_q3_rmse], 0.9, 1.1, colors=ref_dark, linestyles='--', alpha=0.8, linewidth=1)
+
+    # Smart jitter for deformed RMSE - inline density-aware jitter
+    np.random.seed(42)
+    if len(deformed_rmse) < 2:
+        deformed_x_jitter = np.full_like(deformed_rmse, 0)
+    else:
+        from scipy.stats import gaussian_kde
+        kde_def = gaussian_kde(deformed_rmse)
+        density_def = kde_def(deformed_rmse)
+        max_density_def = np.max(density_def)
+        jitter_amount_def = (density_def / max_density_def) * 0.15
+        direction_def = np.random.choice([-1, 1], size=len(deformed_rmse))
+        jitter_def = np.random.uniform(-jitter_amount_def, jitter_amount_def) * direction_def
+        deformed_x_jitter = 0 + jitter_def
+    
+    # Smart jitter for reference RMSE - inline density-aware jitter
+    if len(reference_rmse) < 2:
+        reference_x_jitter = np.full_like(reference_rmse, 1)
+    else:
+        kde_ref = gaussian_kde(reference_rmse)
+        density_ref = kde_ref(reference_rmse)
+        max_density_ref = np.max(density_ref)
+        jitter_amount_ref = (density_ref / max_density_ref) * 0.15
+        direction_ref = np.random.choice([-1, 1], size=len(reference_rmse))
+        jitter_ref = np.random.uniform(-jitter_amount_ref, jitter_amount_ref) * direction_ref
+        reference_x_jitter = 1 + jitter_ref
+
+    # Add jittered scatter points with improved styling
+    ax_violin.scatter(
+        deformed_x_jitter,
+        deformed_rmse,
+        color=def_color, s=12, alpha=0.6,
+        edgecolor='white',
+        linewidth=0.3,
+        zorder=3
+    )
+
+    ax_violin.scatter(
+        reference_x_jitter,
+        reference_rmse,
+        color=ref_color, s=12, alpha=0.6,
+        edgecolor='white',
+        linewidth=0.3,
+        zorder=3
+    )
+
+    # Add sample size annotations
+    ax_violin.text(0, -0.5, f'n={len(deformed_rmse)}', ha='center', fontsize=8, color=def_dark)
+    ax_violin.text(1, -0.5, f'n={len(reference_rmse)}', ha='center', fontsize=8, color=ref_dark)
+
+    # # Add statistical test
+    # from scipy.stats import mannwhitneyu
+    # statistic_rmse, p_value_rmse = mannwhitneyu(deformed_rmse, reference_rmse)
+    # if p_value_rmse < 0.001:
+    #     p_text_rmse = "p < 0.001"
+    # else:
+    #     p_text_rmse = f"p = {p_value_rmse:.3f}"
+    # ax_violin.text(0.5, ax_violin.get_ylim()[1] * 0.85, p_text_rmse, ha='center', fontsize=9, 
+    #                bbox=dict(boxstyle='round', facecolor='lightgray', alpha=0.5))
+
+    # Set up axes
+    ax_violin.set_xlim(-0.5, 1.5)
+    ax_violin.set_xticks([0, 1])
+    ax_violin.set_xticklabels(['Deformed', 'Reference'])
+    ax_violin.set_ylim(0, 10)
+    ax_violin.set_title('RMSE by Configuration')
+    ax_violin.set_xlabel('Configuration')
+    ax_violin.set_ylabel('Root Mean Square Error')
+    
+    # Add median text box
+    props = dict(boxstyle='round,pad=0.5', facecolor='white', alpha=0.8, edgecolor='gray')
+    median_text = (f"Deformed median: {deformed_median:.2f}\n"
+                f"Reference median: {reference_median:.2f}\n"
+                f"Combined median: {combined_median:.2f}")
+    
+    plt.text(0.025, 0.95, median_text, transform=ax_violin.transAxes, fontsize=9,
+            verticalalignment='top', bbox=props)
+    
+    # Save RMSE violin plot
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, 'rmse_violin.png'), dpi=300)
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/rmse_violin.pdf', dpi=300)
+    plt.close(fig_violin)
+
+    
+    # MAE Violin Plot
+    fig_mae_violin = plt.figure(figsize=(8, 7))
+    ax_mae_violin = fig_mae_violin.add_subplot(111)
+    
+    # Prepare data for violin plot
+    mae_violin_data = [deformed_mae, reference_mae]
+    
+    # Create violin plot
+    parts_mae = ax_mae_violin.violinplot(mae_violin_data, positions=[0, 1], showmeans=False, showmedians=False, showextrema=False)
+    
+    # Customize violin colors
+    parts_mae['bodies'][0].set_facecolor(def_color)
+    parts_mae['bodies'][0].set_alpha(0.5)  # More transparent for better point visibility
+    parts_mae['bodies'][1].set_facecolor(ref_color)
+    parts_mae['bodies'][1].set_alpha(0.5)
+    
+    # Customize median lines
+    # parts_mae['cmedians'].set_colors([def_dark, ref_dark])
+    # parts_mae['cmedians'].set_linewidth(2)
+
+    # Add quartile lines for MAE
+    deformed_q1_mae = np.percentile(deformed_mae, 25)
+    deformed_q3_mae = np.percentile(deformed_mae, 75)
+    reference_q1_mae = np.percentile(reference_mae, 25)
+    reference_q3_mae = np.percentile(reference_mae, 75)
+    # ax_mae_violin.hlines([deformed_q1_mae, deformed_q3_mae], -0.1, 0.1, colors=def_dark, linestyles='--', alpha=0.8, linewidth=1)
+    # ax_mae_violin.hlines([reference_q1_mae, reference_q3_mae], 0.9, 1.1, colors=ref_dark, linestyles='--', alpha=0.8, linewidth=1)
+
+    # Smart jitter for deformed MAE - inline density-aware jitter
+    np.random.seed(42)
+    if len(deformed_mae) < 2:
+        deformed_x_jitter_mae = np.full_like(deformed_mae, 0)
+    else:
+        from scipy.stats import gaussian_kde
+        kde_def_mae = gaussian_kde(deformed_mae)
+        density_def_mae = kde_def_mae(deformed_mae)
+        max_density_def_mae = np.max(density_def_mae)
+        jitter_amount_def_mae = (density_def_mae / max_density_def_mae) * 0.15
+        direction_def_mae = np.random.choice([-1, 1], size=len(deformed_mae))
+        jitter_def_mae = np.random.uniform(-jitter_amount_def_mae, jitter_amount_def_mae) * direction_def_mae
+        deformed_x_jitter_mae = 0 + jitter_def_mae
+    
+    # Smart jitter for reference MAE - inline density-aware jitter
+    if len(reference_mae) < 2:
+        reference_x_jitter_mae = np.full_like(reference_mae, 1)
+    else:
+        kde_ref_mae = gaussian_kde(reference_mae)
+        density_ref_mae = kde_ref_mae(reference_mae)
+        max_density_ref_mae = np.max(density_ref_mae)
+        jitter_amount_ref_mae = (density_ref_mae / max_density_ref_mae) * 0.15
+        direction_ref_mae = np.random.choice([-1, 1], size=len(reference_mae))
+        jitter_ref_mae = np.random.uniform(-jitter_amount_ref_mae, jitter_amount_ref_mae) * direction_ref_mae
+        reference_x_jitter_mae = 1 + jitter_ref_mae
+
+    # Add jittered scatter points with improved styling
+    ax_mae_violin.scatter(
+        deformed_x_jitter_mae,
+        deformed_mae,
+        color=def_color, s=12, alpha=0.6,
+        edgecolor='white',
+        linewidth=0.3,
+        zorder=3
+    )
+
+    ax_mae_violin.scatter(
+        reference_x_jitter_mae,
+        reference_mae,
+        color=ref_color, s=12, alpha=0.6,
+        edgecolor='white',
+        linewidth=0.3,
+        zorder=3
+    )
+
+    # Add sample size annotations
+    ax_mae_violin.text(0, -0.5, f'n={len(deformed_mae)}', ha='center', fontsize=8, color=def_dark)
+    ax_mae_violin.text(1, -0.5, f'n={len(reference_mae)}', ha='center', fontsize=8, color=ref_dark)
+
+    # # Add statistical test
+    # from scipy.stats import mannwhitneyu
+    # statistic_mae, p_value_mae = mannwhitneyu(deformed_mae, reference_mae)
+    # if p_value_mae < 0.001:
+    #     p_text_mae = "p < 0.001"
+    # else:
+    #     p_text_mae = f"p = {p_value_mae:.3f}"
+    # ax_mae_violin.text(0.5, ax_mae_violin.get_ylim()[1] * 0.85, p_text_mae, ha='center', fontsize=9, 
+    #                    bbox=dict(boxstyle='round', facecolor='lightgray', alpha=0.5))
+
+    # Set up axes
+    ax_mae_violin.set_xlim(-0.5, 1.5)
+    ax_mae_violin.set_xticks([0, 1])
+    ax_mae_violin.set_xticklabels(['Deformed', 'Reference'])
+    ax_mae_violin.set_ylim(0, 10)
+    ax_mae_violin.set_title('MAE by Configuration')
+    ax_mae_violin.set_xlabel('Configuration')
+    ax_mae_violin.set_ylabel('Mean Absolute Error')
+    
+    # Calculate MAE medians and add text box
+    combined_median_mae = np.median(np.concatenate([deformed_mae, reference_mae]))
+    props = dict(boxstyle='round,pad=0.5', facecolor='white', alpha=0.8, edgecolor='gray')
+    median_text_mae = (f"Deformed median: {deformed_median_mae:.2f}\n"
+                    f"Reference median: {reference_median_mae:.2f}\n"
+                    f"Combined median: {combined_median_mae:.2f}")
+    
+    plt.text(0.025, 0.95, median_text_mae, transform=ax_mae_violin.transAxes, fontsize=9,
+            verticalalignment='top', bbox=props)
+    
+    # Save MAE violin plot
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, 'mae_violin.png'), dpi=300)
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/mae_violin.pdf', dpi=300)
+    plt.close(fig_mae_violin)
     
     # 3. Statistical tests
     results = {}
