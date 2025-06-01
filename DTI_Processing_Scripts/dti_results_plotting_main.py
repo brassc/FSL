@@ -4523,7 +4523,16 @@ if __name__ == '__main__':
     # Optional: Drop intermediate columns if no longer needed
     outcome_df = outcome_df.drop(columns=['GOSE_3months', 'GOSE_6months', 'GOSE_time_unknown','GOSE_6months_partiallyimputed', 'GOSE_12months', 'OUTCOME_GOSE'])
     outcome_df=outcome_df.reset_index(drop=True)
+
+    # Create a new row as a DataFrame
+    new_row = pd.DataFrame({'patient_id': [16754], 'GOSE_COMBI': [3]})
+
+    # Add the row to outcome_df
+    outcome_df = pd.concat([outcome_df, new_row], ignore_index=True)
+
+
     print(outcome_df)
+
 
 
 
