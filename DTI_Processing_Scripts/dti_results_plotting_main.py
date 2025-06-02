@@ -1532,9 +1532,9 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
                 verticalalignment='top', horizontalalignment='left', 
                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.8)) #fontsize=14
         
-        ax1.set_xlabel('Herniation Area [mm²]', fontsize=12)
-        ax1.set_ylabel('Anterior MD Difference\n(Craniectomy - Control) [mm²/s]', fontsize=12)
-        ax1.set_title('Anterior MD vs Herniation Area', fontsize=14, fontweight='bold')
+        ax1.set_xlabel('Herniation Area [mm²]')#, fontsize=12)
+        ax1.set_ylabel('Anterior MD Difference\n(Craniectomy - Control) [mm²/s]')#, fontsize=12)
+        ax1.set_title('Anterior MD vs Herniation Area', fontweight='bold') #, fontsize=14,
         ax1.grid(False)
         ax1.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
         ax1.axvline(x=0, color='gray', linestyle='-', alpha=0.1)
@@ -4397,31 +4397,31 @@ if __name__ == '__main__':
     # ####################
     # # DOES HERNIATION CAUSE MD_DIFF? 
     # # Model 4: Area predicts MD anterior (primary)
-    # print("****************************\nNEW_MODELS")
-    # model4 = smf.mixedlm("md_anterior_diff ~ area_diff", 
-    #                     data=wm_md_hern_combi, 
-    #                     groups=wm_md_hern_combi['patient_id'])
+    print("****************************\nNEW_MODELS")
+    model4 = smf.mixedlm("md_anterior_diff ~ area_diff", 
+                        data=wm_md_hern_combi, 
+                        groups=wm_md_hern_combi['patient_id'])
 
-    # # Model 5: Area predicts MD posterior (comparison) 
-    # model5 = smf.mixedlm("md_posterior_diff ~ area_diff", 
-    #                     data=wm_md_hern_combi, 
-    #                     groups=wm_md_hern_combi['patient_id'])
+    # Model 5: Area predicts MD posterior (comparison) 
+    model5 = smf.mixedlm("md_posterior_diff ~ area_diff", 
+                        data=wm_md_hern_combi, 
+                        groups=wm_md_hern_combi['patient_id'])
 
-    # # Model 6: Area predicts MD anterior (with timepoint control)
-    # model6 = smf.mixedlm("md_anterior_diff ~ area_diff + timepoint", 
-    #                     data=wm_md_hern_combi, 
-    #                     groups=wm_md_hern_combi['patient_id'])
+    # Model 6: Area predicts MD anterior (with timepoint control)
+    model6 = smf.mixedlm("md_anterior_diff ~ area_diff + timepoint", 
+                        data=wm_md_hern_combi, 
+                        groups=wm_md_hern_combi['patient_id'])
 
-    # # Model 7: Area predicts MD posterior (with timepoint control)
-    # model7 = smf.mixedlm("md_posterior_diff ~ area_diff + timepoint", 
-    #                     data=wm_md_hern_combi, 
-    #                     groups=wm_md_hern_combi['patient_id'])
+    # Model 7: Area predicts MD posterior (with timepoint control)
+    model7 = smf.mixedlm("md_posterior_diff ~ area_diff + timepoint", 
+                        data=wm_md_hern_combi, 
+                        groups=wm_md_hern_combi['patient_id'])
     
 
-    # result4=model4.fit()
-    # result5=model5.fit()
-    # result6=model6.fit()
-    # result7=model7.fit()
+    result4=model4.fit()
+    result5=model5.fit()
+    result6=model6.fit()
+    result7=model7.fit()
 
     # print("\nArea Predicts MD Anterior LME Summary:")
     # print_lme_summary_precise(result4,precision=8)
@@ -4443,9 +4443,9 @@ if __name__ == '__main__':
 
 
     
-    # create_area_predicts_md_plot(wm_md_hern_combi, result4, result5, show_combined=True)
-    # create_area_predicts_md_plot(wm_md_hern_combi, result4, result5, show_combined=False)
-
+    create_area_predicts_md_plot(wm_md_hern_combi, result4, result5, show_combined=True)
+    create_area_predicts_md_plot(wm_md_hern_combi, result4, result5, show_combined=False)
+    sys.exit()
 
 
     ###################
