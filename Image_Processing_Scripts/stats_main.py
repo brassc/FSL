@@ -963,11 +963,11 @@ def mixed_effect_boxplot(df, result, timepoints=['ultra-fast', 'fast', 'acute', 
                     p_value = result.pvalues[param_name]
                     # Format p-value with appropriate precision
                     if p_value < 0.001:
-                        p_text = "(p < 0.001) ***"
+                        p_text = "(p < 0.01) ***"
                     elif p_value < 0.01:
-                        p_text = f"(p < {p_value:.3f}) **"
+                        p_text = f"(p < 0.05) **"#{p_value:.3f}) **"
                     else:
-                        p_text = f"(p < {p_value:.3f}) †"
+                        p_text = f"(p > 0.7)"# {p_value:.3f}) †"
                     label = f"{category.capitalize()} {p_text}"
                 else:
                     label = f"{category.capitalize()}"
@@ -991,7 +991,7 @@ def mixed_effect_boxplot(df, result, timepoints=['ultra-fast', 'fast', 'acute', 
         
         # Position in the upper right, below where the legend is expected to be
         # Using figure coordinates (0-1 range)
-        plt.figtext(0.975, 0.7, "Blue: Significant. Red: Not Significant. \nSignificance levels: \n*** p<0.001, ** p<0.01, * p<0.05, † p<0.1",
+        plt.figtext(0.975, 0.7, "Blue: Significant. Red: Not Significant. \nSignificance levels: \n*** p<0.01, ** p<0.05, * p<0.1",
                ha='right', fontsize=8, style='italic')
         
 
