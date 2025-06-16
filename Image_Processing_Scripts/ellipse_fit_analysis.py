@@ -1264,9 +1264,9 @@ def create_summary_visualisations(metrics_df, output_dir):
         zorder=3
     )
 
-    # Add sample size annotations
-    ax_violin.text(0, -0.5, f'n={len(deformed_rmse)}', ha='center', fontsize=8, color=def_dark)
-    ax_violin.text(1, -0.5, f'n={len(reference_rmse)}', ha='center', fontsize=8, color=ref_dark)
+    # # Add sample size annotations
+    # ax_violin.text(0, -0.5, f'n={len(deformed_rmse)}', ha='center', fontsize=8, color=def_dark)
+    # ax_violin.text(1, -0.5, f'n={len(reference_rmse)}', ha='center', fontsize=8, color=ref_dark)
 
     # # Add statistical test
     # from scipy.stats import mannwhitneyu
@@ -1361,7 +1361,7 @@ def create_summary_visualisations(metrics_df, output_dir):
     ax_mae_violin.scatter(
         deformed_x_jitter_mae,
         deformed_mae,
-        color=def_color, s=12, alpha=0.6,
+        color=def_color, s=12, alpha=0.3,
         edgecolor='white',
         linewidth=0.3,
         zorder=3
@@ -1370,15 +1370,15 @@ def create_summary_visualisations(metrics_df, output_dir):
     ax_mae_violin.scatter(
         reference_x_jitter_mae,
         reference_mae,
-        color=ref_color, s=12, alpha=0.6,
+        color=ref_color, s=12, alpha=0.3,
         edgecolor='white',
         linewidth=0.3,
         zorder=3
     )
 
     # Add sample size annotations
-    ax_mae_violin.text(0, -0.5, f'n={len(deformed_mae)}', ha='center', fontsize=8, color=def_dark)
-    ax_mae_violin.text(1, -0.5, f'n={len(reference_mae)}', ha='center', fontsize=8, color=ref_dark)
+    # ax_mae_violin.text(0, -0.5, f'n={len(deformed_mae)}', ha='center', fontsize=8, color=def_dark)
+    # ax_mae_violin.text(1, -0.5, f'n={len(reference_mae)}', ha='center', fontsize=8, color=ref_dark)
 
     # # Add statistical test
     # from scipy.stats import mannwhitneyu
