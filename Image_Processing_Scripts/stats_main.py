@@ -953,7 +953,7 @@ def mixed_effect_boxplot(df, result, timepoints=['ultra-fast', 'fast', 'acute', 
         if tp in predictions:
             pred_value = predictions[tp]
             ax.scatter(i, pred_value, color='lightgrey',#custom_colors.get(tp, 'black'), 
-                      marker='s', s=120, zorder=10, 
+                      marker='d', s=80, zorder=10, 
                       edgecolor='black', linewidth=1.5)
     
     # Create a more professional legend
@@ -984,10 +984,10 @@ def mixed_effect_boxplot(df, result, timepoints=['ultra-fast', 'fast', 'acute', 
         #             label = f"{category.capitalize()}"
             
     legend_elements.append(
-        Line2D([0], [0], marker='s', color='w', 
+        Line2D([0], [0], marker='d', color='w', 
                 markerfacecolor='lightgrey',#custom_colors.get(category, 'black'),
                 markeredgecolor='black',
-                markersize=10, label="Linear Mixed Effects Model Predictions")#, label=label)
+                markersize=8, label="Linear Mixed Effects Model Predictions")#, label=label)
             )
     
     # Small circle for jitter points (size=6 from stripplot)
@@ -1774,7 +1774,7 @@ if __name__ == '__main__':
 
     # pairwise test visualisations:
     #THIS ONE ONLY:
-    data_availability_matrix(pivoted_data, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], filename='data_availability.png')
+    # data_availability_matrix(pivoted_data, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], filename='data_availability.png')
     
     #significance_matrix_ttest(valid_results, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], filename='significance_matrix.png')
     #significance_matrix_wilcoxon(valid_wilcoxon_results, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], filename='significance_matrix_wilcoxon.png')
@@ -1782,12 +1782,12 @@ if __name__ == '__main__':
 
     # Mixed effect model visualisations:
     # THIS ONE:
-    data_availability_matrix(binned_df_pivot, order, filename='data_availability_matrix_binned.png')
+    # data_availability_matrix(binned_df_pivot, order, filename='data_availability_matrix_binned.png')
 
     # Plot the significance matrix
     # THIS ONE: (2 LINES)
-    sig_df, mask = emmeans_significance_matrix(py_pairs)
-    plot_emmeans_sig_mat(sig_df, mask)  
+    # sig_df, mask = emmeans_significance_matrix(py_pairs)
+    # plot_emmeans_sig_mat(sig_df, mask)  
 
-    # mixed_effect_boxplot(new_df, result, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], chronic_timepoints=['3mo', '6mo', '12mo', '24mo'])
+    mixed_effect_boxplot(new_df, result, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], chronic_timepoints=['3mo', '6mo', '12mo', '24mo'])
    
