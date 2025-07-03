@@ -965,6 +965,7 @@ def plot_emmeans_sig_mat_h(sig_df, mask):
     heatmap = sns.heatmap(
         sig_df,
         annot=True,  # Show numbers in cells
+        annot_kws={"size": 16},  # Annotation font size
         cmap=cmap,   # Color map
         mask=mask,   # Mask diagonal values
         vmin=0, vmax=0.5,  # Set color scale range
@@ -972,8 +973,17 @@ def plot_emmeans_sig_mat_h(sig_df, mask):
         fmt='.4f',   # Format as floating point with 4 decimals
         linewidths=0,  # Remove lines between cells
         linecolor='none',  # Ensure no line color
-        yticklabels=ordered_timepoints  # Reverse y-axis labels
+        yticklabels=ordered_timepoints,  # Reverse y-axis labels
+        cbar_kws={"label": "p-value"} # Add colorbar label
     )
+
+    # Make x and y axis labels bigger
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+
+    # Make colorbar tick labels bigger
+    cbar = heatmap.collections[0].colorbar
+    cbar.ax.tick_params(labelsize=14)
 
     # Add significance markers
     for i in range(4):  # rows
@@ -990,16 +1000,16 @@ def plot_emmeans_sig_mat_h(sig_df, mask):
                     )
                 elif sig_df.iloc[i, j] < 0.01:
                     plt.text(
-                        j + 0.625, i + 0.45, "**", ha='left', va='center', fontsize=10
+                        j + 0.65, i + 0.45, "**", ha='left', va='center', fontsize=10
                     )
                 elif sig_df.iloc[i, j] < 0.05:
                     plt.text(
-                        j + 0.625, i + 0.45, "*", ha='left', va='center', fontsize=10
+                        j + 0.65, i + 0.45, "*", ha='left', va='center', fontsize=10
                     )
-                elif sig_df.iloc[i, j] < 0.1:
-                    plt.text(
-                        j + 0.625, i + 0.45, "†", ha='left', va='center', fontsize=10
-                    )
+                # elif sig_df.iloc[i, j] < 0.1:
+                #     plt.text(
+                #         j + 0.65, i + 0.45, "†", ha='left', va='center', fontsize=10
+                #     )
 
     plt.title('Pairwise comparison of p-values from mixed effects model (emmeans) for ellipse $h$ parameter')
     plt.grid(False)
@@ -1009,8 +1019,8 @@ def plot_emmeans_sig_mat_h(sig_df, mask):
     plt.subplots_adjust(bottom=0.075)
 
     # Add legend for significance levels
-    plt.figtext(0.25, 0.01, "Significance levels: ** p<0.01, * p<0.05, † p<0.1",
-            ha='left', fontsize=12, style='italic') #*** p<0.001, 
+    # plt.figtext(0.25, 0.01, "Significance levels: ** p<0.01, * p<0.05, † p<0.1",
+    #         ha='left', fontsize=12, style='italic') #*** p<0.001, 
 
     plt.savefig('significance_matrix_mixed_effects_h.png', dpi=300, bbox_inches='tight')
     plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/significance_matrix_mixed_effects_h.png', dpi=600, bbox_inches='tight')
