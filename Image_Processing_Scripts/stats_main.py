@@ -542,7 +542,16 @@ def data_availability_matrix(data, timepoints, filename='data_availability.png')
 
     # Visualize the data availability
     plt.figure(figsize=(10, 8))
-    sns.heatmap(availability_matrix, annot=True, cmap="YlGnBu", fmt='g')
+    heatmap=sns.heatmap(availability_matrix, annot=True, 
+                vmin=0, vmax=16,
+                cmap="YlGnBu", fmt='g', 
+                annot_kws={"size": 16},  # Annotation font size)
+                cbar_kws={"label": "Number of Scans"}) # Add colorbar label
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    cbar = heatmap.collections[0].colorbar
+    cbar.ax.tick_params(labelsize=14)
+
     plt.title('Data Availability Matrix (number of patients)')
     plt.grid(False)
     plt.tight_layout()
@@ -1115,16 +1124,19 @@ def emmeans_significance_matrix(py_pairs):
     mask = np.isnan(sig_df.values)
 
     return sig_df, mask
+
+
 def plot_emmeans_sig_mat(sig_df, mask):
     # Plot heatmap
     ordered_timepoints= ['ultra-fast', 'fast', 'acute', 'chronic']
-    plt.figure(figsize=(10, 10))
+    plt.figure(figsize=(10, 8))
     cmap = sns.diverging_palette(240, 10, as_cmap=True)
 
     # Create heatmap
     heatmap = sns.heatmap(
         sig_df,
         annot=True,  # Show numbers in cells
+        annot_kws={"size": 16},  # Annotation font size
         cmap=cmap,   # Color map
         mask=mask,   # Mask diagonal values
         vmin=0, vmax=0.5,  # Set color scale range
@@ -1132,8 +1144,17 @@ def plot_emmeans_sig_mat(sig_df, mask):
         fmt='.4f',   # Format as floating point with 4 decimals
         linewidths=0,  # Remove lines between cells
         linecolor='none',  # Ensure no line color
-        yticklabels=ordered_timepoints  # Reverse y-axis labels
+        yticklabels=ordered_timepoints,  # Reverse y-axis labels
+        cbar_kws={"label": "p-value"} # Add colorbar label
     )
+
+    # Make x and y axis labels bigger
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+
+    # Make colorbar tick labels bigger
+    cbar = heatmap.collections[0].colorbar
+    cbar.ax.tick_params(labelsize=14)
 
     # Add significance markers
     for i in range(4):  # rows
@@ -1150,16 +1171,16 @@ def plot_emmeans_sig_mat(sig_df, mask):
                     )
                 elif sig_df.iloc[i, j] < 0.01:
                     plt.text(
-                        j + 0.625, i + 0.45, "**", ha='left', va='center', fontsize=10
+                        j + 0.65, i + 0.45, "**", ha='left', va='center', fontsize=10
                     )
                 elif sig_df.iloc[i, j] < 0.05:
                     plt.text(
-                        j + 0.625, i + 0.45, "*", ha='left', va='center', fontsize=10
+                        j + 0.65, i + 0.45, "*", ha='left', va='center', fontsize=10
                     )
-                elif sig_df.iloc[i, j] < 0.1:
-                    plt.text(
-                        j + 0.625, i + 0.45, "†", ha='left', va='center', fontsize=10
-                    )
+                # elif sig_df.iloc[i, j] < 0.1:
+                #     plt.text(
+                #         j + 0.625, i + 0.45, "†", ha='left', va='center', fontsize=10
+                #     )
 
     plt.title('Pairwise Comparison p-values from Mixed Effects Model (emmeans)')
     plt.grid(False)
@@ -1169,8 +1190,8 @@ def plot_emmeans_sig_mat(sig_df, mask):
     plt.subplots_adjust(bottom=0.075)
 
     # Add legend for significance levels
-    plt.figtext(0.25, 0.01, "Significance levels: ** p<0.01, * p<0.05, † p<0.1",
-            ha='left', fontsize=12, style='italic') #*** p<0.001, 
+    # plt.figtext(0.35, 0.01, "Significance levels: ** p<0.01, * p<0.05",#, † p<0.1",
+            # ha='left', fontsize=12, style='italic') #*** p<0.001, 
 
     plt.savefig('significance_matrix_mixed_effects_v2.png', dpi=300, bbox_inches='tight')
     plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/significance_matrix_mixed_effects_v2.png', dpi=600, bbox_inches='tight')
@@ -1753,7 +1774,7 @@ if __name__ == '__main__':
 
     # pairwise test visualisations:
     #THIS ONE ONLY:
-    # data_availability_matrix(pivoted_data, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], filename='data_availability.png')
+    data_availability_matrix(pivoted_data, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], filename='data_availability.png')
     
     #significance_matrix_ttest(valid_results, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], filename='significance_matrix.png')
     #significance_matrix_wilcoxon(valid_wilcoxon_results, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], filename='significance_matrix_wilcoxon.png')
@@ -1761,12 +1782,12 @@ if __name__ == '__main__':
 
     # Mixed effect model visualisations:
     # THIS ONE:
-    # data_availability_matrix(binned_df_pivot, order, filename='data_availability_matrix_binned.png')
+    data_availability_matrix(binned_df_pivot, order, filename='data_availability_matrix_binned.png')
 
     # Plot the significance matrix
     # THIS ONE: (2 LINES)
-    # sig_df, mask = emmeans_significance_matrix(py_pairs)
-    # plot_emmeans_sig_mat(sig_df, mask)  
+    sig_df, mask = emmeans_significance_matrix(py_pairs)
+    plot_emmeans_sig_mat(sig_df, mask)  
 
-    mixed_effect_boxplot(new_df, result, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], chronic_timepoints=['3mo', '6mo', '12mo', '24mo'])
+    # mixed_effect_boxplot(new_df, result, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], chronic_timepoints=['3mo', '6mo', '12mo', '24mo'])
    
