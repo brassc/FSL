@@ -918,21 +918,23 @@ def mixed_effect_boxplot(df, result, timepoints=['ultra-fast', 'fast', 'acute', 
                 
                 # Assign significance level
                 if p_value < 0.001:
-                    sig_levels[category] = "***"
-                elif p_value < 0.01:
                     sig_levels[category] = "**"
+                elif p_value < 0.01:
+                    sig_levels[category] = "*"
                 elif p_value < 0.05:
                     sig_levels[category] = "*"
-                elif p_value < 0.1:
-                    sig_levels[category] = "†"
+                # elif p_value < 0.1:
+                #     sig_levels[category] = "†"
                 else:
                     sig_levels[category] = "n.s."
                 
                 # Assign color based on significance
                 if p_value < 0.05:  # Significant
-                    custom_colors[category] = to_rgba(coolwarm(0.0))  # Blue for significant
+                    # custom_colors[category] = to_rgba(coolwarm(0.0))  # Blue for significant
+                    custom_colors[category] = to_rgba(coolwarm(0.3))  # Default to neutral
                 else:  # Not significant
-                    custom_colors[category] = to_rgba(coolwarm(1.0))  # Red for not significant
+                    # custom_colors[category] = to_rgba(coolwarm(1.0))  # Red for not significant
+                    custom_colors[category] = to_rgba(coolwarm(0.3))  # Default to neutral
             else:
                 custom_colors[category] = to_rgba(coolwarm(0.3))  # Default to neutral
                 sig_levels[category] = "n.s."
@@ -941,47 +943,56 @@ def mixed_effect_boxplot(df, result, timepoints=['ultra-fast', 'fast', 'acute', 
     for i, tp in enumerate(plot_timepoints):
         if tp in predictions:
             pred_value = predictions[tp]
-            ax.scatter(i, pred_value, color=custom_colors.get(tp, 'black'), 
-                      marker='o', s=120, zorder=10, 
+            ax.scatter(i, pred_value, color='lightgrey',#custom_colors.get(tp, 'black'), 
+                      marker='s', s=120, zorder=10, 
                       edgecolor='black', linewidth=1.5)
     
     # Create a more professional legend
     legend_elements = []
     
     # Create legend title with better formatting
-    title = "Mixed Effect Model Predictions"
+    # title = "Mixed Effect Model Predictions"
     
         # Model predictions in legend with p-values
-    for category in model_order:
-        if category in predictions:
-            # Format the label with p-values
-            if category == reference_category:
-                label = f"{category.capitalize()} reference"
-            else:
-                param_name = f'timepoint[T.{category}]'
-                if param_name in result.pvalues:
-                    p_value = result.pvalues[param_name]
-                    # Format p-value with appropriate precision
-                    if p_value < 0.001:
-                        p_text = "(p < 0.01) ***"
-                    elif p_value < 0.01:
-                        p_text = f"(p < 0.05) **"#{p_value:.3f}) **"
-                    else:
-                        p_text = f"(p > 0.7)"# {p_value:.3f}) †"
-                    label = f"{category.capitalize()} {p_text}"
-                else:
-                    label = f"{category.capitalize()}"
+    # for category in model_order:
+        # if category in predictions:
+        #     # Format the label with p-values
+        #     if category == reference_category:
+        #         label = f"{category.capitalize()} reference"
+        #     else:
+        #         param_name = f'timepoint[T.{category}]'
+        #         if param_name in result.pvalues:
+        #             p_value = result.pvalues[param_name]
+        #             # Format p-value with appropriate precision
+        #             if p_value < 0.001:
+        #                 p_text = "(p < 0.01) ***"
+        #             elif p_value < 0.01:
+        #                 p_text = f"(p < 0.05) **"#{p_value:.3f}) **"
+        #             else:
+        #                 p_text = f"(p > 0.7)"# {p_value:.3f}) †"
+        #             label = f"{category.capitalize()} {p_text}"
+        #         else:
+        #             label = f"{category.capitalize()}"
             
-            legend_elements.append(
-                Line2D([0], [0], marker='o', color='w', 
-                      markerfacecolor=custom_colors.get(category, 'black'),
-                      markeredgecolor='black',
-                      markersize=10, label=label)
+    legend_elements.append(
+        Line2D([0], [0], marker='s', color='w', 
+                markerfacecolor='lightgrey',#custom_colors.get(category, 'black'),
+                markeredgecolor='black',
+                markersize=10, label="Linear Mixed Effects Model Predictions")#, label=label)
             )
+    
+    # Small circle for jitter points (size=6 from stripplot)
+    legend_elements.append(
+        Line2D([0], [0], marker='o', color='w', 
+                markerfacecolor='black',
+                markeredgecolor='black',
+                markersize=6, label='Raw Data Points')
+            )
+    
     
     # Create the legend with improved formatting
     if legend_elements:
-        legend = ax.legend(handles=legend_elements, title=title, 
+        legend = ax.legend(handles=legend_elements, #title=title, 
                           loc='upper right', framealpha=0.8,
                           fontsize=9, title_fontsize=10)
         
@@ -991,8 +1002,8 @@ def mixed_effect_boxplot(df, result, timepoints=['ultra-fast', 'fast', 'acute', 
         
         # Position in the upper right, below where the legend is expected to be
         # Using figure coordinates (0-1 range)
-        plt.figtext(0.975, 0.7, "Blue: Significant. Red: Not Significant. \nSignificance levels: \n*** p<0.01, ** p<0.05, * p<0.1",
-               ha='right', fontsize=8, style='italic')
+        # plt.figtext(0.975, 0.7, "Blue: Significant. Red: Not Significant. \nSignificance levels: \n** p<0.01, * p<0.05",
+        #        ha='right', fontsize=8, style='italic')
         
 
     # # Add significance notations under the x-axis
