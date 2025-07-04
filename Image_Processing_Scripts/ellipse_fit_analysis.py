@@ -1,3 +1,4 @@
+from matplotlib.lines import Line2D
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -1148,30 +1149,56 @@ def create_summary_visualisations(metrics_df, output_dir):
 
 
 
+    # Calculate mean and std for Dice coefficient
+    def_dice_mean = metrics_df['def_dice'].mean()
+    def_dice_std = metrics_df['def_dice'].std()
+    ref_dice_mean = metrics_df['ref_dice'].mean()
+    ref_dice_std = metrics_df['ref_dice'].std()
 
+    # Calculate mean and std for MAE
+    def_mae_mean = metrics_df['def_mae'].mean()
+    def_mae_std = metrics_df['def_mae'].std()
+    ref_mae_mean = metrics_df['ref_mae'].mean()
+    ref_mae_std = metrics_df['ref_mae'].std()
+
+    def_label = (f"$\\mathbf{{Deformed:}}$\n"
+                f"Dice: {def_dice_mean:.3f} ± {def_dice_std:.3f}\n"
+                f"MAE: {def_mae_mean:.2f} ± {def_mae_std:.2f} [mm]")
+
+    ref_label = (f"$\\mathbf{{Reference:}}$\n"
+                f"Dice: {ref_dice_mean:.3f} ± {ref_dice_std:.3f}\n"
+                f"MAE: {ref_mae_mean:.2f} ± {ref_mae_std:.2f} [mm]")
     
     # 2. Scatter plot of RMSE vs R²
     plt.figure(figsize=(10, 7))
     scatter = plt.scatter(metrics_df['def_dice'], metrics_df['def_mae'], 
                           color=def_color, 
                           alpha=0.7, 
-                          label='Deformed',
+                        #   label='Deformed',
+                          label=def_label,
                           edgecolors='black', 
                           linewidth=0.5)
     plt.scatter(metrics_df['ref_dice'], metrics_df['ref_mae'], 
                 color=ref_color, 
                 alpha=0.7, 
-                label='Reference',
+                # label='Reference',
+                label=ref_label,
                 edgecolors='black', 
                 linewidth=0.5)
     
-    plt.ylabel('Mean Absolute Error (MAE)')
+    plt.ylabel('Mean Absolute Error (MAE) [mm]')
     plt.xlabel('Dice Coefficient')
     plt.title('MAE vs Dice by Configuration')
     plt.ylim(0,8)
     plt.xlim(0,1)
-    plt.legend()
-    
+    legend = plt.legend(loc='upper left', fontsize=12, framealpha=0.9, 
+          fancybox=True)
+
+    # for text in legend.get_texts():
+    #     text.set_verticalalignment('top')
+    #     # Add some padding to the top of text to align with marker center
+    #     # text.set_position((text.get_position()[0], text.get_position()[1] + 0.005))
+
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, 'scatter_mae_dice.png'))
     plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/scatter_mae_dice.pdf', dpi=300)
