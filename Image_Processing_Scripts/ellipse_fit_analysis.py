@@ -1162,12 +1162,12 @@ def create_summary_visualisations(metrics_df, output_dir):
     ref_mae_std = metrics_df['ref_mae'].std()
 
     def_label = (f"$\\mathbf{{Deformed:}}$\n"
-                f"Dice: {def_dice_mean:.3f} ± {def_dice_std:.3f}\n"
-                f"MAE: {def_mae_mean:.2f} ± {def_mae_std:.2f} [mm]")
+                f"Mean Dice: {def_dice_mean:.3f} ± {def_dice_std:.3f}\n"
+                f"Mean MAE: {def_mae_mean:.2f} ± {def_mae_std:.2f} [mm]")
 
     ref_label = (f"$\\mathbf{{Reference:}}$\n"
-                f"Dice: {ref_dice_mean:.3f} ± {ref_dice_std:.3f}\n"
-                f"MAE: {ref_mae_mean:.2f} ± {ref_mae_std:.2f} [mm]")
+                f"Mean Dice: {ref_dice_mean:.3f} ± {ref_dice_std:.3f}\n"
+                f"Mean MAE: {ref_mae_mean:.2f} ± {ref_mae_std:.2f} [mm]")
     
     # 2. Scatter plot of RMSE vs R²
     plt.figure(figsize=(10, 7))
