@@ -2197,12 +2197,12 @@ def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='inc
             plt.style.use('default')  # Fallback if neither works
             
     plt.rcParams.update({
-        'font.size': 12,
+        'font.size': 14,
         'axes.titlesize': 14,
-        'axes.labelsize': 12,
-        'xtick.labelsize': 10,
-        'ytick.labelsize': 10,
-        'legend.fontsize': 10,
+        'axes.labelsize': 14,
+        'xtick.labelsize': 14,
+        'ytick.labelsize': 14,
+        'legend.fontsize': 14,
         'figure.figsize': (12, 8)
     })
     
@@ -2219,7 +2219,7 @@ def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='inc
     results = {}
     
     # Create a figure for results
-    fig, ax = plt.subplots(figsize=(12, 8))
+    fig, ax = plt.subplots(figsize=(10, 6))
     
     # Colors for regions
     colors = {'anterior': 'blue', 'posterior': 'red', 'combined': 'purple'}
@@ -2291,6 +2291,9 @@ def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='inc
                 for r in ring_numbers]
         ax.errorbar(ring_numbers, mean_values, yerr=y_err, fmt='none', 
                     ecolor=colors['combined'], alpha=0.5)
+
+        # Force y-axis to use plain notation instead of scientific
+        ax.ticklabel_format(style='plain', axis='y')
         
     else:
         # Process each region separately
@@ -2371,14 +2374,21 @@ def jt_test(df, parameter='fa', regions=(2,10), save_path=None, alternative='inc
     ax.axhline(y=0, color='gray', linestyle='--', alpha=0.5)
     ax.set_xlabel("Ring Number", fontsize=14)
     ax.set_ylabel(f"{parameter.upper()} Difference (Craniectomy - Control)", fontsize=14)
+    if parameter.lower() == 'md':
+        ax.set_ylabel(f"Mean Diffusivity Difference (Craniectomy - Control) [mm²/s]", fontsize=14)
     ax.set_xticks(ring_numbers)
     ax.grid(True, alpha=0.3)
     ax.legend(loc='upper right')
     
     title_prefix = "Combined" if combine_regions else "Separate"
-    plt.title(f"{title_prefix} Regions: Jonckheere-Terpstra Test for White Matter {parameter.upper()} Differences Across Rings {start_ring}-{end_ring}", 
-             fontsize=16)
+    # plt.title(f"{title_prefix} Regions: Jonckheere-Terpstra Test for White Matter {parameter.upper()} Differences Across Rings {start_ring}-{end_ring}", 
+            #  fontsize=16)
     plt.tight_layout()
+    if parameter.lower() == 'fa':
+        ax.set_ylim(-0.0475, 0.0375)
+        # ax.set_ylim
+    elif parameter.lower() == 'md':
+        ax.set_ylim(-0.000015, 0.000115)
     
     # Save figure if path provided
     if save_path:
@@ -2418,12 +2428,12 @@ def plot_metric_difference(df, parameter, region, save_path=None, plot_type='box
     except NameError:
         plt.style.use('seaborn-whitegrid')
         plt.rcParams.update({
-            'font.size': 12,
-            'axes.titlesize': 14,
-            'axes.labelsize': 12,
-            'xtick.labelsize': 10,
-            'ytick.labelsize': 10,
-            'legend.fontsize': 10,
+            'font.size': 14,
+            'axes.titlesize': 16,
+            'axes.labelsize': 14,
+            'xtick.labelsize': 14,
+            'ytick.labelsize': 14,
+            'legend.fontsize': 16,
             'figure.figsize': (12, 8)
         })
     
@@ -2693,14 +2703,16 @@ def plot_metric_difference(df, parameter, region, save_path=None, plot_type='box
     if group_by == 'region' and len(regions_to_analyze) > 1:
         ax.legend(by_label.values(), by_label.keys(), title='Region')
     else:
-        ax.legend(by_label.values(), by_label.keys(), title='Timepoint')
+        ax.legend(by_label.values(), by_label.keys(), title='Timepoint', fontsize=12) 
     
     # Add a horizontal line at y=0
     ax.axhline(y=0, color='gray', linestyle='--', alpha=0.7)
     
     # Set axis labels and title
-    ax.set_xlabel('Ring Number')
-    ax.set_ylabel(f'{parameter.upper()} Difference (Craniectomy Side - Control Side)')
+    ax.set_xlabel('Ring Number', fontsize=14)
+    ax.set_ylabel(f'{parameter.upper()} Difference (Craniectomy Side - Control Side)', fontsize=14)
+    if parameter.lower() == 'md':
+        ax.set_ylabel(f'Mean Diffusivity Difference (Craniectomy Side - Control Side) [mm²/s]', fontsize=14)
     
     # Set appropriate y-limits based on parameter
     if parameter.lower() == 'fa':
@@ -2722,10 +2734,10 @@ def plot_metric_difference(df, parameter, region, save_path=None, plot_type='box
     else:
         group_title = "by Timepoint"
         
-    ax.set_title(f'{parameter.upper()} Differences (Craniectomy Side - Control Side) for {region_title} {group_title}')
+    # ax.set_title(f'{parameter.upper()} Differences (Craniectomy Side - Control Side) for {region_title} {group_title}')
     
-    if 'wm' in save_path:
-        ax.set_title(f'{parameter.upper()} Differences (Craniectomy Side - Control Side) in White Matter for {region_title} {group_title}')
+    # if 'wm' in save_path:
+    #     ax.set_title(f'{parameter.upper()} Differences (Craniectomy Side - Control Side) in White Matter for {region_title} {group_title}')
 
 
     # Adjust layout
@@ -3542,8 +3554,8 @@ if __name__ == '__main__':
     wm_data_10x4vox_filename='DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_wm_harmonised.csv'
     wm_data_10x4vox=process_timepoint_data(input_file_location=wm_data_10x4vox_filename)
     # plot_metric_difference(df=wm_data_5x4vox, parameter='fa', region='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_anterior_comparison_box.png', plot_type='strip')
-    # plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
-    # plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
+    plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
+    plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
     # plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
     # plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
     # # sys.exit()
@@ -3554,26 +3566,26 @@ if __name__ == '__main__':
     ######### JT TEST #################
     #################################
 
-    # # Run the test on rings 2-10 looking for an increasing trend
-    # results = jt_test(df=wm_data_10x4vox, parameter='fa', regions=(2, 10), 
-    #                 save_path='DTI_Processing_Scripts/jt_test_results-fa-rings-2to10.png', alternative='increasing')
+    # Run the test on rings 2-10 looking for an increasing trend
+    results = jt_test(df=wm_data_10x4vox, parameter='fa', regions=(2, 10), 
+                    save_path='DTI_Processing_Scripts/jt_test_results-fa-rings-2to10.png', alternative='increasing')
 
-    # print(results)
-    # results = jt_test(df=wm_data_10x4vox, parameter='fa', regions=(2, 10), 
-    #                 save_path='DTI_Processing_Scripts/jt_test_results-fa-rings-combined-2to10.png', alternative='increasing', combine_regions=True)
+    print(results)
+    results = jt_test(df=wm_data_10x4vox, parameter='fa', regions=(2, 10), 
+                    save_path='DTI_Processing_Scripts/jt_test_results-fa-rings-combined-2to10.png', alternative='increasing', combine_regions=True)
 
-    # print(results)
+    print(results)
 
-    # results = jt_test(df=wm_data_10x4vox, parameter='md', regions=(2, 10), 
-    #                 save_path='DTI_Processing_Scripts/jt_test_results-md-rings-2to10.png', alternative='increasing')
+    results = jt_test(df=wm_data_10x4vox, parameter='md', regions=(2, 10), 
+                    save_path='DTI_Processing_Scripts/jt_test_results-md-rings-2to10.png', alternative='increasing')
 
-    # print(results)
-    # results = jt_test(df=wm_data_10x4vox, parameter='md', regions=(2, 10), 
-    #                 save_path='DTI_Processing_Scripts/jt_test_results-md-rings-combined-2to10.png', alternative='increasing', combine_regions=True)
+    print(results)
+    results = jt_test(df=wm_data_10x4vox, parameter='md', regions=(2, 10), 
+                    save_path='DTI_Processing_Scripts/jt_test_results-md-rings-combined-2to10.png', alternative='increasing', combine_regions=True)
 
-    # print(results)
+    print(results)
 
-    # sys.exit()
+    sys.exit()
 
     ################################################
     
