@@ -3619,13 +3619,13 @@ if __name__ == '__main__':
 
 
     # Data availability matrix
-    matrix = data_availability_matrix(
-        data=wm_data_roi_567, 
-        timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'],
-        diff_column='fa_anterior_diff',  # or any other diff column
-        filename='fa_diff_data_availability.png'
-    )
-    sys.exit()
+    # matrix = data_availability_matrix(
+    #     data=wm_data_roi_567, 
+    #     timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'],
+    #     diff_column='fa_anterior_diff',  # or any other diff column
+    #     filename='fa_diff_data_availability.png'
+    # )
+    # sys.exit()
 
     # create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='fa', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
     # create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='md', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
@@ -3648,13 +3648,15 @@ if __name__ == '__main__':
     # print(f"Unique timepoints in combined wm data: {wm_data_roi_567_combi['timepoint'].unique()}")
     # print(wm_data_roi_567_combi)
 
-    # # Do new data availability matrix for combi data
-    # matrix_combi = data_availability_matrix(
-    #     data=wm_data_roi_567_combi, 
-    #     timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'],
-    #     diff_column='fa_anterior_diff',  # or any other diff column
-    #     filename='fa_diff_data_availability_combi.png'
-    # )
+    # Do new data availability matrix for combi data
+    matrix_combi = data_availability_matrix(
+        data=wm_data_roi_567_combi, 
+        timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'],
+        diff_column='fa_anterior_diff',  # or any other diff column
+        filename='fa_diff_data_availability_combi.png'
+    )
+
+    sys.exit()
 
     #####################################################
     # LINEAR MIXED EFFECTS MODEL WITH COMBI DATA
