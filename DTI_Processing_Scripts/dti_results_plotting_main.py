@@ -828,7 +828,19 @@ def data_availability_matrix(data, timepoints, diff_column='fa_anterior_diff', f
     
     # Visualize the data availability
     plt.figure(figsize=(10, 8))
-    sns.heatmap(availability_matrix, annot=True, cmap="YlGnBu", fmt='g')
+    # sns.heatmap(availability_matrix, annot=True, cmap="YlGnBu", fmt='g')
+
+    heatmap=sns.heatmap(availability_matrix, annot=True, 
+                vmin=0, vmax=16,
+                cmap="YlGnBu", fmt='g', 
+                annot_kws={"size": 16},  # Annotation font size)
+                cbar_kws={"label": "Number of Scans"}) # Add colorbar label
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    cbar = heatmap.collections[0].colorbar
+    cbar.ax.tick_params(labelsize=14)
+
+
     plt.title('Data Availability Matrix (number of patients)')
     plt.grid(False)
     plt.tight_layout()
@@ -3554,8 +3566,8 @@ if __name__ == '__main__':
     wm_data_10x4vox_filename='DTI_Processing_Scripts/merged_data_10x4vox_NEW_filtered_wm_harmonised.csv'
     wm_data_10x4vox=process_timepoint_data(input_file_location=wm_data_10x4vox_filename)
     # plot_metric_difference(df=wm_data_5x4vox, parameter='fa', region='anterior', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_5x4vox_anterior_comparison_box.png', plot_type='strip')
-    plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
-    plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
+    # plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
+    # plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_box.png', plot_type='strip', group_by='timepoint')
     # plot_metric_difference(df=wm_data_10x4vox, parameter='fa', region='both', save_path='DTI_Processing_Scripts/test_results/roi_fa_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
     # plot_metric_difference(df=wm_data_10x4vox, parameter='md', region='both', save_path='DTI_Processing_Scripts/test_results/roi_md_wm_10x4vox_both_regions_comparison_boxplot.png', plot_type='box', group_by='timepoint')
     # # sys.exit()
@@ -3567,25 +3579,25 @@ if __name__ == '__main__':
     #################################
 
     # Run the test on rings 2-10 looking for an increasing trend
-    results = jt_test(df=wm_data_10x4vox, parameter='fa', regions=(2, 10), 
-                    save_path='DTI_Processing_Scripts/jt_test_results-fa-rings-2to10.png', alternative='increasing')
+    # results = jt_test(df=wm_data_10x4vox, parameter='fa', regions=(2, 10), 
+    #                 save_path='DTI_Processing_Scripts/jt_test_results-fa-rings-2to10.png', alternative='increasing')
 
-    print(results)
-    results = jt_test(df=wm_data_10x4vox, parameter='fa', regions=(2, 10), 
-                    save_path='DTI_Processing_Scripts/jt_test_results-fa-rings-combined-2to10.png', alternative='increasing', combine_regions=True)
+    # print(results)
+    # results = jt_test(df=wm_data_10x4vox, parameter='fa', regions=(2, 10), 
+    #                 save_path='DTI_Processing_Scripts/jt_test_results-fa-rings-combined-2to10.png', alternative='increasing', combine_regions=True)
 
-    print(results)
+    # print(results)
 
-    results = jt_test(df=wm_data_10x4vox, parameter='md', regions=(2, 10), 
-                    save_path='DTI_Processing_Scripts/jt_test_results-md-rings-2to10.png', alternative='increasing')
+    # results = jt_test(df=wm_data_10x4vox, parameter='md', regions=(2, 10), 
+    #                 save_path='DTI_Processing_Scripts/jt_test_results-md-rings-2to10.png', alternative='increasing')
 
-    print(results)
-    results = jt_test(df=wm_data_10x4vox, parameter='md', regions=(2, 10), 
-                    save_path='DTI_Processing_Scripts/jt_test_results-md-rings-combined-2to10.png', alternative='increasing', combine_regions=True)
+    # print(results)
+    # results = jt_test(df=wm_data_10x4vox, parameter='md', regions=(2, 10), 
+    #                 save_path='DTI_Processing_Scripts/jt_test_results-md-rings-combined-2to10.png', alternative='increasing', combine_regions=True)
 
-    print(results)
+    # print(results)
 
-    sys.exit()
+    # sys.exit()
 
     ################################################
     
@@ -3606,13 +3618,14 @@ if __name__ == '__main__':
 
 
 
-    # # Data availability matrix
-    # matrix = data_availability_matrix(
-    #     data=wm_data_roi_567, 
-    #     timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'],
-    #     diff_column='fa_anterior_diff',  # or any other diff column
-    #     filename='fa_diff_data_availability.png'
-    # )
+    # Data availability matrix
+    matrix = data_availability_matrix(
+        data=wm_data_roi_567, 
+        timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'],
+        diff_column='fa_anterior_diff',  # or any other diff column
+        filename='fa_diff_data_availability.png'
+    )
+    sys.exit()
 
     # create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='fa', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
     # create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='md', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
