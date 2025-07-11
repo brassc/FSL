@@ -1840,7 +1840,16 @@ def create_timepoint_boxplot_recategorised_dti(df, parameter, timepoints=['ultra
 
     set_publication_style()  # Assuming this function exists in your environment
 
-    fig, ax = plt.subplots(figsize=(12, 6))
+    plt.rcParams.update({
+        'font.size': 14,           # Base font size
+        # 'axes.titlesize': 18,      # Title font size
+        'axes.labelsize': 16,      # Axis label font size
+        'xtick.labelsize': 14,     # X-axis tick label size
+        'ytick.labelsize': 14,     # Y-axis tick label size
+        'legend.fontsize': 14      # Legend font size
+    })
+
+    fig, ax = plt.subplots(figsize=(12, 7))
 
     palette = sns.color_palette("viridis", len(timepoints))
 
@@ -1968,9 +1977,9 @@ def create_timepoint_boxplot_recategorised_dti(df, parameter, timepoints=['ultra
         unit = " [mm²/s]"
     
     # Set labels and title
-    ax.set_xlabel('Timepoint', fontsize=12)
-    ax.set_ylabel(f'{param_name} Difference (Craniectomy - Control){unit}', fontsize=12)
-    ax.set_title(f'{param_name} Difference by Timepoint', fontsize=14, fontweight='bold')
+    ax.set_xlabel('Timepoint')
+    ax.set_ylabel(f'{param_name} Difference (Craniectomy - Control){unit}')
+    ax.set_title(f'{param_name} Difference by Timepoint', fontweight='bold')
     
     # Add grid for y-axis only
     ax.grid(True, axis='y', linestyle='-', alpha=0.3)
@@ -1990,10 +1999,10 @@ def create_timepoint_boxplot_recategorised_dti(df, parameter, timepoints=['ultra
         if count > 0:
             if parameter == 'fa':
                 ax.text(i, ax.get_ylim()[0] * 1.15, f"n={count}",
-                    ha='center', va='bottom', fontsize=10)
+                    ha='center', va='bottom', fontsize=12)
             else:
                 ax.text(i, ax.get_ylim()[0] * 1.35, f"n={count}",
-                    ha='center', va='bottom', fontsize=10)
+                    ha='center', va='bottom', fontsize=12)
     
     ax.xaxis.set_label_coords(0.5, -0.125)  # Move x-axis label down
     plt.tight_layout()
@@ -3627,9 +3636,11 @@ if __name__ == '__main__':
     # )
     # sys.exit()
 
-    # create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='fa', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
-    # create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='md', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
-    
+    # create_timepoint_boxplot_recategorised_dti(df, parameter, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+
+    create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='fa', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+    create_timepoint_boxplot_recategorised_dti(df=wm_data_roi_567, parameter='md', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
+    sys.exit()
     
     # create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='fa', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
     # create_timepoint_boxplot_recategorised_dti_single_region(df=wm_data_roi_567, parameter='md', region='anterior', timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'])
@@ -3649,14 +3660,14 @@ if __name__ == '__main__':
     # print(wm_data_roi_567_combi)
 
     # Do new data availability matrix for combi data
-    matrix_combi = data_availability_matrix(
-        data=wm_data_roi_567_combi, 
-        timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'],
-        diff_column='fa_anterior_diff',  # or any other diff column
-        filename='fa_diff_data_availability_combi.png'
-    )
+    # matrix_combi = data_availability_matrix(
+    #     data=wm_data_roi_567_combi, 
+    #     timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'],
+    #     diff_column='fa_anterior_diff',  # or any other diff column
+    #     filename='fa_diff_data_availability_combi.png'
+    # )
 
-    sys.exit()
+    # sys.exit()
 
     #####################################################
     # LINEAR MIXED EFFECTS MODEL WITH COMBI DATA
