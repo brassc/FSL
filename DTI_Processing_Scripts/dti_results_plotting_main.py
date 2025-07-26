@@ -1243,7 +1243,7 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
         
         ax1.set_xlabel('Herniation Area [mm²]')#, fontsize=12
         ax1.set_ylabel('Anterior FA Difference\n(Craniectomy - Control)')#, fontsize=12
-        ax1.set_title('Anterior FA Difference vs Herniation Area', fontweight='bold') #, fontsize=14
+        # ax1.set_title('Anterior FA Difference vs Herniation Area', fontweight='bold') #, fontsize=14
         ax1.grid(False)
         ax1.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
         ax1.axvline(x=0, color='gray', linestyle='-', alpha=0.1)
@@ -1317,7 +1317,7 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
         
         ax2.set_xlabel('Herniation Area [mm²]') #, fontsize=12
         ax2.set_ylabel('Posterior FA Difference\n(Craniectomy - Control)') #, fontsize=12
-        ax2.set_title('Posterior FA Difference vs Herniation Area', fontweight='bold') # fontsize=14,
+        # ax2.set_title('Posterior FA Difference vs Herniation Area', fontweight='bold') # fontsize=14,
         ax2.grid(False)
         ax2.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
         ax2.axvline(x=0, color='gray', linestyle='-', alpha=0.1)
@@ -1565,7 +1565,7 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
         
         ax1.set_xlabel('Herniation Area [mm²]')#, fontsize=12)
         ax1.set_ylabel('Anterior MD Difference\n(Craniectomy - Control) [mm²/s]')#, fontsize=12)
-        ax1.set_title('Anterior MD vs Herniation Area', fontweight='bold') #, fontsize=14,
+        # ax1.set_title('Anterior MD vs Herniation Area', fontweight='bold') #, fontsize=14,
         ax1.grid(False)
         ax1.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
         ax1.axvline(x=0, color='gray', linestyle='-', alpha=0.1)
@@ -1633,13 +1633,15 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
             
             # Add statistics
             stats_text = f'β = {slope_post:.2e}\np = {result5.pvalues["area_diff"]:.3f}'
+            # slope_formatted = f'{slope_post:.2e}'.replace('e', ' × 10^{').replace('+0', '').replace('-0', '-') + '}'
+            # stats_text = f'β = {slope_formatted}\np = {result5.pvalues["area_diff"]:.3f}'
             ax2.text(0.015, 0.985, stats_text, transform=ax2.transAxes, 
                 verticalalignment='top', horizontalalignment='left',# fontsize=10,
                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
         
         ax2.set_xlabel('Herniation Area [mm²]')#, fontsize=12)
         ax2.set_ylabel('Posterior MD Difference\n(Craniectomy - Control) [mm²/s]')#, fontsize=12)
-        ax2.set_title('Posterior MD vs Herniation Area', fontweight='bold')# fontsize=14,
+        # ax2.set_title('Posterior MD vs Herniation Area', fontweight='bold')# fontsize=14,
         ax2.grid(False)
         ax2.axhline(y=0, color='gray', linestyle='-', alpha=0.1)
         ax2.axvline(x=0, color='gray', linestyle='-', alpha=0.1)
