@@ -740,7 +740,9 @@ def create_timepoint_boxplot_LME_dti(df, parameter, result, timepoints=['ultra-f
         ax.set_ylim(-0.2, 0.1)
     ax.set_ylabel(f'{param_name} Difference (Craniectomy - Control){unit}')#, fontsize=12)
     ax.set_title(f'{param_name} Difference by Timepoint', fontweight='bold') #, fontsize=14
-    
+    if fixed_only is False and fixed_effects_result is not None:
+        ax.set_title(f'Linear Mixed and Fixed Effects Model Predictions of {param_name} Difference by Timepoint', fontweight='bold')
+
     # Add grid for y-axis only
     ax.grid(True, axis='y', linestyle='-', alpha=0.3)
     
@@ -3748,8 +3750,8 @@ if __name__ == '__main__':
     # # sys.exit()
 
     # with posterior as default region: 
-    fa_long_wm_data_roi_567_combi_post=fa_long_wm_data_roi_567_combi.copy()
-    fa_long_wm_data_roi_567_combi_post["Region"] = pd.Categorical(fa_long_wm_data_roi_567_combi["Region"], categories=["posterior", "anterior"])
+    # fa_long_wm_data_roi_567_combi_post=fa_long_wm_data_roi_567_combi.copy()
+    # fa_long_wm_data_roi_567_combi_post["Region"] = pd.Categorical(fa_long_wm_data_roi_567_combi["Region"], categories=["posterior", "anterior"])
 
     # model_posterior = smf.mixedlm("FA_diff ~ timepoint + Region", 
     #                     fa_long_wm_data_roi_567_combi_post, 
@@ -3757,10 +3759,10 @@ if __name__ == '__main__':
     
     # result_post = model_posterior.fit(method='powell')
 
-    # # Step 4: Output results
+    # Step 4: Output results
     # print("Mixed effects model summary for posterior region as baseline:")
     # print_lme_summary_precise(result_post, precision=6)
-    # sys.exit()
+    # # sys.exit()
     # print(result_post.summary())
 
     # print("\nFixed Effects Parameters:")
@@ -3769,100 +3771,100 @@ if __name__ == '__main__':
     # print("\nRandom Effects Parameters:")
     # print(result_post.cov_re)
 
-    ##############################
-    ######## PLOTTING LME
+    #############################
+    ####### PLOTTING LME
 
-    # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'])
-    ##################################
+    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'])
+    #################################
 
-    # ###### WHY DO LME? 
-    # # Check if linear mixed effect (patient as random effect) adds any value
-    # print("\n=== Formal Test for Random Effects ===")
-    # # Compare fixed vs mixed effects models using likelihood ratio test
-    # from scipy import stats
+    ###### WHY DO LME? 
+    # Check if linear mixed effect (patient as random effect) adds any value
+    print("\n=== Formal Test for Random Effects ===")
+    # Compare fixed vs mixed effects models using likelihood ratio test
+    from scipy import stats
 
-    # try:
-    #     # Both models must use ML estimation for valid comparison
-    #     model_fixed = smf.ols("FA_diff ~ timepoint + Region", data=fa_long_wm_data_roi_567_combi)
-    #     result_fixed = model_fixed.fit()
-    #     ll_fixed = result_fixed.llf
+    try:
+        # Both models must use ML estimation for valid comparison
+        model_fixed = smf.ols("FA_diff ~ timepoint + Region", data=fa_long_wm_data_roi_567_combi)
+        result_fixed = model_fixed.fit()
+        ll_fixed = result_fixed.llf
         
-    #     model_mixed = smf.mixedlm("FA_diff ~ timepoint + Region",
-    #                             fa_long_wm_data_roi_567_combi,
-    #                             groups=fa_long_wm_data_roi_567_combi["patient_id"])
-    #     result_mixed = model_mixed.fit(method='powell', reml=False)  # Use ML, not REML
-    #     ll_mixed = result_mixed.llf
+        model_mixed = smf.mixedlm("FA_diff ~ timepoint + Region",
+                                fa_long_wm_data_roi_567_combi,
+                                groups=fa_long_wm_data_roi_567_combi["patient_id"])
+        result_mixed = model_mixed.fit(method='powell', reml=False)  # Use ML, not REML
+        ll_mixed = result_mixed.llf
         
-    #     # Likelihood ratio test
-    #     lr_stat = 2 * (ll_mixed - ll_fixed)
-    #     p_value = 1 - stats.chi2.cdf(lr_stat, df=1)  # df=1 for one random effect
+        # Likelihood ratio test
+        lr_stat = 2 * (ll_mixed - ll_fixed)
+        p_value = 1 - stats.chi2.cdf(lr_stat, df=1)  # df=1 for one random effect
         
-    #     print(f"Fixed effects LL: {ll_fixed:.4f}")
-    #     print(f"Mixed effects LL: {ll_mixed:.4f}")
-    #     print(f"LR statistic: {lr_stat:.4f}")
-    #     print(f"p-value: {p_value:.4f}")
-    #     print("Random effects needed" if p_value < 0.05 else "Fixed effects sufficient")
-    # except:
-    #     print("Could not perform likelihood ratio test")
+        print(f"Fixed effects LL: {ll_fixed:.4f}")
+        print(f"Mixed effects LL: {ll_mixed:.4f}")
+        print(f"LR statistic: {lr_stat:.4f}")
+        print(f"p-value: {p_value:.4f}")
+        print("Random effects needed" if p_value < 0.05 else "Fixed effects sufficient")
+    except:
+        print("Could not perform likelihood ratio test")
 
 
 
-    # # ###########################
-    # # ########## FIXED EFFECT WITH CLUSTERED STANDARD ERRORS (accounts for repeated measures by using clustering)
-    # # Fixed effects model with robust standard errors clustered by patient_id
-    # # to account for within-patient correlation across timepoints and regions
-    # # #####################################################
-    # # # LINEAR FIXED EFFECTS MODEL WITH COMBI DATA AND CLUSTERED SEs
-    # # # H_0: There is no statistically significant difference between
-    # # # FA in Control vs. Craniectomy for anterior and posterior ROIs.
-    # # # i.e. H_0: FA_diff = FA_{craniectomy} - FA_{control} = 0
-    # # # Fixed effects equation with Timepoint and Region as covariates.
-    # # # Y_{jk} = \beta_0 + \sum_{t=1}^{T-1} \beta_{1t} \cdot \text{Timepoint}_{jt} + \beta_2 \cdot \text{Region}_k + \varepsilon_{jk}
-    # # # $Y_{jk}$: FA difference (Craniectomy - Control) at timepoint $j$, in region $k$
-    # # # $\beta_0$: Intercept (mean FA difference at reference timepoint and region)
-    # # # $\beta_{1t}$: Coefficient for timepoint $t$ (excluding the reference level)
-    # # # $\text{Timepoint}_{jt}$: Indicator variable (1 if observation is at timepoint $t$, else 0)
-    # # # $\beta_2$: Coefficient for region (e.g., anterior vs posterior)
-    # # # $\text{Region}_k$: Indicator variable for brain region (e.g., 0 = anterior, 1 = posterior)
-    # # # $\varepsilon_{jk}$: Residual error, where $\varepsilon_{jk} \sim \mathcal{N}(0, \sigma^2)$
-    # # # print(wm_data_roi_567_combi.columns)
-    # # # fa_long_wm_data_roi_567_combi = pd.melt(wm_data_roi_567_combi,
-    # # # id_vars=['patient_id', 'timepoint'],
-    # # # value_vars=['fa_anterior_diff', 'fa_posterior_diff'],
-    # # # var_name='Region',
-    # # # value_name='FA_diff')
-    # # # print(fa_long_wm_data_roi_567_combi)
-    # # # # rename regions to anterior and posterior
-    # # # fa_long_wm_data_roi_567_combi['Region'] = fa_long_wm_data_roi_567_combi['Region'].map({
-    # # # 'fa_anterior_diff': 'anterior',
-    # # # 'fa_posterior_diff': 'posterior'
-    # # # })
-    # # # # Order timepoints, so that the first one is reference
-    # # # # Ensure 'timepoint' is treated as a categorical variable
-    # # # fa_long_wm_data_roi_567_combi['timepoint'] = pd.Categorical(
-    # # # fa_long_wm_data_roi_567_combi['timepoint'],
-    # # # categories=['acute', 'ultra-fast', 'fast', '3-6mo', '12-24mo'], # adjust as needed
-    # # # ordered=True
-    # # # )
+    # ###########################
+    # ########## FIXED EFFECT WITH CLUSTERED STANDARD ERRORS (accounts for repeated measures by using clustering)
+    # Fixed effects model with robust standard errors clustered by patient_id
+    # to account for within-patient correlation across timepoints and regions
+    # #####################################################
+    # # LINEAR FIXED EFFECTS MODEL WITH COMBI DATA AND CLUSTERED SEs
+    # # H_0: There is no statistically significant difference between
+    # # FA in Control vs. Craniectomy for anterior and posterior ROIs.
+    # # i.e. H_0: FA_diff = FA_{craniectomy} - FA_{control} = 0
+    # # Fixed effects equation with Timepoint and Region as covariates.
+    # # Y_{jk} = \beta_0 + \sum_{t=1}^{T-1} \beta_{1t} \cdot \text{Timepoint}_{jt} + \beta_2 \cdot \text{Region}_k + \varepsilon_{jk}
+    # # $Y_{jk}$: FA difference (Craniectomy - Control) at timepoint $j$, in region $k$
+    # # $\beta_0$: Intercept (mean FA difference at reference timepoint and region)
+    # # $\beta_{1t}$: Coefficient for timepoint $t$ (excluding the reference level)
+    # # $\text{Timepoint}_{jt}$: Indicator variable (1 if observation is at timepoint $t$, else 0)
+    # # $\beta_2$: Coefficient for region (e.g., anterior vs posterior)
+    # # $\text{Region}_k$: Indicator variable for brain region (e.g., 0 = anterior, 1 = posterior)
+    # # $\varepsilon_{jk}$: Residual error, where $\varepsilon_{jk} \sim \mathcal{N}(0, \sigma^2)$
+    # # print(wm_data_roi_567_combi.columns)
+    # # fa_long_wm_data_roi_567_combi = pd.melt(wm_data_roi_567_combi,
+    # # id_vars=['patient_id', 'timepoint'],
+    # # value_vars=['fa_anterior_diff', 'fa_posterior_diff'],
+    # # var_name='Region',
+    # # value_name='FA_diff')
+    # # print(fa_long_wm_data_roi_567_combi)
+    # # # rename regions to anterior and posterior
+    # # fa_long_wm_data_roi_567_combi['Region'] = fa_long_wm_data_roi_567_combi['Region'].map({
+    # # 'fa_anterior_diff': 'anterior',
+    # # 'fa_posterior_diff': 'posterior'
+    # # })
+    # # # Order timepoints, so that the first one is reference
+    # # # Ensure 'timepoint' is treated as a categorical variable
+    # # fa_long_wm_data_roi_567_combi['timepoint'] = pd.Categorical(
+    # # fa_long_wm_data_roi_567_combi['timepoint'],
+    # # categories=['acute', 'ultra-fast', 'fast', '3-6mo', '12-24mo'], # adjust as needed
+    # # ordered=True
+    # # )
 
     # Fixed effects model with clustered standard errors (anterior as reference region)
-    # import statsmodels.formula.api as smf
-    # model_fixed = smf.ols("FA_diff ~ timepoint + Region", data=fa_long_wm_data_roi_567_combi)
-    # result_fixed = model_fixed.fit(cov_type='cluster', cov_kwds={'groups': fa_long_wm_data_roi_567_combi['patient_id']})
+    import statsmodels.formula.api as smf
+    model_fixed = smf.ols("FA_diff ~ timepoint + Region", data=fa_long_wm_data_roi_567_combi)
+    result_fixed = model_fixed.fit(cov_type='cluster', cov_kwds={'groups': fa_long_wm_data_roi_567_combi['patient_id']})
 
-    # # Output fixed effects model results with clustered SEs
-    # print("Fixed effects model summary (clustered SEs by patient_id):")
-    # print(result_fixed.summary())
-    # print("\nFixed Effects Parameters:")
-    # print(result_fixed.params)
-    # print("Fixed effects model summary (clustered SEs by patient_id):")
-    # # print_lme_summary_precise(result_fixed, precision=6)
-    # print_fixed_effects_summary_precise(result_fixed, precision=8)
-    # # Check the actual p-values with high precision
-    # print("Actual p-values:")
-    # for param_name in result_fixed.params.index:
-    #     p_val = result_fixed.pvalues[param_name]
-    #     print(f"{param_name}: {p_val:.10e}")  # Scientific notation with 10 decimal places
+    # Output fixed effects model results with clustered SEs
+    print("Fixed effects model summary (clustered SEs by patient_id):")
+    print(result_fixed.summary())
+    print("\nFixed Effects Parameters:")
+    print(result_fixed.params)
+    print("Fixed effects model summary (clustered SEs by patient_id):")
+    # print_lme_summary_precise(result_fixed, precision=6)
+    print_fixed_effects_summary_precise(result_fixed, precision=8)
+    # Check the actual p-values with high precision
+    print("Actual p-values:")
+    for param_name in result_fixed.params.index:
+        p_val = result_fixed.pvalues[param_name]
+        print(f"{param_name}: {p_val:.10e}")  # Scientific notation with 10 decimal places
 
     
 
@@ -3883,7 +3885,7 @@ if __name__ == '__main__':
     # print_fixed_effects_summary_precise(result_fixed_post, precision=8)
     
 
-    # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, fixed_effects_result=result_fixed)
+    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, fixed_effects_result=result_fixed)
     # # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, fixed_effects_result=result_fixed, fixed_only=True)
     # sys.exit()
     
@@ -4152,20 +4154,20 @@ if __name__ == '__main__':
                         md_long_wm_data_roi_567_combi, 
                         groups=md_long_wm_data_roi_567_combi["patient_id"])
     
-    # result = model.fit(method='powell')
+    result = model.fit(method='powell')
 
-    # # Output mixed effect model results
-    # print("Mixed effects model summary:")
+    # Output mixed effect model results
+    print("Mixed effects model summary:")
     
-    # # print(result.summary())
-    # print_lme_summary_precise(result,precision=6)
-    # # sys.exit()
+    # print(result.summary())
+    print_lme_summary_precise(result,precision=6)
+    # sys.exit()
 
-    # print("\nFixed Effects Parameters:")
-    # print(result.fe_params)
+    print("\nFixed Effects Parameters:")
+    print(result.fe_params)
 
-    # print("\nRandom Effects Parameters:")
-    # print(result.cov_re)
+    print("\nRandom Effects Parameters:")
+    print(result.cov_re)
 
     # # with posterior as default region: 
     # md_long_wm_data_roi_567_combi_post=md_long_wm_data_roi_567_combi.copy()
@@ -4178,16 +4180,16 @@ if __name__ == '__main__':
     # # result_post = model_posterior.fit(method='powell')
 
     # # # Step 4: Output results
-    # # print("Mixed effects model summary (posterior as ref):")
-    # # # print(result_post.summary())
-    # # print_lme_summary_precise(result_post,precision=6)
-    # # # sys.exit()
+    # print("Mixed effects model summary (posterior as ref):")
+    # # print(result_post.summary())
+    # print_lme_summary_precise(result_post,precision=6)
+    # # sys.exit()
 
-    # # # print("\nFixed Effects Parameters:")
-    # # # print(result_post.fe_params)
+    # print("\nFixed Effects Parameters:")
+    # print(result_post.fe_params)
 
-    # # # print("\nRandom Effects Parameters:")
-    # # # print(result_post.cov_re)
+    # print("\nRandom Effects Parameters:")
+    # print(result_post.cov_re)
 
     # # ##############################
     # # ######## PLOTTING LME
@@ -4266,16 +4268,16 @@ if __name__ == '__main__':
     # # # # )
 
     # # Fixed effects model with clustered standard errors (anterior as reference region)
-    # import statsmodels.formula.api as smf
-    # model_fixed = smf.ols("MD_diff ~ timepoint + Region", data=md_long_wm_data_roi_567_combi)
-    # result_fixed = model_fixed.fit(cov_type='cluster', cov_kwds={'groups': md_long_wm_data_roi_567_combi['patient_id']})
+    import statsmodels.formula.api as smf
+    model_fixed = smf.ols("MD_diff ~ timepoint + Region", data=md_long_wm_data_roi_567_combi)
+    result_fixed = model_fixed.fit(cov_type='cluster', cov_kwds={'groups': md_long_wm_data_roi_567_combi['patient_id']})
 
-    # # Output fixed effects model results with clustered SEs
-    # print("Fixed effects model summary (clustered SEs by patient_id):")
-    # # print(result_fixed.summary())
-    # # print("\nFixed Effects Parameters:")
-    # # print(result_fixed.params)
-    # print_fixed_effects_summary_precise(result_fixed, precision=6)
+    # Output fixed effects model results with clustered SEs
+    print("Fixed effects model summary (clustered SEs by patient_id):")
+    print(result_fixed.summary())
+    print("\nFixed Effects Parameters:")
+    print(result_fixed.params)
+    print_fixed_effects_summary_precise(result_fixed, precision=6)
     # # # sys.exit()
 
     # # # Fixed effects model with posterior as reference region
@@ -4295,7 +4297,7 @@ if __name__ == '__main__':
     # # print_fixed_effects_summary_precise(result_fixed_post,precision=6)
     # # # sys.exit()
     # print("hello")
-    # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, fixed_effects_result=result_fixed)
+    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, fixed_effects_result=result_fixed)
     # # # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, fixed_effects_result=result_fixed, fixed_only=True)
     # # sys.exit()
     # #### PLOT FIXED EFFECT ON BOX PLOT
