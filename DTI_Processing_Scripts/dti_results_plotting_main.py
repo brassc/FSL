@@ -1047,7 +1047,7 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
         'axes.labelsize': 16,      # Axis label font size
         'xtick.labelsize': 14,     # X-axis tick label size
         'ytick.labelsize': 14,     # Y-axis tick label size
-        'legend.fontsize': 14      # Legend font size
+        'legend.fontsize': 13      # Legend font size
     })
 
     # set up timepoint colours
@@ -1192,7 +1192,7 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
         # Separate subplots - create two separate figures
         
         # Figure 1: Anterior
-        fig1, ax1 = plt.subplots(1, 1, figsize=(10, 8))
+        fig1, ax1 = plt.subplots(1, 1, figsize=(8, 6))
         anterior_data = df.dropna(subset=['fa_anterior_diff', 'area_diff'])
         
         # Plot anterior data (circles) - colored by timepoint
@@ -1262,7 +1262,7 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
             plt.Rectangle((0,0),1,1, facecolor='#440154', alpha=0.2, label='Anterior 95% CI')
         ]
         ax1.legend(handles=legend_elements, loc='upper right', # fontsize=10,
-                  ) #bbox_to_anchor=(0, 0.95)
+                  bbox_to_anchor=(1.05, 1.015)) #
         
         plt.tight_layout()
         
@@ -1272,7 +1272,7 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
         plt.close()
         
         # Figure 2: Posterior
-        fig2, ax2 = plt.subplots(1, 1, figsize=(10, 8))
+        fig2, ax2 = plt.subplots(1, 1, figsize=(8, 6))
         posterior_data = df.dropna(subset=['fa_posterior_diff', 'area_diff'])
         
         # Plot posterior data (squares) - colored by timepoint
@@ -1335,7 +1335,7 @@ def create_area_predicts_fa_plot(df, result4, result5, show_combined=True, timep
             plt.Rectangle((0,0),1,1, facecolor='#73D055', alpha=0.2, label='Posterior 95% CI')
         ]
         ax2.legend(handles=legend_elements, loc='upper right', #fontsize=10,
-                  ) #bbox_to_anchor=(0, 0.925)
+                  bbox_to_anchor=(1.05, 1.015)) #
         
         plt.tight_layout()
         
@@ -1383,7 +1383,7 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
         'axes.labelsize': 16,      # Axis label font size
         'xtick.labelsize': 14,     # X-axis tick label size
         'ytick.labelsize': 14,     # Y-axis tick label size
-        'legend.fontsize': 14      # Legend font size
+        'legend.fontsize': 13      # Legend font size
     })
 
     
@@ -1517,7 +1517,7 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
         # Separate subplots - create two separate figures
         
         # Figure 1: Anterior
-        fig1, ax1 = plt.subplots(1, 1, figsize=(10, 8))
+        fig1, ax1 = plt.subplots(1, 1, figsize=(8, 6))
         anterior_data = df.dropna(subset=['md_anterior_diff', 'area_diff'])
         
         # Plot anterior data (circles) - colored by timepoint
@@ -1584,7 +1584,7 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
             plt.Rectangle((0,0),1,1, facecolor='#31688E', alpha=0.2, label='Anterior 95% CI')
         ]
         ax1.legend(handles=legend_elements,  loc='upper right', 
-                  ) #bbox_to_anchor=(0, 0.95)fontsize=10,
+                  bbox_to_anchor=(1.05, 1.015)) #bbox_to_anchor=(0, 0.95)fontsize=10,
         
         plt.tight_layout()
         
@@ -1594,7 +1594,7 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
         plt.close()
         
         # Figure 2: Posterior
-        fig2, ax2 = plt.subplots(1, 1, figsize=(10, 8))
+        fig2, ax2 = plt.subplots(1, 1, figsize=(8, 6))
         posterior_data = df.dropna(subset=['md_posterior_diff', 'area_diff'])
         
         # Plot posterior data (squares) - colored by timepoint
@@ -1657,7 +1657,7 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
             plt.Rectangle((0,0),1,1, facecolor='#FDE725', alpha=0.2, label='Posterior 95% CI')
         ]
         ax2.legend(handles=legend_elements,loc='upper right', # fontsize=10, 
-                  ) #bbox_to_anchor=(0, 0.95)
+                  bbox_to_anchor=(1.05, 1.015)) #bbox_to_anchor=(0, 0.95)
         
         plt.tight_layout()
         
