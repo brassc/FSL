@@ -1130,7 +1130,9 @@ def plot_emmeans_sig_mat(sig_df, mask):
     # Plot heatmap
     ordered_timepoints= ['ultra-fast', 'fast', 'acute', 'chronic']
     plt.figure(figsize=(10, 8))
-    cmap = sns.diverging_palette(240, 10, as_cmap=True)
+    # cmap = sns.diverging_palette(240, 10, as_cmap=True)
+    from matplotlib.colors import ListedColormap
+    cmap = ListedColormap(["#9dd1ef", "#ff9797"])  # Pale blue for significant, pale red for non-significant
 
     # Create heatmap
     heatmap = sns.heatmap(
@@ -1139,22 +1141,41 @@ def plot_emmeans_sig_mat(sig_df, mask):
         annot_kws={"size": 16},  # Annotation font size
         cmap=cmap,   # Color map
         mask=mask,   # Mask diagonal values
-        vmin=0, vmax=0.5,  # Set color scale range
-        center=0.15,  # Center color scale
+        # vmin=0, vmax=0.5,  # Set color scale range
+        # center=0.15,  # Center color scale
+        vmin=0, vmax=0.1, # Binary threshold at 0.05
+        center=0.05, # Center at significance threshold
         fmt='.4f',   # Format as floating point with 4 decimals
         linewidths=0,  # Remove lines between cells
         linecolor='none',  # Ensure no line color
         yticklabels=ordered_timepoints,  # Reverse y-axis labels
-        cbar_kws={"label": "p-value"} # Add colorbar label
+        # cbar_kws={"label": "p-value"} # Add colorbar label
+        # cbar_kws={"label": "p-value", "pad": 0.02} # Keep colorbar space
+        cbar=False,  # Disable colorbar for binary colormap
+        # cbar=False, # Remove colorbar
+        square=True # Keep cells square
     )
+    # Set axis to be square
+    heatmap.set_aspect('equal')
 
     # Make x and y axis labels bigger
     plt.xticks(fontsize=14)
     plt.yticks(fontsize=14)
 
-    # Make colorbar tick labels bigger
-    cbar = heatmap.collections[0].colorbar
-    cbar.ax.tick_params(labelsize=14)
+    # # Make colorbar tick labels bigger
+    # cbar = heatmap.collections[0].colorbar
+    # cbar.ax.tick_params(labelsize=14)
+
+
+
+    # Add binary legend
+    from matplotlib.patches import Patch
+    legend_elements = [
+        Patch(facecolor='#9dd1ef', label='Significant (p < 0.05)'),
+        Patch(facecolor='#ff9797', label='Not significant (p ≥ 0.05)')
+    ]
+    plt.legend(handles=legend_elements, bbox_to_anchor=(1.02, 1), loc='upper left', 
+            fontsize=14, frameon=True)
 
     # Add significance markers
     for i in range(4):  # rows
@@ -1171,11 +1192,11 @@ def plot_emmeans_sig_mat(sig_df, mask):
                     )
                 elif sig_df.iloc[i, j] < 0.01:
                     plt.text(
-                        j + 0.65, i + 0.45, "**", ha='left', va='center', fontsize=10
+                        j + 0.665, i + 0.45, "**", ha='left', va='center', fontsize=10
                     )
                 elif sig_df.iloc[i, j] < 0.05:
                     plt.text(
-                        j + 0.65, i + 0.45, "*", ha='left', va='center', fontsize=10
+                        j + 0.665, i + 0.45, "*", ha='left', va='center', fontsize=10
                     )
                 # elif sig_df.iloc[i, j] < 0.1:
                 #     plt.text(
@@ -1786,8 +1807,8 @@ if __name__ == '__main__':
 
     # Plot the significance matrix
     # THIS ONE: (2 LINES)
-    # sig_df, mask = emmeans_significance_matrix(py_pairs)
-    # plot_emmeans_sig_mat(sig_df, mask)  
+    sig_df, mask = emmeans_significance_matrix(py_pairs)
+    plot_emmeans_sig_mat(sig_df, mask)  
 
-    mixed_effect_boxplot(new_df, result, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], chronic_timepoints=['3mo', '6mo', '12mo', '24mo'])
+    # mixed_effect_boxplot(new_df, result, timepoints=['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo'], chronic_timepoints=['3mo', '6mo', '12mo', '24mo'])
    
