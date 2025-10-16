@@ -67,6 +67,10 @@ data = data[data['Patient ID'] != '6shy992']
 # Apply filtering to keep only patients with 2+ scans
 filtered_data = filter_patients(data)
 
+# Remove specific patients from filtered data only
+filtered_data = filtered_data[filtered_data['Patient ID'] != '13198']
+filtered_data = filtered_data[filtered_data['Patient ID'] != '22785']
+
 
 def trim_and_separate(data):
     # Ignoring the first and last columns from the data
@@ -85,6 +89,9 @@ def trim_and_separate(data):
 
 modified_data, trimmed_data = trim_and_separate(data)
 filtered_modified_data, filtered_trimmed_data = trim_and_separate(filtered_data)
+
+#print(filtered_modified_data)
+
 
 # Define a custom color map (binary + blue for value 2)
 cmap = mcolors.ListedColormap(['white', 'black', 'blue'])
@@ -296,6 +303,6 @@ plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/filtered_patient_ti
            bbox_inches='tight', 
            pad_inches=0.1,
            format='png')
-plt.close()
+plt.show()
 
 
