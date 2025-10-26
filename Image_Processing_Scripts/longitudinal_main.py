@@ -475,8 +475,16 @@ if __name__ == '__main__':
     #position legend outside of plot
     plt.tight_layout()
     plt.legend(title='Patient ID', bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
-    plt.savefig('Image_Processing_Scripts/plots/area_change_longitudinal_v2.png', bbox_inches='tight')
-    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/area_change_longitudinal_v2.pdf', bbox_inches='tight', dpi=300)
+
+    # Get the legend and modify labels
+    leg = plt.gca().get_legend()
+    for i, text in enumerate(leg.get_texts(), 1):
+        text.set_text(str(i))
+    
+    plt.savefig('Image_Processing_Scripts/plots/area_change_longitudinal_redacted.png', bbox_inches='tight')
+    plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/area_change_longitudinal_redacted.pdf', bbox_inches='tight', dpi=300)
+    # plt.savefig('Image_Processing_Scripts/plots/area_change_longitudinal_v2.png', bbox_inches='tight')
+    # plt.savefig('../Thesis/phd-thesis-template-2.4/Chapter5/Figs/area_change_longitudinal_v2.pdf', bbox_inches='tight', dpi=300)
     plt.close()
     #plt.show()
 
