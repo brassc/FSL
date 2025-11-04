@@ -398,6 +398,20 @@ This script tests the null hypothesis: **WM proportion does NOT change significa
 - Analyzes rings 5, 6, 7 (the ROIs used in longitudinal FA/MD analysis)
 - Separate models for each region: anterior, posterior, baseline_anterior, baseline_posterior
 
+**Model equation:**
+
+$$Y_{ij} = \beta_0 + \sum_{t=1}^{T-1} \beta_{1t} \cdot \text{Timepoint}_{jt} + u_i + \varepsilon_{ij}$$
+
+Where:
+- $Y_{ij}$: WM proportion for patient $i$ at observation $j$
+- $\beta_0$: Intercept (mean WM proportion at acute timepoint, the reference)
+- $\beta_{1t}$: Fixed effect coefficient for timepoint $t$ relative to acute
+- $\text{Timepoint}_{jt}$: Indicator variable (1 if observation $j$ is at timepoint $t$, 0 otherwise)
+- $T = 7$: Total number of timepoints (acute, ultra-fast, fast, 3mo, 6mo, 12mo, 24mo)
+- $t \in \{1, ..., 6\}$: Non-reference timepoints (ultra-fast, fast, 3mo, 6mo, 12mo, 24mo)
+- $u_i \sim \mathcal{N}(0, \sigma_u^2)$: Random intercept for patient $i$
+- $\varepsilon_{ij} \sim \mathcal{N}(0, \sigma^2)$: Residual error
+
 **Reference category:**
 - Acute timepoint used as reference for three reasons:
   1. **Largest sample size** (n=16 vs 2-9 for other timepoints) → most stable estimates
