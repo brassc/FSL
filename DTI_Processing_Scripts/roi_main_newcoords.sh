@@ -176,6 +176,9 @@ grep -v "^1," $coord_csv | while IFS=, read excluded patient_id timepoint rest; 
 
             # Step 4: Extract metrics from WM-masked ROIs
             ./DTI_Processing_Scripts/roi_extract_wm.sh "$patient_id" "$timepoint" "$tp_base" "$bin_size" "$num_bins" "$master_csv" "$filter_fa_values" "$get_all_values"
+            
+            # Step 5: Extract WM proportion data for rings 5, 6, 7
+            ./DTI_Processing_Scripts/roi_extract_wm_proportion.sh "$patient_id" "$timepoint" "$tp_base" "$bin_size" "$num_bins" "$filter_fa_values"
 
             # Append to master CSV
             #cat "DTI_Processing_Scripts/results/${patient_id}_${timepoint}_metrics_${num_bins}x${bin_size}vox.csv" | tail -n 1 >> $master_csv
