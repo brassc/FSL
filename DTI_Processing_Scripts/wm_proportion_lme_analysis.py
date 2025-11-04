@@ -291,11 +291,19 @@ def plot_trajectories_by_region(df, region, rings=[5, 6, 7], output_dir='DTI_Pro
     ax.grid(True, alpha=0.3)
     ax.legend()
 
-    # Save
+    # Save to results directory (PNG)
     output_file = os.path.join(output_dir, f'wm_proportion_trajectory_{region}.png')
     plt.tight_layout()
     plt.savefig(output_file, dpi=300, bbox_inches='tight')
     print(f"Trajectory plot saved to: {output_file}")
+
+    # Save to thesis directory (PDF, high resolution)
+    thesis_dir = '../Thesis/phd-thesis-template-2.4/Chapter6/Figs'
+    if os.path.exists(thesis_dir):
+        thesis_file = os.path.join(thesis_dir, f'wm_proportion_trajectory_{region}.pdf')
+        plt.savefig(thesis_file, dpi=300, bbox_inches='tight', format='pdf')
+        print(f"Trajectory plot saved to thesis: {thesis_file}")
+
     plt.close()
 
 def main():
