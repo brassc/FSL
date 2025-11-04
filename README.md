@@ -351,12 +351,72 @@ This script:
 - Master CSV results: `DTI_Processing_Scripts/results/all_metrics_<num_bins>x<bin_size>vox.csv`
 - White matter master CSV: `DTI_Processing_Scripts/results/all_metrics_<num_bins>x<bin_size>vox_wm.csv`
 
-Note: When using special parameters or filtering, appropriate suffixes are added to file and directory names. Most current is with suffix `NEW_filtered`. 
+Note: When using special parameters or filtering, appropriate suffixes are added to file and directory names. Most current is with suffix `NEW_filtered`.
 
 
 
 
-[comment]: # The script `create_roi_native_space.sh` takes these files and gets FA and MD data within that space, saves it as a `.pkl` file (`{patient_id}_{timepoint}_dti_values.pkl`).  
+[comment]: # The script `create_roi_native_space.sh` takes these files and gets FA and MD data within that space, saves it as a `.pkl` file (`{patient_id}_{timepoint}_dti_values.pkl`).
+
+
+## Proportion of White Matter
+
+### Overview
+
+White matter (WM) proportion quantifies the fraction of voxels within each ROI that are classified as white matter tissue. This metric addresses potential confounding by tissue composition changes over time: if WM proportion changes as the brain herniates/recovers, observed FA/MD changes could reflect shifts in grey/white matter content rather than true microstructural changes.
+
+### Rationale
+
+FA differs substantially between grey and white matter (WM high, GM low), while MD is similar across tissue types. If WM proportion decreases over time, FA would decrease mechanically without reflecting microstructural pathology. This analysis tests whether tissue composition is stable, ruling out this confound.
+
+### Extraction Pipeline
+
+#### `roi_extract_wm_proportion.sh`
+
+This script:
+
+1. For each ROI ring, calculates:
+   - Total voxel count within the ROI
+   - White matter voxel count (after masking with `tissueMap_WM.nii.gz`)
+   - WM proportion (WM count / total count)
+
+2. Outputs results to:
+   - Individual CSV: `DTI_Processing_Scripts/results/<patient_id>_<timepoint>_wm_proportion_<num_bins>x<bin_size>vox.csv`
+   - Master CSV: `DTI_Processing_Scripts/results/all_wm_proportion_analysis_<num_bins>x<bin_size>vox_NEW_filtered.csv`
+
+3. Columns include `WM_count_{region}_ring_{N}`, `total_count_{region}_ring_{N}`, `WM_prop_{region}_ring_{N}` for each anatomical region (ant, post, baseline_ant, baseline_post).
+
+### Statistical Analysis
+
+#### `wm_proportion_lme_analysis.py`
+
+This script tests the null hypothesis: **WM proportion does NOT change significantly over time**.
+
+**Method:**
+- Linear mixed effects model: `WM_proportion ~ timepoint + (1|patient_id)`
+- Fitted using `statsmodels.formula.api.mixedlm` with random intercept for patient ID
+- Analyzes rings 5, 6, 7 (the ROIs used in longitudinal FA/MD analysis)
+- Separate models for each region: anterior, posterior, baseline_anterior, baseline_posterior
+
+**Reference category:**
+- Acute timepoint used as reference for three reasons:
+  1. **Largest sample size** (n=16 vs 2-9 for other timepoints) → most stable estimates
+  2. **Clinically meaningful**: Represents post-craniectomy baseline after initial trauma/surgery phase
+  3. **Consistency**: Matches FA/MD analysis reference, enabling direct comparison
+
+**Outputs:**
+- Individual LME model summaries: `DTI_Processing_Scripts/wm_proportion_lme_results/lme_{region}_rings_5-7.txt`
+- Trajectory plots with patient-level trajectories: `wm_proportion_trajectory_{region}.png`
+- Summary table: `wm_proportion_lme_summary.csv`
+
+**Usage:**
+```bash
+python DTI_Processing_Scripts/wm_proportion_lme_analysis.py
+```
+
+**Interpretation:**
+- If all p-values ≥ 0.05: WM proportion is stable → rules out tissue composition as confound
+- If any p-value < 0.05: Further analysis required (correlation with FA/MD changes, covariate adjustment)
 
 
 ## Harmonisation
