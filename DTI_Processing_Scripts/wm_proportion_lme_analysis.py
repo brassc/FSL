@@ -16,6 +16,10 @@ import os
 import warnings
 warnings.filterwarnings('ignore')
 
+# Add parent directory to path to import set_publication_style
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from Image_Processing_Scripts.set_publication_style import set_publication_style
+
 def map_timepoint_to_string(numeric_timepoint):
     """Convert numeric timepoint to string timepoint."""
     timepoints = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
@@ -245,6 +249,9 @@ def create_summary_table(results_dict, output_dir):
 
 def plot_trajectories_by_region(df, region, rings=[5, 6, 7], output_dir='DTI_Processing_Scripts/wm_proportion_lme_results'):
     """Create trajectory plot for a specific region."""
+    # Set publication style for consistent formatting
+    set_publication_style()
+
     # Calculate mean WM proportion
     prop_cols = [f'WM_prop_{region}_ring_{ring}' for ring in rings]
     df[f'WM_prop_{region}_mean'] = df[prop_cols].mean(axis=1)
@@ -282,13 +289,12 @@ def plot_trajectories_by_region(df, region, rings=[5, 6, 7], output_dir='DTI_Pro
     # Formatting
     ax.set_xticks(x_pos)
     ax.set_xticklabels(summary['timepoint_cat'], rotation=45, ha='right')
-    ax.set_xlabel('Timepoint', fontsize=12, fontweight='bold')
-    ax.set_ylabel('WM Proportion (Mean Rings 5-7)', fontsize=12, fontweight='bold')
+    ax.set_xlabel('Timepoint')
+    ax.set_ylabel('WM Proportion (Mean Rings 5-7)')
 
     region_title = region.replace('_', ' ').title()
-    ax.set_title(f'WM Proportion Over Time: {region_title}', fontsize=14, fontweight='bold')
+    ax.set_title(f'WM Proportion Over Time: {region_title}')
 
-    ax.grid(True, alpha=0.3)
     ax.legend()
 
     # Save to results directory (PNG)
