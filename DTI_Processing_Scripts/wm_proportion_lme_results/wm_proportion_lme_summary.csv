@@ -1,0 +1,5 @@
+Region,N_observations,N_patients,Min_p_value,Any_significant
+ant,51,19,0.15974046053596247,No
+post,51,19,0.349884151191065,No
+baseline_ant,51,19,0.46947253521237875,No
+baseline_post,51,19,0.34967417822647096,No

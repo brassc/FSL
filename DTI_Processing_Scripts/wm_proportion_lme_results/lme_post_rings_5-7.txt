@@ -1,0 +1,37 @@
+Linear Mixed Effects Model Results
+Formula: WM_prop_post_mean ~ timepoint
+Groups: patient_id
+================================================================================
+
+              Mixed Linear Model Regression Results
+==================================================================
+Model:             MixedLM  Dependent Variable:  WM_prop_post_mean
+No. Observations:  51       Method:              REML             
+No. Groups:        19       Scale:               0.0047           
+Min. group size:   2        Log-Likelihood:      40.3344          
+Max. group size:   4        Converged:           Yes              
+Mean group size:   2.7                                            
+------------------------------------------------------------------
+                        Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+------------------------------------------------------------------
+Intercept                0.530    0.022 24.221 0.000  0.487  0.573
+timepoint[T.ultra-fast] -0.032    0.034 -0.935 0.350 -0.098  0.035
+timepoint[T.fast]       -0.003    0.031 -0.082 0.934 -0.062  0.057
+timepoint[T.3mo]         0.040    0.060  0.663 0.507 -0.078  0.158
+timepoint[T.6mo]        -0.014    0.036 -0.389 0.697 -0.085  0.057
+timepoint[T.12mo]       -0.030    0.034 -0.887 0.375 -0.096  0.036
+timepoint[T.24mo]       -0.024    0.043 -0.548 0.583 -0.108  0.061
+Group Var                0.003    0.032                           
+==================================================================
+
+
+Timepoint coefficients (vs reference 'acute'):
+  timepoint[T.ultra-fast]: coef=-0.031670, p=0.349884
+  timepoint[T.fast]: coef=-0.002515, p=0.934479
+  timepoint[T.3mo]: coef=0.039885, p=0.507191
+  timepoint[T.6mo]: coef=-0.014136, p=0.697069
+  timepoint[T.12mo]: coef=-0.029991, p=0.374916
+  timepoint[T.24mo]: coef=-0.023603, p=0.583386
+
+Minimum p-value across timepoints: 0.349884
+Any timepoint significantly different from reference: False

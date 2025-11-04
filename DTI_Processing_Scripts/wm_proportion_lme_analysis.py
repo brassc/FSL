@@ -10,29 +10,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy import stats
+import statsmodels.formula.api as smf
 import sys
 import os
 import warnings
 warnings.filterwarnings('ignore')
-
-# R integration for LME models
-import rpy2.robjects as ro
-from rpy2.robjects import pandas2ri
-from rpy2.robjects.packages import importr
-pandas2ri.activate()
-
-def setup_r_environment():
-    """Set up R environment with required packages."""
-    try:
-        base = importr('base')
-        lme4 = importr('lme4')
-        lmerTest = importr('lmerTest')
-        return True
-    except Exception as e:
-        print(f"Error loading R packages: {e}")
-        print("Please ensure R packages 'lme4' and 'lmerTest' are installed")
-        return False
 
 def map_timepoint_to_string(numeric_timepoint):
     """Convert numeric timepoint to string timepoint."""
@@ -74,12 +56,12 @@ def process_timepoint_data(df):
 
 def fit_lme_model(df, dv_column, output_file=None):
     """
-    Fit LME model: DV ~ timepoint + (1|patient_id)
+    Fit LME model: DV ~ timepoint, random intercept for patient_id
 
     Args:
         df: DataFrame with columns [patient_id, timepoint, dv_column]
         dv_column: Name of dependent variable column
-        output_file: Optional file to write R output
+        output_file: Optional file to write model output
 
     Returns:
         Dictionary with model results
@@ -91,64 +73,69 @@ def fit_lme_model(df, dv_column, output_file=None):
         print(f"Warning: Only {len(df_clean)} observations for {dv_column}, skipping analysis")
         return None
 
-    # Convert to R dataframe
-    r_df = pandas2ri.py2rpy(df_clean)
-    ro.globalenv['data'] = r_df
+    # Set timepoint as categorical with 'acute' as reference
+    timepoint_order = ['acute', 'ultra-fast', 'fast', '3mo', '6mo', '12mo', '24mo']
+    df_clean['timepoint'] = pd.Categorical(
+        df_clean['timepoint'],
+        categories=timepoint_order,
+        ordered=True
+    )
 
-    # Fit LME model
-    formula = f'{dv_column} ~ timepoint + (1|patient_id)'
+    # Fit LME model using statsmodels
+    formula = f'{dv_column} ~ timepoint'
 
     try:
         # Fit model
-        model = ro.r(f'''
-            library(lmerTest)
-            model <- lmer({formula}, data=data, REML=TRUE)
-            model
-        ''')
+        model = smf.mixedlm(formula, df_clean, groups=df_clean["patient_id"])
+        result = model.fit(method='powell')
 
-        # Get summary
-        summary = ro.r('summary(model)')
+        # Extract p-values for timepoint effects
+        # Check if ANY timepoint coefficient is significant (p < 0.05)
+        timepoint_pvals = {}
+        for param in result.pvalues.index:
+            if param.startswith('timepoint[T.'):
+                timepoint_pvals[param] = result.pvalues[param]
 
-        # Extract fixed effects
-        fixed_effects = ro.r('fixef(model)')
-
-        # Get ANOVA table (Type III tests)
-        anova_table = ro.r('anova(model, type="III")')
-
-        # Extract p-value for timepoint effect
-        anova_df = pandas2ri.rpy2py(anova_table)
-        timepoint_pval = anova_df.loc['timepoint', 'Pr(>F)'] if 'timepoint' in anova_df.index else np.nan
-
-        # Get coefficients table
-        coef_summary = ro.r('summary(model)$coefficients')
-        coef_df = pandas2ri.rpy2py(coef_summary)
+        # Check if any timepoint is significant
+        min_pval = min(timepoint_pvals.values()) if timepoint_pvals else np.nan
+        any_significant = any(p < 0.05 for p in timepoint_pvals.values()) if timepoint_pvals else False
 
         # Write detailed output if requested
         if output_file:
             with open(output_file, 'w') as f:
                 f.write(f"Linear Mixed Effects Model Results\n")
                 f.write(f"Formula: {formula}\n")
+                f.write(f"Groups: patient_id\n")
                 f.write(f"=" * 80 + "\n\n")
-                f.write(f"ANOVA (Type III tests):\n")
-                f.write(anova_df.to_string())
+                f.write(result.summary().as_text())
                 f.write(f"\n\n")
-                f.write(f"Fixed Effects Coefficients:\n")
-                f.write(coef_df.to_string())
-                f.write(f"\n\n")
-                f.write(f"Overall Timepoint Effect p-value: {timepoint_pval:.6f}\n")
+                f.write(f"Timepoint coefficients (vs reference 'acute'):\n")
+                for param in result.params.index:
+                    if param.startswith('timepoint[T.'):
+                        f.write(f"  {param}: coef={result.params[param]:.6f}, "
+                               f"p={result.pvalues[param]:.6f}")
+                        if result.pvalues[param] < 0.05:
+                            f.write(" *")
+                        f.write("\n")
+                f.write(f"\n")
+                f.write(f"Minimum p-value across timepoints: {min_pval:.6f}\n")
+                f.write(f"Any timepoint significantly different from reference: {any_significant}\n")
 
         results = {
-            'timepoint_pval': timepoint_pval,
-            'anova_table': anova_df,
-            'coefficients': coef_df,
+            'timepoint_pvals': timepoint_pvals,
+            'min_pval': min_pval,
+            'any_significant': any_significant,
             'n_obs': len(df_clean),
-            'n_patients': df_clean['patient_id'].nunique()
+            'n_patients': df_clean['patient_id'].nunique(),
+            'result': result
         }
 
         return results
 
     except Exception as e:
         print(f"Error fitting LME model for {dv_column}: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 def analyze_region(df, region, rings=[5, 6, 7], output_dir='DTI_Processing_Scripts/wm_proportion_lme_results'):
@@ -196,12 +183,18 @@ def analyze_region(df, region, rings=[5, 6, 7], output_dir='DTI_Processing_Scrip
 
     if results:
         print(f"\n*** LME MODEL RESULTS ***")
-        print(f"Overall timepoint effect p-value: {results['timepoint_pval']:.6f}")
+        print(f"Minimum p-value across timepoints: {results['min_pval']:.6f}")
 
-        if results['timepoint_pval'] < 0.05:
-            print(f"→ SIGNIFICANT: WM proportion changes significantly over time (p < 0.05)")
+        # Print individual timepoint p-values
+        print(f"\nIndividual timepoint comparisons:")
+        for param, pval in results['timepoint_pvals'].items():
+            sig_marker = " *" if pval < 0.05 else ""
+            print(f"  {param}: p = {pval:.6f}{sig_marker}")
+
+        if results['any_significant']:
+            print(f"\n→ SIGNIFICANT: At least one timepoint differs significantly (p < 0.05)")
         else:
-            print(f"→ NOT SIGNIFICANT: WM proportion does NOT change significantly over time (p ≥ 0.05)")
+            print(f"\n→ NOT SIGNIFICANT: No timepoints differ significantly (all p ≥ 0.05)")
 
         print(f"\nDetailed results saved to: {output_file}")
 
@@ -217,8 +210,8 @@ def create_summary_table(results_dict, output_dir):
                 'Region': region,
                 'N_observations': results['n_obs'],
                 'N_patients': results['n_patients'],
-                'Timepoint_p_value': results['timepoint_pval'],
-                'Significant': 'Yes' if results['timepoint_pval'] < 0.05 else 'No'
+                'Min_p_value': results['min_pval'],
+                'Any_significant': 'Yes' if results['any_significant'] else 'No'
             })
 
     summary_df = pd.DataFrame(summary_data)
@@ -293,10 +286,6 @@ def main():
     print("Testing Null Hypothesis: WM proportion does NOT change over time")
     print("="*80)
 
-    # Check R environment
-    if not setup_r_environment():
-        sys.exit(1)
-
     # Create output directory
     output_dir = 'DTI_Processing_Scripts/wm_proportion_lme_results'
     os.makedirs(output_dir, exist_ok=True)
@@ -344,8 +333,14 @@ def main():
     print("OVERALL CONCLUSION")
     print(f"{'='*80}")
 
-    sig_regions = summary_df[summary_df['Significant'] == 'Yes']['Region'].tolist()
-    nonsig_regions = summary_df[summary_df['Significant'] == 'No']['Region'].tolist()
+    # Check if summary_df has data
+    if summary_df.empty or 'Any_significant' not in summary_df.columns:
+        print("✗ Analysis failed - could not fit LME models")
+        print("  → Check data quality and sample size")
+        return
+
+    sig_regions = summary_df[summary_df['Any_significant'] == 'Yes']['Region'].tolist()
+    nonsig_regions = summary_df[summary_df['Any_significant'] == 'No']['Region'].tolist()
 
     if len(nonsig_regions) == len(regions):
         print("✓ WM proportion did NOT change significantly over time in ANY region")
