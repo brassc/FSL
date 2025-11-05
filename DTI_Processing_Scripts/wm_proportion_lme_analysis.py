@@ -312,6 +312,125 @@ def plot_trajectories_by_region(df, region, rings=[5, 6, 7], output_dir='DTI_Pro
 
     plt.close()
 
+def plot_combined_trajectories(df, rings=[5, 6, 7], output_dir='DTI_Processing_Scripts/wm_proportion_lme_results'):
+    """
+    Create combined trajectory plots:
+    1. Baseline regions: baseline_ant (blue) + baseline_post (red)
+    2. Craniectomy regions: ant (blue) + post (red)
+    """
+    # Set publication style
+    set_publication_style()
+
+    # Match jt-test plot font sizes
+    plt.rcParams.update({
+        'font.size': 14,           # Base font size
+        'axes.labelsize': 14,      # Axis label font size
+        'xtick.labelsize': 14,     # X-axis tick label size
+        'ytick.labelsize': 14,     # Y-axis tick label size
+        'legend.fontsize': 14      # Legend font size
+    })
+
+    # Define timepoint order
+    timepoint_order = ['ultra-fast', 'fast', 'acute', '3mo', '6mo', '12mo', '24mo']
+
+    # Define region pairs and colors
+    plot_configs = [
+        {
+            'regions': [('baseline_ant', 'Control Anterior', 'blue'),
+                       ('baseline_post', 'Control Posterior', 'red')],
+            'filename': 'wm_proportion_trajectory_combined_baseline',
+            'ylabel': 'WM Proportion (Mean Rings 5-7)'
+        },
+        {
+            'regions': [('ant', 'Craniectomy Anterior', 'blue'),
+                       ('post', 'Craniectomy Posterior', 'red')],
+            'filename': 'wm_proportion_trajectory_combined_craniectomy',
+            'ylabel': 'WM Proportion (Mean Rings 5-7)'
+        }
+    ]
+
+    for config in plot_configs:
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        # Collect all timepoints present across both regions
+        all_timepoints_present = set()
+
+        # First pass: collect all summaries and determine x-axis
+        region_summaries = []
+        for region, label, color in config['regions']:
+            # Calculate mean WM proportion
+            prop_cols = [f'WM_prop_{region}_ring_{ring}' for ring in rings]
+            df[f'WM_prop_{region}_mean'] = df[prop_cols].mean(axis=1)
+
+            # Create categorical timepoint
+            df['timepoint_cat'] = pd.Categorical(
+                df['timepoint'],
+                categories=timepoint_order,
+                ordered=True
+            )
+
+            # Calculate mean and SEM by timepoint
+            summary = df.groupby('timepoint_cat')[f'WM_prop_{region}_mean'].agg(['mean', 'sem', 'count']).reset_index()
+            summary = summary.dropna()
+            region_summaries.append((region, label, color, summary))
+            all_timepoints_present.update(summary['timepoint_cat'].tolist())
+
+        # Create x-axis based on all timepoints present
+        timepoints_present = [tp for tp in timepoint_order if tp in all_timepoints_present]
+        x_pos_map = {tp: i for i, tp in enumerate(timepoints_present)}
+
+        # Second pass: plot each region
+        for region, label, color, summary in region_summaries:
+            # Map timepoints to x positions
+            x_pos = [x_pos_map[tp] for tp in summary['timepoint_cat']]
+
+            # Plot mean trajectory
+            ax.errorbar(x_pos, summary['mean'], yerr=summary['sem'],
+                       marker='o', markersize=8, linewidth=2, capsize=5,
+                       label=label, color=color, alpha=0.8)
+
+            # Add individual patient trajectories (faint)
+            df['timepoint_cat'] = pd.Categorical(
+                df['timepoint'],
+                categories=timepoint_order,
+                ordered=True
+            )
+            for patient_id in df['patient_id'].unique():
+                patient_data = df[df['patient_id'] == patient_id].sort_values('timepoint_cat')
+                if len(patient_data) >= 2:
+                    tp_indices = [x_pos_map[tp] for tp in patient_data['timepoint'] if tp in x_pos_map]
+                    wm_vals = patient_data[f'WM_prop_{region}_mean'].values[:len(tp_indices)]
+                    if len(tp_indices) == len(wm_vals):
+                        ax.plot(tp_indices, wm_vals, alpha=0.1, linewidth=1, color=color)
+
+        # Formatting
+        ax.set_xticks(range(len(timepoints_present)))
+        ax.set_xticklabels(timepoints_present, rotation=45, ha='right')
+        ax.set_xlabel('Timepoint')
+        ax.set_ylabel(config['ylabel'])
+        ax.set_ylim(0.15, 0.8)
+
+        # Legend with larger font
+        ax.legend(fontsize=14, frameon=True, loc='upper right')
+
+        # No title as requested
+
+        plt.tight_layout()
+
+        # Save to results directory (PNG)
+        output_file = os.path.join(output_dir, f"{config['filename']}.png")
+        plt.savefig(output_file, dpi=300, bbox_inches='tight')
+        print(f"Combined trajectory plot saved to: {output_file}")
+
+        # Save to thesis directory (PDF, high resolution)
+        thesis_dir = '../Thesis/phd-thesis-template-2.4/Chapter6/Figs'
+        if os.path.exists(thesis_dir):
+            thesis_file = os.path.join(thesis_dir, f"{config['filename']}.pdf")
+            plt.savefig(thesis_file, dpi=300, bbox_inches='tight', format='pdf')
+            print(f"Combined trajectory plot saved to thesis: {thesis_file}")
+
+        plt.close()
+
 def main():
     """Main analysis function."""
 
@@ -353,6 +472,12 @@ def main():
 
         # Create trajectory plot
         plot_trajectories_by_region(df, region, rings, output_dir)
+
+    # Create combined trajectory plots
+    print(f"\n{'='*80}")
+    print("CREATING COMBINED TRAJECTORY PLOTS")
+    print(f"{'='*80}")
+    plot_combined_trajectories(df, rings, output_dir)
 
     # Create summary table
     print(f"\n{'='*80}")
