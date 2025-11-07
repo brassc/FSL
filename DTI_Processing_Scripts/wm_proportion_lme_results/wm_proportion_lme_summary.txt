@@ -1,0 +1,22 @@
+\begin{table}[htbp]
+\centering
+\caption{Linear Mixed Effects Model Results for WM Proportion Over Time}
+\label{tab:wm_proportion_lme}
+\begin{tabular}{lcccc}
+\toprule
+Region & N Observations & N Patients & Min $p$-value & Significant \\
+\midrule
+Craniectomy Anterior & 51 & 19 & 0.160 & No \\
+Craniectomy Posterior & 51 & 19 & 0.350 & No \\
+Control Anterior & 51 & 19 & 0.469 & No \\
+Control Posterior & 51 & 19 & 0.350 & No \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+\begin{tablenotes}
+\small
+\item \textbf{Model specification:} $Y_{ij} = \beta_0 + \sum_{t=1}^{T-1} \beta_{1t} \cdot \text{Timepoint}_{jt} + u_i + \varepsilon_{ij}$
+\item Where: $Y_{ij}$ is WM proportion for patient $i$ at observation $j$; $\beta_0$ is the intercept (mean WM proportion at acute timepoint, the reference); $\beta_{1t}$ is the fixed effect coefficient for timepoint $t$ relative to acute; $\text{Timepoint}_{jt}$ is an indicator variable (1 if observation $j$ is at timepoint $t$, 0 otherwise); $T = 7$ is the total number of timepoints (acute, ultra-fast, fast, 3mo, 6mo, 12mo, 24mo); $t \in \{1, ..., 6\}$ represents non-reference timepoints (ultra-fast, fast, 3mo, 6mo, 12mo, 24mo); $u_i \sim \mathcal{N}(0, \sigma_u^2)$ is the random intercept for patient $i$; $\varepsilon_{ij} \sim \mathcal{N}(0, \sigma^2)$ is the residual error.
+\item Min $p$-value represents the minimum $p$-value across all timepoint comparisons to the reference (acute).
+\end{tablenotes}
+\end{table}

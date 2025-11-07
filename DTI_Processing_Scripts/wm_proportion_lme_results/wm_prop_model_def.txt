@@ -1,0 +1,23 @@
+\begin{table}[H]
+    \centering
+    \caption{\label{tab:stats_wm_prop_timepoint}Statistics and equations for linear mixed effects model relating white matter proportion to timepoint effects.}
+    \fbox{
+        \begin{minipage}{14cm}
+        \textbf{Linear Mixed Effects Model:} \\
+            $Y_{ij} = \beta_0 + \beta_1 \cdot \text{Timepoint}_j + u_i + \varepsilon_{ij}$ \\
+            Where: \\
+            $Y_{ij}$ = WM proportion for patient $i$ at observation $j$ \\
+            $\beta_0$ = intercept (mean WM proportion at reference timepoint, acute) \\
+            $\beta_1$ = coefficient for timepoint effect \\
+            $\text{Timepoint}_j$ = categorical variable for timepoint $j$ (ultra-fast, fast, acute, 3mo, 6mo, 12mo, 24mo) \\
+            $u_i$ = random intercept for patient $i$ \\ %\sim \mathcal{N}(0, \sigma_u^2)$
+            $\varepsilon_{ij}$ = residual error \\ %\sim \mathcal{N}(0, \sigma^2)$
+            \\
+            \textbf{Hypothesis Testing:} \\
+            $H_0: \beta_1 = 0$ (No timepoint effects on WM proportion) \\
+            $H_1: \beta_1 \neq 0$ (Timepoint affects WM proportion)\\
+            \\
+            \textbf{Note:} Model fitted separately for each region (craniectomy anterior, craniectomy posterior, control anterior, control posterior).
+        \end{minipage}
+    }
+\end{table}
