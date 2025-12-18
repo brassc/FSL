@@ -36,7 +36,7 @@ def initialize_columns(data, name):
     if v_col not in data.columns:
         data[v_col] = pd.Series([np.array([])] * len(data[f'v_{name}_rot']), index=data.index)
     if area_col not in data.columns:
-        data[area_col] = np.float16()
+        data[area_col] = np.float16(0.0)
     return h_col, v_col, area_col
 
 
@@ -95,7 +95,7 @@ for i in range (0, len(data)):
     """
     # Create and fill area difference column
     if 'area_diff' not in data.columns:
-        data['area_diff'] = np.float16()
+        data['area_diff'] = np.float16(0.0)
     data.loc[i, 'area_diff'] = data.loc[i, 'area_def'] - data.loc[i, 'area_ref']
 
     #interpolate for common x for fill between
@@ -128,7 +128,7 @@ for i in range (0, len(data)):
     plt.close()
 
     # add to new_df
-    new_df = new_df._append({'patient_id': data['patient_id'].iloc[i], 'timepoint': data['timepoint'].iloc[i], 'side': data['side'].iloc[i], 'area_def': data['area_def'].iloc[i], 'area_ref': data['area_ref'].iloc[i], 'area_diff': data['area_diff'].iloc[i]}, ignore_index=True)
+    new_df = pd.concat([new_df, pd.DataFrame([{'patient_id': data['patient_id'].iloc[i], 'timepoint': data['timepoint'].iloc[i], 'side': data['side'].iloc[i], 'area_def': data['area_def'].iloc[i], 'area_ref': data['area_ref'].iloc[i], 'area_diff': data['area_diff'].iloc[i]}])], ignore_index=True)
 
 print(new_df)
 new_df.to_csv(f'Image_Processing_Scripts/{area_data_filename}', index=False)
@@ -209,7 +209,7 @@ print(data['v_def_rot'])
 print("Starting integration...")
 for i in range(0, len(data['area_def'])):#range(5,6):#
     
-    data.loc[i, 'area_def'] = sp.integrate.trapz(y=data.loc[i, 'v_def_rot_sorted'], x=data.loc[i, 'h_def_rot_sorted']) 
+    data.loc[i, 'area_def'] = sp.integrate.trapezoid(y=data.loc[i, 'v_def_rot_sorted'], x=data.loc[i, 'h_def_rot_sorted']) 
     
     plt.scatter(data.loc[i, 'h_def_rot_sorted'], data.loc[i, 'v_def_rot_sorted'], color='red')
     plt.fill_between(data.loc[i, 'h_def_rot_sorted'], data.loc[i, 'v_def_rot_sorted'], color='orange', alpha=0.5)

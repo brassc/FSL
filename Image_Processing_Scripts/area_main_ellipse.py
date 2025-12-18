@@ -52,14 +52,14 @@ for i in range(len(data)):
     print(f"Ellipse areas calculated - Deformed: {ellipse_area_def}, Reference: {ellipse_area_ref}, Difference: {ellipse_area_diff}")
     
     # Add to ellipse dataframe
-    ellipse_df = ellipse_df._append({
+    ellipse_df = pd.concat([ellipse_df, pd.DataFrame([{
         'patient_id': data['patient_id'].iloc[i],
         'timepoint': data['timepoint'].iloc[i],
         'side': data['side'].iloc[i],
         'ellipse_area_def': ellipse_area_def,
         'ellipse_area_ref': ellipse_area_ref,
         'ellipse_area_diff': ellipse_area_diff
-    }, ignore_index=True)
+    }])], ignore_index=True)
 
     
     # Visualize ellipses and areas

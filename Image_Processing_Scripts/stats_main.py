@@ -6,6 +6,8 @@ from scipy import stats
 import statsmodels.formula.api as smf
 import seaborn as sns
 import sys
+import warnings
+warnings.filterwarnings('ignore', category=FutureWarning)
 from scipy.stats import mannwhitneyu
 import statsmodels.stats.multitest as smm
 from scipy.stats import ttest_rel, wilcoxon
@@ -22,8 +24,7 @@ from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import StrVector
 from rpy2.robjects.packages import PackageNotInstalledError
 
-# Activate pandas to R conversion
-pandas2ri.activate()
+# pandas2ri conversion will be used via context manager where needed
 
 # First, install required R packages if not already installed
 utils = importr('utils')
@@ -1739,23 +1740,26 @@ if __name__ == '__main__':
 
     # EMMEANS - estimates of marginal means
     # Get the estimated marginal means
-    
 
-    # Convert your data to R
-    r_df = pandas2ri.py2rpy(binned_df)
 
-    # Create and fit the model in R
-    ro.globalenv['data'] = r_df
-    formula = "area_diff ~ timepoint + (1 | patient_id)"
-    r_model = lme4.lmer(formula, data=ro.globalenv['data'])
+    # Use context manager for pandas to R conversion
+    with (ro.default_converter + pandas2ri.converter).context():
+        # Convert your data to R
+        r_df = ro.conversion.py2rpy(binned_df)
 
-    # Get the estimated marginal means
-    r_emmeans = emmeans.emmeans(r_model, specs="timepoint")
-    r_pairs = emmeans.contrast(r_emmeans, method="pairwise", adjust="tukey") 
-    # tukey adjustment controls family wise error rate, accounting for variance structure in mixed model including random effects. 
+        # Create and fit the model in R
+        ro.globalenv['data'] = r_df
+        formula = "area_diff ~ timepoint + (1 | patient_id)"
+        r_model = lme4.lmer(formula, data=ro.globalenv['data'])
 
-    # Convert the results back to Python
-    py_pairs = pandas2ri.rpy2py(base.as_data_frame(r_pairs))
+        # Get the estimated marginal means
+        r_emmeans = emmeans.emmeans(r_model, specs="timepoint")
+        r_pairs = emmeans.contrast(r_emmeans, method="pairwise", adjust="tukey")
+        # tukey adjustment controls family wise error rate, accounting for variance structure in mixed model including random effects.
+
+        # Convert the results back to Python
+        py_pairs = ro.conversion.rpy2py(base.as_data_frame(r_pairs))
+
     print(py_pairs)
     
 
