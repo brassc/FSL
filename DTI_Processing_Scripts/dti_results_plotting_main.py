@@ -1701,22 +1701,22 @@ def create_area_predicts_fa_plot_paper(df, result4, result5, timepoints=["ultra-
     output_dir = "../Paper-PhD-Neuro/figures"
     os.makedirs(output_dir, exist_ok=True)
 
-    # Brain (OUP) formatting specifications
-    # Total panel width: 185mm, with 4 plots + legend + gutters
-    # Each plot approximately 77mm wide x 70mm tall
-    fig_width_mm = 77
-    fig_height_mm = 70
-    fig_width_in = fig_width_mm / 25.4  # Convert to inches
-    fig_height_in = fig_height_mm / 25.4
+    # Figure size derived from LaTeX draft layout to ensure true font sizes
+    # \textwidth=165mm, subfigure at 0.495*0.82*\textwidth ≈ 67mm
+    # This sets a minimum font size — Brain's wider 2-column layout will only enlarge
+    textwidth_mm = 165
+    subfigure_width_mm = 0.495 * 0.82 * textwidth_mm
+    fig_width_in = subfigure_width_mm / 25.4
+    fig_height_in = fig_width_in * 0.8
 
     # Font sizes at final print size (Brain guidelines)
     plt.rcParams.update({
         'font.family': 'sans-serif',
         'font.sans-serif': ['Helvetica', 'Arial', 'DejaVu Sans'],
-        'font.size': 7,              # Base font size
+        'font.size': 8,              # Base font size
         'axes.labelsize': 8,         # Axis label font size
-        'xtick.labelsize': 7,        # X-axis tick label size
-        'ytick.labelsize': 7,        # Y-axis tick label size
+        'xtick.labelsize': 8,        # X-axis tick label size
+        'ytick.labelsize': 8,        # Y-axis tick label size
         'axes.linewidth': 0.5,       # Spine line width
         'xtick.major.width': 0.5,    # Tick line width
         'ytick.major.width': 0.5,
@@ -1761,7 +1761,7 @@ def create_area_predicts_fa_plot_paper(df, result4, result5, timepoints=["ultra-
                 plot_marker = marker_late
 
             ax1.scatter(tp_data['area_diff'], tp_data['fa_anterior_diff'],
-                       marker=plot_marker, s=20, alpha=0.7, color=plot_color,
+                       marker=plot_marker, s=12, alpha=0.7, color=plot_color,
                        edgecolors='none')
 
     # Add regression line with CI
@@ -1781,12 +1781,12 @@ def create_area_predicts_fa_plot_paper(df, result4, result5, timepoints=["ultra-
         # Add statistics text
         stats_text = f'$\\beta$ = {slope_ant:.2e}\np = {result4.pvalues["area_diff"]:.3f}'
         ax1.text(0.97, 0.97, stats_text, transform=ax1.transAxes,
-                verticalalignment='top', horizontalalignment='right', fontsize=6,
-                bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
-                         edgecolor='none', alpha=0.8))
+                verticalalignment='top', horizontalalignment='right', fontsize=8,
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='none',
+                         edgecolor='none'))
 
     # Formatting - y-axis label present, NO x-axis label (top row)
-    ax1.set_title('Anterior', fontsize=8)
+    ax1.set_title('Anterior', fontsize=10)
     ax1.set_ylabel('$\\Delta$FA')
     ax1.set_xlabel('Herniation Area (mm$^2$)', color='none')  # Invisible placeholder for consistent axes size
     ax1.set_xlim(x_min, x_max)
@@ -1824,7 +1824,7 @@ def create_area_predicts_fa_plot_paper(df, result4, result5, timepoints=["ultra-
                 plot_marker = marker_late
 
             ax2.scatter(tp_data['area_diff'], tp_data['fa_posterior_diff'],
-                       marker=plot_marker, s=20, alpha=0.7, color=plot_color,
+                       marker=plot_marker, s=12, alpha=0.7, color=plot_color,
                        edgecolors='none')
 
     # Add regression line with CI
@@ -1844,12 +1844,12 @@ def create_area_predicts_fa_plot_paper(df, result4, result5, timepoints=["ultra-
         # Add statistics text
         stats_text = f'$\\beta$ = {slope_post:.2e}\np = {result5.pvalues["area_diff"]:.3f}'
         ax2.text(0.97, 0.97, stats_text, transform=ax2.transAxes,
-                verticalalignment='top', horizontalalignment='right', fontsize=6,
-                bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
-                         edgecolor='none', alpha=0.8))
+                verticalalignment='top', horizontalalignment='right', fontsize=8,
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='none',
+                         edgecolor='none'))
 
     # Formatting - NO y-axis label, NO x-axis label (top right)
-    ax2.set_title('Posterior', fontsize=8)
+    ax2.set_title('Posterior', fontsize=10)
     ax2.set_ylabel('$\\Delta$FA', color='none')  # Invisible placeholder for consistent axes size
     ax2.set_xlabel('Herniation Area (mm$^2$)', color='none')  # Invisible placeholder for consistent axes size
     ax2.set_xlim(x_min, x_max)
@@ -1893,20 +1893,20 @@ def create_area_predicts_md_plot_paper(df, result4, result5, timepoints=["ultra-
     output_dir = "../Paper-PhD-Neuro/figures"
     os.makedirs(output_dir, exist_ok=True)
 
-    # Brain (OUP) formatting specifications
-    fig_width_mm = 77
-    fig_height_mm = 70
-    fig_width_in = fig_width_mm / 25.4
-    fig_height_in = fig_height_mm / 25.4
+    # Figure size derived from LaTeX draft layout to ensure true font sizes
+    textwidth_mm = 165
+    subfigure_width_mm = 0.495 * 0.82 * textwidth_mm
+    fig_width_in = subfigure_width_mm / 25.4
+    fig_height_in = fig_width_in * 0.8
 
     # Font sizes at final print size
     plt.rcParams.update({
         'font.family': 'sans-serif',
         'font.sans-serif': ['Helvetica', 'Arial', 'DejaVu Sans'],
-        'font.size': 7,
+        'font.size': 8,
         'axes.labelsize': 8,
-        'xtick.labelsize': 7,
-        'ytick.labelsize': 7,
+        'xtick.labelsize': 8,
+        'ytick.labelsize': 8,
         'axes.linewidth': 0.5,
         'xtick.major.width': 0.5,
         'ytick.major.width': 0.5,
@@ -1929,7 +1929,7 @@ def create_area_predicts_md_plot_paper(df, result4, result5, timepoints=["ultra-
     # Common axis limits
     x_min = df['area_diff'].min()
     x_max = df['area_diff'].max() + 50
-    y_min = -0.25
+    y_min = -0.3
     y_max = 0.3
 
     # ============ ANTERIOR PLOT (with y-axis label, with x-axis label) ============
@@ -1949,7 +1949,7 @@ def create_area_predicts_md_plot_paper(df, result4, result5, timepoints=["ultra-
                 plot_marker = marker_late
 
             ax1.scatter(tp_data['area_diff'], tp_data['md_anterior_diff'],
-                       marker=plot_marker, s=20, alpha=0.7, color=plot_color,
+                       marker=plot_marker, s=12, alpha=0.7, color=plot_color,
                        edgecolors='none')
 
     # Add regression line with CI
@@ -1969,12 +1969,12 @@ def create_area_predicts_md_plot_paper(df, result4, result5, timepoints=["ultra-
         # Add statistics text
         stats_text = f'$\\beta$ = {slope_ant:.2e}\np = {result4.pvalues["area_diff"]:.3f}'
         ax1.text(0.97, 0.97, stats_text, transform=ax1.transAxes,
-                verticalalignment='top', horizontalalignment='right', fontsize=6,
-                bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
-                         edgecolor='none', alpha=0.8))
+                verticalalignment='top', horizontalalignment='right', fontsize=8,
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='none',
+                         edgecolor='none'))
 
     # Formatting - y-axis label AND x-axis label (bottom left)
-    ax1.set_title('Anterior', fontsize=8, color='none')  # Invisible placeholder for consistent axes size
+    ax1.set_title('Anterior', fontsize=10, color='none')  # Invisible placeholder for consistent axes size
     ax1.set_ylabel('$\\Delta$MD (mm$^2$/s)')
     ax1.set_xlabel('Herniation Area (mm$^2$)')
     ax1.set_xlim(x_min, x_max)
@@ -2011,7 +2011,7 @@ def create_area_predicts_md_plot_paper(df, result4, result5, timepoints=["ultra-
                 plot_marker = marker_late
 
             ax2.scatter(tp_data['area_diff'], tp_data['md_posterior_diff'],
-                       marker=plot_marker, s=20, alpha=0.7, color=plot_color,
+                       marker=plot_marker, s=12, alpha=0.7, color=plot_color,
                        edgecolors='none')
 
     # Add regression line with CI
@@ -2031,12 +2031,12 @@ def create_area_predicts_md_plot_paper(df, result4, result5, timepoints=["ultra-
         # Add statistics text
         stats_text = f'$\\beta$ = {slope_post:.2e}\np = {result5.pvalues["area_diff"]:.3f}'
         ax2.text(0.97, 0.97, stats_text, transform=ax2.transAxes,
-                verticalalignment='top', horizontalalignment='right', fontsize=6,
-                bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
-                         edgecolor='none', alpha=0.8))
+                verticalalignment='top', horizontalalignment='right', fontsize=8,
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='none',
+                         edgecolor='none'))
 
     # Formatting - NO y-axis label, with x-axis label (bottom right)
-    ax2.set_title('Posterior', fontsize=8, color='none')  # Invisible placeholder for consistent axes size
+    ax2.set_title('Posterior', fontsize=10, color='none')  # Invisible placeholder for consistent axes size
     ax2.set_ylabel('$\\Delta$MD (mm$^2$/s)', color='none')  # Invisible placeholder for consistent axes size
     ax2.set_xlabel('Herniation Area (mm$^2$)')
     ax2.set_xlim(x_min, x_max)
@@ -2079,8 +2079,8 @@ def create_area_predicts_legend_paper():
     plt.rcParams.update({
         'font.family': 'sans-serif',
         'font.sans-serif': ['Helvetica', 'Arial', 'DejaVu Sans'],
-        'font.size': 7,
-        'legend.fontsize': 7,
+        'font.size': 8,
+        'legend.fontsize': 8,
     })
 
     # Colors and markers matching the plots
@@ -2089,9 +2089,16 @@ def create_area_predicts_legend_paper():
     color_regression = '#B22222'  # Firebrick red
     color_ci = '#B22222'
 
-    # Create figure just for legend
-    fig, ax = plt.subplots(figsize=(1.2, 1.5))  # Narrow figure for legend only
-    ax.axis('off')
+    # Figure size derived from LaTeX layout, same method as plots:
+    # Plots: 0.495 * 0.82 * textwidth. Legend: 0.15 * textwidth.
+    # LaTeX \includegraphics[width=\textwidth] inside minipage scales 1:1
+    # when saved file width == minipage width. No bbox_inches='tight', no tight_layout.
+    textwidth_mm = 165
+    legend_width_mm = 0.15 * textwidth_mm  # 24.75mm
+    legend_width_in = legend_width_mm / 25.4
+    legend_height_in = legend_width_in * 2.0  # Tall enough for 4 legend entries
+
+    fig = plt.figure(figsize=(legend_width_in, legend_height_in))
 
     # Create legend elements with redundant color + shape encoding
     legend_elements = [
@@ -2103,17 +2110,15 @@ def create_area_predicts_legend_paper():
         mpatches.Patch(facecolor=color_ci, alpha=0.3, edgecolor='none', label='95% CI'),
     ]
 
-    # Create legend
-    legend = ax.legend(handles=legend_elements, loc='center', frameon=True,
-                      edgecolor='none', facecolor='white')
+    # Place legend directly on figure using figure coordinates (0-1)
+    # loc='center' with bbox_to_anchor centering in figure space
+    fig.legend(handles=legend_elements, loc='center', frameon=False,
+               fontsize=8)
 
-    plt.tight_layout()
-    plt.savefig(f'{output_dir}/area_predicts_legend_paper.pdf',
-                bbox_inches='tight', transparent=False)
-    plt.savefig(f'{output_dir}/area_predicts_legend_paper.tiff', dpi=600,
-                bbox_inches='tight', transparent=False)
-    plt.savefig('DTI_Processing_Scripts/dti_plots/area_predicts_legend_paper.png', dpi=300,
-                bbox_inches='tight', transparent=False)
+    # Save at exact figsize — no bbox_inches='tight', no tight_layout, pad_inches=0
+    plt.savefig(f'{output_dir}/area_predicts_legend_paper.pdf', pad_inches=0, transparent=False)
+    plt.savefig(f'{output_dir}/area_predicts_legend_paper.tiff', dpi=600, pad_inches=0, transparent=False)
+    plt.savefig('DTI_Processing_Scripts/dti_plots/area_predicts_legend_paper.png', dpi=300, pad_inches=0, transparent=False)
     plt.close()
 
     print(f"Saved legend to {output_dir}/area_predicts_legend_paper.png")
