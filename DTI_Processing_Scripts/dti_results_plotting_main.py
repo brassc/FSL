@@ -1798,6 +1798,8 @@ def create_area_predicts_fa_plot_paper(df, result4, result5, timepoints=["ultra-
 
     plt.tight_layout()
     plt.savefig(f'{output_dir}/area_predicts_fa_anterior_paper.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'{output_dir}/area_predicts_fa_anterior_paper.pdf', bbox_inches='tight')
+    plt.savefig(f'{output_dir}/area_predicts_fa_anterior_paper.tiff', dpi=600, bbox_inches='tight')
     plt.savefig('DTI_Processing_Scripts/dti_plots/area_predicts_fa_anterior_paper.png', dpi=300, bbox_inches='tight')
     plt.close()
 
@@ -1855,6 +1857,8 @@ def create_area_predicts_fa_plot_paper(df, result4, result5, timepoints=["ultra-
 
     plt.tight_layout()
     plt.savefig(f'{output_dir}/area_predicts_fa_posterior_paper.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'{output_dir}/area_predicts_fa_posterior_paper.pdf', bbox_inches='tight')
+    plt.savefig(f'{output_dir}/area_predicts_fa_posterior_paper.tiff', dpi=600, bbox_inches='tight')
     plt.savefig('DTI_Processing_Scripts/dti_plots/area_predicts_fa_posterior_paper.png', dpi=300, bbox_inches='tight')
     plt.close()
 
@@ -1973,6 +1977,8 @@ def create_area_predicts_md_plot_paper(df, result4, result5, timepoints=["ultra-
 
     plt.tight_layout()
     plt.savefig(f'{output_dir}/area_predicts_md_anterior_paper.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'{output_dir}/area_predicts_md_anterior_paper.pdf', bbox_inches='tight')
+    plt.savefig(f'{output_dir}/area_predicts_md_anterior_paper.tiff', dpi=600, bbox_inches='tight')
     plt.savefig('DTI_Processing_Scripts/dti_plots/area_predicts_md_anterior_paper.png', dpi=300, bbox_inches='tight')
     plt.close()
 
@@ -2029,6 +2035,8 @@ def create_area_predicts_md_plot_paper(df, result4, result5, timepoints=["ultra-
 
     plt.tight_layout()
     plt.savefig(f'{output_dir}/area_predicts_md_posterior_paper.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'{output_dir}/area_predicts_md_posterior_paper.pdf', bbox_inches='tight')
+    plt.savefig(f'{output_dir}/area_predicts_md_posterior_paper.tiff', dpi=600, bbox_inches='tight')
     plt.savefig('DTI_Processing_Scripts/dti_plots/area_predicts_md_posterior_paper.png', dpi=300, bbox_inches='tight')
     plt.close()
 
@@ -2085,6 +2093,10 @@ def create_area_predicts_legend_paper():
 
     plt.tight_layout()
     plt.savefig(f'{output_dir}/area_predicts_legend_paper.png', dpi=300,
+                bbox_inches='tight', transparent=False)
+    plt.savefig(f'{output_dir}/area_predicts_legend_paper.pdf',
+                bbox_inches='tight', transparent=False)
+    plt.savefig(f'{output_dir}/area_predicts_legend_paper.tiff', dpi=600,
                 bbox_inches='tight', transparent=False)
     plt.savefig('DTI_Processing_Scripts/dti_plots/area_predicts_legend_paper.png', dpi=300,
                 bbox_inches='tight', transparent=False)
