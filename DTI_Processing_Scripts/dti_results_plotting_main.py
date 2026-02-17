@@ -1797,10 +1797,14 @@ def create_area_predicts_fa_plot_paper(df, result4, result5, timepoints=["ultra-
     ax1.spines['right'].set_visible(False)
 
     plt.tight_layout()
-    plt.savefig(f'{output_dir}/area_predicts_fa_anterior_paper.png', dpi=300, bbox_inches='tight')
     plt.savefig(f'{output_dir}/area_predicts_fa_anterior_paper.pdf', bbox_inches='tight')
     plt.savefig(f'{output_dir}/area_predicts_fa_anterior_paper.tiff', dpi=600, bbox_inches='tight')
     plt.savefig('DTI_Processing_Scripts/dti_plots/area_predicts_fa_anterior_paper.png', dpi=300, bbox_inches='tight')
+    # Save variant with faint origin axes
+    ax1.axhline(y=0, color='gray', linestyle='-', linewidth=0.5, alpha=0.3)
+    ax1.axvline(x=0, color='gray', linestyle='-', linewidth=0.5, alpha=0.3)
+    plt.savefig(f'{output_dir}/area_predicts_fa_anterior_paper_with_axes.pdf', bbox_inches='tight')
+    plt.savefig(f'{output_dir}/area_predicts_fa_anterior_paper_with_axes.tiff', dpi=600, bbox_inches='tight')
     plt.close()
 
     # ============ POSTERIOR PLOT (no y-axis label, no x-axis label) ============
@@ -1856,10 +1860,14 @@ def create_area_predicts_fa_plot_paper(df, result4, result5, timepoints=["ultra-
     ax2.spines['right'].set_visible(False)
 
     plt.tight_layout()
-    plt.savefig(f'{output_dir}/area_predicts_fa_posterior_paper.png', dpi=300, bbox_inches='tight')
     plt.savefig(f'{output_dir}/area_predicts_fa_posterior_paper.pdf', bbox_inches='tight')
     plt.savefig(f'{output_dir}/area_predicts_fa_posterior_paper.tiff', dpi=600, bbox_inches='tight')
     plt.savefig('DTI_Processing_Scripts/dti_plots/area_predicts_fa_posterior_paper.png', dpi=300, bbox_inches='tight')
+    # Save variant with faint origin axes
+    ax2.axhline(y=0, color='gray', linestyle='-', linewidth=0.5, alpha=0.3)
+    ax2.axvline(x=0, color='gray', linestyle='-', linewidth=0.5, alpha=0.3)
+    plt.savefig(f'{output_dir}/area_predicts_fa_posterior_paper_with_axes.pdf', bbox_inches='tight')
+    plt.savefig(f'{output_dir}/area_predicts_fa_posterior_paper_with_axes.tiff', dpi=600, bbox_inches='tight')
     plt.close()
 
     print(f"Saved FA paper plots to {output_dir}/")
@@ -1976,10 +1984,14 @@ def create_area_predicts_md_plot_paper(df, result4, result5, timepoints=["ultra-
     ax1.spines['right'].set_visible(False)
 
     plt.tight_layout()
-    plt.savefig(f'{output_dir}/area_predicts_md_anterior_paper.png', dpi=300, bbox_inches='tight')
     plt.savefig(f'{output_dir}/area_predicts_md_anterior_paper.pdf', bbox_inches='tight')
     plt.savefig(f'{output_dir}/area_predicts_md_anterior_paper.tiff', dpi=600, bbox_inches='tight')
     plt.savefig('DTI_Processing_Scripts/dti_plots/area_predicts_md_anterior_paper.png', dpi=300, bbox_inches='tight')
+    # Save variant with faint origin axes
+    ax1.axhline(y=0, color='gray', linestyle='-', linewidth=0.5, alpha=0.3)
+    ax1.axvline(x=0, color='gray', linestyle='-', linewidth=0.5, alpha=0.3)
+    plt.savefig(f'{output_dir}/area_predicts_md_anterior_paper_with_axes.pdf', bbox_inches='tight')
+    plt.savefig(f'{output_dir}/area_predicts_md_anterior_paper_with_axes.tiff', dpi=600, bbox_inches='tight')
     plt.close()
 
     # ============ POSTERIOR PLOT (no y-axis label, with x-axis label) ============
@@ -2034,10 +2046,14 @@ def create_area_predicts_md_plot_paper(df, result4, result5, timepoints=["ultra-
     ax2.spines['right'].set_visible(False)
 
     plt.tight_layout()
-    plt.savefig(f'{output_dir}/area_predicts_md_posterior_paper.png', dpi=300, bbox_inches='tight')
     plt.savefig(f'{output_dir}/area_predicts_md_posterior_paper.pdf', bbox_inches='tight')
     plt.savefig(f'{output_dir}/area_predicts_md_posterior_paper.tiff', dpi=600, bbox_inches='tight')
     plt.savefig('DTI_Processing_Scripts/dti_plots/area_predicts_md_posterior_paper.png', dpi=300, bbox_inches='tight')
+    # Save variant with faint origin axes
+    ax2.axhline(y=0, color='gray', linestyle='-', linewidth=0.5, alpha=0.3)
+    ax2.axvline(x=0, color='gray', linestyle='-', linewidth=0.5, alpha=0.3)
+    plt.savefig(f'{output_dir}/area_predicts_md_posterior_paper_with_axes.pdf', bbox_inches='tight')
+    plt.savefig(f'{output_dir}/area_predicts_md_posterior_paper_with_axes.tiff', dpi=600, bbox_inches='tight')
     plt.close()
 
     print(f"Saved MD paper plots to {output_dir}/")
@@ -2080,10 +2096,10 @@ def create_area_predicts_legend_paper():
     # Create legend elements with redundant color + shape encoding
     legend_elements = [
         Line2D([0], [0], marker='o', color='w', markerfacecolor=color_early,
-               markeredgecolor='none', markersize=5, alpha=0.7, label='0-42 days'),
+               markeredgecolor='none', markersize=5, alpha=0.7, label='$<$ 6 weeks'),
         Line2D([0], [0], marker='^', color='w', markerfacecolor=color_late,
-               markeredgecolor='none', markersize=5, alpha=0.7, label='3-24 months'),
-        Line2D([0], [0], color=color_regression, linewidth=1.0, label='Regression'),
+               markeredgecolor='none', markersize=5, alpha=0.7, label='$\\geq$ 6 weeks'),
+        Line2D([0], [0], color=color_regression, linewidth=1.0, label='LME fit'),
         mpatches.Patch(facecolor=color_ci, alpha=0.3, edgecolor='none', label='95% CI'),
     ]
 
@@ -2092,8 +2108,6 @@ def create_area_predicts_legend_paper():
                       edgecolor='none', facecolor='white')
 
     plt.tight_layout()
-    plt.savefig(f'{output_dir}/area_predicts_legend_paper.png', dpi=300,
-                bbox_inches='tight', transparent=False)
     plt.savefig(f'{output_dir}/area_predicts_legend_paper.pdf',
                 bbox_inches='tight', transparent=False)
     plt.savefig(f'{output_dir}/area_predicts_legend_paper.tiff', dpi=600,
