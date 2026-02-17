@@ -1682,6 +1682,418 @@ def create_area_predicts_md_plot(df, result4, result5, show_combined=True, timep
     return
 
 
+def create_area_predicts_fa_plot_paper(df, result4, result5, timepoints=["ultra-fast", "fast", "acute", "3-6mo", "12-24mo"]):
+    """
+    Create scatter plots for FA vs herniation area for Brain (OUP) publication.
+    Creates separate anterior and posterior plots without legends (legend created separately).
+
+    Parameters:
+    df: DataFrame with columns ['fa_anterior_diff', 'fa_posterior_diff', 'area_diff', 'timepoint', 'patient_id']
+    result4: Fitted model result for fa_anterior_diff ~ area_diff
+    result5: Fitted model result for fa_posterior_diff ~ area_diff
+    timepoints: List of timepoint categories
+
+    Output files:
+    - area_predicts_fa_anterior_paper.png (with y-axis label, no x-axis label)
+    - area_predicts_fa_posterior_paper.png (no y-axis label, no x-axis label)
+    """
+    # Output directory for paper
+    output_dir = "../Paper-PhD-Neuro/figures"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Brain (OUP) formatting specifications
+    # Total panel width: 185mm, with 4 plots + legend + gutters
+    # Each plot approximately 77mm wide x 70mm tall
+    fig_width_mm = 77
+    fig_height_mm = 70
+    fig_width_in = fig_width_mm / 25.4  # Convert to inches
+    fig_height_in = fig_height_mm / 25.4
+
+    # Font sizes at final print size (Brain guidelines)
+    plt.rcParams.update({
+        'font.family': 'sans-serif',
+        'font.sans-serif': ['Helvetica', 'Arial', 'DejaVu Sans'],
+        'font.size': 7,              # Base font size
+        'axes.labelsize': 8,         # Axis label font size
+        'xtick.labelsize': 7,        # X-axis tick label size
+        'ytick.labelsize': 7,        # Y-axis tick label size
+        'axes.linewidth': 0.5,       # Spine line width
+        'xtick.major.width': 0.5,    # Tick line width
+        'ytick.major.width': 0.5,
+        'xtick.major.size': 3,       # Tick length
+        'ytick.major.size': 3,
+        'lines.linewidth': 1.0,      # Line width >= 0.5pt per Brain guidelines
+        'scatter.marker': 'o',
+    })
+
+    # Colorblind-friendly palette with redundant shape encoding
+    # Navy circles for early timepoints, Steel blue triangles for late timepoints
+    color_early = '#003f5c'   # Navy
+    color_late = '#58a4b0'    # Muted teal
+    marker_early = 'o'        # Circle
+    marker_late = '^'         # Triangle
+    color_regression = '#B22222'  # Firebrick red for regression line
+    color_ci = '#B22222'          # Matching red for CI shading
+
+    # Get area range for regression lines
+    area_range = np.linspace(df['area_diff'].min(), df['area_diff'].max(), 100)
+
+    # Common axis limits
+    x_min = df['area_diff'].min()
+    x_max = df['area_diff'].max() + 50
+    y_min = -0.2
+    y_max = 0.1
+
+    # ============ ANTERIOR PLOT (with y-axis label, no x-axis label) ============
+    fig1, ax1 = plt.subplots(1, 1, figsize=(fig_width_in, fig_height_in))
+    ax1.grid(False)
+    anterior_data = df.dropna(subset=['fa_anterior_diff', 'area_diff'])
+
+    # Plot data points - redundant color + shape encoding for accessibility
+    for tp in timepoints:
+        tp_data = anterior_data[anterior_data['timepoint'] == tp]
+        if not tp_data.empty:
+            if tp in timepoints[:3]:  # Early timepoints
+                plot_color = color_early
+                plot_marker = marker_early
+            else:  # Late timepoints
+                plot_color = color_late
+                plot_marker = marker_late
+
+            ax1.scatter(tp_data['area_diff'], tp_data['fa_anterior_diff'],
+                       marker=plot_marker, s=20, alpha=0.7, color=plot_color,
+                       edgecolors='none')
+
+    # Add regression line with CI
+    if result4 is not None:
+        intercept_ant = result4.params['Intercept']
+        slope_ant = result4.params['area_diff']
+        predicted_ant = intercept_ant + slope_ant * area_range
+        anterior_se = result4.bse['Intercept']
+        ci_lower_ant = predicted_ant - 1.96 * anterior_se
+        ci_upper_ant = predicted_ant + 1.96 * anterior_se
+
+        ax1.fill_between(area_range, ci_lower_ant, ci_upper_ant,
+                        color=color_ci, alpha=0.3, edgecolor='none')
+        ax1.plot(area_range, predicted_ant, '-', color=color_regression,
+                linewidth=1.0, zorder=10)
+
+        # Add statistics text
+        stats_text = f'$\\beta$ = {slope_ant:.2e}\np = {result4.pvalues["area_diff"]:.3f}'
+        ax1.text(0.97, 0.97, stats_text, transform=ax1.transAxes,
+                verticalalignment='top', horizontalalignment='right', fontsize=6,
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
+                         edgecolor='none', alpha=0.8))
+
+    # Formatting - y-axis label present, NO x-axis label (top row)
+    ax1.set_title('Anterior', fontsize=8)
+    ax1.set_ylabel('$\\Delta$FA')
+    ax1.set_xlabel('Herniation Area (mm$^2$)', color='none')  # Invisible placeholder for consistent axes size
+    ax1.set_xlim(x_min, x_max)
+    ax1.set_ylim(y_min, y_max)
+
+    # Remove top and right spines for cleaner look
+    ax1.spines['top'].set_visible(False)
+    ax1.spines['right'].set_visible(False)
+
+    plt.tight_layout()
+    plt.savefig(f'{output_dir}/area_predicts_fa_anterior_paper.png', dpi=300, bbox_inches='tight')
+    plt.savefig('DTI_Processing_Scripts/dti_plots/area_predicts_fa_anterior_paper.png', dpi=300, bbox_inches='tight')
+    plt.close()
+
+    # ============ POSTERIOR PLOT (no y-axis label, no x-axis label) ============
+    fig2, ax2 = plt.subplots(1, 1, figsize=(fig_width_in, fig_height_in))
+    ax2.grid(False)
+    posterior_data = df.dropna(subset=['fa_posterior_diff', 'area_diff'])
+
+    # Plot data points
+    for tp in timepoints:
+        tp_data = posterior_data[posterior_data['timepoint'] == tp]
+        if not tp_data.empty:
+            if tp in timepoints[:3]:
+                plot_color = color_early
+                plot_marker = marker_early
+            else:
+                plot_color = color_late
+                plot_marker = marker_late
+
+            ax2.scatter(tp_data['area_diff'], tp_data['fa_posterior_diff'],
+                       marker=plot_marker, s=20, alpha=0.7, color=plot_color,
+                       edgecolors='none')
+
+    # Add regression line with CI
+    if result5 is not None:
+        intercept_post = result5.params['Intercept']
+        slope_post = result5.params['area_diff']
+        predicted_post = intercept_post + slope_post * area_range
+        posterior_se = result5.bse['Intercept']
+        ci_lower_post = predicted_post - 1.96 * posterior_se
+        ci_upper_post = predicted_post + 1.96 * posterior_se
+
+        ax2.fill_between(area_range, ci_lower_post, ci_upper_post,
+                        color=color_ci, alpha=0.3, edgecolor='none')
+        ax2.plot(area_range, predicted_post, '-', color=color_regression,
+                linewidth=1.0, zorder=10)
+
+        # Add statistics text
+        stats_text = f'$\\beta$ = {slope_post:.2e}\np = {result5.pvalues["area_diff"]:.3f}'
+        ax2.text(0.97, 0.97, stats_text, transform=ax2.transAxes,
+                verticalalignment='top', horizontalalignment='right', fontsize=6,
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
+                         edgecolor='none', alpha=0.8))
+
+    # Formatting - NO y-axis label, NO x-axis label (top right)
+    ax2.set_title('Posterior', fontsize=8)
+    ax2.set_ylabel('$\\Delta$FA', color='none')  # Invisible placeholder for consistent axes size
+    ax2.set_xlabel('Herniation Area (mm$^2$)', color='none')  # Invisible placeholder for consistent axes size
+    ax2.set_xlim(x_min, x_max)
+    ax2.set_ylim(y_min, y_max)
+
+    # Remove top and right spines
+    ax2.spines['top'].set_visible(False)
+    ax2.spines['right'].set_visible(False)
+
+    plt.tight_layout()
+    plt.savefig(f'{output_dir}/area_predicts_fa_posterior_paper.png', dpi=300, bbox_inches='tight')
+    plt.savefig('DTI_Processing_Scripts/dti_plots/area_predicts_fa_posterior_paper.png', dpi=300, bbox_inches='tight')
+    plt.close()
+
+    print(f"Saved FA paper plots to {output_dir}/")
+    return
+
+
+def create_area_predicts_md_plot_paper(df, result4, result5, timepoints=["ultra-fast", "fast", "acute", "3-6mo", "12-24mo"]):
+    """
+    Create scatter plots for MD vs herniation area for Brain (OUP) publication.
+    Creates separate anterior and posterior plots without legends (legend created separately).
+
+    Parameters:
+    df: DataFrame with columns ['md_anterior_diff', 'md_posterior_diff', 'area_diff', 'timepoint', 'patient_id']
+    result4: Fitted model result for md_anterior_diff ~ area_diff
+    result5: Fitted model result for md_posterior_diff ~ area_diff
+    timepoints: List of timepoint categories
+
+    Output files:
+    - area_predicts_md_anterior_paper.png (with y-axis label, with x-axis label)
+    - area_predicts_md_posterior_paper.png (no y-axis label, with x-axis label)
+    """
+    # Output directory for paper
+    output_dir = "../Paper-PhD-Neuro/figures"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Brain (OUP) formatting specifications
+    fig_width_mm = 77
+    fig_height_mm = 70
+    fig_width_in = fig_width_mm / 25.4
+    fig_height_in = fig_height_mm / 25.4
+
+    # Font sizes at final print size
+    plt.rcParams.update({
+        'font.family': 'sans-serif',
+        'font.sans-serif': ['Helvetica', 'Arial', 'DejaVu Sans'],
+        'font.size': 7,
+        'axes.labelsize': 8,
+        'xtick.labelsize': 7,
+        'ytick.labelsize': 7,
+        'axes.linewidth': 0.5,
+        'xtick.major.width': 0.5,
+        'ytick.major.width': 0.5,
+        'xtick.major.size': 3,
+        'ytick.major.size': 3,
+        'lines.linewidth': 1.0,
+    })
+
+    # Colorblind-friendly palette with redundant shape encoding
+    color_early = '#003f5c'   # Navy
+    color_late = '#58a4b0'    # Muted teal
+    marker_early = 'o'        # Circle
+    marker_late = '^'         # Triangle
+    color_regression = '#B22222'  # Firebrick red for regression line
+    color_ci = '#B22222'          # Matching red for CI shading
+
+    # Get area range for regression lines
+    area_range = np.linspace(df['area_diff'].min(), df['area_diff'].max(), 100)
+
+    # Common axis limits
+    x_min = df['area_diff'].min()
+    x_max = df['area_diff'].max() + 50
+    y_min = -0.25
+    y_max = 0.3
+
+    # ============ ANTERIOR PLOT (with y-axis label, with x-axis label) ============
+    fig1, ax1 = plt.subplots(1, 1, figsize=(fig_width_in, fig_height_in))
+    ax1.grid(False)
+    anterior_data = df.dropna(subset=['md_anterior_diff', 'area_diff'])
+
+    # Plot data points - redundant color + shape encoding for accessibility
+    for tp in timepoints:
+        tp_data = anterior_data[anterior_data['timepoint'] == tp]
+        if not tp_data.empty:
+            if tp in timepoints[:3]:
+                plot_color = color_early
+                plot_marker = marker_early
+            else:
+                plot_color = color_late
+                plot_marker = marker_late
+
+            ax1.scatter(tp_data['area_diff'], tp_data['md_anterior_diff'],
+                       marker=plot_marker, s=20, alpha=0.7, color=plot_color,
+                       edgecolors='none')
+
+    # Add regression line with CI
+    if result4 is not None:
+        intercept_ant = result4.params['Intercept']
+        slope_ant = result4.params['area_diff']
+        predicted_ant = intercept_ant + slope_ant * area_range
+        anterior_se = result4.bse['Intercept']
+        ci_lower_ant = predicted_ant - 1.96 * anterior_se
+        ci_upper_ant = predicted_ant + 1.96 * anterior_se
+
+        ax1.fill_between(area_range, ci_lower_ant, ci_upper_ant,
+                        color=color_ci, alpha=0.3, edgecolor='none')
+        ax1.plot(area_range, predicted_ant, '-', color=color_regression,
+                linewidth=1.0, zorder=10)
+
+        # Add statistics text
+        stats_text = f'$\\beta$ = {slope_ant:.2e}\np = {result4.pvalues["area_diff"]:.3f}'
+        ax1.text(0.97, 0.97, stats_text, transform=ax1.transAxes,
+                verticalalignment='top', horizontalalignment='right', fontsize=6,
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
+                         edgecolor='none', alpha=0.8))
+
+    # Formatting - y-axis label AND x-axis label (bottom left)
+    ax1.set_title('Anterior', fontsize=8, color='none')  # Invisible placeholder for consistent axes size
+    ax1.set_ylabel('$\\Delta$MD (mm$^2$/s)')
+    ax1.set_xlabel('Herniation Area (mm$^2$)')
+    ax1.set_xlim(x_min, x_max)
+    ax1.set_ylim(y_min, y_max)
+
+    ax1.spines['top'].set_visible(False)
+    ax1.spines['right'].set_visible(False)
+
+    plt.tight_layout()
+    plt.savefig(f'{output_dir}/area_predicts_md_anterior_paper.png', dpi=300, bbox_inches='tight')
+    plt.savefig('DTI_Processing_Scripts/dti_plots/area_predicts_md_anterior_paper.png', dpi=300, bbox_inches='tight')
+    plt.close()
+
+    # ============ POSTERIOR PLOT (no y-axis label, with x-axis label) ============
+    fig2, ax2 = plt.subplots(1, 1, figsize=(fig_width_in, fig_height_in))
+    ax2.grid(False)
+    posterior_data = df.dropna(subset=['md_posterior_diff', 'area_diff'])
+
+    # Plot data points
+    for tp in timepoints:
+        tp_data = posterior_data[posterior_data['timepoint'] == tp]
+        if not tp_data.empty:
+            if tp in timepoints[:3]:
+                plot_color = color_early
+                plot_marker = marker_early
+            else:
+                plot_color = color_late
+                plot_marker = marker_late
+
+            ax2.scatter(tp_data['area_diff'], tp_data['md_posterior_diff'],
+                       marker=plot_marker, s=20, alpha=0.7, color=plot_color,
+                       edgecolors='none')
+
+    # Add regression line with CI
+    if result5 is not None:
+        intercept_post = result5.params['Intercept']
+        slope_post = result5.params['area_diff']
+        predicted_post = intercept_post + slope_post * area_range
+        posterior_se = result5.bse['Intercept']
+        ci_lower_post = predicted_post - 1.96 * posterior_se
+        ci_upper_post = predicted_post + 1.96 * posterior_se
+
+        ax2.fill_between(area_range, ci_lower_post, ci_upper_post,
+                        color=color_ci, alpha=0.3, edgecolor='none')
+        ax2.plot(area_range, predicted_post, '-', color=color_regression,
+                linewidth=1.0, zorder=10)
+
+        # Add statistics text
+        stats_text = f'$\\beta$ = {slope_post:.2e}\np = {result5.pvalues["area_diff"]:.3f}'
+        ax2.text(0.97, 0.97, stats_text, transform=ax2.transAxes,
+                verticalalignment='top', horizontalalignment='right', fontsize=6,
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
+                         edgecolor='none', alpha=0.8))
+
+    # Formatting - NO y-axis label, with x-axis label (bottom right)
+    ax2.set_title('Posterior', fontsize=8, color='none')  # Invisible placeholder for consistent axes size
+    ax2.set_ylabel('$\\Delta$MD (mm$^2$/s)', color='none')  # Invisible placeholder for consistent axes size
+    ax2.set_xlabel('Herniation Area (mm$^2$)')
+    ax2.set_xlim(x_min, x_max)
+    ax2.set_ylim(y_min, y_max)
+
+    ax2.spines['top'].set_visible(False)
+    ax2.spines['right'].set_visible(False)
+
+    plt.tight_layout()
+    plt.savefig(f'{output_dir}/area_predicts_md_posterior_paper.png', dpi=300, bbox_inches='tight')
+    plt.savefig('DTI_Processing_Scripts/dti_plots/area_predicts_md_posterior_paper.png', dpi=300, bbox_inches='tight')
+    plt.close()
+
+    print(f"Saved MD paper plots to {output_dir}/")
+    return
+
+
+def create_area_predicts_legend_paper():
+    """
+    Create a standalone legend for the area predicts plots (Brain/OUP format).
+    This legend is separate from the plots to be placed alongside the 2x2 panel.
+
+    Output file:
+    - area_predicts_legend_paper.png
+    """
+    from matplotlib.lines import Line2D
+    import matplotlib.patches as mpatches
+
+    # Output directory
+    output_dir = "../Paper-PhD-Neuro/figures"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Font settings
+    plt.rcParams.update({
+        'font.family': 'sans-serif',
+        'font.sans-serif': ['Helvetica', 'Arial', 'DejaVu Sans'],
+        'font.size': 7,
+        'legend.fontsize': 7,
+    })
+
+    # Colors and markers matching the plots
+    color_early = '#003f5c'   # Navy
+    color_late = '#58a4b0'    # Muted teal
+    color_regression = '#B22222'  # Firebrick red
+    color_ci = '#B22222'
+
+    # Create figure just for legend
+    fig, ax = plt.subplots(figsize=(1.2, 1.5))  # Narrow figure for legend only
+    ax.axis('off')
+
+    # Create legend elements with redundant color + shape encoding
+    legend_elements = [
+        Line2D([0], [0], marker='o', color='w', markerfacecolor=color_early,
+               markeredgecolor='none', markersize=5, alpha=0.7, label='0-42 days'),
+        Line2D([0], [0], marker='^', color='w', markerfacecolor=color_late,
+               markeredgecolor='none', markersize=5, alpha=0.7, label='3-24 months'),
+        Line2D([0], [0], color=color_regression, linewidth=1.0, label='Regression'),
+        mpatches.Patch(facecolor=color_ci, alpha=0.3, edgecolor='none', label='95% CI'),
+    ]
+
+    # Create legend
+    legend = ax.legend(handles=legend_elements, loc='center', frameon=True,
+                      edgecolor='none', facecolor='white')
+
+    plt.tight_layout()
+    plt.savefig(f'{output_dir}/area_predicts_legend_paper.png', dpi=300,
+                bbox_inches='tight', transparent=False)
+    plt.savefig('DTI_Processing_Scripts/dti_plots/area_predicts_legend_paper.png', dpi=300,
+                bbox_inches='tight', transparent=False)
+    plt.close()
+
+    print(f"Saved legend to {output_dir}/area_predicts_legend_paper.png")
+    return
+
+
 def parameter_differences(df):
     """
     Calculate differences between baseline and actual values for FA and MD parameters
@@ -3776,7 +4188,7 @@ if __name__ == '__main__':
     #############################
     ####### PLOTTING LME
 
-    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'])
+    # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, timepoints=['ultra-fast', 'fast', 'acute', '3-6mo', '12-24mo'])
     #################################
 
     ###### WHY DO LME? 
@@ -3887,7 +4299,7 @@ if __name__ == '__main__':
     # print_fixed_effects_summary_precise(result_fixed_post, precision=8)
     
 
-    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, fixed_effects_result=result_fixed)
+    # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, fixed_effects_result=result_fixed)
     # # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='fa', result=result, fixed_effects_result=result_fixed, fixed_only=True)
     # sys.exit()
     
@@ -4090,8 +4502,11 @@ if __name__ == '__main__':
     print(result6.params)
 
     # Usage:
-    create_area_predicts_fa_plot(wm_fa_hern_combi, result4, result5, show_combined=True)
-    create_area_predicts_fa_plot(wm_fa_hern_combi, result4, result5, show_combined=False)
+    # create_area_predicts_fa_plot(wm_fa_hern_combi, result4, result5, show_combined=True)
+    # create_area_predicts_fa_plot(wm_fa_hern_combi, result4, result5, show_combined=False)
+
+    # Paper version (Brain/OUP format)
+    create_area_predicts_fa_plot_paper(wm_fa_hern_combi, result4, result5)
 
     # sys.exit()
 
@@ -4299,7 +4714,8 @@ if __name__ == '__main__':
     # # print_fixed_effects_summary_precise(result_fixed_post,precision=6)
     # # # sys.exit()
     # print("hello")
-    create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, fixed_effects_result=result_fixed)
+
+    # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, fixed_effects_result=result_fixed)
     # # # create_timepoint_boxplot_LME_dti(df=wm_data_roi_567_combi, parameter='md', result=result, fixed_effects_result=result_fixed, fixed_only=True)
     # # sys.exit()
     # #### PLOT FIXED EFFECT ON BOX PLOT
@@ -4503,8 +4919,13 @@ if __name__ == '__main__':
 
 
     
-    create_area_predicts_md_plot(wm_md_hern_combi, result4, result5, show_combined=True)
-    create_area_predicts_md_plot(wm_md_hern_combi, result4, result5, show_combined=False)
+    # create_area_predicts_md_plot(wm_md_hern_combi, result4, result5, show_combined=True)
+    # create_area_predicts_md_plot(wm_md_hern_combi, result4, result5, show_combined=False)
+
+    # Paper version (Brain/OUP format)
+    create_area_predicts_md_plot_paper(wm_md_hern_combi, result4, result5)
+    create_area_predicts_legend_paper()  # Create standalone legend
+
     sys.exit()
 
 
