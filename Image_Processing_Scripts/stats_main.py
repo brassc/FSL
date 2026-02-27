@@ -1251,14 +1251,17 @@ def mixed_effect_boxplot_paper(df, result,
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
 
-    ax.set_xlabel('Timepoint', fontsize=8)
     ax.set_ylabel('Herniation Area [mm²]', fontsize=8)
+    ax.set_xlabel('Timepoint', fontsize=8, labelpad=30)
 
+    from matplotlib.transforms import blended_transform_factory
+    trans = blended_transform_factory(ax.transData, ax.transAxes)
     for i, tp in enumerate(plot_timepoints):
         count = len(df_filtered[df_filtered['timepoint'] == tp])
         if count > 0:
-            ax.text(i, ax.get_ylim()[0] * 1.5, f"n={count}",
-                    ha='center', va='bottom', fontsize=8)
+            ax.text(i, -0.14, f"n={count}",
+                    ha='center', va='top', fontsize=8,
+                    transform=trans)
 
     def add_significance_bracket(ax, x1, x2, y, h, text):
         ax.plot([x1, x1, x2, x2], [y, y+h, y+h, y], lw=1.0, c='black')
@@ -1271,6 +1274,14 @@ def mixed_effect_boxplot_paper(df, result,
     add_significance_bracket(ax, 2, 3, y_max * 0.45, bracket_height, sig_levels.get("chronic", ""))
 
     plt.tight_layout()
+
+    label_map = {
+        'ultra-fast': '0\u20132 days',
+        'fast':       '2\u20138 days',
+        'acute':      '8\u201342 days\n(1\u20136 weeks)',
+        'chronic':    '42\u2013730 days\n(6 weeks \u2013 24 months)',
+    }
+    ax.set_xticklabels([label_map.get(tp, tp) for tp in plot_timepoints])
 
     output_dir = "../Paper-PhD-Neuro/figures"
     os.makedirs(output_dir, exist_ok=True)
